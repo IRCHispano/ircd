@@ -1,0 +1,45 @@
+$Id: tener_en_cuenta.jcea,v 1.11 2000/01/21 20:03:11 jcea Exp $
+
+14/Ene/00
+Un proxy abierto puede pasar el chequeo si, por ejemplo,
+la conexion del usuario completa la capacidad del
+proxy, ya que este no tendra recursos para atender
+la verificacion de la red.
+
+El problema se agrava por el hecho de que si eso
+ocurre, la IP sera mantenida en cache y no pasara
+mas comprobaciones de proxy durante 30 minutos.
+
+10/Ene/00
+Los modos +A y +S de canales, no son
+representados por muchos clientes de IRC,
+entre ellos el popular mIRC, a menos que se
+este utilizando la version 5.61 o superior.
+
+10/Ene/00
+Las bases de datos de disco se pueden truncar a 0,
+pero no borrar.
+
+22/Dic/99
+He hecho algunas pruebas para ver hasta que punto puede
+resultar rentable en terminos de ancho de banda el
+que la comunicacion entre servidores se realice usando
+compresion GZIP. Para ello he generado un BURST y lo he
+grabado en disco. Comprimido con GZIP, su tamano se
+reduce a la mitad.
+
+La ganancia no es demasiado importante, por tanto.
+
+27/Oct/99
+Las BDD no residentes no se compactan, aunque
+se marca la orden en disco.
+
+27/Oct/99
+Solo se conservan en memoria los registros
+que afectan al servidor en concreto.
+
+27/Oct/99
+"make install" elimina las BDD que no se
+estan empleando. Por tanto hay que modificar
+el "Makefile" si se an~aden BDD nuevas.
+ 

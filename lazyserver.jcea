@@ -1,0 +1,72 @@
+$Id: lazyserver.jcea,v 1.7 2000/07/25 10:09:51 jcea Exp $
+
+14/Jun/00
+Con la tecnologia de IRC sobre tuneles IP que he
+desarrollado (http://www.argo.es/clones/clones2.html), el
+interes por los "Lazy server" se diluye un poco, salvo
+por el hecho de que ello ahorraria CPU y ancho de banda.
+
+Se necesitaria un comando "setip" para fijar la IP y HOST.
+Este comando deberia estar permitido SOLO desde ciertas
+IPs (en particular 127.0.0.1).
+
+22/Dic/99
+
+Cuando en un sitio hay varios clientes, no tiene sentido que
+todos ellos se conecten al servidor, sino que lo mas rentable
+es que hubiese un servidor local. La ventaja es mayor, incluso,
+cuando los usuarios tienen canales comunes, etc.
+
+Pero un servidor local no siempre es factible ya que, por un
+lado requiere un esfuerzo de administracion y, por otro,
+los lugares donde resulta rentable no son CONFIABLES.
+
+Este proyecto pretende desarrollar un "lazy server". Es decir
+un servidor que actue de proxy entre varios usuarios y un servidor
+normal de la red. La red solo debe enviar una copia al proxy
+de todas aquellos paquetes que deban ser recibido por uno o
+mas usuarios del mismo.
+
+No basta con hacer proxy de "join", "privmsg", "notice",
+"part", "quit", "squit", "mode" y alguno mas, ya que todos
+los demas comandos del IRC deben poder ser enviados sin
+problemas. Ello complica la parte del servidor de IRC en si, que
+debe parchearse para poder soportar "lazyservers". Si un usuario
+del proxy hace un "/version gaia.*", ese comando debe rutarse
+por la red, y la respuesta debe llegar al usuario que hizo la
+peticion, no a todo el mundo.
+
+De todas formas ese problema se soluciona -aparentemente- de forma
+bastante sencilla. Practicamente los unicos cambios que serian
+necesarios en el servidor serian:
+
+a) Fiarse del "from" que envia un "lazy server", si se corresponde
+   a nicks asignados.
+
+b) Permitir la entrada de un nuevo nick solo si su IP se corresponde
+   con una IP local.
+
+c) La mayoria de los comandos del proxy no tienen efecto hasta que
+   el servidor del que cuelga responde (por ejemplo, entradas
+   y salidas en canales).
+
+d) En aquellos comandos que un servidor debe enviar (respuesta) a
+   varios usuarios, el servidor debe ser parcheado para que
+   solamente envie una copia para todos los usuarios que
+   cuelgan del proxy.
+
+En una primera fase, el cambio mas sencillo en el servidor de IRC
+seria:
+
+a) Anadir un nuevo comando para la entrada de "lazy servers".
+
+b) Cambiar las rutinas de "parsing" para que tengan en cuenta
+   el punto A anterior.
+
+c) cptr de estos clientes deberia ser el mismo. tal vez sea
+   necesaria una especie de "contador de referencias", asi como
+   una lista de nicks asociados.
+
+Una de las ventajas que abre este sistema, ademas de reducir
+trafico, es la posibilidad de meter "clones" sin necesitar una IP
+fija, a pesar del sistema de control de clones distribuido.

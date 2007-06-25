@@ -1,0 +1,648 @@
+$Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
+
+* 2003/09/08 jcea@argo.es            (u2.10.H.08.01)              CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2003/09/10 jcea@argo.es            (DB119 - u2.10.H.08.02)          FIX
+  -----------------------------------------------------------------------
+  Solucionado un grave problema de seguridad, potencialmente explotable
+  de forma remota. Para ello el atacante debe poder introducir datos
+  arbitrarios de su eleccion en la BDD.
+
+  Es un problema antediluviano.
+
+  A actualizar todo dios.
+
+* 2003/09/10 jcea@argo.es            (u2.10.H.08.03)              CLEANUP
+  -----------------------------------------------------------------------
+  Movemos los servidores P09 "cableados" en el codigo fuente a la tabla
+  'z', registros "p09:*".
+
+  Este parche no considera la posibilidad de que se haya compilado el
+  IRCD sin soporte de BDD, dado que espero que en un par de dias
+  se opte por ese camino en todo el codigo.
+
+* 2003/09/10 jcea@argo.es            (u2.10.H.08.04)              CLEANUP
+  -----------------------------------------------------------------------
+  Si intenta conectar un nodo P09 que no tenemos en la BDD, denegamos
+  la conexion.
+
+* 2003/09/10 jcea@argo.es            (u2.10.H.08.05)              CLEANUP
+  -----------------------------------------------------------------------
+  Se limpian algunos rastos de Undernet sacados a la luz con los parches
+  anteriores.
+
+* 2003/09/10 jcea@argo.es            (u2.10.H.08.06)              CLEANUP
+  -----------------------------------------------------------------------
+  Cuando se cumple u2.10.H.08.04, avisamos a los ops.
+
+* 2003/09/10 jcea@argo.es            (u2.10.H.08.07)              CLEANUP
+  -----------------------------------------------------------------------
+  Soluciono un par de problemas de seguridad potenciales adicionales.
+
+* 2003/09/15 jcea@argo.es            (u2.10.H.08.08)              CLEANUP
+  -----------------------------------------------------------------------
+  1063566087 KaLDoR SYMLINK : What should the name of the installed
+             symbolic link to the exectuable be <--- aunque sea una
+             pijadita de nada en el make config.... es executable,
+             no lo que pone ahí no?
+
+* 2003/09/15 n3tkat@9power.org       (u2.10.H.08.09)              CLEANUP
+  -----------------------------------------------------------------------
+  Eliminamos la opcion de compilar sin BDD y todo lo que ello implica.
+
+* 2003/09/15 jcea@argo.es            (u2.10.H.08.10)              CLEANUP
+  -----------------------------------------------------------------------
+  Corregidos un par de temas de indentacion del parche anterior, y
+  actualizacion del "/version".
+
+* 2003/09/16 jcea@argo.es            (u2.10.H.08.11)                  FIX
+  -----------------------------------------------------------------------
+  Parche de seguridad IRCD.
+
+* 2003/09/16 zoltan@irc-dev.net      (u2.10.H.08.12)                  FIX
+  -----------------------------------------------------------------------
+  Al hacer un "rehash", los que accedieron saltando una linea K con una E,
+  recibian un kill. Pasaba porque se borraba el valor de cptr->passwd, cosa
+  que no se hacia antes. Es un efecto colateral derivado del parche
+  u2.10.H.07.12, que solo se tenia en cuenta la comprobacion de las E-lines
+  al entrar a la red, olvidandose de las comprobaciones de E-lines en
+  cualquier momento debido a un "rehash".
+
+* 2003/09/16 mount@irc-dev.net       (u2.10.H.08.13)               CLEANUP
+  ------------------------------------------------------------------------
+  Cambio #ifdef X's residentes en el código por #if defined(X)'s.
+
+* 2003/09/18 mount@irc-dev.net       (u2.10.H.08.14)               CLEANUP
+  ------------------------------------------------------------------------
+  Hago lo mismo que con el parche anterior, pero en este caso, cambio los
+  #ifndef X's por #if !defined(X)'s.
+
+* 2003/09/18 jcea@argo.es            (u2.10.H.08.15)                  FIX
+  -----------------------------------------------------------------------
+  El parche u2.10.H.08.09 no esta completo. Hay que eliminar un par
+  de compilaciones condicionales que se habian transpapelado.
+
+* 2003/09/18 mount@irc-dev.net       (DB120 - u2.10.H.08.16)       CLEANUP
+  ------------------------------------------------------------------------
+  Se elimina la restricción de acceso al registro '.' de la tabla 'v',
+  ya que este registro ha quedado obsoleto.
+
+* 2003/09/18 mount@irc-dev.net       (u2.10.H.08.17)                   FIX
+  ------------------------------------------------------------------------
+  En '/version', el valor de 'BDD_MMAP_SIZE' no se separaba del indicador
+  de parches 'DB'. Lo separo con un punto ('.').
+
+* 2003/09/19 abba@buscanet.com       (u2.10.H.08.18)               CLEANUP    
+  ------------------------------------------------------------------------
+  Se quita otro BDD procedente del parche u2.10.H.08.09 que no se utiliza
+  ya.
+
+* 2003/09/19 japi@arrakis.es         (u2.10.H.08.19)                   FIX
+  ------------------------------------------------------------------------
+  El fichero "zlib/Makefile2" no se genera correctamente en plataformas
+  que no usan el "gnu sed". En realidad es un "bug" en la secuencia de
+  sustitucion. Cambiado.
+
+* 2003/09/22 mount@irc-dev.net       (u2.10.H.08.20)               CLEANUP
+  ------------------------------------------------------------------------
+  Limpiamos un par de detalles pendientes de la compilacion condicional
+  de BDD, en "ircd/Makefile.in".
+
+* 2003/09/22 amn3s1a@ono.com         (u2.10.H.08.21)              CLEANUP
+  -----------------------------------------------------------------------
+  Divido la función "m_nick" en dos funciones distintas. Una que se
+  llama cuando se recibe de un usuario local local, y otra cuando el
+  usuario es remoto.
+
+* 2003/09/22 amn3s1a@ono.com         (u2.10.H.08.22)              CLEANUP
+  -----------------------------------------------------------------------
+  Elimino de m_nick_remoto todo aquello que solamente se llevaba a
+  cabo con las conexiones locales.
+
+* 2003/09/22 amn3s1a@ono.com         (u2.10.H.08.23)              CLEANUP
+  -----------------------------------------------------------------------
+  Elimino de m_nick_local todo aquello que solamente se llevaba a
+  cabo con las conexiones remotas. Tambien se an~aden algunas
+  comprobaciones..
+
+* 2003/09/22 amn3s1a@ono.com         (u2.10.H.08.24)              CLEANUP
+  -----------------------------------------------------------------------
+  Elimino de m_nick_remoto algunas variables que ya no se usan.
+
+* 2003/09/22 jcea@argo.es            (u2.10.H.08.25)              CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2003/09/22 mount@irc-dev.net       (u2.10.H.08.26)                  FIX
+  -----------------------------------------------------------------------
+  Antes, al negar una pregunta de 'make config', quedaba definida como
+  'n'. Esto daba problemas al hacer 'make install', en partes del script
+  que contienen ifdef's.
+
+* 2003/09/25 jcea@argo.es            (u2.10.H.08.27)                  FIX
+  -----------------------------------------------------------------------
+  Tras u2.10.H.08.23, el código no compila en algunas versiones de GCC.
+
+* 2003/09/29 jcea@argo.es            (u2.10.H.08.28)              CLEANUP
+  -----------------------------------------------------------------------
+  Se pueden borrar mas cosas que en "u2.10.H.08.22", aprovechando que
+  "IsServer(cptr)" siempre es TRUE para este caso.
+
+  Asi limpiamos mas codigo.
+
+* 2003/09/29 jcea@argo.es            (u2.10.H.08.29)              CLEANUP
+  -----------------------------------------------------------------------
+  El "Jupe" de nicks no debe procesarse cuando el comando nos llega
+  de forma remota.
+
+  Mas limpieza de adicional a "u2.10.H.08.22".
+
+* 2003/09/29 jcea@argo.es            (u2.10.H.08.30)              CLEANUP
+  -----------------------------------------------------------------------
+  Comprobar que el usuario que nos llega no sea un "inv123456" o
+  "invitado-123456" sobra cuando el usuario que nos llega es remoto.
+
+  Mas limpieza de adicional a "u2.10.H.08.22".
+
+* 2003/09/29 jcea@argo.es            (u2.10.H.08.31)              CLEANUP
+  -----------------------------------------------------------------------
+  Con la limpieza anterior hay variables que ya no se usan y sobran.
+  Las eliminamos.
+
+* 2003/09/29 mount@irc-dev.net       (u2.10.H.08.32)              CLEANUP
+  -----------------------------------------------------------------------
+  Elimino el soporte de JUPES de nicks por U:Lines.
+
+* 2003/09/29 mount@irc-dev.net       (u2.10.H.08.33)              CLEANUP
+  -----------------------------------------------------------------------
+  Se documenta en ejemplo.conf el soporte de U:Lines por BDD.
+
+* 2003/09/29 mount@irc-dev.net       (u2.10.H.08.34)              CLEANUP
+  -----------------------------------------------------------------------
+  Se elimina el código del registro temporal de la BDD
+  'permite.nicks.largos.en.local', de la tabla 'z'.
+
+* 2003/09/30 jcea@argo.es            (u2.10.H.08.35)              CLEANUP
+  -----------------------------------------------------------------------
+  Eliminamos el codigo asociado a "PROFIL", cuyo soporte hace años
+  que es inexistente.
+
+* 2003/10/01 mount@irc-dev.net       (DB121 - u2.10.H.08.36)      CLEANUP
+  -----------------------------------------------------------------------
+  Evito buscar la clave de cifrado de ips, a menos que sea necesario.
+  Se almacena la clave en ASCII y BINARIO, para agilizar procesos
+  criptográficos.
+
+* 2003/10/01 jcea@argo.es            (u2.10.H.08.37)              CLEANUP
+  -----------------------------------------------------------------------
+  Elimino "dead code" dejado por el parche anterior.
+
+* 2003/10/02 jcea@argo.es            (u2.10.H.08.38)              CLEANUP
+  -----------------------------------------------------------------------
+  Añado a "mount@irc-dev" al "/info". Es una respuesta a haberse ganado
+  la mascara de "devel".
+
+* 2003/10/10 jcea@argo.es            (u2.10.H.08.39)              CLEANUP
+  -----------------------------------------------------------------------
+  Divido la rutina "set_mode" en "set_mode_local" y "set_mode_remoto",
+  para poder hacer limpieza. Es muy buena idea, porque la rutina
+  original es muy compleja y mide... !!!1107 lineas de codigo!!!.
+
+* 2003/10/10 jcea@argo.es            (u2.10.H.08.40)              CLEANUP
+  -----------------------------------------------------------------------
+  Meto un par de "assert()" en el parche anterior, para detectar
+  inconsistencias cuanto antes.
+ 
+* 2003/10/10 jcea@argo.es            (u2.10.H.08.41)              CLEANUP
+  -----------------------------------------------------------------------
+  Empiezo a quitar "dead code" en "set_mode_local".
+
+* 2003/10/10 jcea@argo.es            (u2.10.H.08.42)              CLEANUP
+  -----------------------------------------------------------------------
+  Empiezo a quitar "dead code" en "set_mode_remoto".
+
+* 2003/10/10 mount@irc-dev.net       (u2.10.H.08.43)              FEATURE
+  -----------------------------------------------------------------------
+  Muevo las gestiones referentes al renombrado de nicks:
+
+  - Distribuición a servidores
+  - Generado de nick estilo invitado-XXXXXXXX
+  - Watch
+
+  a una nueva rutina, la cual la llamo rename_user(), y cuya sintaxis es
+  rename_user(sptr, nuevo_nick), si nuevo_nick es NULL, se genera un
+  nuevo nick.
+
+  Actualmente sólo hace el contenido de la función m_rename, sólo que
+  ahora esta llama a rename_user(), esto se hace así para poder
+  renombrar nicks facilmente, y no tener partes duplicadas de código.
+
+* 2003/10/15 jcea@argo.es            (u2.10.H.08.44)              CLEANUP
+  -----------------------------------------------------------------------
+  Algo de limpieza del codigo anterior, y compilacion correcta.
+
+* 2003/10/15 jcea@argo.es            (u2.10.H.08.45)                  FIX
+  -----------------------------------------------------------------------
+  El parche de mount no tiene en cuenta que llegue un "rename" para
+  un usuario de otro nodo. Ese es un error CRITICO.
+
+* 2003/10/15 jcea@argo.es            (u2.10.H.08.46)              CLEANUP
+  -----------------------------------------------------------------------
+  Cansado de tener problemas con los tabuladores, cambio todos los
+  tabuladores del IRCD por dos espacios.
+
+  "make indent".
+
+* 2003/10/15 jcea@argo.es            (u2.10.H.08.47)                  FIX
+  -----------------------------------------------------------------------
+  El parche u2.10.H.08.26 introduce el bug de que los simbolos booleanos
+  marcados como "NO" no se guardan en la configuracion, por lo que en el
+  proximo "make config" nos lo va a preguntar.
+
+  Deshago ese parche.
+
+* 2003/10/15 jcea@argo.es            (u2.10.H.08.48)                  FIX
+  -----------------------------------------------------------------------
+  Solucionamos el problema que pretendia solucionar u2.10.H.08.26, espero
+  que esta vez de la forma correcta.
+
+
+* 2003/10/20 ryden@redhispana.org    (u2.10.H.08.49)                  FIX
+  -----------------------------------------------------------------------
+  Error en "db_pack()".
+
+* 2003/10/21 cazon@condonesdecolores.org  (u2.10.H.08.50)         CLEANUP
+  -----------------------------------------------------------------------
+  Ha sido traducido el fichero INTALL al castellano. Coexistirán los dos
+  ficheros, el nuevo como INSTALL.es.
+
+* 2003/10/21 ryden@redhispana.org    (u2.10.H.08.51)              CLEANUP
+  -----------------------------------------------------------------------
+  Movemos el limpiado de la caché de ips virtuales en el cambio de clave
+  de cifrado al s_bdd.c
+
+* 2003/10/21 jcea@argo.es            (u2.10.H.08.52)                  FIX
+  -----------------------------------------------------------------------
+  Deshago los parches u2.10.H.07.19, u2.10.H.07.21, u2.10.H.07.62.
+
+  Opino que se trataba de una solucion buscando un problema.
+
+  Dejo un TAG en el CVS por si algun dia se retoma el tema.
+
+* 2003/10/21 ryden@redhispana.org    (u2.10.H.08.53)              FEATURE
+  -----------------------------------------------------------------------
+  Limpieza de caché inmediata al cambiar un registro en las tablas 'v' y
+  'w'.
+
+* 2003/10/21 ryden@redhispana.org    (u2.10.H.08.54)              FEATURE
+  -----------------------------------------------------------------------
+  Las ips virtuales solo se regeneran cuando es necesario.
+
+* 2003/10/21 jcea@argo.es            (u2.10.H.08.55)              CLEANUP
+  -----------------------------------------------------------------------
+  Algo de limpieza y reestructuracion de los dos parches anteriores.
+
+* 2003/10/21 jcea@argo.es            (u2.10.H.08.56)                  FIX
+  -----------------------------------------------------------------------
+  Bugfix en la optimizacion de cache de IPs virtuales personalizadas.
+
+* 2003/10/21 jcea@argo.es            (u2.10.H.08.57)                  FIX
+  -----------------------------------------------------------------------
+  Cuando borramos la IP virtual, tambien debemos hacer un
+  "ClearIpVirtualPersonalizada()".
+
+* 2003/10/21 jcea@argo.es            (u2.10.H.08.58)                  FIX
+  -----------------------------------------------------------------------
+  Bugfix en la optimizacion de cache de IPs virtuales personalizadas.
+
+* 2003/10/21 jcea@argo.es            (u2.10.H.08.59)                  FIX
+  -----------------------------------------------------------------------
+  La logica del parche "u2.10.H.08.54" no funciona. Desactivo el parche
+  de forma temporal, hasta tener algo que funcione y este probado de verdad...
+
+* 2003/10/22 amn3s1a@ono.com         (u2.10.H.08.60)                  FIX
+  -----------------------------------------------------------------------
+  El script configure en el directorio principal, pasa TODOS los 
+  parametros recibidos a config/configure y omite la llamada a 
+  configure/zlib si  se le pasan los parametros -h o --help
+
+* 2003/10/22 daijo@irc-dev.net       (u2.10.H.08.61)              FEATURE
+  -----------------------------------------------------------------------
+  Al enviar un notice a un canal al que no tenemos permiso, ahora enviamos
+  el mismo mensaje que teniamos con PRIVMSG: ERR_CANNOTSENDTOCHAN.
+
+
+* 2003/10/22 ryden@redhispana.org    (u2.10.H.08.62)                  FIX
+  -----------------------------------------------------------------------
+  Reparada la optimizacion de generado de ips virtuales.
+
+* 2003/10/22 jcea@argo.es            (u2.10.H.08.63)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza y clarificacion del parche anterior.
+
+* 2003/10/22 jcea@argo.es            (u2.10.H.08.64)              CLEANUP
+  -----------------------------------------------------------------------
+  Simplificacion y optimizacion de codigo en "make_virtualhost()".
+
+* 2003/10/22 jcea@argo.es            (u2.10.H.08.65)                  FIX
+  -----------------------------------------------------------------------
+  Solucionado unn bug en introducido en "u2.10.H.08.63".
+
+* 2003/10/22 jcea@argo.es            (u2.10.H.08.66)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de algunos "warnings" de compilacion.
+
+* 2003/10/22 ryden@redhispana.org    (u2.10.H.08.67)                  FIX
+  -----------------------------------------------------------------------
+  Solucionado el error que enviaba dos veces el raw de IP virtual en el
+  caso de introducir un nuevo registro.
+
+* 2003/10/23 mount@irc-dev.net       (u2.10.H.08.68)              CLEANUP
+  -----------------------------------------------------------------------
+  Ahora, rename_user() hace también:
+
+    1. Regeneración de IP Virtual.
+    2. Gestión correcta de modos.
+    3. Gestión correcta de contadores de HELPERS.
+
+* 2003/10/29 jcea@argo.es            (u2.10.H.08.69)                  FIX
+  -----------------------------------------------------------------------
+  Bug fix y limpieza del parche anterior.
+
+* 2003/10/29 ryden@redhispana.org    (u2.10.H.08.70)              CLEANUP
+  -----------------------------------------------------------------------
+  Factor comun del borrado de ips virtuales.
+
+* 2003/10/29 mount@irc-dev.net       (u2.10.H.08.71)              CLEANUP
+  -----------------------------------------------------------------------
+  Añado en 'include/s_user.h' la rutina rename_user(), para exportarla
+  y así poderla usar en otros ficheros que no sean s_user.c.
+
+* 2003/10/29 mount@irc-dev.net    (DB122 - u2.10.H.08.72)         FEATURE
+  -----------------------------------------------------------------------
+  Los suspends y forbids por BDD tienen efecto inmediato:
+
+  Se informa al usuario de la acción pertinente y se hace un rename
+  al usuario, para ello usamos rename_user().
+
+* 2003/10/30 ryden@redhispana.org    (u2.10.H.08.73)                  FIX
+  -----------------------------------------------------------------------
+  Bugfix del parche "u2.10.H.08.70".
+
+* 2003/10/30 ryden@redhispana.org    (u2.10.H.08.74)              FEATURE
+  -----------------------------------------------------------------------
+  La clave de un canal pasa a ser memoria dinamica.
+
+* 2003/10/31 jcea@argo.es            (u2.10.H.08.75)                  FIX
+  -----------------------------------------------------------------------
+  Algo de limpieza y documentacion del parche anterior. Soluciono
+  un posible "buffer overflow" introducido en "u2.10.H.08.74",
+  al gestionar el "burst".
+
+* 2003/11/03 jcea@argo.es            (u2.10.H.08.76)                  FIX
+  -----------------------------------------------------------------------
+  Tengo que añadir algunos "IsUser()" antes de limpiar las IPs virtuales,
+  ya que se está llamando a las rutinas con estructuras a medio inicializar.
+
+  Esto es algo que deberia solucionarse en el futuro.
+
+* 2003/11/04 ryden@redhispana.org    (u2.10.H.08.77)              FEATURE
+  -----------------------------------------------------------------------
+  Se elimina la cache de ips virtuales personalizadas al recibir un nuevo
+  valor del registro de ocultar la ip cifrada en ips virtuales
+  personalizadas 2.
+
+* 2003/11/10 jcea@argo.es            (u2.10.H.08.78)                  FIX
+  -----------------------------------------------------------------------
+  Cambio algunos "sptr->user" por "IsUser(sptr)", que es una comprobación
+  "mas fuerte".
+
+* 2003/11/12 ryden@redhispana.org    (u2.10.H.08.79)              FEATURE
+  -----------------------------------------------------------------------
+  Pasamos el miembro "name" de la estructura aClient a memoria dinamica.
+
+* 2003/11/12 jcea@argo.es            (u2.10.H.08.80)              CLEANUP
+  -----------------------------------------------------------------------
+  Un pelin de limpieza de estilo en el parche anterior.
+
+* 2003/11/12 jcea@argo.es            (u2.10.H.08.81)                  FIX
+  -----------------------------------------------------------------------
+  El parche u2.10.H.08.79 esta incompleto. No gestiona todos los casos.
+
+* 2003/11/13 jcea@argo.es            (u2.10.H.08.82)                  FIX
+  -----------------------------------------------------------------------
+  Con el parche u2.10.H.08.79 se puede dar el caso de que una rutina
+  libere la cadena y luego intente usar "parv[0]", que apuntara a
+  dios sabe donde.
+
+* 2003/11/13 jcea@argo.es            (u2.10.H.08.83)                  FIX
+  -----------------------------------------------------------------------
+  Otro bug de u2.10.H.08.79, que ocurre al conectar un usuario y forzar
+  un "ghost" durante la conexion (no despues).
+
+* 2003/11/13 jcea@argo.es            (u2.10.H.08.84)                  FIX
+  -----------------------------------------------------------------------
+  Limpieza de u2.10.H.08.81.
+
+* 2003/11/18 jcea@argo.es            (u2.10.H.08.85)                  FIX
+  -----------------------------------------------------------------------
+  Soluciono un "memory leak" en u2.10.H.08.79.
+
+* 2003/11/18 jcea@argo.es            (u2.10.H.08.86)                  FIX
+  -----------------------------------------------------------------------
+  Otro bug en u2.10.H.08.79, en "/stats l".
+
+* 2003/11/18 jcea@argo.es            (u2.10.H.08.87)              FEATURE
+  -----------------------------------------------------------------------
+  Empiezo a definir algunas funciones del "slab allocator", para poder
+  usarlas ya aunque aun no esten implementadas como un "slab allocator".
+
+* 2003/11/18 jcea@argo.es            (u2.10.H.08.88)              CLEANUP
+  -----------------------------------------------------------------------
+  Movemos los cambios en u2.10.H.08.79 a los prototipos del
+  "slab allocator".
+
+* 2003/11/27 ryden@redhispana.org    (u2.10.H.08.89)              FEATURE
+  -----------------------------------------------------------------------
+  Pasamos el miembro "username" de la estructura aClient a memoria
+  dinámica.
+
+* 2003/11/27 jcea@argo.es            (u2.10.H.08.90)              CLEANUP
+  -----------------------------------------------------------------------
+  Algo de limpieza.
+
+* 2003/11/27 n3tkat@9power.org       (u2.10.H.08.91)                  FIX
+  -----------------------------------------------------------------------
+  Cuando un nodo hace "bounce" de cambios de modos de un usuario, topic,
+  kick o invite le mandamos también un "-o" para quitar el op a dicho
+  usuario y "curar" el desync. 
+
+* 2003/11/27 ryden@redhispana.org    (u2.10.H.08.92)              CLEANUP
+  -----------------------------------------------------------------------
+  Convertimos todos los 'puntero ? puntero : ""' a la macro
+  PunteroACadena(puntero)
+
+* 2003/12/03 n3tkat@9power.org       (u2.10.H.08.93)                  FIX
+  -----------------------------------------------------------------------
+  Al comprobar los nicks 'invitado-123456' e 'inv123456' lo hacemos
+  "case insensible" y nos aseguramos de que la segunda parte son numeros.
+
+* 2003/12/03 ryden@redhispana.org    (u2.10.H.08.94)              CLEANUP
+  -----------------------------------------------------------------------
+  Pasamos el miembro "username" de la estructura User a memoria dinámica.
+
+* 2003/12/03 ryden@redhispana.org    (u2.10.H.08.95)              CLEANUP
+  -----------------------------------------------------------------------
+  Añadimos un assert en "m_pong" por seguridad.
+
+* 2003/12/03 n3tkat@9power.org       (u2.10.H.08.96)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de las multiples declaraciones de
+  "static void send_umode_out(aClient a, aClient b, int c, int d, int e);"
+
+* 2003/12/03 n3tkat@9power.org       (u2.10.H.08.97)                  FIX
+  -----------------------------------------------------------------------
+  Al forzar un GHOST durante la conexión no salia ningun destinatario del
+  NOTICE. Ponemos GHOST como destinatario:
+  :nick2!-@- NOTICE GHOST :*** Sesión fantasma del nick N3 ha sido liberada.
+
+* 2003/12/03 jcea@argo.es            (u2.10.H.08.98)              CLEANUP
+  -----------------------------------------------------------------------
+  Algo de limpieza en el parche u2.10.H.08.94.
+
+* 2003/12/03 jcea@argo.es            (u2.10.H.08.99)              CLEANUP
+  -----------------------------------------------------------------------
+  Algo de limpieza en el parche u2.10.H.08.95. En especial, nos aseguramos
+  de que nunca se genere un PING con el valor "COOKIE_VERIFIED". Tambien
+  cambiamos del sitio el "assert()".
+
+* 2003/12/08 jcea@argo.es            (u2.10.H.08.100)                 FIX
+  -----------------------------------------------------------------------
+  BugFix. Evitamos un DoS a traves de "/whois".
+
+* 2003/12/17 jcea@argo.es            (u2.10.H.08.101)                 FIX
+  -----------------------------------------------------------------------
+  Se solucionan otros bugs derivados de la migracion de memoria
+  estatica a dinamica, que pueden matar el servidor.
+
+* 2003/12/17 ryden@redhispana.org    (u2.10.H.08.102)                 FIX
+  -----------------------------------------------------------------------
+  Evitamos que muera el servidor en un "/trace" cuando hay clientes
+  conectando.
+
+* 2003/12/17 ryden@redhispana.org    (u2.10.H.08.103)                 FIX
+  -----------------------------------------------------------------------
+  Reparamos un par de bugs introducidos en u2.10.H.08.99.
+
+* 2004/01/27 ryden@redhispana.org    (u2.10.H.08.104)             CLEANUP
+  -----------------------------------------------------------------------
+  Pasamos el miembro "by" de la estructura Server a memoria dinámica.
+
+* 2004/01/27 ryden@redhispana.org    (u2.10.H.08.105)             CLEANUP
+  -----------------------------------------------------------------------
+  Pasamos el miembro "virtualhost" de la estructura User a memoria
+  dinámica.
+
+* 2004/01/27 ryden@redhispana.org    (u2.10.H.08.106)             CLEANUP
+  -----------------------------------------------------------------------
+  Pasamos el miembro "info" de la estructura Client a memoria dinámica.
+
+* 2004/01/27 ryden@redhispana.org    (u2.10.H.08.107)             CLEANUP
+  -----------------------------------------------------------------------
+  Un poco de limpieza en el parche anterior.
+
+* 2004/01/27 ryden@redhispana.org    (u2.10.H.08.108)             CLEANUP
+  -----------------------------------------------------------------------
+  Pasamos el miembro "sockhost" de la estructura Client a memoria
+  dinámica.
+
+* 2004/01/27 jcea@argo.es            (u2.10.H.08.109)                 FIX
+  -----------------------------------------------------------------------
+  Soluciono un problema con los parches anteriores, cuando un nodo
+  recibe una conexion de otro y hay un intento de negociacion.
+
+* 2004/01/27 jcea@argo.es            (u2.10.H.08.110)                 FIX
+  -----------------------------------------------------------------------
+  Soluciono otro problema con u2.10.H.08.108 y la desconexion de
+  usuarios remotos.
+
+* 2004/01/27 jcea@argo.es            (u2.10.H.08.111)                 FIX
+  -----------------------------------------------------------------------
+  Soluciono un problema introducido en u2.10.H.08.105, cuando llegan
+  registros por la BDD que afectan a un usuario conectado.
+
+* 2004/01/27 ryden@redhispana.org    (u2.10.H.08.112)             CLEANUP
+  -----------------------------------------------------------------------
+  Pasamos el miembro "host" de la estructura User a memoria dinámica.
+
+* 2004/01/27 ryden@redhispana.org    (u2.10.H.08.113)                 FIX
+  -----------------------------------------------------------------------
+  Arreglados unos bugs de los parches anteriores que no compilaban en
+  modo debug.
+
+* 2004/01/27 jcea@argo.es            (u2.10.H.08.114)                 FIX
+  -----------------------------------------------------------------------
+  Elimino un "memory leak" introducido en u2.10.H.08.112.
+
+* 2004/01/27 jcea@argo.es            (u2.10.H.08.115)             CLEANUP
+  -----------------------------------------------------------------------
+  Doy de alta a RyDeN como "devel" de la red, en el "version.c.SH".
+
+* 2004/02/03 ryden@redhispana.org    (u2.10.H.08.116)                 FIX
+  -----------------------------------------------------------------------
+  Eliminamos un assert mal puesto que mataba al ircd cuando se compilaba
+  con modo debug.
+
+* 2004/02/03 jcea@argo.es            (u2.10.H.08.117)             CLEANUP
+  -----------------------------------------------------------------------
+  Soluciono un par de "warnings" en la compilacion.
+
+* 2004/02/03 mount@irc-dev.net       (u2.10.H.08.118)                 FIX
+  -----------------------------------------------------------------------
+  Si no se tenia IRCD local y se usaba %LOCALMOTD, constaba como
+  si existiera un MOTD local que realmente no existe.
+
+* 2004/02/03 n3tkat@9power.org       (u2.10.H.08.119)             CLEANUP
+  -----------------------------------------------------------------------
+  Eliminamos el uso de las N-lines y todo lo que ello supone.
+
+* 2004/02/03 n3tkat@9power.org       (u2.10.H.08.120)             CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza del parche anterior.
+
+* 2004/02/03 n3tkat@9power.org       (u2.10.H.08.121)             CLEANUP
+  -----------------------------------------------------------------------
+  Modificamos el ejemplo.conf para estar al dia con la eliminacion de las
+  N-lines.
+
+* 2004/02/04 jcea@argo.es            (u2.10.H.08.122)             CLEANUP
+  -----------------------------------------------------------------------
+  Mas limpieza de los parches de eliminacion de las lineas N.
+
+* 2004/02/04 jcea@argo.es            (u2.10.H.08.123)             CLEANUP
+  -----------------------------------------------------------------------
+  Mas limpieza de los parches de eliminacion de las lineas N.
+
+* 2004/02/04 jcea@argo.es            (u2.10.H.08.124)             CLEANUP
+  -----------------------------------------------------------------------
+  Mas limpieza de los parches de eliminacion de las lineas N.
+
+* 2004/02/04 jcea@argo.es            (u2.10.H.08.125)             CLEANUP
+  -----------------------------------------------------------------------
+  Mas limpieza de los parches de eliminacion de las lineas N.
+
+* 2004/02/04 jcea@argo.es            (u2.10.H.08.126)             CLEANUP
+  -----------------------------------------------------------------------
+  Mas limpieza de los parches de eliminacion de las lineas N.
+
+* 2004/02/04 jcea@argo.es            (u2.10.H.08.127)                 FIX
+  -----------------------------------------------------------------------
+  El parche de eliminacion de las lineas N no configura correctamente la
+  clase de conexion a la que pertenece un servidor determinado.
+
+* 2004/02/04 jcea@argo.es            (u2.10.H.08.128)             CLEANUP
+  -----------------------------------------------------------------------
+  Mas limpieza en "ejemplo.conf", no realizada en u2.10.H.08.121.
+

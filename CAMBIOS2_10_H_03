@@ -1,0 +1,416 @@
+$Id: CAMBIOS2_10_H_03,v 1.47 2002/03/14 19:54:34 jcea Exp $
+
+* 2002/03/14 jcea@argo.es          (u2.10.H.03.54)                CLEANUP
+  -----------------------------------------------------------------------
+  Cambiamos el mensaje de suspension, ya que no sabemos si es temporal
+  o no :-).
+
+* 2002/03/14 amn3s1a@ono.com       (u2.10.H.03.53)                    FIX
+  -----------------------------------------------------------------------
+  Pequen~o error en el parche anterior...
+
+* 2002/03/14 amn3s1a@ono.com       (u2.10.H.03.52)                    FIX
+  -----------------------------------------------------------------------
+  Cuando se recibe un cambio de nick entre nicks equivalentes, no tocamos
+  los modos, aunque desde fuera SI se vean cambios de modos. Este cambio
+  es temporal hasta que todos los nodos usen esta version.
+
+* 2002/03/14 zolty@zolty.net       (u2.10.H.03.51)                FEATURE
+  -----------------------------------------------------------------------
+  Tercer y ultimo parche de suspension de nicks registrados.
+  Cuando un nick suspendido se identifica, no se le pone el modo '+r', 
+  sino el nuevo modo '+S' y no puede tener acceso al modo '+h' ni tener
+  una ip virtual personalizada en el caso de que la tuviera.
+  Cuando se cambia de nick (o por un rename), pierde el modo '+S' antes
+  de cambiar el nick.
+
+* 2002/03/14 zolty@zolty.net       (u2.10.H.03.50)                FEATURE
+  -----------------------------------------------------------------------
+  Segundo parche de suspension de nicks registrados.
+  Mira si en la clave del usuario almacenada en la db contiene un '+' al
+  final, en caso afirmativo el nick esta suspendido y en caso contrario
+  nick activo (no suspendido).
+
+* 2002/03/14 jcea@argo.es          (Z13 - u2.10.H.03.49)              FIX
+  -----------------------------------------------------------------------
+  Actualizamos la libreria ZLIB de 1.1.3 a 1.1.4, debido a un problema
+  de seguridad detectado.
+
+* 2002/03/13 jcea@argo.es          (u2.10.H.03.48)                CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2002/03/13 zolty@zolty.net       (u2.10.H.03.47)                FEATURE
+  -----------------------------------------------------------------------
+  Primer parche de un lote de parches para la implementacion de suspension
+  de nicks registrados.
+  Se utiliza un bit de los modos hispano el
+      #define HMODES_NICKSUSPENDED 0x00000100
+  y las macros asociadas:
+      IsNickSuspended(x)
+      SetNickSuspended(x)
+      ClearNickSuspended(x)
+  Este 'flag' queda reflejado con la letra 'S'. Este modo solo pueden
+  cambiar los servidores.
+
+  El /WHOIS ha sido ampliado para mostrar este nuevo modo y ocupa el
+  numerico de error 390, que esta libre en otras redes, para indicar que
+  un usuario tiene el nick suspendido.
+
+
+* 2002/03/12 jcea@argo.es          (DB92 - u2.10.H.03.46)         CLEANUP
+  -----------------------------------------------------------------------
+  Desde DB16, los nodos envian la version de base de datos distribuida
+  que se esta utilizando. Por ello se enviaba primero el JOIN de la
+  tabla 'n' y, una vez que el otro extremo nos indica su disponibilidad
+  para aceptar la otras 25 BDD, le enviamos el estado del resto.
+
+  El efecto neto de esto es que en cuanto se produce un JOIN, sabemos
+  al momento el numero de registro de la tabla 'n', pero para saber los
+  numeros de registro del resto de tablas habra que esperar a que se
+  finalice el BURST en ambos sentidos.
+
+  Dado que ya no hay nodos anteriores a DB16 en la red, podemos enviar
+  el estado de las 26 bases de datos al momento, antes de los BURST,
+  ya que sabemos que el otro extremo lo entiende y lo soporta.
+
+  Este cambio es muy importante para Olimpo, por ejemplo, porque puede
+  intentar introducir registros en la red en cuanto se produce el
+  NET JOIN.
+
+* 2002/03/12 zolty@zolty.net       (u2.10.H.03.45)                CLEANUP
+  -----------------------------------------------------------------------
+  Se eliminan dos lineas que son innecesarias desde la
+  introduccion del parche "User Quit:".
+
+* 2002/03/12 zolty@zolty.net       (u2.10.H.03.44)                FEATURE
+  -----------------------------------------------------------------------
+  Ahora, cuando un usuario sale de la red con un /QUIT, el servidor manda
+  al usuario un "Closing link"  con el mensaje de salida antes de cerrar
+  la conexion con el usuario.
+
+* 2002/03/04  freemind@unr.com     (u2.10.H.03.43)                    FIX
+  -----------------------------------------------------------------------
+  En el "/map", el porcentaje del propio nodo siempre sale como 0.0%.
+
+* 2002/02/20 jcea@argo.es          (u2.10.H.03.42)                FEATURE
+  -----------------------------------------------------------------------
+  Nos encontramos que, a veces, se generan "quit :" espureos, lo que
+  puede convertirse en un "quit ()" en el cliente.
+
+  Asimismo, si no se indicaba ningún mensaje de salida, aparecia el nick.
+  Lo he cambiado para que si no se indica ningún mensaje de salida,
+  no aparezca nada.
+
+* 2002/02/20 jcea@argo.es          (u2.10.H.03.41)                    FIX
+  -----------------------------------------------------------------------
+  Cuando un usuario no pone ningún mensaje, no añadimos un "User Quit:"
+  gratuito.
+
+* 2002/02/18 jcea@argo.es          (u2.10.H.03.40)                FEATURE
+  -----------------------------------------------------------------------
+  Cuando se hace un "/map", se indica el porcentaje de usuarios que
+  tiene cada nodo de la red.
+
+* 2002/02/18 jcea@argo.es          (u2.10.H.03.39)                FEATURE
+  -----------------------------------------------------------------------
+  Cuando un usuario hace un "quit", su mensaje de salida aparece precedido
+  con "User Quit:".
+
+  De esa forma no hay duda de si el mensaje de salida es un mensaje de
+  la red o un mensaje del usuario.
+
+* 2002/01/13 amn3s1a@ono.com       (u2.10.H.03.38)                FEATURE
+  -----------------------------------------------------------------------
+  10/Ene/02
+  Cuando se ejecuta un comando "/oper", poder especificar una
+  nueva clase para el usuario, en el ircd.conf.
+
+  Esto es util, por ejemplo, para definir un tamaño maximo de
+  cola, o un "ping" diferente.
+                                      - o -
+
+  Ademas de esto se ha an~adido un tercer parametro a /oper para especificar
+  una clase, si esta no se encuentra, no hay ningun cambio. Ej:
+
+  /oper amn3s1a openaccess 2
+
+  Notas:
+  En algunos clientes como BitchX se hace necesario el uso de /quote ya
+  que de otra manera no envia el tercer parametro.
+
+  Al perder el modo de operador, el usuario vuelve a la clase a la que
+  pertenecia anteriormente.
+
+* 2001/12/12 jcea@argo.es          (u2.10.H.03.37)                    FIX
+  -----------------------------------------------------------------------
+  Debemos considerar tambien el caso de que haya cambios de nick
+  equivalentes provenientes del resto de la red. En esos casos
+  tampoco debemos tocar modos.
+
+* 2001/12/12 jcea@argo.es          (u2.10.H.03.36)                    FIX
+  -----------------------------------------------------------------------
+  Hay un problema de compatibilidad entre los nodos "antiguos" y los
+  nodos con parche 34 aplicado.
+
+  Cuando un nodo antiguo recibe un cambio de nick, le quita el +r siempre.
+
+  Una solucion temporal es seguir propagando los -r y +r en los cambios
+  de nick hasta que todo dios actualice, y luego eliminar eso, una
+  vez que ya no es preciso.
+
+* 2001/12/11 jcea@argo.es          (u2.10.H.03.35)                CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2001/12/11 jcea@argo.es          (u2.10.H.03.34)                    FIX
+  -----------------------------------------------------------------------
+  El parche anterior eliminaba corectamente la necesidad de quitar
+  modos, ya que los modos no cambian, pero no tocaba la necesidad
+  de enviar modos.
+
+  Es decir, cuando cambiamos de nick, hace:
+
+  modo -r
+  cambio de nick
+  modo +r
+
+  El parche anterior eliminaba la perdida de modos, pero dejaba tal cual
+  el segundo modo. En la practica no se ve el segundo modo porque solo
+  se envian modos si se detectan cambios, y no es el caso, ya que los
+  modos no han cambiado.
+
+  Pero el procesado lo hacemos igualmente.
+
+  Este parche elimina dicho procesado superfluo.
+
+* 2001/12/11 amn3s1a@ono.com       (u2.10.H.03.33)                    FIX
+  -----------------------------------------------------------------------
+  Los cambios de nick entre nicks equivalentes, no deberian
+  necesitar la clave.
+
+* 2001/12/11 jcea@argo.es          (DB91 - u2.10.H.03.32)         FEATURE
+  -----------------------------------------------------------------------
+  Complementa el parche anterior para "DBQ", para el caso de que la
+  tabla no exista o no sea residente.
+ 
+* 2001/12/11 jcea@argo.es          (DB90 - u2.10.H.03.31)         FEATURE
+  -----------------------------------------------------------------------
+  El comando "DBQ" deberia imprimir la clave de busqueda
+  aunque el registro no exista, para poder casar facilmente las
+  preguntas con las respuestas.
+
+* 2001/12/11 jcea@argo.es          (u2.10.H.03.30)                FEATURE
+  -----------------------------------------------------------------------
+  "RELIABLE_CLOCK" desactivado para todo el mundo. La hora de la red
+  la debe fijar un "service", ya que hay nodos que dicen que tienen
+  un reloj fiable y ni por asomo...
+
+* 2001/12/11 jcea@argo.es          (u2.10.H.03.29)                    FIX
+  -----------------------------------------------------------------------
+  Cuando se hace un "SETTIME", si el offset es de 0 segundos, se imprime
+  "clock is set 0 seconds backwards", en vez de "forward".
+
+* 2001/12/11 amn3s1a@ono.com       (VIP32 - u2.10.H.03.28)            FIX
+  -----------------------------------------------------------------------
+  27/Nov/01
+  Cuando compilamos con "BDD_VIP2 : HISPANO/ESNET: Ocultación de IP de TODOS los usuarios [N/y/?]"
+  y seleccionamos "no", deberia permitirse el flag +x a los usuarios locales
+  si el nick tiene entrada en la tabla "v". Es decir, si tiene una IP virtual personalizada.
+
+* 2001/12/11 amn3s1a@ono.com       (u2.10.H.03.27)                    FIX
+  -----------------------------------------------------------------------
+  Arreglado el bug de permitir un limite de usuarios inferior a 1. Para
+  evitar desync's con nodos usando versiones anteriores, se permiten pasar
+  si vienen de estos o de sus usuarios.
+
+* 2001/12/07 jcea@argo.es          (u2.10.H.03.26)                    FIX
+  -----------------------------------------------------------------------
+  En "/time" se imprimia "Deciembre", en vez de "Diciembre".
+
+* 2001/11/26 jcea@argo.es          (u2.10.H.03.25)                    FIX
+  -----------------------------------------------------------------------
+  No tiene sentido que un nodo pida a otro un "DBQ", ya que la respuesta
+  llega como un "NOTICE".
+
+  Revertimos el parche anterior e ignoramos los "DBQ"
+  cuyo remitente sea un servidor.
+
+* 2001/11/26 amn3s1a@ono.com       (u2.10.H.03.24)                    FIX
+  -----------------------------------------------------------------------
+  m_dbq no contemplaba la posibilidad de ser llamado desde un server, asi
+  al enviar el comando DBQ * x x como server, hacia un segment fault.
+
+  >> ] DBQ * v .
+  Connection closed by foreign host.
+
+* 2001/11/25 amn3s1a@ono.com       (u2.10.H.03.23)                    FIX
+  -----------------------------------------------------------------------
+Comentado por "NiKoLaS":
+
+Cuando se hace un /names, sin parámetros, nos empieza a sacar la
+información visible de TODOS los canales de la red, lo que provoca una caida
+(dependiendo de la capacidad del servidor donde nos encontremos) por "Max
+sendQ exceeded". La respuesta al /names sin parámetros, debería ser "Not
+enough parameters" y la sintaxis de /names <#canal>.
+       
+* 2001/11/12 jcea@argo.es          (u2.10.H.03.22)                CLEANUP
+  -----------------------------------------------------------------------
+  An~adimos "Amn3s1a" a los creditos.
+
+* 2001/11/12 jcea@argo.es          (u2.10.H.03.21)                    FIX
+  -----------------------------------------------------------------------
+  Creo que en u2.10.H.03.17 se introduce un bug en el comando "hunt_server",
+  ya que no estoy seguro de la conveniencia de enviar SIEMPRE un mensaje
+  de error al remitente cuando se intenta alcanzar un servidor inexistente.
+
+  Prefiero enviar ese mensaje de error en las rutinas cliente.
+ 
+* 2001/11/11 amn3s1a@ono.com       (u2.10.H.03.20)                    FIX
+  -----------------------------------------------------------------------
+  Solucionado un bug en m_kick, en el que se checkea si el user es +k antes
+  de incluso saber si esta en el canal.
+
+  :aabbccdd!~aa@AlRP4s.BYdsyG.virtual JOIN :#aabbccdd
+  :carme.irc-hispano.org 353 aabbccdd = #aabbccdd :@aabbccdd
+  :carme.irc-hispano.org 366 aabbccdd #aabbccdd :End of /NAMES list.
+  KICK #aabbccdd buscamina
+  :carme.irc-hispano.org 484 aabbccdd Buscamina #aabbccdd :Cannot kick or 
+    deop channel service
+ 
+
+* 2001/11/09 zolty@zolty.net       (DB89 - u2.10.H.03.19)             FIX
+  -----------------------------------------------------------------------
+17/Ago/01
+[22:26] <{^DaNi^}>  despues , un error cosmetico
+[22:26] <{^DaNi^}>  dbq n nick_inexistente
+[22:27] <{^DaNi^}>  DBQ ERROR REGISTRO_NO_ENCONTRADO
+[22:27] <{^DaNi^}>  dbq n nick_existente
+[22:27] <{^DaNi^}>  DBQ ERROR No tienes permiso para acceder a Tabla='n' Clave='jcea'
+[22:27] <{^DaNi^}>  no deberia comprobar primero los permisos y despues hacer la busqueda=
+
+  Tambien, si un usuario normal ejecuta el comando DBQ, le sale un mensaje
+  de que no tiene privilegios para ejecutarlo. 
+
+* 2001/11/09 zolty@zolty.net       (u2.10.H.03.18)                    FIX
+  ----------------------------------------------------------------------- 
+  Cambio el mensaje de la raw 481 (ERR_NOPRIVILEGES), por uno mas acorde
+  ya que hay comandos privilegiados que puede ejecutar los helpers.
+  Mensaje antiguo: Permission Denied- You're not an IRC operator
+  Mensaje actual: No tienes privilegios para ejecutar el comando
+
+  Ahora, un usuario normal, al ejecutar el TRACE, le sale el mensaje de 
+  que no tiene privilegios.
+
+* 2001/11/09 zolty@zolty.net       (u2.10.H.03.17)                    FIX
+  -----------------------------------------------------------------------
+  Corregido un bug en hunt_server(), ahora si se hace un
+  /whois nodo_inexistente nick  o un
+  /trace nick nodo_inexistente
+  devolverá el mensaje "No such server".
+
+* 2001/10/26 zolty@zolty.net       (u2.10.H.03.16)                    FIX
+  -----------------------------------------------------------------------
+  Solucionado un bug del parche anterior, sobraba un %s y junto los
+  XMODE y GHOST en el mismo 005.
+
+* 2001/10/25 jcea@argo.es          (u2.10.H.03.15)                    FIX
+  -----------------------------------------------------------------------
+  Solucionados un par de faltas ortografias en el parche anterior, y
+  envio de varios "005" en vez de uno largo.
+
+  An~ado unos cuantos valores mas en el "005", tomados de Undernet.
+
+* 2001/10/25 amn3s1a@ono.com       (u2.10.H.03.14)                FEATURE
+  -----------------------------------------------------------------------
+  Se ha añadido el raw 005 comunmente usado en varios ircds como ircu y
+  bahamut, este especifica caracteristicas del servidor. Aparte de los 
+  usados de manera generica se han añadido BDD, XMODE y GHOST.
+
+* 2001/10/25 amn3s1a@ono.com       (u2.10.H.03.13)                FEATURE
+  -----------------------------------------------------------------------
+  Se ha movido los mensajes correspondientes a "/map" (005, 006 y 007)
+  hacia 015, 016 y 017 respectivamente, para la implementacion del mensaje
+  005 RPL_ISUPPORT.
+
+* 2001/10/25 amn3s1a@ono.com       (u2.10.H.03.12)                CLEANUP
+  -----------------------------------------------------------------------
+  Simplificacion en Ping timeouts. Ya que ahora no hace falta chequear si
+  un user tiene +x para llamar o no a get_client_name
+
+* 2001/10/25 zolty@zolty.net       (DB88 - u2.10.H.03.11)            FIX         
+  -----------------------------------------------------------------------
+  Fix cosmetico, poniendo /nick nick!clave_mala salia el notice de error
+  con el ":". 
+  Poniendo "!" por el medio, ha de salir /NICK nick!clave y
+  poniendo ":" o nada, ha de salir /NICK nick:clave
+
+* 2001/10/24 zolty@zolty.net       (DB87 - u2.10.H.03.10)         FEATURE
+  -----------------------------------------------------------------------
+  Se añade nueva sintaxis para matar ghosts. Es la siguiente:
+           /nick jcea !clave
+
+* 2001/10/24 jcea@argo.es          (u2.10.H.03.09)                CLEANUP
+  -----------------------------------------------------------------------
+  Cambios cosmeticos en el parche anterior.
+
+* 2001/10/24 zolty@zolty.net       (DB86 - u2.10.H.03.08)         FEATURE
+  -----------------------------------------------------------------------
+  Se introduce la funcionalidad de poder matar una sesion "ghost" antes
+  de haber entrado a la red. Para ello, en el cliente IRC nos ponemos de
+  nick jcea!clave, y hacemos as¡ la entrada normal a la red, encargandose
+  esta de matar al "ghost" y ponernos el nick sin "!".
+
+  Tambien puedes hacerlo en cualquier momento para matar un clon y poner 
+  su nick, es la suma de GHOST + NICK.
+  
+  Las sintaxis son las siguientes:
+  
+  /nick nick!password
+  /quote nick nick! password
+  /nick nick!  (Si se ha especificado una clave al conectar)
+
+
+* 2001/10/20 amn3s1a@ono.com       (VIP31 - u2.10.H.03.07)            FIX
+  -----------------------------------------------------------------------
+  En algunas ocasiones salen las ips al llamar a get_client_name sin la
+  opcion de obtener tambien la ip real (vease /die).
+
+* 2001/10/20 amn3s1a@ono.com       (VIP30 - u2.10.H.03.06)            FIX
+  -----------------------------------------------------------------------
+  Cuando se intentaba tracear a alguien salia la ip real independientemente
+  de tener el flag de user X o x activado/desactivado.
+
+* 2001/10/19 amn3s1a@ono.com       (u2.10.H.03.05)                    FIX
+  -----------------------------------------------------------------------
+  Actualizado el mensaje de RAW 04 enviado al conectar, añadidos todos los
+  modos de canales/usuarios disponibles (xXrh para users y rR para canales)
+
+* 2001/10/02 zolty@zolty.net       (VIP29 - u2.10.H.03.04)            FIX
+  -----------------------------------------------------------------------
+  En ocasiones salen la ip al hacer un SQUIT
+
+  -carme.irc-hispano.org- *** Notice -- Remote SQUIT by
+Dani----[ppp34-sa1.Acer.BCN.ES.INTELIDEAS.NET] [carme.irc-hispano.org]:
+-
+-carme.irc-hispano.org- *** Notice -- Net break: brisa.irc-hispano.org plasma.irc-hispano.org
+(Dani----)
+  
+* 2001/09/21 zolty@zolty.net       (VIP28 - u2.10.H.03.03)        FEATURE
+  -----------------------------------------------------------------------
+  Cepilla la cache de las ips virtuales cuando se cambia la clave de 
+  cifrado.
+
+  Esto no ocurre inmediatamente tras cambiar la clave, sino cuando
+  se intenta generar una ip virtual nueva para un usuario.
+
+* 2001/09/18 zolty@zolty.net       (DB85 - u2.10.H.03.02)             FIX
+  -----------------------------------------------------------------------
+  En el Cleanup del DB84 se ha eliminado la tabla 't' de migracion de
+  nicks, pero tambien se ha eliminado el codigo de permisos y se utilizaba
+  el de la tabla 'v' que solo denegaba si se consultaba el registro '.'
+  en vez de a todos los registros como debe ser.
+
+* 2001/09/14 jcea@argo.es          (u2.10.H.03.01)                CLEANUP 
+  -----------------------------------------------------------------------
+  "make indent".

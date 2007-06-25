@@ -1,0 +1,541 @@
+$Id: CAMBIOS2_10_H_05,v 1.91 2002/10/01 10:58:37 jcea Exp $
+
+* 2002/09/01 jcea@argo.es            (u2.10.H.05.95)              FEATURE
+  -----------------------------------------------------------------------
+  Ampliacion de TOPICLEN de 160 a 240 caracteres (un 50% mas).
+
+* 2002/09/01 nikolas@irc-dev.net     (u2.10.H.05.94)                  FIX
+  -----------------------------------------------------------------------
+  Deshacemos el parche u2.10.H.05.71 por enviar el numeric en vez del
+  nick. Es imposible saber el nick al que se envia un PRIVMSG si el
+  mensaje se pierde en transito por la red a su destino. Por ello, se
+  vuelve a mostrar el "*" del codigo original.
+
+* 2002/09/30 nikolas@irc-dev.net     (u2.10.H.05.93)                  FIX
+  -----------------------------------------------------------------------
+  Bug en el parche anterior que hacia que no se propagasen los ban.
+
+* 2002/09/27 nikolas@irc-dev.net     (u2.10.H.05.92)                  FIX
+  -----------------------------------------------------------------------
+  Permitimos quitar banes con cualquier caracter, y para ponerlos solo
+  sirven los que el parche u2.10.H.05.34 admite.
+
+* 2002/09/27 jcea@argo.es            (u2.10.H.05.91)                  FIX
+  -----------------------------------------------------------------------
+  Revertimos el parche u2.10.H.05.77, por violar el RFC 1459.
+
+* 2002/09/27 nikolas@irc-dev.net     (u2.10.H.05.90)                  FIX
+  -----------------------------------------------------------------------
+  En un /trace pepe pepe.* se imprimia dos veces "No such server".
+
+* 2002/09/27 nikolas@irc-dev.net     (u2.10.H.05.89)                  FIX
+  -----------------------------------------------------------------------
+  Consistencia en el WATCH: cptr -> sptr.
+
+* 2002/09/27 nikolas@irc-dev.net     (u2.10.H.05.88)                  FIX
+  -----------------------------------------------------------------------
+  Cuando enviamos un WALLCHOPS a un canal inexistente, se muestra error.
+
+* 2002/09/24 nikolas@irc-dev.net     (u2.10.H.05.87)                  FIX
+  -----------------------------------------------------------------------
+  Correccion en un numeric.
+
+* 2002/07/23 jcea@argo.es            (u2.10.H.05.86)              CLEANUP
+  -----------------------------------------------------------------------
+  Simplificacion del parche anterior.
+
+* 2002/07/23 nikolas@irc-dev.net     (u2.10.H.05.85)                  FIX
+  -----------------------------------------------------------------------
+  El +M aparece en los raws 004 y 005.
+
+* 2002/09/23 jcea@argo.es            (u2.10.H.05.84)              CLEANUP
+  -----------------------------------------------------------------------
+  Mas limpieza y simplificacion en "can_send".
+
+* 2002/09/23 jcea@argo.es            (u2.10.H.05.83)              CLEANUP
+  -----------------------------------------------------------------------
+  Simplificacion y optimizacion del parche anterior.
+
+* 2002/09/23 nikolas@irc-dev.net     (u2.10.H.05.82)              FEATURE
+  -----------------------------------------------------------------------
+  Nuevo modo de canal: +M. Impide enviar texto al canal y especificar
+  texto en los PART y QUIT a nicks que no sean +r.
+
+* 2002/09/23 jcea@argo.es            (u2.10.H.05.81)                  FIX
+  -----------------------------------------------------------------------
+  Compilacion correcta si se configura sin soporte BDD.
+
+* 2002/09/23 nikolas@irc-dev.net     (u2.10.H.05.80)              FEATURE
+  -----------------------------------------------------------------------
+  Nuevo numeric en el WHOIS para el modo +R. Mostramos "Solo admite
+  privados de nicks registrados", y usamos el 342 para ello.
+
+* 2002/07/19 nikolas@irc-dev.net    (u2.10.H.05.79)                   FIX
+  -----------------------------------------------------------------------
+  Solucionamos un pequeño error que impedia recompilar las tablas de
+  caracteres de common.c con 'make ctables'.
+
+* 2002/07/19 nikolas@irc-dev.net    (u2.10.H.05.78)                   FIX
+  -----------------------------------------------------------------------
+  En el WHO mostramos el +k si procede.
+
+* 2002/07/19 nikolas@irc-dev.net    (u2.10.H.05.77)                   FIX
+  -----------------------------------------------------------------------
+  En la respuesta RPL_LUSERCLIENT en vez de mostrar el numero de usuarios
+  sin +i y con +i, mostramos el total y los que son +i.
+
+* 2002/07/18 nikolas@irc-dev.net    (u2.10.H.05.76)               FEATURE
+  -----------------------------------------------------------------------
+  En el raw 004, mostramos el +B como modo de usuario.
+
+* 2002/07/18 nikolas@irc-dev.net    (u2.10.H.05.75)               FEATURE
+  -----------------------------------------------------------------------
+  En el WHO, mostramos el +B si procede.
+
+* 2002/07/18 nikolas@irc-dev.net    (u2.10.H.05.74)               FEATURE
+  -----------------------------------------------------------------------
+  En la respuesta a LUSERS, si hemos compilado el ircd con soporte BDD
+  se muestran, aparte de los IRCops, los Opers y bots de la red:
+
+    There are 27 users and 14 invisible on 1 servers
+    4 IRCop(s), 7 helper(s) and 2 official bots online
+    I have 4 clients and 3 servers
+
+* 2002/09/17 nikolas@irc-dev.net     (u2.10.H.05.73)              FEATURE
+  -----------------------------------------------------------------------
+  Nuevo numeric en el WHOIS para los bots. Si el bot tiene +B mostramos
+  "Es un roBOT oficial de la Red". Usamos el 316 para ello.
+
+* 2002/09/17 nikolas@irc-dev.net     (u2.10.H.05.72)                  FIX
+  -----------------------------------------------------------------------
+  Correccion en un numeric.
+
+* 2002/09/12 red_star23@yahoo.es     (u2.10.H.05.71)                  FIX
+  -----------------------------------------------------------------------
+  Cuando un usuario abandona el IRC teniendo mensajes en "transito" hacia
+  el circulando por la red, el mensaje de "Target left IRC" indica
+  correctamente el nick en cuestion.
+
+* 2002/09/11 jcea@argo.es            (u2.10.H.05.70)                  FIX
+  -----------------------------------------------------------------------
+  Permitir compilar el IRCD con soporte de WATCH pero sin soporte +x.
+
+* 2002/09/10 jcea@argo.es            (u2.10.H.05.69)                  FIX
+  -----------------------------------------------------------------------
+  No permite que un usuario cambie de nick varias veces *ANTES* de que el
+  usuario haya completado el registro de su conexion en la red.
+
+* 2002/09/09 jcea@argo.es            (W11 - u2.10.H.05.68)            FIX
+  -----------------------------------------------------------------------
+  Cuando un usuario se desconecta, el WATCH que envía a los usuarios que
+  monitorizan el usuario PRESUPONE que el usuario original estaba +x,
+  lo que puede no ser el caso.
+
+* 2002/09/09 jcea@argo.es            (u2.10.H.05.67)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "m_config.c".
+
+* 2002/09/09 jcea@argo.es            (u2.10.H.05.66)                  FIX
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "m_watch.c". Esto nos descubre un BUG, que
+  solucionamos.
+
+* 2002/09/09 jcea@argo.es            (u2.10.H.05.65)                  FIX
+  -----------------------------------------------------------------------
+  Solucionado un grave bug en la negociacion de conexiones, cuando el
+  otro extremo intenta negociar opciones que no reconocemos.
+
+* 2002/09/09 jcea@argo.es            (u2.10.H.05.64)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "dbuf.c". Se incluyen nuevas dependencias
+  en el "Makefile".
+
+* 2002/09/06 jcea@argo.es            (u2.10.H.05.63)              CLEANUP
+  -----------------------------------------------------------------------
+  Pequeña optimizacion en los WATCH.
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.62)              CLEANUP
+  -----------------------------------------------------------------------
+  OTRO: Limpieza de Warnings en "s_bdd.c".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.61)              CLEANUP
+  -----------------------------------------------------------------------
+  OTRO: Limpieza de Warnings en "s_user.c".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.60)              CLEANUP
+  -----------------------------------------------------------------------
+  OTRO: Limpieza de Warnings en "s_bdd.c".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.59)              CLEANUP
+  -----------------------------------------------------------------------
+  OTRO: Limpieza de Warnings en "s_bdd.c".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.58)              CLEANUP
+  -----------------------------------------------------------------------
+  OTRO: Limpieza de Warnings en "s_bdd.c". Se solucionan varios bugs
+  potencialmente peligrosos.
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.57)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "m_config.c". Se incluyen nuevas dependencias
+  en el "Makefile".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.56)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "s_bdd.c". Se solucionan varios bugs
+  potencialmente peligrosos.
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.55)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "s_conf.c". Se incluyen nuevas dependencias
+  en el "Makefile".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.54)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "s_bsd.c". Se incluyen nuevas dependencias
+  en el "Makefile".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.53)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "list.c". Se incluyen nuevas dependencias
+  en el "Makefile".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.52)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "fileio.c".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.51)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "s_socks.c".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.50)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "ircd.c". Se incluyen nuevas dependencias
+  en el "Makefile". Se soluciona un error mecanografico relativamente
+  importante en "IPcheck.h".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.49)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "m_watch.c". Se solucionan un bug
+  potencialmente peligroso.
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.48)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "opercmds.c". Se solucionan un par de bugs
+  potencialmente peligrosos.
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.47)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de Warnings en "s_user.c".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.46)              CLEANUP
+  -----------------------------------------------------------------------
+  En el fichero "s_bdd.h" faltaba definir la funcion "db_es_miembro()".
+
+* 2002/09/05 jcea@argo.es            (u2.10.H.05.45)              CLEANUP
+  -----------------------------------------------------------------------
+  La declaracion de funciones de "m_watch.c" deberia hacerse
+  en un "m_watch.h", no mezclados en otros ficheros de cabecera.
+
+  Corrijo dependencias en el "Makefile".
+
+* 2002/09/05 jcea@argo.es            (W10 - u2.10.H.05.44)            FIX
+  -----------------------------------------------------------------------
+  Un par de correcciones al parche anterior.
+
+* 2002/09/05 jcea@argo.es            (W9 - u2.10.H.05.43)             FIX
+  -----------------------------------------------------------------------
+  Parche solucionando al fin el problema pendiente del WATCH y
+  las notificaciones de salidas de los nicks. Ahora, en los RPL_LOGOFF
+  tambien se muestra la IP virtual correcta.
+
+  Diversas optimizaciones en el sistema de WATCH.
+
+* 2002/09/03 jcea@argo.es            (DB98 - u2.10.H.05.42)           FIX
+  -----------------------------------------------------------------------
+  Solucionamos un problema introducido en DB97, respecto al borrado de
+  bases de datos no residentes. Ademas, clarifico el codigo, para evitar
+  errores similares en el futuro.
+
+* 2002/09/03 jcea@argo.es            (u2.10.H.05.41)                  FIX
+  -----------------------------------------------------------------------
+  Anadimos un poco de seguridad al parche u2.10.H.05.39, para curarnos
+  en salud.
+
+  Ademas, dicho parche no compila si se configura el IRCD *SIN* soporte
+  de WATCH.
+
+* 2002/09/03 nikolas@irc-dev.net     (u2.10.H.05.40)              CLEANUP
+  -----------------------------------------------------------------------
+  Subimos el numero minimo de entradas en la lista de WATCH de 32 a 96.
+
+* 2002/09/03 nikolas@irc-dev.net     (u2.10.H.05.39)                  FIX
+  -----------------------------------------------------------------------
+  Primer parche que soluciona el problema de que nicks con entrada en las
+  tablas 'w' o 'v'. En los avisos de WATCH de RPL_LOGON, mostraba la IP
+  virtual calculada a partir de la real, en vez del vhost de la tabla
+  correspondiente.
+
+* 2002/09/03 jcea@argo.es            (DB97 - u2.10.H.05.38)       FEATURE
+  -----------------------------------------------------------------------
+  Reescribimos numerosas rutinas de gestion de la BDD para que soporten
+  un taman~o de HASH distinto para cada BDD. Por ejemplo, los permisos
+  de clones pueden estar gestionados decentemente por un HASH de 256
+  entradas, pero los la tabla "n" (nicks +r), ahora mismo, tiene mas
+  de 100.000 entradas, por lo que la cadena de un "bucket" crece de forma
+  importante.
+
+  Las tablas pequen~as las dejo con HASHES de 256 "buckets". Para la tabla
+  "n" uso un HASH con 32768 "buckets". Para la tabla "i" uso 512 "buckets".
+
+  Ademas, las tablas que no se usan no tienen memoria asignada para sus
+  "buckets".
+  
+
+* 2002/08/29 nikolas@irc-dev.net     (u2.10.H.05.37)              CLEANUP
+  -----------------------------------------------------------------------
+  Subimos la lista maxima de silences de 15 a 25. No obstante, quien haga
+  el make config usando una configuracion anterior, seguira teniendo el
+  numero de antes, a no ser que repita el 'make config' o edite el
+  .config :)
+
+* 2002/08/27 nikolas@irc-dev.net     (u2.10.H.05.36)              CLEANUP
+  -----------------------------------------------------------------------
+  Añadimos a NiKoLaS a los credits.
+
+* 2002/08/27 nikolas@irc-dev.net     (u2.10.H.05.35)              CLEANUP
+  -----------------------------------------------------------------------
+  Comentamos un bloque de comprobacion del formato del ident por dos
+  motivos: Primero, comprobaba que el ident de la maquina que conecta
+  y el que suministra el usuario sean iguales, lo que no es necesario
+  desde que no se chequea el ident. Segundo, no tiene sentido ya el
+  hecho de que un ident tenga todas las letras en mayuscula, mas o
+  menos numeros, etc.
+
+* 2002/08/27 nikolas@irc-dev.net     (u2.10.H.05.34)                  FIX
+  -----------------------------------------------------------------------
+  No se permiten en los banes otros caracteres mas que los propios de
+  los nicks, ident y hosts. Añadimos un nuevo numeric para notificar al
+  cliente del error al intentar poner un ban con otros caracteres:
+
+  420 {ERR_INVALIDBANMASK, "%s :Invalid ban mask: %s"},
+
+* 2002/08/27 jcea@argo.es            (u2.10.H.05.33)                  FIX
+  -----------------------------------------------------------------------
+  Para poblar su lista de usuarios en un canal, el BitchX usa el
+  comando "/who". Lo cambiamos tambien para reflejar el "+o" y "+v"
+  simultaneo.
+
+* 2002/08/27 jcea@argo.es            (u2.10.H.05.32)                  FIX
+  -----------------------------------------------------------------------
+  En el parche "u2.10.H.05.28" enviamos los modos +o y +v como "+@". Eso
+  parece que da problemas en el mIRC. Los pongo al reves, como "@+".
+
+* 2002/08/26 jcea@argo.es            (u2.10.H.05.31)                  FIX
+  -----------------------------------------------------------------------
+  Mejora del parche anterior.
+
+  En realidad el parche no es estrictamente necesario, ya que el tema
+  del IDENT se puede controlar a traves de las lineas "I" del "ircd.conf".
+
+* 2002/08/26 jcea@argo.es            (u2.10.H.05.30)              FEATURE
+  -----------------------------------------------------------------------
+  Dado que, hoy por hoy, el IDENT no sirve para nada, lo desactivo en
+  el servidor de IRC. No obstante no elimino el codigo, para que cualquier
+  otra red que utilice nuestro codigo y desee IDENT (animalitos... :-),
+  pueda compiler el soport IDENT sin problemas.
+
+  Ver "ircd/s_auth.c" y "ircd/s_user.c".
+
+* 2002/08/26 jcea@argo.es            (u2.10.H.05.29)                  FIX
+  -----------------------------------------------------------------------
+  Ya que hemos ampliado el numero de BANEOS por canal de 30 a 75, hay
+  que aumentar tambien el tama~o maximo total de los BANEOS,
+  apropiadamente.
+
+* 2002/08/26 jcea@argo.es            (u2.10.H.05.28)                  FIX
+  -----------------------------------------------------------------------
+  Cuando un usuario entra en un canal, debe recibir correctamente los
+  modos de los usuarios  que estan +o y +v simultaneamente.
+
+* 2002/08/26 jcea@argo.es            (u2.10.H.05.27)              CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2002/08/26 nikolas@irc-dev.net     (u2.10.H.05.26)              CLEANUP
+  -----------------------------------------------------------------------
+  Para guardar coherencias con otras redes, cambiamos de sitio dos 
+  numerics:
+
+  239 (RPL_STATSELINE) -> 223
+  494 (ERR_SILECANTBESHOWN) -> 509
+
+* 2002/08/25 nikolas@irc-dev.net     (u2.10.H.05.25)                  FIX
+  -----------------------------------------------------------------------
+  Usuarios con el modo +R, no lo mostraban en el who.
+
+* 2002/08/22 jcea@argo.es            (u2.10.H.05.24)              FEATURE
+  -----------------------------------------------------------------------
+  Con el crecimiento de IRC-Hispano (mas de 45.000 usuarios simultaneos,
+  mas de 15.000 canales simultaneos), tener un limite de 30 baneos por
+  canal es un poco pobre. Lo amplio a 75.
+
+* 2002/08/20 zoltan@irc-dev.net      (u2.10.H.05.23)              CLEANUP
+  -----------------------------------------------------------------------
+  Se documenta el archivo numeric.h con los RPL/ERR que se usan en varios
+  ircd's de redes como Undernet, IRCnet, EFNet, DalNet, PTLink y daemones
+  como Unreal, aircd,...
+
+  Se ha basado en el numeric.h del  u2.10.12 de Undernet, visible en
+  http://coder-com.undernet.org/cgi-bin/cvsweb.cgi/ircu2.10/include/numeric.h
+  ?rev=1.23&content-type=text/x-cvsweb-markup&only_with_tag=MAIN
+
+* 2002/08/20 zoltan@irc-dev.net      (u2.10.H.05.22)              CLEANUP
+  -----------------------------------------------------------------------
+  Para la respuesta del comando USERIP, ahora se utiliza el "numeric"
+  340, como en Undernet, en vez de los "numeric" 307 (compilacion sin BDD)
+  y 380 (compilacion con BDD).
+
+* 2002/08/13 nikolas@irc-dev.net     (u2.10.H.05.21)              CLEANUP
+  ----------------------------------------------------------------------- 
+  Las notificaciones al ususario de que esta silenciado se hacen con un
+  numeric en vez de usar un notice del servidor. Utilizamos el 510 para
+  ello.
+
+* 2002/08/13 nikolas@irc-dev.net     (u2.10.H.05.20)              FEATURE
+  -----------------------------------------------------------------------
+  Nuevo modo de usuario, el +R, que solo permite recibir mensajes privados
+  de usuarios que tengan modo +r. Al contrario que en DalNet, este modo va
+  ligado con el +r, perdiendolo cuando perdamos el +r. Un ircop, aunque no
+  tenga modo +r, puede hablar a un +R.
+
+  Se utiliza el numerico 486 que es el utilizado en DalNet.
+
+* 2002/08/12 jcea@argo.es            (DB96 - u2.10.H.05.19)       FEATURE
+  -----------------------------------------------------------------------
+  Reescribo algunas rutinas de la BDD. Ahora el alta de un nuevo registro
+  supone un unico MALLOC en vez de tres. Idem los FREE. Ello supone un
+  menor consumo de memoria, una mayor "localidad" en las referencias
+  y un mayor rendimiento en general.
+
+  Aun se puede optimizar mas, pero vayamos poco a poco...
+
+* 2002/08/11 nikolas@irc-dev.net     (u2.10.H.05.18)                  FIX
+  -----------------------------------------------------------------------
+  Cuando un usuario +k, al hacer PART de un canal donde esta baneado, o
+  sin voz ni op en el mismo estando el canal +m, se ha de poder ver su
+  mensaje de salida del canal (si lo especifica). Analogamente, para
+  cuando lo que se hace es un QUIT.
+
+* 2002/08/06 nikolas@irc-dev.net     (u2.10.H.05.17)                  FIX
+  -----------------------------------------------------------------------
+  Una macro mas:
+
+  KICKLEN: longitud maxima del mensaje de kick.
+
+* 2002/08/06 nikolas@irc-dev.net     (u2.10.H.05.16)              FEATURE
+  -----------------------------------------------------------------------
+  Se introducen dos nuevas macros:
+
+  QUITLEN: longitud maxima total para el mensaje de quit de un usuario.
+  AWAYLEN: longitud maxima del mensaje de away.
+
+  Y se usan en donde corresponde en vez de TOPICLEN, que era utilizado
+  para esas funciones.
+
+  En la lista de features devueltas por el numeric 005, se introducen
+  esas dos tambien.
+ 
+* 2002/08/06 nikolas@irc-dev.net     (u2.10.H.05.15)              CLEANUP
+  -----------------------------------------------------------------------
+  Analogamente a lo que ya se hace en las caidas por "Ping Timeout", en
+  las caidas por "Read error" se quita el nick, pues es redundante.
+
+* 2002/08/01 jcea@argo.es            (u2.10.H.05.14)                  FIX
+  -----------------------------------------------------------------------
+  El "chkconf" solo permite numericos de servidor en el rango 1-4096
+  inclusive. En realidad el rango correcto es 0-4095.
+
+* 2002/08/01 zoltan@irc-dev.net      (u2.10.H.05.13)              CLEANUP
+  -----------------------------------------------------------------------
+  Cambios esteticos en el "ejemplo.conf".
+
+* 2002/08/01 zoltan@irc-dev.net      (u2.10.H.05.12)                  FIX
+  -----------------------------------------------------------------------
+  El chkconf casca si pones un numerico extendido. Ahora permite rangos
+  1 a 4096.
+ 
+* 2002/07/29 zoltan@irc-dev.net      (u2.10.H.05.11)              CLEANUP
+  -----------------------------------------------------------------------
+  Se modifica el cifranick.c, para que se pueda compilar independientemente
+  sin necesidad de compilar el ircd y se ha puesto soporte para Windows.
+  Las instrucciones de compilacion en Windows estan en el fichero README.
+  
+  Parche de soporte Windows facilitado por Daijo <daijo@irc-dev.net>
+
+* 2002/07/29 zoltan@irc-dev.net      (u2.10.H.05.10)              CLEANUP
+  -----------------------------------------------------------------------
+  Se mete en el archivo de ejemplo de la configuracion del ircd.conf,
+  explicaciones y ejemplos de las lineas E (Excepciones) y F (Features).  
+
+* 2002/07/29 zoltan@irc-dev.net      (u2.10.H.05.09)              FEATURE
+  -----------------------------------------------------------------------
+  Implementacion de E-lines (Exception Line) para establecer una excepcion
+  dentro de una kline. Por ejemplo si hay una kline a un dominio *.pt y
+  queremos que entre un usuario con ip dial345.es.pt, se pone una eline 
+  a dicho host para que pueda entrar al irc.
+
+  El formato de la E-line es:
+     E:<IP/Hostmak>:[Clave opcional]:<Username>:[Puerto Opcional]
+
+  Se amplia el comando /STATS con el parametro E/e, solo para ircops/helpers,
+  para listar las elines usando el numerico 239 que es el que utiliza EFNet
+  para las elines. 
+
+* 2002/07/25 jcea@argo.es            (u2.10.H.05.08)              CLEANUP
+  -----------------------------------------------------------------------
+  El nuevo fichero de configuracion de IRC-Hispano sera "ejemplo.conf",
+  no "example.conf".
+
+* 2002/07/25 nikolas@irc-dev.net     (u2.10.H.05.07)              CLEANUP
+  -----------------------------------------------------------------------
+  Traduccion de "example.conf" al castellano.
+
+* 2002/07/23 nikolas@irc-dev.net     (u2.10.H.05.06)                  FIX
+  -----------------------------------------------------------------------
+  En los cambios de nick demasiado rapidos, el cliente veia de todas
+  formas un cambio de nick de la forma "sunick is now known as sunick".
+  Solo lo veia el cliente, no se propagaba por la red.
+
+* 2002/07/23 jcea@argo.es    (DB95 - u2.10.H.05.05)                   FIX
+  -----------------------------------------------------------------------
+  Cuando se arranca el servidor y se cargan las bases de datos en memoria,
+  el hash de verificacion de las bases de datos distribuidas no residentes
+  SIEMPRE va a fallar. Ello provoca el borrado de esa base de datos, aunque
+  luego se la volvera a pasar su HUB.
+
+  Ello no tiene mayor importancia, porque las bases de datos no residentes,
+  por definicion, no se utilizan. Pero daba problemas con la nueva
+  version de Olimpo, que verifica ese tipo de cosas en busca de
+  inconsistencias en la red.
+
+  Ademas, generaba un trafico innecesario en la red, ya que cuando un
+  servidor se arranca, pide a su HUB las bases de datos no residentes,
+  que acaba de eliminar...
+
+* 2002/07/23 jcea@argo.es    (u2.10.H.05.04)                      CLEANUP
+  -----------------------------------------------------------------------
+  Cambio el "numeric" 432 de "Erroneus Nickname" a "Invalid Nickname",
+  de significado mas obvio.
+
+* 2002/07/23 jcea@argo.es    (u2.10.H.05.03)                      CLEANUP
+  -----------------------------------------------------------------------
+  Cambios cosmeticos en algunos "numerics".
+
+* 2002/07/23 jcea@argo.es    (u2.10.H.05.02)                      CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2002/07/23 jcea@argo.es    (u2.10.H.05.01)                      CLEANUP
+  -----------------------------------------------------------------------
+  Modifico el "Makefile" para que soporte la nueva version de "indent".

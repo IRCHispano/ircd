@@ -1,0 +1,18 @@
+/.cvsignore/1.1/Fri Oct  8 09:59:16 1999/-ko/
+/Configure.in/1.7/Wed Oct 15 21:45:44 2003/-ko/
+/Makefile.in/1.3/Mon Jul 22 19:15:01 2002/-ko/
+/README/1.2/Mon Sep 15 12:19:45 2003/-ko/
+/acconfig.h/1.2/Fri Oct  8 10:07:17 1999/-ko/
+/acinclude.m4/1.2/Fri Oct  8 10:07:17 1999//
+/aclocal.m4/1.3/Mon Sep  1 19:26:59 2003//
+/config-sh.in/1.40/Tue Feb  3 20:43:18 2004/-ko/
+/configure/1.8/Mon Sep 22 14:08:51 2003/-ko/
+/configure.in/1.5/Mon Sep  1 19:26:59 2003/-ko/
+/gen.doc.Makefile/1.1/Fri Oct  8 09:59:16 1999/-ko/
+/gen.ircd.Makefile/1.7/Mon May 19 14:06:57 2003/-ko/
+/install-sh/1.1/Fri Oct  8 09:59:16 1999/-ko/
+/parse.none/1.1/Fri Oct  8 09:59:16 1999/-ko/
+/setup.h.in/1.7/Mon Sep  1 19:39:53 2003/-ko/
+/setup.h.top/1.1/Fri Oct  8 09:59:16 1999/-ko/
+/stamp-h.in/1.1/Fri Oct  8 09:59:16 1999/-ko/
+D

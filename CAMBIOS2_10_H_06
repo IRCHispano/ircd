@@ -1,0 +1,681 @@
+$Id: CAMBIOS2_10_H_06,v 1.98 2003/05/16 16:24:24 jcea Exp $
+
+* 2003/05/16 daijo@irc-dev.net       (u2.10.H.06.104)             CLEANUP
+  -----------------------------------------------------------------------
+  Eliminamos en setup.h.in la posibilidad de definir HAVE_STRERROR, ya que
+  al igual que en los parches anteriores sabemos que si existe.
+
+* 2003/05/16 daijo@irc-dev.net       (u2.10.H.06.103)             CLEANUP
+  -----------------------------------------------------------------------
+  Terminando la limpieza anterior, en la comprobacion del configure se
+  elimina strerror. Asi mismo, en zutil.h asumimos que tenemos strerror
+  sin utilizar la comprobacion anterior mediante una macro.
+
+* 2003/05/16 jcea@argo.es            (u2.10.H.06.102)             CLEANUP
+  -----------------------------------------------------------------------
+  Se ajustan un par de comentarios enm funciones a los parches anteriores.
+
+* 2003/05/16 daijo@irc-dev.net       (u2.10.H.06.101)             CLEANUP
+  -----------------------------------------------------------------------
+  Eliminado todo el codigo que definia STRERROR si no lo tenia nuestro
+  sistema. Actualmente todas las implementaciones de la libc (glibc)
+  incluyen la funcion strerror en errno.h
+
+* 2003/05/16 daijo@irc-dev.net       (u2.10.H.06.100)             CLEANUP
+  -----------------------------------------------------------------------
+  Cambiamos todos los sys_errlist[errno] por strerror(errno). Este cambio
+  es debido a la discordancia entre sistemas de sys_errlist.
+
+* 2003/05/07 zoltan@irc-dev.net      (u2.10.H.06.99)              FEATURE
+  ----------------------------------------------------------------------
+  El notice de aviso del cambio de vhost ha sido cambiado por un numerico
+  el 396 utilizado en Undernet.
+       RPL_HOSTHIDDEN, "%s :is now your hidden host"
+
+* 2003/04/24 jcea@argo.es            (u2.10.H.06.98)              CLEANUP
+  -----------------------------------------------------------------------
+  Cuando se detecta una modificacion no autorizada en el sistema
+  de BDD persistente, nos indica claramente que estaba haciendo el IRCD
+  en ese momento (grabando un registro nuevo por la red, verificando
+  el MMAP, etc).
+
+* 2003/04/24 jcea@argo.es            (DB111 - u2.10.H.06.97)          FIX
+  -----------------------------------------------------------------------
+  Por lo que se ve, en algunos sistemas de ficheros el parametro "RDEV"
+  de la estructura "STAT" (BDD persistente) no devuelve valores
+  consistentes. Se supone que "RDEV" solo tiene sentido en ficheros que
+  se corresponden a dispositivos "block" o "char", no para ficheros
+  "normales", pero yo esperaria que el valor devuelto fuese, al menos,
+  consistente.
+
+  Cambio el sistema de verificacion para no tener en cuenta el "RDEV".
+
+* 2003/04/23 jcea@argo.es            (u2.10.H.06.96)                  FIX
+  -----------------------------------------------------------------------
+  Compilacion correcta sin persistencia.
+
+* 2003/04/23 jcea@argo.es            (u2.10.H.06.95)              FEATURE
+  -----------------------------------------------------------------------
+  Cuando un nodo detecta una modificacion no autorizada de un fichero
+  de BDD (sistema de persistencia), nos indica que parametros, exactamente,
+  han cambiado del fichero.
+
+* 2003/04/23 jcea@argo.es            (u2.10.H.06.94)              FEATURE
+  -----------------------------------------------------------------------
+  Lo que sigue solo afecta a enlaces P10.
+
+  En el comando "server" aceptamos un parametro adicional, que indica
+  el "timestamp" con el que se ha arrancado el servidor.
+
+  Enviamos nuestro "timestamp" de arranque cuando nos conectamos
+  a otro nodo, u otro nodo se conecta a nosotros.
+
+  Enviamos el "timestamp" de un nodo remoto que se nos introduce al
+  resto de la red.
+
+  Si no conocemos el "timestamp" de un nodo, enviamos un CERO.
+
+  Este campo ya existia en algunas instancias de "SERVER", y se
+  enviaba como un CERO fijo.
+
+* 2003/04/09 jcea@argo.es            (u2.10.H.06.93)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpiamos y simplificamos un poco el codigo de los parches anteriores.
+
+* 2003/04/09 jcea@argo.es            (u2.10.H.06.92)              FEATURE
+  -----------------------------------------------------------------------
+  Soporte +l-l en canales persistentes.
+
+* 2003/04/09 jcea@argo.es            (u2.10.H.06.91)                  FIX
+  -----------------------------------------------------------------------
+  Completamos el soporte de +k-k en canales persistentes y solucionamos
+  un par de bugs.
+
+* 2003/04/09 jcea@argo.es            (u2.10.H.06.90)              FEATURE
+  -----------------------------------------------------------------------
+  Soporte inicial de obligatoriedad o prohibicion de +k en canales
+  persistentes.
+
+* 2003/04/09 jcea@argo.es            (u2.10.H.06.89)                  FIX
+  -----------------------------------------------------------------------
+  Solucionado un problema en cuando hay bajas en la BDD de canales
+  persistentes y el MMAP cache falla, al arrancar el programa. Bajo
+  ciertas circunstancias el canal podia sobrevivir.
+
+* 2003/04/09 jcea@argo.es            (u2.10.H.06.88)                  FIX
+  -----------------------------------------------------------------------
+  Los modos +s y +p son incompatibles, así que:
+
+  - Controlamos que no nos lleguen juntos como modos obligatorios.
+    si es el caso, +s prima.
+
+  - Si llega un +s obligatorio, metemos un +p prohibido implicito.
+
+  - Idem si lo que llega es un +p.
+
+  Adicionalmente, controlamos que no lleguen modos obligatorios y
+  prohibidos que coincidan. Es decir, no puede aparecer "+s-s" como
+  modos de canal por BDD. Si es el caso, los modos obligatorios priman.
+
+* 2003/04/08 jcea@argo.es            (u2.10.H.06.87)                  FIX
+  -----------------------------------------------------------------------
+  Algunos problemas introducidos con los parches anteriores, cuando
+  un canal persistente se convierte a nopersistente y viceversa de forma
+  repetida.
+
+* 2003/04/08 jcea@argo.es            (DB110 - u2.10.H.06.86)      FEATURE
+  -----------------------------------------------------------------------
+  Gestionamos cambios de modos controlados de usuarios en canales
+  persistentes.
+
+* 2003/04/08 jcea@argo.es            (DB109 - u2.10.H.06.85)      FEATURE
+  -----------------------------------------------------------------------
+  Los canales persistentes pueden tener modos permitidos y prohibidos,
+  gestionados a traves de la BDD.
+
+  Con este parche se empiezan a implementar. De momento solo se tienen
+  en cuenta cuando llega un registro nuevo por la BDD o cuando se arranca
+  desde el sistema de MMAP cache.
+
+  *NO* se gestiona aun los cambios de modos de otros nodos o usuarios.
+
+* 2003/04/08 jcea@argo.es            (u2.10.H.06.84)                  FIX
+  -----------------------------------------------------------------------
+  Cuando se hace un "die", hacemos "flush" de las conexiones antes
+  de meternos con el MMAP cache.
+
+* 2003/04/08 jcea@argo.es            (u2.10.H.06.83)                  FIX
+  -----------------------------------------------------------------------
+  Cuando se hace un "restart", primero completa el MMAP cache, y luego
+  corta las conexiones con los usuarios, no al reves. Asi no nos
+  encontramos intentando conectar y la conexion siendo rechazada porque
+  el servidor esta trabajando en el MMAP cache, grabandolo, y aun
+  ni siquiera ha reiniciado.
+
+* 2003/04/08 jcea@argo.es            (u2.10.H.06.82)                  FIX
+  -----------------------------------------------------------------------
+  Solucionado un problema con los canales persistentes y los "bounces"
+  de modos.
+
+* 2003/04/08 jcea@argo.es            (DB108 - u2.10.H.06.81)      FEATURE
+  -----------------------------------------------------------------------
+  Si en el MMAP cache hay canales persistentes, los procesa cuando se
+  reinicia el servidor.
+
+* 2003/04/08 jcea@argo.es            (u2.10.H.06.80)                  FIX
+  -----------------------------------------------------------------------
+  Si el MMAP cache parece correcto, pero algun HASH de las tablas nos
+  detecta algun problema, sen~alamos un MISS.
+
+* 2003/04/08 jcea@argo.es            (u2.10.H.06.79)              CLEANUP
+  -----------------------------------------------------------------------
+  "/stats b" muestra el taman~o reservado para el MMAP de cache.
+
+* 2003/02/26 jcea@argo.es            (u2.10.H.06.78)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza cuando un nodo se compila sin soporte de persistencia.
+
+* 2003/02/26 jcea@argo.es            (u2.10.H.06.77)                  FIX
+  -----------------------------------------------------------------------
+  Inicializacion correcta de ciertas estructuras en plataformas
+  de 64 bits.
+
+* 2003/02/25 jcea@argo.es            (u2.10.H.06.76)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza del codigo de persistencia, a favor de maquinas de 64 bits.
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.75)                  FIX
+  -----------------------------------------------------------------------
+  Bucle infinito en "/die".
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.74)                  FIX
+  -----------------------------------------------------------------------
+  Un par de fixes mas en la persistencia.
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.73)                  FIX
+  -----------------------------------------------------------------------
+  Solucionado un problemilla en la generacion y verificacion de la
+  cache.
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.72)                  FIX
+  -----------------------------------------------------------------------
+  Solucionamos un problemilla con el alta de registros nuevos provenientes
+  de la red.
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.71)              FEATURE
+  -----------------------------------------------------------------------
+  En el "/stats b" da informacion sobre la memoria que podria liberarse.
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.70)                  FIX
+  -----------------------------------------------------------------------
+  Algunos retoques a "portable_stat" ya que en Solaris, por ejemplo,
+  "st_atime" es un macro.
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.69)              FEATURE
+  -----------------------------------------------------------------------
+  La estructura "stat" de ficheros es portable si nos limitamos a
+  acceder a los elementos documentados. Pero si lo que estamos es
+  comparando estructuras directamente memoria a memoria, no es portable
+  ni podemos especificar campos "internos" de forma portable.
+
+  Esto es importante, por ejemplo, a la hora de ignorar el efecto de
+  "atime" de un fichero. No podemos inicializar ese campo a un valor
+  fijo de forma portable, porque en Solaris, por ejemplo, nos aparece
+  un campo de nanosegundos.
+
+  Al final opto por definir una estructura "portable_stat" interna
+  al IRCD, con los campos que queremos, y que son comunes a
+  todas las plataformas.
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.68)                  FIX
+  -----------------------------------------------------------------------
+  Solucionado un problema con "u2.10.H.06.63", donde el estado de un
+  fichero se sobreescribia de forma incorrecta, provocando un "die"
+  al realizar la siguiente verificacion.
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.67)                  FIX
+  -----------------------------------------------------------------------
+  En el parche "u2.10.H.06.63" tambien hay que tener en cuenta el caso
+  de truncar la BDD.
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.66)                  FIX
+  -----------------------------------------------------------------------
+  Con el nuevo sistema de verificacion de BDD y cache de persistencia,
+  hacer un "make install" mientras estaba un IRCD funcionando, lo mata,
+  porque este detecta una modificacion no autorizada de la BDD.
+
+  Modifico el script de instalacion para evitar este problema, y
+  aprovecho para hacer un poco de limpieza.
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.65)              FEATURE
+  -----------------------------------------------------------------------
+  Si todo parece correcto, no hace falta que revisemos la BDD byte
+  a byte.
+
+* 2003/02/20 jcea@argo.es            (DB107 - u2.10.H.06.64)      FEATURE
+  -----------------------------------------------------------------------
+  La segunda parte del parche anterior es guardar en la cache de
+  persistencia la informacion detallada de los ficheros BDD (struct stat)
+  y contrastarla con la recarga de la cache, para verificar si hay un
+  HIT o no.
+
+* 2003/02/20 jcea@argo.es            (DB106 - u2.10.H.06.63)      FEATURE
+  -----------------------------------------------------------------------
+  Optimizamos la implementacion del sistema de persistencia, en
+  particular de la verificacion de la cache, cuando se carga.
+
+  El primer paso es guardarnos informacion detallada sobre los ficheros
+  de BDD, para detectar modificaciones sin necesidad de leerlos byte
+  a byte.
+
+   - Carga inicial de la BDD (cuando hay un cache MISS).
+   - Lectura de la BDD para enviarla en un BURST.
+   - Escritura de un nuevo registro en la BDD.
+   - Compactacion de la BDD.
+
+* 2003/02/20 jcea@argo.es            (u2.10.H.06.62)                  FIX
+  -----------------------------------------------------------------------
+  Obtener la informacion sobre la "arena" persistente puede ser una
+  operacion lenta, asi que solo la damos en un "/stats b" si
+  el usuario es +o.
+
+* 2003/02/06 jcea@argo.es            (u2.10.H.06.61)                  FIX
+  -----------------------------------------------------------------------
+  Bajo ciertas circunstancias, el sistema de persistencia podia borrar
+  las BDD.
+
+* 2003/02/06 jcea@argo.es            (u2.10.H.06.60)                  FIX
+  -----------------------------------------------------------------------
+  Solucionados algunos problemas de sobreescritura de memoria.
+
+* 2003/02/06 jcea@argo.es            (u2.10.H.06.59)                  FIX
+  -----------------------------------------------------------------------
+  Solucionado un "assert()" cuando teniamos un "cache HIT".
+
+* 2003/02/06 jcea@argo.es            (u2.10.H.06.58)              FEATURE
+  -----------------------------------------------------------------------
+  Sigo progresando en la implementacion del sistema de persistencia...
+
+  Implemento el almacenamiento de la persistencia. Con esto ya deberiamos
+  poder hacer pruebas reales.
+
+* 2003/02/06 jcea@argo.es            (DB105 - u2.10.H.06.57)      FEATURE
+  -----------------------------------------------------------------------
+  Sigo progresando en la implementacion del sistema de persistencia...
+
+  Guarda los "hashes" internos de la BDD en el sistema de persistencia.
+
+  Con este parche se supone completada lo que es la "carga" de la
+  cache de persistencia. Ahora solo quedaria la parte de grabacion.
+
+* 2003/02/06 jcea@argo.es            (u2.10.H.06.56)              FEATURE
+  -----------------------------------------------------------------------
+  Sigo progresando en la implementacion del sistema de persistencia...
+
+  Comprueba que el fichero de "hashes" no haya cambiado respecto
+  a la actualizacion del fichero de cache.
+
+  Guarda en el sistema de persistencia los datos "bookeeping" de la BDD.
+
+* 2003/02/06 jcea@argo.es            (u2.10.H.06.55)              FEATURE
+  -----------------------------------------------------------------------
+  Un "rehash" no debe recargar la BDD, porque eso es un proceso lento
+  y lo sera aun mas. Debemos buscar otros mecanismos para comprobar
+  la integridad de la BDD.
+
+* 2003/02/05 jcea@argo.es            (u2.10.H.06.54)              FEATURE
+  -----------------------------------------------------------------------
+  Importante optimizacion de velocidad en un "cache MISS".
+
+* 2003/02/05 jcea@argo.es            (u2.10.H.06.53)              FEATURE
+  -----------------------------------------------------------------------
+  Un par de retoques mas...
+
+* 2003/02/05 jcea@argo.es            (u2.10.H.06.52)                  FIX
+  -----------------------------------------------------------------------
+  Solucionados varios problemas de los parches anteriores.
+
+* 2003/02/05 jcea@argo.es            (u2.10.H.06.51)              FEATURE
+  -----------------------------------------------------------------------
+  Clarificacion de la evaluacion de si el fichero MMAP de cache para
+  BDD nos sirve o no, al arrancar.
+
+  Cuando se acepta, lo marcamos para que no sea aceptado de nuevo
+  si el servidor intenta leerlo otra vez sin haberlo volcado nuevamente
+  a disco. Esto es interesante porque si hay algun problema con el
+  fichero, y muere el servidor, al volver a arrancar lo volvera a tomar
+  de nuevo y volvera a morir.
+
+  Actualizamos el "/stats b" para que nos diga si hemos tenido un
+  cache HIT o MISS.
+
+* 2003/02/05 jcea@argo.es            (u2.10.H.06.50)              FEATURE
+  -----------------------------------------------------------------------
+  Aunque el fichero MMAP de cache para la BDD tiene un taman~o fijo,
+  permito que la memoria usada dentro de el cambie de longitud. Ello
+  posibilita definir un fichero muy largo sin penalizar su carga/descarga
+  cuando se usa poca memoria, especialmente en lo que se refiere al
+  calculo del HASH para detectar corrupciones. En vez de generar un HASH
+  cubriendo todo el fichero, se considera solo lo que realmente se
+  esta utilizando.
+
+  Se modifica "/stats b" para que se muestre el maximo historico
+  de ocupacion, durante la ejecucion de la instancia de IRCD actual.
+
+* 2003/02/04 jcea@argo.es            (u2.10.H.06.49)              FEATURE
+  -----------------------------------------------------------------------
+  Muestra datos sobre el sistema de persistencia en el "/stats b".
+
+* 2003/02/04 jcea@argo.es            (DB104 - u2.10.H.06.48)      FEATURE
+  -----------------------------------------------------------------------
+  Con este parche el sistema de persistencia esta autocontenido 100%,
+  incluyendo el "metadata" de "malloc".
+
+* 2003/02/04 jcea@argo.es            (DB103 - u2.10.H.06.47)      FEATURE
+  -----------------------------------------------------------------------
+  Los registros ya son almacenados en el bloque persistente, aunque
+  todavia no hacemos que sobrevivan a rearranques del servidor.
+
+* 2003/02/04 jcea@argo.es            (DB102 - u2.10.H.06.46)      FEATURE
+  -----------------------------------------------------------------------
+  Primera implementacion de "malloc()" persistentes.
+
+* 2003/02/03 jcea@argo.es            (DB101 - u2.10.H.06.45)      FEATURE
+  -----------------------------------------------------------------------
+  Implementacion minima de la cache de BDD.
+
+* 2003/01/21 nikolas@irc-dev.net     (u2.10.H.06.44)              FEATURE
+  -----------------------------------------------------------------------
+  En el numeric 252 (ircops, helpers y bots online) cambiamos el orden
+  en que se envian los contadores de manera que el primero en aparecer
+  sea el de helpers, por ser mas significativo que el de ircops.
+
+* 2003/01/16 nikolas@irc-dev.net     (u2.10.H.06.43)              FEATURE
+  -----------------------------------------------------------------------
+  En el tiempo de expiracion de las g-lines se incluye informacion con
+  la zona horaria.
+
+* 2003/01/09 nikolas@irc-dev.net     (u2.10.H.06.42)                  FIX
+  -----------------------------------------------------------------------
+  Compilando *SIN* soporte BDD se muestra el resumen de modos del numeric
+  379.
+
+* 2003/01/09 jcea@argo.es            (u2.10.H.06.41)                  FIX
+  -----------------------------------------------------------------------
+  Corrige algunos problemas para permitir compilar el servidor sin
+  soporte de BDD.
+
+* 2003/01/08 jcea@argo.es            (CH2 - u2.10.H.06.40)        FEATURE
+  -----------------------------------------------------------------------
+  Si llega un modo '+r' para un canal a traves de la red (burst o cambio
+  de modo normal), lo ignoramos.
+
+  Cuando un canal pierde '+r', pierde tambien '+S' y '+A'.
+
+* 2003/01/08 jcea@argo.es            (CH1 - u2.10.H.06.39)        FEATURE
+  -----------------------------------------------------------------------
+  Define el modo "+r" de canal.
+
+  Cuando se elimina un registro de canal registrado, y dicho canal
+  esta vacio, lo eliminamos de memoria. Si no esta vacio, enviamos
+  el "-r".
+
+  Cuando se recibe un registro de un canal registrado, que no lo estaba:
+
+  - Si el canal no existe, lo crea y lo deja vacio.
+
+  - Si el canal existe, propaga "+r" del canal a los usuarios locales.
+
+  Si un canal se queda vacio pero es "+r", no lo elimina.
+
+* 2003/01/08 jcea@argo.es            (DB100 - u2.10.H.06.38)      FEATURE
+  -----------------------------------------------------------------------
+  A la hora de normalizar las claves de la BDD, permite lógica distinta
+  segun la tabla de que se trate.
+
+  Incluyo logica de normalizacion de nombres de canales.
+
+  Soporte del canal 'c', de registro de canales.
+
+  Ya hay cierto soporte antiguo para el canal 'c', que tengo que evaluar
+  si sigue siendo correcto o no. Muevo esa logica a la tabla 'z' hasta
+  poder revisarla despacito y con buena letra.
+
+* 2003/01/08 jcea@argo.es            (DB99 - u2.10.H.06.37)       FEATURE
+  -----------------------------------------------------------------------
+  Se incluye logica que permite la ejecucion de codigo arbitrario cuando
+  se da de alta o se elimina un registro en la BDD. Esto permite que
+  cualquier cambio en la BDD tenga efecto de forma inmediata, no cuando
+  se use dicho registro.
+
+  Cuando se modifica la BDD, se indica la fuente de la modificacion, que
+  puede ser un nodo externo o el propio server (tomando los datos del
+  disco duro).
+
+* 2003/01/07 nikolas@irc-dev.net     (u2.10.H.06.36)                  FIX
+  -----------------------------------------------------------------------
+  Ajuste en el contador de helpers. En exit_client eliminamos el flag de
+  helper para no volverlo a restar en exit_one_client.
+
+* 2003/01/02 jcea@argo.es            (u2.10.H.06.35)              CLEANUP
+  -----------------------------------------------------------------------
+  Elimino unos "warnings" en los parches anteriores.
+
+* 2003/01/01 nikolas@irc-dev.net     (u2.10.H.06.34)              FEATURE
+  -----------------------------------------------------------------------
+  Usuarios con +k se saltan la limitacion de targets y de cambios de nick
+  consecutivos.
+
+* 2002/12/31 nikolas@irc-dev.net     (u2.10.H.06.33)                  FIX
+  -----------------------------------------------------------------------
+  Un ajuste mas en el contador de helpers. No se contabilizaban las 
+  salidas por exit_client :)
+
+* 2002/12/31 nikolas@irc-dev.net     (u2.10.H.06.32)              FEATURE
+  -----------------------------------------------------------------------
+  En un VERSION vemos el numero maximo de canales por usuario. Aparece
+  tras el valor de CLIENT_FLOOD. Asimismo, chequeamos que su valor este
+  entre 1-99 (99 < MAXCHANNELSPERUSER > 1).
+
+* 2002/12/31 nikolas@irc-dev.net     (u2.10.H.06.31)              FEATURE
+  -----------------------------------------------------------------------
+  Nuevo numeric para el WHOIS:
+
+  /* 379 */
+    {RPL_WHOISMODES, "%s :Utiliza los modos [%s]"},
+
+  Devuelve las letras de los modos visibles del usuario. El criterio para
+  mostrar u ocultar modos es el mismo que para el WHO.
+
+  Se ha modificado la funcion umode_str(aClient *cptr), que servia para
+  calcular la cadena de modos que se envia en un BURST para que acepte un
+  segundo parametro: umode_str(aClient *cptr, aClient *acptr), de tal
+  modo que calcula tambien, si acptr != NULL, los modos de cptr visibles
+  por acptr.
+
+* 2002/12/26 jcea@argo.es            (Z14 - u2.10.H.06.30)            FIX
+  -----------------------------------------------------------------------
+  Inicializacion correcta de ZLIB, que podia dar problemas bajo ciertas
+  circunstancias, incluyendo la caida del servidor.
+
+* 2002/12/16 n3tkat@9power.org       (u2.10.H.06.29)              FEATURE
+  -----------------------------------------------------------------------
+  Segunda parte del parche para permitir el ~ en los nicks. Ahora, ya
+  permitimos su uso de forma local.
+
+* 2002/12/16 jcea@argo.es            (u2.10.H.06.28)              FEATURE
+  -----------------------------------------------------------------------
+  Se toca la funcion "can_send()" para que un nodo pueda enviar a un
+  canal. Antes no se podia hacer si el canal estaba +n.
+
+* 2002/12/16 jcea@argo.es            (u2.10.H.06.27)              FEATURE
+  -----------------------------------------------------------------------
+  Cuando se invita a alguien a un canal, lo ven los "ops" de dicho canal.
+
+* 2002/12/15 n3tkat@9power.org       (u2.10.H.06.26)              FEATURE
+  -----------------------------------------------------------------------
+  Primera parte del parche para permitir el uso del caracter '~' en los
+  nicks. Permitimos nicks con '~' de otros servidores, pero no locales.
+
+* 2002/12/12 jcea@argo.es            (u2.10.H.06.25)                  FIX
+  -----------------------------------------------------------------------
+  Bajo circunstancias poco claras, y si tenemos el servidor configurado
+  para que use "poll()" en vez de "select()" (lo normal), puede darse
+  el caso de intentar hacer un
+
+    if (DoingSocks(cptr) || DoingDNS(cptr) || DoingAuth(cptr)
+
+  de conexiones NO locales, con lo que fallan los "assert()". Es algo muy
+  esporadico (en Gaia, cada 24 horas de funcionamiento), pero que
+  "ocurre".
+
+  Esto, en realidad, es un bug del IRCD original, pero que no se ha
+  "detectado" hasta ahora.
+
+* 2002/12/11 nikolas@irc-dev.net     (u2.10.H.06.24)                  FIX
+  -----------------------------------------------------------------------
+  Si se hace in INVITE a un canal inexistente, se devuelve el error de
+  "No such channel" en vez del de "You're not on that channel".
+
+* 2002/12/11 jcea@argo.es            (u2.10.H.06.23)                  FIX
+  -----------------------------------------------------------------------
+  Se solucionan un par de detalles cuestionables del parche anterior.
+
+* 2002/12/11 zoltan@irc-dev.net      (u2.10.H.06.22)              FEATURE
+  -----------------------------------------------------------------------
+  Ampliacion del comando INVITE. Si se invoca sin parametros, nos muestra
+  la lista de invitaciones que tenemos y que no hemos usado todavia para
+  entrar. Esta lista siempre ha existido y hasta ahora no era visible.
+
+  Se utilizan los siguientes numericos, utilizados en Undernet.
+  346 => RPL_INVITELIST
+  347 => RPL_ENDOFINVITELIST
+
+* 2002/12/10 jcea@argo.es            (u2.10.H.06.21)              CLEANUP
+  -----------------------------------------------------------------------
+  "IsLocal()" y "MyConnect()" son redundantes. Ademas, "IsLocal()" no
+  funciona correctamente en los primeros instantes de una conexion.
+
+  Elimino "IsLocal()".
+
+* 2002/12/10 jcea@argo.es            (u2.10.H.06.20)                  FIX
+  -----------------------------------------------------------------------
+  Cuando se configura el IRCD para que se ejecute bajo un usuario/grupo,
+  el grupo no se configuraba correctamente.
+
+* 2002/12/09 jcea@argo.es            (u2.10.H.06.19)              CLEANUP
+  -----------------------------------------------------------------------
+  Cambio "s_auth.c" para que use macros en la manipulacion de
+  "FLAGS_AUTH" y "FLAGS_WRAUTH".
+
+* 2002/12/09 jcea@argo.es            (u2.10.H.06.18)              CLEANUP
+  -----------------------------------------------------------------------
+  Aprovechando el parche "u2.10.H.06.15", migro el flag "FLAGS_WRAUTH". 
+
+* 2002/12/09 jcea@argo.es            (u2.10.H.06.17)              CLEANUP
+  -----------------------------------------------------------------------
+  Aprovechando el parche "u2.10.H.06.15", migro el flag "FLAGS_AUTH".
+
+* 2002/12/09 jcea@argo.es            (u2.10.H.06.16)              CLEANUP
+  -----------------------------------------------------------------------
+  Aprovechando el parche "u2.10.H.06.15", migro el flag "FLAGS_DOINGDNS".
+
+  En el "assert()" uso "MyConnect()", porque "IsLocal()" no esta
+  inicializado aun...
+
+* 2002/12/09 jcea@argo.es            (u2.10.H.06.15)              CLEANUP
+  -----------------------------------------------------------------------
+  La variable de "flags" ya tiene ocupados sus 32 bits. En vez de utilizar
+  una variable de 64 bits, divido los "flags" en dos grupos de 32 bits.
+  Un grupo, el actual, existe siempre. El otro grupo de 32 bits SOLO
+  existira para conexiones LOCALES.
+
+  De esta forma se reduce el consumo de memoria, ya que las conexiones
+  remotas usan 32 bits, en vez de 64 bits.
+
+  Hay que ir migrando los flags poco a poco, uno a uno. Hay que usar
+  "assert()" (de forma temporal) para comprobar que se accede
+  a ese "flag" **SOLO** cuando el usuario es local.
+
+* 2002/12/04 nikolas@irc-dev.net     (u2.10.H.06.14)              FEATURE
+  -----------------------------------------------------------------------
+  Si un usuario sin +r hace un INVITE a un usuario +R no se lo permite.
+  Si el usuario que hace el INVITE, por contra, tiene +o, si le deja.
+
+* 2002/10/22 jcea@argo.es            (u2.10.H.06.13)                  FIX
+  -----------------------------------------------------------------------
+  Otro bug delicado de topic y "/list".
+
+* 2002/10/21 jcea@argo.es            (u2.10.H.06.12)                  FIX
+  -----------------------------------------------------------------------
+  Bug fix de los dos parches anteriores. Este bug es chungo, pero se ha
+  detectado y solucionado en minutos :-). El servidor cascaba si se hacia
+  un "/list", ya que ahora puede no existir ni siquiera la informacion
+  de TOPIC. Antes, aunque no hubiese topic, su espacio SI existia, que
+  es precisamente lo que queremos eliminar con estos parches.
+
+* 2002/10/21 jcea@argo.es            (u2.10.H.06.11)                  FIX
+  -----------------------------------------------------------------------
+  Bug fix de los dos parches anteriores.
+
+* 2002/10/21 jcea@argo.es            (u2.10.H.06.10)              FEATURE
+  -----------------------------------------------------------------------
+  Como optimizacion del parche anterior, cuando se pone un "topic" nuevo,
+  reutilizamos la memoria dinamica del topic anterior si su longitud es
+  lo bastante grande como para acomodar el nuevo.
+
+* 2002/10/21 jcea@argo.es            (u2.10.H.06.09)              FEATURE
+  -----------------------------------------------------------------------
+  En vez de reservar 'X' bytes para el topic y el nick del usuario que lo
+  pone, se usa memoria dinamica para ello.
+
+* 2002/10/21 nikolas@irc-dev.net     (u2.10.H.06.08)                  FIX
+  -----------------------------------------------------------------------
+  Solucionado un bug que hacia que no se propagase el modo de canal +M en
+  los bursts.
+
+* 2002/10/10 jcea@argo.es            (u2.10.H.06.07)                  FIX
+  -----------------------------------------------------------------------
+  Solucionado un posible problema de seguridad en "m_stat()". Ahora no
+  es problematico, pero no sabemos como puede evolucionar esa funcion
+  en el futuro, asi que mejor curarse en salud.
+
+* 2002/10/09 jcea@argo.es            (u2.10.H.06.06)              FEATURE
+  -----------------------------------------------------------------------
+  No se incluye la IP cifrada en los usuarios con IP Virtual personalizada,
+  porque ello incrementa su "sex appeal" cara a los usuarios.
+
+  El perder esa informacion queda compensado con el
+  hecho de que las entradas de los usuarios +r quedan
+  registradas en los bots, incluyendo sus IPs.
+
+  No me acaba de gustar, pero es una peticion de Sisco.
+
+* 2002/10/09 nikolas@irc-dev.net     (u2.10.H.06.05)                  FIX
+  -----------------------------------------------------------------------
+  Refinamos el parche u2.10.H.06.02 pues nodos con esa version, esta vez
+  tenian un numero negativo de helpers. El error se producia porque al
+  eliminar el conteo de register_user() con la intencion de procesar esa
+  entrada y sumarla en m_nick(), para entradas remotas de opers con
+  nick:clave o entradas remotas de bots con +h, no se hacia el conteo de
+  ese helper, y cuando despues un +h salia de la red, se restaba uno sin
+  haberse sumado uno anteriormente.
+
+* 2002/10/07 amn3s1a@ono.com         (u2.10.H.06.04)                  FIX
+  -----------------------------------------------------------------------
+  Comprobaciones extras en los parametros del mensaje DBQ. En concreto,
+  el nombre de la tabla sólo puede contener un caracter.
+
+* 2002/10/07 amn3s1a@ono.com         (u2.10.H.06.03)                  FIX
+  -----------------------------------------------------------------------
+  Los JOIN, PART y WHO en los que el origen (es decir, sptr) es un servidor 
+  son ignorados, ya que en el caso del JOIN y WHO, mata el proceso.
+  
+* 2002/10/06 nikolas@irc-dev.net     (u2.10.H.06.02)                  FIX
+  -----------------------------------------------------------------------
+  Solucionamos un pequeño bug que hacia que en el LUSERS se mostrase
+  un numero equivocado (mayor) de helpers.
+
+* 2002/10/01 jcea@argo.es            (u2.10.H.06.01)              CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".

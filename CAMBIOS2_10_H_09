@@ -1,0 +1,156 @@
+$Id: CAMBIOS2_10_H_09,v 1.15 2004/03/30 10:29:59 jcea Exp $
+
+* 2004/02/04 jcea@argo.es            (u2.10.H.09.01)              CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2004/02/05 jcea@argo.es            (u2.10.H.09.02)                  FIX
+  -----------------------------------------------------------------------
+  La migracion de cadenas a memoria dinamica sigue dando por saco. En esta
+  ocasion el problema que se soluciona es la entrada de una GLINE para
+  un usuario en proceso de conexion.
+
+* 2004/02/05 ryden@redhispana.org    (u2.10.H.09.03)                  FIX
+  -----------------------------------------------------------------------
+  Migramos todos los "xptr->name" dentro de las funciones que recorren la
+  lista global de usuarios al sistema de PunteroACadena().
+
+* 2004/02/06 ryden@redhispana.org    (u2.10.H.09.04)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza del chanchullo del not_sender.
+
+* 2004/02/26 mount@irc-dev.net       (u2.10.H.09.05)                  FIX
+  -----------------------------------------------------------------------
+  El viejo problema de chkconf.c ha sido arreglado:
+  
+  >>>
+  chkconf.c:67: redefinition of `struct Client'
+  <<<
+
+  Bajo ciertas circunstancias, se incluía include/struct.h, que tiene
+  la estructura Client declarada, para su uso interno en el ircd.
+
+  He solventado el problema excluyendo include/s_debug.h de
+  include/h.h, que era cargado por chkconf.c. Ahora "s_debug.h", se
+  carga independientemente.
+
+* 2004/03/11 n3tkat@9power.org       (u2.10.H.09.06)                  FIX
+  -----------------------------------------------------------------------
+  Modificacion para que compile correctamente en Mac OS X. Probado
+  satisfactoriamente en un PowerMac G4 con Mac OS X 10.3 y XCode 1.1
+
+* 2004/03/12 jcea@argo.es            (u2.10.H.09.07)              CLEANUP
+  -----------------------------------------------------------------------
+  "make depend".
+
+* 2004/03/12 abor@irc-dev.net        (u2.10.H.09.08)                  FIX
+  -----------------------------------------------------------------------
+  Se añade a la información horaria que se envia en el /MOTD el timezone.
+
+* 2004/03/12 jcea@argo.es            (u2.10.H.09.09)                  FIX
+  -----------------------------------------------------------------------
+  El parche anterior no compila correctamente bajo todos los sistemas
+  operativos. Reutilizo la funcion "date" en "s_misc.c", que hace
+  justo lo que quiero de forma portable.
+
+  Adicionalmente hago limpieza de la gestion de tiempos del MOTD.
+
+  Adicionalmente el parche anterior se dejo un caso sin cambiar.
+
+* 2004/03/12 n3tkat@9power.org       (u2.10.H.09.10)              CLEANUP
+  -----------------------------------------------------------------------
+  Eliminamos el uso de "simular_registado" en "make_virtualhost()" y
+  solucionamos el bug para el que se puso de otra manera.
+
+
+* 2004/03/12 mount@irc-dev.net       (u2.10.H.09.11)              FEATURE
+  -----------------------------------------------------------------------
+  Efecto instantáneo del "stuff" de BDD_OPERDB, por lo tanto:
+
+  - Si se recibe un registro de BDD_OPERDB:
+  
+    * Se comprueba que sea mayor que 5.
+    * Se comprueba que el nick esté conectado.
+    * Se comprueba que el nick tenga +r.
+    * Se le dá +h.
+
+  - Si se recibe un dropado de BDD_OPERDB:
+  
+    * Se comprueba que el nick esté conectado.
+    * Se quita +h.
+
+  También declaramos 'extern' la función send_umodes_out(), para
+  poder usarlo desde s_bdd.c. Lo anoto para que se tenga en cuenta.
+
+* 2004/03/12 jcea@argo.es            (u2.10.H.09.12)                  FIX
+  -----------------------------------------------------------------------
+  El parche anterior es incorrecto, porque no tiene en cuenta la
+  posibilidad de que llegue un borrado por BDD para un usuario sin "+h",
+  o que llegue una nnueva alta por la BDD para un usuario que YA
+  tenga "+h".
+
+* 2004/03/17 jcea@argo.es            (u2.10.H.09.13)                  FIX
+  -----------------------------------------------------------------------
+  Solucionamos otra causa de "core dump" tras la migracion
+  a memoria dinamica.
+
+* 2004/03/22 jcea@argo.es            (u2.10.H.09.14)              FEATURE 
+  -----------------------------------------------------------------------
+  Actualizamos la libreria ZLIB a la version 1.2.1.
+
+* 2004/03/22 jcea@argo.es            (u2.10.H.09.15)              CLEANUP
+  -----------------------------------------------------------------------
+  An~ado un ".cvsignore" en "zlib".
+
+* 2004/03/22 jcea@argo.es            (u2.10.H.09.16)              CLEANUP
+  -----------------------------------------------------------------------
+  Cuando hacemos un "make clean", elimina tambien los ficheros de
+  parches inaplicables (los "*.rej").
+
+* 2004/03/22 jcea@argo.es            (u2.10.H.09.17)              CLEANUP
+  -----------------------------------------------------------------------
+  An~adimos "Makefile" y "zconf.h" al ".cvsignore" de la libreria ZLIB.
+
+* 2004/03/22 mount@irc-dev.net       (u2.10.H.09.18)                  FIX
+  -----------------------------------------------------------------------
+  Cuando se hacía 'make clean', './configure' y 'make', la ZLIB se
+  compilaba antes del 'make config'.
+
+* 2004/03/22 jcea@argo.es            (u2.10.H.09.19)                  FIX
+  -----------------------------------------------------------------------
+  El parche anterior requiere "bash". Mejoro su compatibilidad con
+  otros "shells".
+
+* 2004/03/24 n3tkat@9power.org       (u2.10.H.09.20)                  FIX
+  -----------------------------------------------------------------------
+  Soluciono un fallo introducido en u2.10.H.08.91 por el que si un nodo
+  hacia un cambio de modos a un canal moria el ircd.
+
+* 2004/03/25 jordi@jrom.net          (u2.10.H.09.21)              CLEANUP
+  -----------------------------------------------------------------------
+  Nombre de la red en un define para que solo se requiera una
+  modificación al cambiar el nombre a la red.
+
+* 2004/03/25 jcea@argo.es            (u2.10.H.09.22)              CLEANUP
+  -----------------------------------------------------------------------
+  "make depend" para el parche anterior.
+
+* 2004/03/25 jcea@argo.es            (u2.10.H.09.23)                  FIX
+  -----------------------------------------------------------------------
+  Solucionamos otra causa de "core dump" tras la migracion
+  a memoria dinamica. En esta ocasion podemos matar un servidor
+  haciendo un "rehash" con usuarios conectando que se ven
+  afectados por una k-line o g-line.
+
+* 2004/03/25 jcea@argo.es            (u2.10.H.09.24)                  FIX
+  -----------------------------------------------------------------------
+  Idem el parche anterior, pero para el caso en el que el servidor
+  se compile con la opcion de "R-LINES". Es una opcion no usada
+  en IRC-Hispano y no se ha probado mucho.
+
+* 2004/03/25 jcea@argo.es            (u2.10.H.09.25)              CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de codigo si se compila el IRCD con la opcion de "R-LINES".
+
+  Es una opcion no usada en IRC-Hispano y no se ha probado mucho.
+

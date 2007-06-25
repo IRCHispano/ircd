@@ -1,0 +1,625 @@
+$Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
+
+* 2002/07/12 nikolas@irc-dev.net    (u2.10.H.04.81)               CLEANUP
+  -----------------------------------------------------------------------
+  Quitamos, en los ficheros de configuracion, varias referencias al IRCD
+  de Undernet, y ponemos las de Hispano.
+
+* 2002/07/09 nikolas@irc-dev.net    (u2.10.H.04.80)               CLEANUP
+  -----------------------------------------------------------------------
+  En el "ping timeout" inicial, cuando un usuario se conecta pero no
+  completa el "handshake", en vez de mandarlo al ftp de Undernet, lo
+  mandamos al ftp de www.irc.org.
+
+* 2002/07/09 jcea@argo.es           (u2.10.H.04.79)                   FIX
+  -----------------------------------------------------------------------
+  Releer las bases de datos puede llevar un buen ratillo, asi que
+  es conveniente poner un "now=time()" al final, para que el reloj
+  no se desajuste, especialmente si, a continuacion, se intenta
+  hacer un NETJOIN.
+
+* 2002/07/09 jcea@argo.es           (VIP39 - u2.10.H.04.78)           FIX
+  -----------------------------------------------------------------------
+  En el parche VIP38 (u2.10.H.04.73), si el usuario no es local,
+  hace caso al modo "+x" si lo tiene.
+
+* 2002/07/09 jcea@argo.es           (u2.10.H.04.77)                   FIX
+  -----------------------------------------------------------------------
+  El parche original de normalizacion de claves de busqueda en la BDD
+  tenia un BUG muy gordo, que es intentar usar la clave antes de que
+  se haya definido siquiera.
+
+* 2002/07/09 jcea@argo.es           (u2.10.H.04.76)               CLEANUP
+  -----------------------------------------------------------------------
+  Optimizamos el parche anterior para evitar "malloc()" a menos que
+  sea necesario.
+
+* 2002/07/09 nikolas@irc-dev.net    (u2.10.H.04.75)               CLEANUP
+  -----------------------------------------------------------------------
+  Cuando usamos DBQ, en el resultado mostrado, aunque no exista, no esté
+  residente o no se tengan privilegios para ello, se imprime la clave
+  normalizada.
+
+* 2002/07/09 nikolas@irc-dev.net    (u2.10.H.04.74)               CLEANUP
+  -----------------------------------------------------------------------
+  Cuando alguien se cae por PING TIMEOUT, no ponemos "ping timeout for
+  nick", que es redundante, sino "ping timeout" a secas.
+
+* 2002/07/09 jcea@argo.es           (VIP38 - u2.10.H.04.73)       FEATURE
+  -----------------------------------------------------------------------
+  Podemos configurar el servidor para que solo interprete el modo "+x"
+  si el nick aparece en la tabla "v" o "w". Esto es un pseudoapaño para
+  mi sistema de túneles. Habría que afinarlo mejor.
+
+* 2002/07/09 jcea@argo.es           (VIP37 - u2.10.H.04.72)           FIX
+  -----------------------------------------------------------------------
+  En los nodos compilados sin soporte +x para todo el mundo, debe
+  permitirse el +x si el nick esta en la tabla "w", no solo
+  en la tabla "v".
+
+* 2002/06/26 jcea@argo.es           (u2.10.H.04.71)               CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2002/06/26 jcea@argo.es           (u2.10.H.04.70)               CLEANUP
+  -----------------------------------------------------------------------
+  Soporte para "indent" version 2.2.8.
+
+* 2002/06/25 jcea@argo.es           (u2.10.H.04.69)               FEATURE
+  -----------------------------------------------------------------------
+  Bajo ciertas circunstancias, un "CREATE" se transforma en un "JOIN" por
+  el camino. Nos aseguramos de que dicha transformacion sea P10 para
+  los nodos que soporten P10.
+
+* 2002/06/24 jcea@argo.es           (u2.10.H.04.68)                   FIX
+  -----------------------------------------------------------------------
+  A ver si con este parche el calculo del HASH global de todas las BDD
+  funciona correctamente tambien bajo plataformas 64 bits, concretamente
+  Alpha.
+
+* 2002/06/24 jcea@argo.es           (VIP36 - u2.10.H.04.67)           FIX
+  -----------------------------------------------------------------------
+  Detalle cosmetico en las IPs virtuales personalizadas.
+
+* 2002/06/24 jcea@argo.es           (DB94 - u2.10.H.04.66)        FEATURE
+  -----------------------------------------------------------------------
+  Un "stats b" muestra las tablas residentes, AUNQUE no tengan ningun
+  registro.
+
+* 2002/06/24 jcea@argo.es           (VIP35 - u2.10.H.04.65)           FIX
+  -----------------------------------------------------------------------
+  Si no hay clave de cifrado, lo indica claramente aunque el usuario este
+  presente en la nueva tabla 'w'.
+
+* 2002/06/24 jcea@argo.es           (VIP34 - u2.10.H.04.64)       FEATURE
+  -----------------------------------------------------------------------
+  Creo una tabla nueva, la "w". Los usuarios +r con entradas en esta tabla
+  disfrutan de una IP personalizada del tipo
+
+  XXXXXX.YYYYYY.LO_QUE_QUIERAS.virtual
+
+  en vez del normal
+
+  XXXXXX.YYYYYY.virtual.
+
+* 2002/06/24 jcea@argo.es           (u2.10.H.04.63)               CLEANUP
+  -----------------------------------------------------------------------
+  Cambio el nombre de la base de datos distribuida 'v', para evitar
+  confusiones con la inminente tabla nueva "w".
+
+* 2002/06/24 jcea@argo.es           (u2.10.H.04.62)                   FIX
+  -----------------------------------------------------------------------
+  El servidor falla si el que hace el KICK es un nodo, no un usuario.
+
+  Problema diagnosticado por Amn3s1a, NiKoLaS y Zoltan.
+
+* 2002/06/21 jcea@argo.es           (u2.10.H.04.61)                   FIX
+  -----------------------------------------------------------------------
+  Solucionado un problemilla en casos extremos y servidores P09.
+
+* 2002/06/21 jcea@argo.es           (u2.10.H.04.60)               FEATURE
+  -----------------------------------------------------------------------
+  A los nodos P10 enviamos
+
+    "numeric_origen PART #canal[,#canal] [:comentario]"
+
+  en vez del antiguo
+
+    ":nick_origen PART #canal[,#canal] [:comentario]"
+
+  Bajo ciertas condiciones, se sigue enviando el PART antiguo. En particular,
+  cuando llega un "JOIN 0". ¿Esto solo se enviaria a clientes?
+
+* 2002/06/21 jcea@argo.es           (u2.10.H.04.59)               FEATURE
+  -----------------------------------------------------------------------
+  A los nodos P10 enviamos
+
+    "numeric_origen JOIN #canal[,#canal] [clave o TS[,clave o TS]]"
+
+  en vez del antiguo
+
+    ":nick_origen JOIN #canal[,#canal] [clave o TS[,clave o TS]]"
+
+  Bajo ciertas condiciones, un CREATE se transforma en un "JOIN", y lo
+  hace segun el formato antiguo.
+
+* 2002/06/21 jcea@argo.es           (u2.10.H.04.58)               FEATURE
+  -----------------------------------------------------------------------
+  A los nodos P10 enviamos
+
+    "numeric_origen KICK #canal numeric_afectado [:texto]"
+
+  en vez del antiguo
+
+    ":nick_origen KICK #canal numeric_afectado [:texto]"
+
+* 2002/06/19 nikolas@irc-dev.net    (u2.10.H.04.57)               CLEANUP
+  -----------------------------------------------------------------------
+  Modificacion del Makefile.in para que el Makefile compruebe que, tanto
+  para 'make config', 'make' y 'make install' se use un make GNU. Mas
+  sintaxis de 'make'.
+
+* 2002/06/18 nikolas@irc-dev.net    (u2.10.H.04.56)               CLEANUP
+  -----------------------------------------------------------------------
+  En el Makefile.in, se quitan algunas referencias aisladas a 'make' y se
+  usa la variable correcta para ello.
+
+* 2002/06/18 nikolas@irc-dev.net    (u2.10.H.04.56)               CLEANUP
+  -----------------------------------------------------------------------
+  En el Makefile.in, se quitan algunas referencias aisladas a 'make' y se
+  usa la variable correcta para ello.
+
+* 2002/06/18 nikolas@irc-dev.net    (u2.10.H.04.55)               CLEANUP
+  -----------------------------------------------------------------------
+  Deshago el parche anterior en aras de evitar la "tonteria extrema" de
+  alguien que, a pesar de los avisos del configure, insista en compilar
+  con un make no-GNU.
+
+* 2002/06/17 nikolas@irc-dev.net    (u2.10.H.04.54)               CLEANUP 
+  -----------------------------------------------------------------------
+  Se modifica el configure para que se asegure de que el make por
+  defecto del sistema sea GNU. Si no lo es, busca el gmake, y nos informa
+  de ello al finalizar el configure.
+
+* 2002/06/13 zoltan@irc-dev.net    (VIP33 - u2.10.H.04.53)            FIX
+  -----------------------------------------------------------------------
+  La cache del virtualhost, ha de borrarse despues de mandar un
+   :nick_antiguo!user@QwErTy:AsDfGh.virtual NICK nick_nuevo
+  que si se mandaba antes, al mandar el cambio de nick, se rellenaba otra
+  vez la cache con el vhost antiguo, y se mostraba el vhost antiguo en
+  acciones como la de notificacion de watch, antes de limpiar otra vez la
+  cache al recibir los modos en los usuarios remotos.
+
+* 2002/06/13 daijo@irc-dev.net     (u2.10.H.04.52)                CLEANUP
+  -----------------------------------------------------------------------
+  Dos "features" mas en la lista de features del 005:
+
+    - FNC (Forced Nick Changes): El servidor puede cambiar el nick sin
+      necesidad que el cliente mande un NICK. Lo hace con un RENAME.
+    - SAFELIST: El servidor manda la lista de canales (/LIST) en
+      multiples iteraciones con una cola, asi no satura la conexion al
+      usuario. 
+
+* 2002/06/13 zoltan@irc-dev.net    (u2.10.H.04.51)                FEATURE
+  -----------------------------------------------------------------------
+  Se implementa soporte de nicks prohibidos (forbid), si la clave
+  encriptada de un nick, contiene un '*' al final, el nick esta en estado
+  prohibido y no se podra poner el nick aunque conozcas la clave.
+
+* 2002/06/13 daijo@irc-dev.net     (u2.10.H.04.50)                CLEANUP
+  -----------------------------------------------------------------------
+  En el 005, se corrige CHARSET ya desfasado por CHARMAPPING. Tambien se
+  escribe completamente CHANNELLEN en lugar de su abreviacion CHANLEN.
+
+* 2002/06/11 nikolas@irc-dev.net   (u2.10.H.04.49)                CLEANUP
+  -----------------------------------------------------------------------
+  Correccion gramatical de los mensajes en las g-lines.
+
+* 2002/06/11 zoltan@irc-dev.net    (u2.10.H.04.48)                FEATURE
+  -----------------------------------------------------------------------
+  En los notices de las GLINE's cuando se agregan o se cambia la
+  expiracion, aparece el tiempo en formato "humano".
+
+* 2002/06/11 zoltan@irc-dev.net    (W8 - u2.10.H.04.47)               FIX
+  -----------------------------------------------------------------------
+  Se cambia de sitio la funcion chequea_estado_watch() en los casos de un
+  cambio de nick. El nick anterior, se avisa antes de que el nick pierda
+  los modos y el borrado de su cache de virtualhost, antes lo mandaba
+  despues de perder los modos y la cache y esto es incorrecto. Y solo
+  manda si es un usuario con conexion registrada.
+  Y el nick nuevo, ahora avisa despues de los modos, y solo si es un
+  usuario.
+
+* 2002/05/30 jcea@argo.es          (TS6 - u2.10.H.04.46)          CLEANUP
+  -----------------------------------------------------------------------
+  Ortografia.
+
+* 2002/05/30 jcea@argo.es          (TS5 - u2.10.H.04.45)              FIX
+  -----------------------------------------------------------------------
+  Las notificaciones las debe enviar tambien a los OPs locales, no solo
+  a los remotos...
+
+* 2002/05/30 jcea@argo.es          (TS4 - u2.10.H.04.44)              FIX
+  -----------------------------------------------------------------------
+  El parche original de TS es incorrecto, ya que solo debe comprobarse
+  el TS de los enlaces directos locales, no los de toda la red.
+
+* 2002/05/30 jcea@argo.es          (W7 - u2.10.H.04.43)               FIX
+  -----------------------------------------------------------------------
+  Bajamos el MAXWATCH por defecto de 128 a 96 entradas, para evitar
+  problemas con el CLIENT_FLOOD.
+
+  Ademas, no nos deja compilar el codigo si CLIENT_FLOOD y MAXWATCH son
+  mas o menos incompatibles. Los detalles son truculentos. Ver los
+  comentarios en "ircd/m_watch.c".
+
+* 2002/05/30 jcea@argo.es          (TS3 - u2.10.H.04.42)              FIX
+  -----------------------------------------------------------------------
+  Cuando un nodo aborta el establecimiento de un enlace con otro, debido
+  a excesivas diferencias de tiempo, informa a toda la red, no solo a los
+  OPs locales a ese nodo.
+
+* 2002/05/30 jcea@argo.es          (TS2 - u2.10.H.04.41)          CLEANUP
+  -----------------------------------------------------------------------
+  Un par de retoques al parche anterior.
+
+* 2002/05/29 zoltan@irc-dev.net    (TS1 - u2.10.H.04.40)          FEATURE
+  -----------------------------------------------------------------------
+  No permite que dos nodos se conecten si el desfase de tiempos entre
+  ellos es mayor de 30 segundos. !!Para algo existe NTP!!.
+
+* 2002/05/29 zoltan@irc-dev.net    (W6 - u2.10.H.04.39)           CLEANUP
+  -----------------------------------------------------------------------
+  Se deshabilita la feature de que al hacer un "WATCH S" nos diga el
+  numero de gente que nos tiene en sus notifys.
+  Se mantiene el codigo en las fuentes.
+
+* 2002/05/21 zoltan@irc-dev.net    (u2.10.H.04.38)                CLEANUP
+  -----------------------------------------------------------------------
+  Si se pone un valor en el MAXWATCH (maximo de entradas en la lista de
+  WATCH) fuera del rango 32-256 dara un error.
+
+* 2002/05/21 zoltan@irc-dev.net    (u2.10.H.04.37)                FEATURE
+  -----------------------------------------------------------------------
+  Un /VERSION nos dara informacion del valor de CLIENT_FLOOD y si WATCH
+  esta activado, las entradas maximas permitidas.
+
+* 2002/05/20 jcea@argo.es          (u2.10.H.04.36)                    FIX
+  -----------------------------------------------------------------------
+  Cuando un nodo envia el primer "SERVER" al establecer un enlace,
+  envia correctamente el prefijo.
+
+  Problema detectado a traves de Olimpo.
+
+* 2002/05/20 jcea@argo.es          (u2.10.H.04.35)                    FIX
+  -----------------------------------------------------------------------
+  Cuando un nodo envia la clave de enlace a otro,
+  envia correctamente el prefijo.
+
+  Problema detectado a traves de Olimpo.
+
+* 2002/05/20 zoltan@irc-dev.net    (u2.10.H.04.34)                    FIX
+  -----------------------------------------------------------------------
+  En el parche u2.10.H.04.04, se ha omitido, por error, el mandar el
+  notice de autentificacion cuando un nick entra en la red. Tambien
+  se retoca el parche u2.10.H.02.25, cambiando parv[0] por sptr->name,
+  teniendo en cuenta que esta dentro de un "if (sptr->name[0])". Asi nos
+  curamos en salud.
+
+* 2002/05/20 zoltan@irc-dev.net    (u2.10.H.04.33)                FEATURE
+  -----------------------------------------------------------------------
+  Se mete WATCH en el 005, asi, los clientes de IRC detectan el comando
+  WATCH y lo utilizaran en detrimento del ISON.
+
+* 2002/05/20 zoltan@irc-dev.net    (W5 - u2.10.H.04.32)           FEATURE
+  -----------------------------------------------------------------------
+  Nuevos parametros soportados para el WATCH.
+      WATCH S/s  Da el estado del notify, nos dice cuantos nicks tenemos
+                 en el notify, asi como el numero de gente del mismo
+                 servidor que nos tienen en sus notifys.
+                 Tambien devuelve la lista de usuarios que estan en el
+                 notify como si un ISON se tratase, pero de toda la gente.
+
+      WATCH l    Lista los usuarios on-line de tu lista de notify.
+      WATCH L    Lita tanto los off-line como on-line de la lista.
+      WATCH      Hace lo mismo que un WATCH l.
+
+* 2002/05/20 zoltan@irc-dev.net    (W4 - u2.10.H.04.31)           FEATURE
+  -----------------------------------------------------------------------
+  Se define la funcion externa chequea_estado_watch() para los 
+  seguimientos de nicks cuando un nick entra/sale en la red.
+
+  Al entrar/salir un nick de la red, se mira en la lista aWatch si esta o
+  no, en el caso de que esta en la lista, manda a todos los usuarios que
+  lo tengan en sus notifys un RPL_LOGON si se trata de una entrada o un
+  RPL_LOGOFF en el caso de una salida.
+
+* 2002/05/20 zoltan@irc-dev.net    (W3 - u2.10.H.04.30)           FEATURE
+  -----------------------------------------------------------------------
+  Implementa el comando WATCH. Las sintaxis son las siguientes:
+      WATCH +nick   Agrega un nick
+      WATCH -nick   Borra un nick
+      WATCH C/c     Resetea la lista.
+
+  Los parametros se pueden combinar, es decir, WATCH C +nick1 +nick2 -nick2
+  Se pueden separar los parametros por " " o "," o ambos.
+
+* 2002/05/20 zoltan@irc-dev.net    (W2 - u2.10.H.04.29)           FEATURE
+  -----------------------------------------------------------------------
+  Se introducen en el codigo los numericos relacionados con el WATCH. Son
+  los siguientes:
+    512 ERR_TOOMANYWATCH   "%s :Maximum size for WATCH-list is %d entries"
+    600 RPL_LOGON          "%s %s %s %ld :logged online"
+    601 RPL_LOGOFF         "%s %s %s %ld :logged offline"
+    602 RPL_WATCHOFF       "%s %s %s %ld :stopped watching"
+    603 RPL_WATCHSTAT      ":You have %d and are on %d WATCH entries"
+    604 RPL_NOWON          "%s %s %s %ld :is online"
+    605 RPL_NOWOFF         "%s %s %s %ld :is offline"
+    606 RPL_WATCHLIST      ":%s"
+    607 RPL_ENDOFWATCHLIST ":End of WATCH %c"
+
+  Para enviar raws del rango 600-607, se ha definido la funcion externa
+  watch_str.
+
+* 2002/05/20 zoltan@irc-dev.net    (W1 - u2.10.H.04.28)           FEATURE
+  -----------------------------------------------------------------------
+  Primer parche de implementacion del comando WATCH.
+  La activacion es opcional y es configurable en el "make config", asi
+  como el numero maximo de entradas en la lista de WATCH. La activacion
+  o desactivacion queda reflejado como W1+ o W1- respectivamente, en el
+  /VERSION.
+
+  En include/list.h se define un struct Watch para la lista de los nicks
+  que estan en al menos 1 notify de los clientes:
+     struct Watch {
+       struct Watch *next;
+       struct SLink *watch;  /* Cadena de punteros a lista aClient */
+       char *nick;           /* Nick */
+       time_t lasttime;      /* TS de ultimo cambio de estado del nick */
+     };
+  El "struct SLink *watch" apunta a una cadena de punteros donde apuntan
+  a las listas aClient de los usuarios que tienen en sus notifys a un
+  determinado nick.
+  
+  Y un nuevo campo en el "struct SLink", el aWatch (se define en h.h, es
+  un typedef a struct Watch), que apunta desde SLink a la lista aWatch. Y
+  aprovechamos el aClient que hay, para apuntar a los usuarios.
+
+  En include/struct.h, se definen 2 nuevos campos en el struct User:
+     struct SLink *watch;
+     int cwatch;
+  El struct SLink *watch, es para apuntar a los nicks que estan en aWatch,
+  asi sabemos que nicks tienen metidos en los notifys de los usuarios. El
+  otro, cwatch, es para contar las entradas que tiene un usuario en su
+  lista de watch.
+
+  Para manejar la lista de watch, se ordenan los nicks alfabeticamente
+  mediante HASH. Se definen 3 funciones externas en ircd/hash.c:
+     int hAddWatch(aWatch *wptr);    Para agregar un watch en la lista.
+     int hRemWatch(aWatch *wptr);    Para borrar un watch de la lista.
+     aWatch *hSeekWatch(char *nick); Para buscar un watch.
+  En include/hash.h, se define un macro, el FindWatch(nick), para buscar
+  un nick de la lista de Watch.
+
+  En ircd/list.c, se definen 2 funciones externas para crear y borrar
+  entradas en la lista de watch reservando o liberando memoria segun el
+  caso:
+     aWatch *make_watch(char *nick); Para reservar una entrada.
+     void free_watch(aWatch *wptr);  Para borrar una entrada.
+
+* 2002/05/20 zoltan@irc-dev.net    (u2.10.H.04.27)               CLEANUP
+  ----------------------------------------------------------------------
+  Se cambia el numerico del "ERR_NOSUCHGLINE" del 512 al 514, ya que el
+  WATCH utiliza el 512 para avisar de lista de watch llena.
+
+* 2002/05/20 zoltan@irc-dev.net    (u2.10.H.04.26)                   FIX
+  ----------------------------------------------------------------------
+  16/May/02
+  Los comandos que requieren privilegios especiales, deberian
+  comprobar dichos privilegios antes de quejarse de cosas
+  como que faltan parametros.
+
+  Ejemplos: "kill" y "wallops".
+
+* 2002/05/20 zoltan@irc-dev.net    (u2.10.H.04.25)                   FIX
+  ----------------------------------------------------------------------
+  Los notices de autentificacion, mandaban al nick nuevo cuando el
+  servidor aun no ha cambiado el nick. Se cambia, para que mande el
+  notice al nick actual del usuario.
+
+  Ejemplo:
+  NICK zoltan
+  :nick2!-@- NOTICE zoltan :*** Contraseña aceptada. Bienvenid@ a casa ;)
+  :Melange!~zolty@DKs0ce.ConlBw.virtual NICK :zoltan
+
+  Y deberia ser:
+  NICK zoltan
+  :nick2!-@- NOTICE Melange :*** Contraseña aceptada. Bienvenid@ a casa ;)
+  :Melange!~zolty@DKs0ce.ConlBw.virtual NICK :zoltan
+
+* 2002/05/09 zoltan@irc-dev.net    (u2.10.H.04.24)                   FIX
+  ----------------------------------------------------------------------
+  Corregido un bug cosmetico, que si hacias /silence <nuestro_nick>,
+  salia el error de "You can't see another user silence list", cuando
+  debe mostrar la lista de silences.
+
+* 2002/05/09 jcea@argo.es          (DB93 - u2.10.H.04.23)         FEATURE
+  -----------------------------------------------------------------------
+  Cuando se pide un HASH remoto de base de datos, para
+  verificar su integridad, deberia existir alguna manera de
+  obtener un hash de todas las BD de forma conjunta, para saber
+  enseguida si un servidor tiene alguna mal o no, sin tener
+  que consultar las 26.
+
+* 2002/04/25 zoltan@irc-dev.net    (u2.10.H.04.22)                CLEANUP
+  -----------------------------------------------------------------------
+  Ahora que todos los nodos estan actualizados a u2.10.H.04.20 o superior,
+  hacemos limpieza del codigo que quedaba de "-r+r" en el cambio de
+  nicks equivalentes.
+
+* 2002/04/22 zoltan@irc-dev.net    (u2.10.H.04.21)                FEATURE
+  -----------------------------------------------------------------------
+  Ya que el IRCD de Hispano te avisa con notices cuando estas silenciando
+  por un usuario, eliminamos la posibilidad de ver la lista de silences
+  de los otros usuarios por privacidad.
+  Se ha an~adido un nuevo error con el numerico 494 (ERR_SILECANTBESHOWN)
+  con el mensaje "You can't see another user silence list".
+
+* 2002/04/19 zoltan@irc-dev.net    (u2.10.H.04.20)                    FIX
+  -----------------------------------------------------------------------
+  Parche temporal de -r+r.
+  Lo que hace es en caso de cambio de nick equivalente, es que no mande
+  -r/-S (-rh si es un oper, o -rx si esta en un nodo sin VIP2)
+  pero SI un +r/+S (+rh si es un oper), ya que un nodo con version
+  anterior, siempre hara un -r/-S, entonces tenemos que mandar +r/+S, y 
+  segun el caso +h y +x tambien, a la fuerza por compatibilidad.
+
+  El efecto es que un usuario cuando hace un cambio de nick equivalente
+  vera un +r, ya que al no mandar un -r, fuerzo a mandar los modos
+  hispano (hmode) que tiene. Es solo temporal.
+
+* 2002/04/18 jcea@argo.es          (u2.10.H.04.19)                    FIX
+  -----------------------------------------------------------------------
+  Deshago el parche anterior. Los parches originales de Amn3s1a
+  son incorrectos.
+
+* 2002/04/18 jcea@argo.es          (u2.10.H.04.18)                CLEANUP
+  -----------------------------------------------------------------------
+  Ahora que todos los nodos estan actualizados a u2.10.H.04.00 o superior,
+  hacemos limpieza del codigo que quedaba de "-r+r" en el cambio de
+  nicks equivalentes.
+
+* 2002/04/18 jcea@argo.es          (u2.10.H.04.17)                CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2002/04/18 jcea@argo.es          (u2.10.H.04.16)                CLEANUP
+  -----------------------------------------------------------------------
+  Bajamos la longitud maxima del nombres de los canales de 200 a 64
+  caracteres.
+
+* 2002/04/17 jcea@argo.es          (u2.10.H.04.15)                CLEANUP
+  -----------------------------------------------------------------------
+  El parche anterior define un macro MAXLEN, pero luego solo lo usa
+  para comprobar taman~os, no para reservar memoria.
+
+* 2002/04/17 zoltan@irc-dev.net    (u2.10.H.04.14)                FEATURE
+  -----------------------------------------------------------------------
+  25/Mar/02
+  En las GLINES debe aparecer el tiempo de expiracion,
+  tanto en TimeStamp como en formato "humano".
+
+  Eso para el comando "/gline" como para los
+  mensajes de salida del usuario afectado.
+  Tambien para el comando "/stats g".
+
+  Asi mismo se arregla un bug, que si sabes una mascara, podias hacer un
+  "/gline mascara" y te daba el motivo y la expiracion sin necesidad de
+  ser Ircop o Helper.
+
+* 2002/04/17 zoltan@irc-dev.net    (u2.10.H.04.13)                    FIX
+  -----------------------------------------------------------------------
+  Se arregla el parche del /OPER (u2.10.H.03.38).
+
+  En class.c modifico las funciones get_client_class() y get_sendq() para
+  que pillen el id de clase y el maximo de sendq de la nueva clase 
+  respectivamente. Se imita al funcionamiento de get_client_ping() ya que
+  actualizaba correctamente mientras que los otros no.
+
+  En s_user.c, en la funcion m_oper(), hago un "detach_conf" y luego un
+  "attach_conf" con la nueva clase para pillar los nuevos sendq, ping y
+  id de clase.
+ 
+  Cuando se hace un mode -o, mantienes en la misma clase.
+  
+* 2002/04/17 zoltan@irc-dev.net    (u2.10.H.04.12)                FEATURE
+  -----------------------------------------------------------------------
+  17/Ago/00
+  Cuando la clase de IRCops esta lleno, que no salga
+  un error de "no O-Line", sino de "class full".
+
+  Ademas de esto, aprovecho para meter tambien el error de "class
+  no-existent" para el parche del /oper.
+  Se escogen los numericos raw 492 y 493 que estan libres para introducir
+  los nuevos errores.
+  
+   492  ERR_OPERCLASSFULL "Class %d is full!"
+   493  ERR_NOOPERCLASS   "Class %d non-existent"
+
+* 2002/04/17 zoltan@irc-dev.net    (u2.10.H.04.11)                CLEANUP
+  -----------------------------------------------------------------------
+  Se limpian las partes del parche u2.10.H.03.38 que no tienen ninguna
+  utilidad.
+
+* 2002/04/15 daijo@irc-dev.net     (u2.10.H.04.10)                FEATURE
+  -----------------------------------------------------------------------
+  Se introduce "CHANLEN" al numeric 005 de RPL_ISUPPORT. Es la longitud
+  maxima del nombre de canal.
+
+* 2002/04/12 zoltan@irc-dev.net    (u2.10.H.04.09)                    FIX
+  -----------------------------------------------------------------------
+  Al cambiar de directorio del programa de encriptado de claves de nick
+  para la DB introducido en la version u2.10.H.04.04, no se ha modificado
+  en el Makefile y en cifranick.c las nuevas rutas, entonces no se podia
+  compilar.
+
+  El nuevo directorio es ircd/crypt/tea/
+
+* 2002/04/12 jcea@argo.es          (u2.10.H.04.08)                    FIX
+  -----------------------------------------------------------------------
+  Si hacemos un cambio entre nicks equivalentes, pero no tenemos
+  modos +r o +S y el nick SI que tiene asociada una clave (por ejemplo,
+  lo acabamos de registrar), nos debe exigir una clave para cambiar a nick
+  equivalente.
+
+* 2002/04/11 jcea@argo.es          (u2.10.H.04.07)                CLEANUP
+  -----------------------------------------------------------------------
+  Permite compilar el server sin soporte de BDD (Base de Datos Distribuida).
+
+* 2002/04/09 zoltan@irc-dev.net    (u2.10.H.04.06)                CLEANUP
+  -----------------------------------------------------------------------
+  Se cambia en los creditos los mails de zoltan y Amn3s1a y se a¤ade dos
+  lineas que pueden encontrar mas informacion sobre el ircd en la web
+  http://www.irc-dev.net
+
+
+* 2002/04/08 zoltan@irc-dev.net    (u2.10.H.04.05)                    FIX
+  -----------------------------------------------------------------------
+  02/Abr/02
+  Problema detectado por "RyDeN":
+
+  mmm, si tienes un nick en la BDD y te lo pones, estando baneado en un
+  canal, te sale el notice de contrase¤a aceptada y luego el raw que
+  deniega el cambio de nick. Queda un poco mal...  
+
+
+* 2002/04/08 zoltan@irc-dev.net    (u2.10.H.04.04)                FEATURE
+  -----------------------------------------------------------------------
+  Por peticion popular, se introduce un programa para encriptar las 
+  claves de los nicks para meterlos en la tabla n del ircd.
+  Esta en la carpeta ircd/tea/ y hay que hacer un "make" dentro del
+  directorio para compilarlo.
+
+  El uso es ./cifranick nick clave  y nos devolvera el nick normalizado
+  y la clave encriptada.
+  
+  He escrito un fichero README con instrucciones para compilar y ejecutar
+  el programa. Esta en el directorio tea
+
+
+* 2002/04/08 jcea@argo.es          (u2.10.H.04.03)                    FIX
+  -----------------------------------------------------------------------
+  Anulo el parche anterior, ya que mata el proceso.
+
+  Si nos damos +o a otra clase, nos quitamos el +o y luego intentamos
+  ponernos +o de nuevo -> el server muere.
+
+* 2002/04/05 amn3s1a@ono.com       (u2.10.H.04.02)                    FIX
+  -----------------------------------------------------------------------
+  Cuando se pierde +o, la clase no cambia, no se recupera la original.
+  Cambios en el parche u2.10.H.04.38.
+
+* 2002/03/20 jcea@argo.es          (u2.10.H.04.01)                CLEANUP 
+  -----------------------------------------------------------------------
+  "make indent".
+

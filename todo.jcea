@@ -1,0 +1,654 @@
+$Id: todo.jcea,v 1.357 2003/11/12 15:54:23 jcea Exp $
+
+11/Jul/03
+El campo de "nick" ocupa 64 bytes. Optimizar eso.
+Slab Allocator?
+
+20/Jun/03
+Cuando se propaga un borrado de BDD, habria que hacer un
+gran esfuerzo por intentar propagar el borrado al resto
+de nodos antes de cortar los enlaces. Eso se puede hacer
+con las funciones de "flush" de un socket que da el IRCD.
+
+19/Dic/02
+Definir un nuevo modo de usuario, similar al +i
+pero que no lista canales NO COMUNES con quien
+hace el WHOIS.
+
+Hay que valorar el hecho de que los usuarios conocen
+canales precisamente porque ven los canales de otros
+usuarios...
+
+14/Dic/02
+Dentro de un an~o volver a considerar la opcion de que la tabla
+de "watch" se guarde en la red, en vez de en el cliente.
+
+Puede ser util para usuarios que se conectan desde diferentes
+sitios, o para cubrir la deficiencia del mIRC, que no separa
+los "notify" por redes.
+
+14/Dic/02
+Dentro de un an~o, volver a considerar el comando "/knock", que
+manda un aviso a los operadores de un canal con acceso restringido.
+
+10/Dic/02
+Meditar sobre la conveniencia de migrar las estructuras de compresion
+a "servidores", en vez de a "conexiones locales". Ello ahorraria memoria,
+aunque comprometeria la posibilidad futura de soportar compresion
+con los usuarios.
+
+10/Oct/02
+En el IRCD hay varias secciones marcadas como FIXME o con "#if 0"
+y similares. Hacer limpieza de lo que sobre.
+
+16/Sep/02
+Cuando quitamos a un usuario del WATCH, nos aparece un TimeStamp
+de 1970.
+
+13/Ago/02
+La variable que contiene los modos de usuario esta superpoblada y 
+apenas le queda ya algun bit libre. Habia que mover lo que son
+flags internos del usuario (si se le ha hecho PING o no, si es TS8, etc)
+a una variable separada, preferiblemente que exista SOLO cuando el
+usuario/conexion es local.
+
+05/Ago/02
+Estudiar la conveniencia de que el taman~o del comentario de los
+QUIT y de las GLINES no este vinculado a TOPICLEN. El problema se
+nota cuando un usuario tiene una IP Virtual larga, que se puede
+cortar cuando le cae una GLINE.
+
+29/Jul/02:
+Canal con +n, status del usuario sin +o ni +v, ban al nick unicamente,
+cuando se cambia de nick y se pone otra vez el baneado, puede escribir en el
+canal :)
+
+25/Jul/02
+Cuando alguien se pone +x, deberia salirle publicidad
+de la personalizacion de IPs Virtuales, tomando el
+mensaje directamente de la BDD.
+
+09/Jul/02
+Si se configura el server con "BDD_VIP3", el usuario
+solo deberia poder ponerse el "+x" si el nick
+aparece en la tabla "v" o "w".
+
+Estudiar implicaciones en cosas como cambios de nick.
+
+21/Jun/02
+Comprobar que KICK, JOIN, PART efectivamente son ya
+100% puros.
+
+12/Jun/02
+> /watch L
+>  1 no esta en irc, ultimo paso el Tue May 21 17:30:18 2002
+> 
+> Sin embargo el usuario 1 jamas conecto al irc... propongo que se mande
+> un tiempo 0 tal y como se hace al borrar al usuario de la lista, pero
+> no el momento en que se añadio ese nick al watch.
+
+17/Abr/02
+En varios sitios aparecen numeros como 512, 510, etc., que
+se utilizan como limitadores de la longitud de la linea
+enviada o recibida, etc. Habria que transformar esos numeros
+en un macro usado en todas partes.
+
+Eso incluye el nuevo macro MAXLEN introducido en 2.10.H.04.14.
+
+28/Dic/01
+En los casos en los que no suponga una perdida de rendimiento
+o memoria apreciable, no deberiamos permitir que comandos
+ilegales enviados por otros nodos maten nuestro servidor. Lo mas
+inteligente seria detectar el problema, hacer log y cortar el enlace
+de forma permanente hasta que venga un IRCop y haga un "rehash" manual,
+por ejemplo.
+
+Por ejemplo, el comando ":nombre_del_Servidor join #canal" mata un server.
+
+30/Oct/01
+        Ahora mismo, el raw 319, cuando nos devuelve, al hacer un whois, la lista
+de canales, lo hace mostrando el orden en que hemos entrado a los canales,
+ordenados del mas reciente al primero. Pienso que sería de más utilidad
+tener dicha lista ordenada alfabeticamente, pues a nadie le interesa el
+orden en que uno entra a los canales, pero si puede ser útil tener esa lista
+ordenada alfabeticamente para cuando queremos ver si fulanito está en tal o
+cual canal, y máxime desde que carme y retevision admiten 15 canales a la
+vez para users. Por lo tanto, devolver la lista ordenada sería lo más
+práctico. Para ello, o bien se va reordenando la lista que guarda en memoria
+los canales de cada usuario, cada vez que un usuario entra en un canal, (lo
+que pienso que es gastar cpu y tiempo de ejecución a lo tonto) o,
+simplemente, cuando se va a mostrar esa información, procesarla y devolverla
+ordenada alfabeticamente.
+
+        Saludos,
+
+NiKoLaS
+
+07/Sep/01
+Entrando a traves de un nodo que no tolera el +x, si hago un
+whois a un usuario con IP virtual en la tabla "v", aparece su
+IP virtual "real", no la de la tabla.
+
+Eso pasa para gente que cuando entra lo hace con /nick nick:clave,
+no con /server server puerto clave
+
+Se puede comprobar haciendo un "/who 0 o", habiendo entrado
+por un tunel de Argo.
+
+EXPLICACION ADICIONAL:
+
+Si compilamos un IRCD con "BDD_VIP2   : HISPANO/ESNET: Ocultación de IP de TODOS los usuarios [N/y/?]"
+y "NO", entonces el servidor no permitirá que los usuarios locales se pongan +x, pero si que
+aceptara +x de usuarios de otros nodos de la red.
+
+El problema es que si un usuario conecta y activa su +x una vez
+que ya esta conectado (por ejemplo, porque entro con un nick que no era +r)
+entonces se calculara su IP virtual de forma estandar, y no se mostrara la
+IP virtual que corresponde a ese nick segun la tabla "v", de existir.
+
+Este bug solo es visible cuando el nick al que hacemos "whois"
+tiene una entrada personalizada en la tabla "v".
+
+31/Ago/01
+Si un usuario con IP virtual en tabla "v" entra por un servidor
+que no tolera +x, evidentemente no se vera su IP virtual por BDD.
+
+17/Ago/01
+Dado que la gente es incapaz de trabajar (no digo recordar :-)
+las claves seguras de 12 caracteres del "+r", ademas del problema
+de solo poder usar 64 caracteres y, pero, solo 4 caracteres al
+principio de cada grupo, seria mas interesante que en vez de que
+los usuarios metan la clave directamente, meter un texto largo
+y calcular su HASH. De esa forma es más fácil aprovechar los
+64 bits de verdad, aun con claves relativamente "recordables".
+
+27/Jul/01
+En el MOTD deberia salir una frase al azar, en plan "fortune".
+
+22/Jun/01
+Cuando se compacta la base de datos, debe realizarse en un "thread" o
+proceso aparte, para no dejar de gestionar las conexiones durante
+periodos prolongados. Dicha tarea aparte debe avisar al servidor
+principal de su finalizacion, para que haga un "rehash" y recargue
+la base de datos, incluyendo la validacion de su "hash".
+
+06/Jun/01
+Pensar sobre la conveniencia de que los usuarios
+normales no puedan ver el nodo por el que se
+conecta otro usuario.
+
+Cambiar el "wallops" para que en vez de mandar solo a
+Opers e IRCops, mande a todos los que tienen +w, y restringir
+dicho modo a Opers e IRCops. Esto es mas claro y logico.
+
+17/May/01
+Con u2.10.H.02.44, el modo "+w" es ignorado a menos
+que seamos tambien "+o" o "+h". Lo logico seria que
+el modo "+w" solo se pueda poner si somos "+h" o "+o",
+o que su funcionalidad se pase a una máscara "+s".
+
+26/Abr/01
+El notice que informa del "silence" deberia
+enviarse en la misma rutina que envia el "silence" en
+si, para evitar duplicar codigo.
+
+Ojo cuando se manda un mensaje a varios destinos.
+
+25/Abr/01
+Meter RC4 en el servidor, tanto para los enlaces
+server<->server como server<->cliente.
+
+16/Abr/01
+* 2001/04/16 jcea@argo.es          (Z11 - u2.10.H.02.27)              FIX
+  -----------------------------------------------------------------------
+  Bug comunicado por {^DaNi^}.
+
+  Los contadores de la zlib hace "wrap". Entre otros efectos, el nivel
+  de compresion informado es incorrecto.
+
+  Soluciono el problema manteniendo un contador separado, que se actualiza
+  sumandole el valor de los contadores zlib antes y despues de la llamada,
+  considerando tambien el caso especial del wrapping.
+
+  Observo que la rutina original del IRCD tambien hace wrapping.
+  
+  Ello es visible, por ejemplo, cada 2000 gigas o 2000 millones de
+  mensajes transferidos sin split.
+
+  En IRC-Hispano, a fecha de hoy, supondría tener enlaces sin caidas
+  durante unos ocho meses. Por lo tanto, no me preocupo de este tema
+  de momento...
+
+11/Abr/01
+Por defecto, solo se deberia mostrar canales
+con mas de X usuarios.
+
+22/Mar/01
+Tener un sistema para poder hacer seguimientos
+de cambios de un nick determinado, aunque no
+estemos en un canal comun.
+
+13/Dic/00
+El servidor deberia reconocer un "nick *"
+como una orden para ponerse un nick
+de la forma "invnnnnnn". Esto es util
+para temas como el IRCQ, y demas
+servicios automaticos.
+
+07/Dic/00
+Cuando un usuario cambia de nick, su IP virtual no
+se recalcula.
+
+24/Nov/00
+Con las nuevas reglas de acceso a la BDD, si se an~aden
+nuevas tablas o registros confidenciales, los viejos
+nodos los seguiran mostrando mientras no se actualicen.
+
+14/Nov/00
+El lag calculado para "/map" debe actualizarse
+en mas ocasiones que "CREATE". Por ejemplo, cuando
+entra un nick nuevo, o cuando un usuario cambia de nick.
+
+En general, cuando se mande un "timestamp".
+
+14/Nov/00
+En los nodos sin usuarios no es facil calcular
+el lag. En esos casos es mejor imprimir un "?"
+a imprimir 0 segundos.
+
+17/Oct/00
+En canales con muchos usuarios tenemos dos problemas:
+
+a) La gente se cae por flood cuando el servidor le manda
+   la lista de usuarios del canal.
+
+b) Mucho trafico "espureo" en el canal, con todas
+   las entradas y salidas del mismo.
+
+17/Oct/00
+Un "/list" no deberia sacar un listado extenso de canales.
+De hecho, deberia limitarse el numero de canales mostrados
+por cualquier "list", indicando, en caso preciso, que hay
+mas canales pero se requiere una consulta mas especifica.
+
+El problema es que cuando se busca por "topic" o por
+nombre de canal, por ejemplo, el filtrado en si lo hace
+el cliente, no el servidor!. O eso es lo que pasa en
+el mIRC.
+
+16/Oct/00
+El mensaje de "Too many connections from same IP for *.*.*.*"
+no deberia ser visible para usuarios normales.
+
+15/Oct/00
+Cuando usamos el modo +x en un canal, deberia aparecer
++x-x, para que no quede como "modo" del canal.
+
+Claro que esto tiene la ventaja de que se sabe que
+se ha usado un modo "x" en un canal determinado, porque
+queda constancia. Pero esto solo lo ve la gente que
+estaba en el canal en el momento de usarlo.
+
+05/Oct/00
+Cuando entra en un canal alguien con IP virtual,
+los que no tienen +X reciben la virtual, y los que
+tienen +X DEBERIAN recibir la real.
+
+Ahora mismo todo el mundo recibe la virtual, incluyendo
+la gente con +X. Ello obliga a hacer un WHOIS aparte,
+y puede crear conflictos con los sistemas de cache
+de muchos clientes IRC.
+
+Lo mismo se aplica para privsmg, part, quit, etc.
+
+28/Jun/00
+Eliminar la cache interna del IRCD para DNS.
+
+23/Jun/00
+?Que informacion se guarda en el WHOWAS si un usuario sale
+y nadie en el nodo local le ha hecho un who/whois?
+
+22/Jun/00
+Cuando sabemos que es un usuario, deberia completarse la
+posible negociacion con "REJ".
+
+22/Jun/00
+Si ACK sin REQ previo, cortar enlace.
+
+14/Jun/00
+Si un leaf tiene un numero de serie mayor que su HUB,
+le intenta introducir registros que este ignora. Esto
+supone trafico extra innecesario, y si el leaf tenia
+el grifo abierto -> split.
+
+a) El HUB no debe responder a "B".
+b) En el join, el HUB debe indicar al otro extremo
+   que no va a aceptar registros provenientes de el.
+
+12/Jun/00
+Estudiar la interaccion entre las microrafagas
+y que algunas de las conexiones en modo "microrafaga"
+se corte de forma abrupta antes de cerrar
+la "microrafaga".
+
+04/May/00
+A veces "stats l" filtra informacion sobre
+conexiones de usuarios.
+
+19/Abr/00
+Las GLINEs deberian validarse tambien contra las
+IPs virtuales.
+
+18/Abr/00
+Si se hace un /whois IPvirtual, no dice que este
+conectado, aunque asi sea.
+
+23/Mar/00
+  An~adir una base de datos con clave
+  el nombre de un nodo y valor un mensaje
+  que se muestra a todos los usuarios que se
+  conectan por dicho nodo.
+
+22/Mar/00
+  Se veian las IPs reales en los "notice" que envia el servidor cuando
+  un usuario entra o sale, si se tiene la mascara "+s" apropiada activada.
+
+  La solucion es que ese flag solo este disponible para Helpers e IRCops.
+
+  Se visualiza la IP real cuando un usuario intenta
+  conectar y:
+
+  - La conexion esta prohibida
+  - Demasiadas conexiones para la clase
+  - Demasiadas conexiones para la IP
+
+  Esto se soluciona sin mas que definir esos mensajes
+  como aptos de ser recibidos exclusivamente por IRCops
+  y Helpers
+
+09/Mar/00
+Posibilidad de corromper una base de datos:
+
+Si durante la transferencia de una base de datos se
+detecta que esta corrupta (por ejemplo, porque se
+hace un "rehash" mientras tanto), el nodo borra su BDD
+local, pero le estan llegando registros nuevos, asi que
+perdera los primeros.
+
+El otro extremo no se entera porque no detecta que se le
+ha indicado base de datos corrupta, porque en ese
+momento tiene el grifo cerrado.
+
+Una posibilidad es que cuando se envie el fin de una BDD
+se envie su HASH. Si en el receptor no coinciden, borra
+la BDD y la pide otra vez.
+
+09/Mar/00
+En algunos servidores aparecen algunas lineas en blanco
+en las bases de datos en disco. Creo que mete las lineas
+en blanco al final del fichero, cuando ocurre algo
+"especial", y a medida que se van an~adiendo registros,
+esas lineas acaban por aparecer por medio.
+
+Estudiando el codigo no hay muchas posibilidades. Como
+no sea al compactar...
+
+29/Feb/00
+Peticion de Trebolin.
+Los usuarios con clones deberian poder consultar el numero
+de clones que tienen disponibles, asi como su fecha de
+alta y de expiracion.
+
+21/Feb/00
+Las ILINES deben ser "case insensible", y lo que
+se propaga por base de datos debe ser minusculas.
+Corregir las que ya estan metidas.
+
+18/Feb/00
+Cuando un cliente sale del IRC, se almacena en el WHOWAS
+su IP cifrada si estaba protegido. Los Operadores de la
+red deberian tener acceso tambien a la IP real.
+
+20/Ene/00
+Cuando un usuario con nick registrado se pone un nick
+sin registrar, aparece su IP real. Perfecto. Lo malo
+es que si luego recupera su nick registrado,
+su nick antiguo y su IP real aparecen en un "/whowas".
+
+19/Ene/00
+Verificar que cuando un servidor no inicia una conexion,
+no envia la negociacion de BDD *ANTES* de haber
+recibido la identificacion PASS/SERVER del otro
+extremo.
+
+Ello puede provocar el envio de varios segmentos
+de claves repetidos. El sistema lo descarta
+automaticamente, pero supone un consumo de CPU
+y ancho de banda.
+
+17/Ene/00
+?Cuanto dura una entrada en IPcheck, si el usuario
+no esta conectado?.
+
+10/Ene/00
+No todas las BDD deben normalizarse a minusculas.
+
+10/Ene/00
+Alguna forma para borrar TODAS las bases de datos
+de un nodo determinado.
+
+07/Ene/00
+Cuando se realiza una compactacion de una base de datos,
+debe propagarse tambien su HASH. Si tras compactar la
+base de datos, el HASH no coincide, deberia borrarse
+y solicitar una nueva copia a la red.
+
+04/Ene/00
+Los registros BDD que llegan a ver visibles FUERA del
+modulo s_bdd.c no deberian contener informacion
+no necesaria para las rutinas externas, como
+el formato interno, el destino, etc.
+
+Ademas, el destino es accesible para el comando "dbq".
+
+04/Ene/00
+Deberian poder enviarse globales a canales, aunque
+estos tengan modo "+n".
+
+03/Ene/00
+A la hora de contar los clones, tambien se cuentan las
+conexiones de los propios servidores.
+
+Curiosamente solo se tiene en cuenta cuando somos nosotros
+quienes recibimos la conexion, no quien la inicia. Ello hace
+que los contadores sean diferentes en cada nodo de la red.
+
+16/Dic/99
+Posibilidad de que un usuario pueda ponerse la
+etiqueta de "no publicidad".
+
+16/Dic/99
+Los mensajes globales que provengan de determinados
+nicks deben consultar una base de datos para cambiar
+su procedencia (por ejemplo, todo lo que venga de
+"global" que aparezca desde el bot "publicidad", que
+realmente no existe). De esta forma se puede cambiar
+facilmente la apariencia de los mensajes, sin hacer
+nada especial, y permite que los usuarios bloqueen
+los mensajes de forma selectiva.
+
+13/Dic/99
+Reaparecen viejos fantasmas. Algunas veces un servidor
+no permite la conexion del numero de usuario que tiene
+permitidos por clones. No parece haber ninguna razon
+para ello, ninguna regla.
+
+Por ejemplo, entro dos clones desde
+"castor.argo.es", pero al intentar hacer lo mismo desde
+"corinto.argo.es", me dice que ya tengo dos clones
+(al intentar meter el segundo), y solo me admite
+una conexion.
+
+05/Nov/99
+A medida que la red crezca, sera mas necesario el
+adoptar ciertas protecciones ante nodos maliciosos,
+ya que al delegar multitud de actividades de gestion
+en los nodos, estos deben ser relativamente confiables.
+
+Es posible, por ejemplo, ampliar el comando "nick"
+para que envie una prueba de que el nodo conoce
+la clave del usuario; esa prueba puede ser
+verificada por cualquier nodo que SI la conozca, 
+especialmente los nodos de control.
+
+05/Nov/99
+Los comandos NICK+MODE suelen ir juntos, especialmente
+cuando estamos hablando de nicks registrados. Deberiamos
+pensar en un comando nuevo que unificase ambos.
+
+03/Nov/99
+Las estructuras HASH deberian ocupar una o mas
+"cache lines" (32bytes en Intel, 64bytes Athlon).
+
+03/Nov/99
+El taman~o de las estructuras HASH para cada
+BDD deberia depender de:
+
+a) El numero de registros
+b) El numero de accesos por segundo
+
+De esa forma no se desperdicia tanta
+memoria como ahora, ni se penaliza la
+velocidad de acceso de las tablas realmente
+criticas.
+
+02/Nov/99
+Cuando se ordena el borrado de una BDD, no podemos
+estar seguros de que el HUB haya propagado la orden
+a traves de la red ANTES de cortar sus enlaces
+con el resto de nodos.
+
+Por ello a veces es preciso borrar una base de datos
+varias veces, para que se entere toda la red.
+
+02/Nov/99
+Deberia definirse un "pool" de structuras hash
+para no tener que hacer un malloc para cada una
+de ellas. Es decir, algo como hacer malloc de
+grupos de 100 estructuras, por ejemplo. De esta
+forma la peticiones de memoria son mas rapidas,
+y la carga en memoria del malloc es menor
+(porque se pide un objeto grande en vez de muchos
+pequen~os).
+
+27/Oct/99
+Cuando un mismo registro tiene varios destinatarios,
+en cada servidor se almacena en memoria solo el mas
+reciente cuya mascara sea valida para ese servidor.
+
+Deberia almacenarse el que tenga la mascara
+mas especifica. El problema es programar esto.
+
+Lo sencillo seria que mascaras mas especificas
+sencillamente son mas largas, pero eso no vale
+para "*.irc-hispano.org".
+
+Otra posibilidad es simplemente contar el numero
+de caracteres que "absorbe" cada comodin. A mas
+absorcion, menos especifico. Pero esto es equivalente
+a lo anterior.
+
+Si forzamos a que la parte "irc-hispano.org" sea siempre
+sustituida por un "*", se puede usar una metrica de
+este tipo.
+
+De todas formas, es cierto que "*.org" es mas especifico
+que "*".
+
+27/Oct/99
+Conservar en memoria exclusivamente un indice
+a la posicion en la BDD en disco. La BDD se
+mapea en memoria con un mmap.
+
+Ojo con la entrada de nuevos registros (hay
+que ampliar el mmap), con su borrado y,
+sobre todo, con la compactacion de la BDD.
+
+Aunque este sistema es rapido y ocupa muy poca
+memoria, tiene el problema del arranque, cuando
+hay que leer la BDD a memoria. Tal vez sea
+conveniente adoptar alguna herramienta tipo GDBM.
+El problema de ese enfoque es comprobar la
+integridad de la BDD, ademas de que las
+compactaciones seguirian siendo lentas.
+
+21/Oct/99
+La compactacion destruye registros cuando
+estos no son para "*". Eso es asi porque
+cuando se van a buscar, no existen en
+el server local a menos que la mascara
+de destinatario haga match con el server.
+
+21/Oct/99
+Soporte para IPs privadas en la red, a traves
+de una BDD, con registros especificos para
+cada nodo de la misma.
+
+Esto es especialmente importante en los
+nuevos nodos que entren, pertenecientes
+a redes de cable.
+
+Las direcciones propagadas deberian ser
+de la forma "17.1.168.192.gaia.irc-hispano.org",
+para permitir una delegacion DNS simple.
+
+Los nodos no deben propagar la posible
+resolucion interna, porque solo es valida
+de forma local, y puede propagar
+informacion confidencial.
+
+15/Oct/99
+Poner los HASHES con mmap(), para no tener
+que hacer tantas operaciones cuando se reciben
+registros nuevos.
+
+?Que ocurre si alguien borra el fichero o reduce
+su taman~o mientras tenemos el mmap?
+
+13/Oct/99
+La compactacion no elimina registros duplicados.
+Ese es un problema cuando, por ejemplo, un usuario
+cambia muchas veces la clave de nick entre dos
+claves distintas. Los registros con la clave
+actual seran mantenidos siempre.
+
+11/Oct/99
+Tenemos problemas si una BDD se borra si ese nodo
+tiene varias vias de actualizacion (HUB). Ver documentacion
+online.
+
+El parche DB25 soluciona el problema, pero es bastante
+chapucero. Hay que pensar algo mejor.
+
+08/Oct/99
+Imprimir NOTICES a los ircops en puntos estrategicos:
+ Borrado de la base de datos
+ Compactacion
+ Preguntas remotas
+
+08/Oct/99
+Cuando un servidor detecta que una de sus BDD
+esta corrupta, solicita una copia nueva a TODOS
+sus enlaces. Si es un HUB, ello supone:
+
+  * Que recibira actualizaciones por todos sus enlaces
+  * Que enviara dichas actualizaciones por todos los enlaces
+
+Esto es un consumo de ancho de banda y CPU importante,
+aunque solo se produce en los HUBs con BDD corrupta.
+
+Esto es aplicable tambien cuando un HUB con varios HUBS
+se conecta a ellos y tiene una version inferior a la suya.
+
+
+
