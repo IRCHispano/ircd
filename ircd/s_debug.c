@@ -686,7 +686,7 @@ void RollBackMsgLog(void)
  */
 void Log_Message(aClient *sptr, int msgclass)
 {
-  register int n = last_log_entry;
+  int n = last_log_entry;
 
   /* Clear our flag, since we are going to
    * finish the processing of this entry */
@@ -748,7 +748,7 @@ void Log_Message(aClient *sptr, int msgclass)
  */
 void Store_Buffer(char *buf, aClient *cptr)
 {
-  register int n;
+  int n;
 
   /* Check if we have an entry pending, if so
    * complete it's processing */

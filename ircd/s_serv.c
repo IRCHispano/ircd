@@ -637,7 +637,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
           cptr->name, host, lhconf ? (lhconf->host ? lhconf->host : "*") : "!");
     else
     {
-      register int killed = a_kills_b_too(LHcptr, sptr);
+      int killed = a_kills_b_too(LHcptr, sptr);
       if (active_lh_line < 3)
       {
         if (exit_client_msg(cptr, LHcptr, &me,

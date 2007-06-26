@@ -51,8 +51,8 @@ RCSTAG_CC("$Id: match.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
 
 int mmatch(const char *old_mask, const char *new_mask)
 {
-  register const char *m = old_mask;
-  register const char *n = new_mask;
+  const char *m = old_mask;
+  const char *n = new_mask;
   const char *ma = m;
   const char *na = n;
   int wild = 0;
@@ -170,8 +170,8 @@ int mmatch(const char *old_mask, const char *new_mask)
 
 int match(const char *mask, const char *string)
 {
-  register const char *m = mask, *s = string;
-  register char ch;
+  const char *m = mask, *s = string;
+  char ch;
   const char *bm, *bs;          /* Will be reg anyway on a decent CPU/compiler */
 
   /* Process the "head" of the mask, if any */
@@ -262,9 +262,9 @@ break_while:
 
 char *collapse(char *mask)
 {
-  register int star = 0;
-  register char *m = mask;
-  register char *b;
+  int star = 0;
+  char *m = mask;
+  char *b;
 
   if (m)
   {
@@ -481,11 +481,11 @@ int matchcomp(char *cmask, int *minlen, int *charset, const char *mask)
 
 int matchexec(const char *string, const char *cmask, int minlen)
 {
-  register const char *s = string - 1;
-  register const char *b = cmask - 1;
-  register int trash;
-  register const char *bb, *bs;
-  register char ch;
+  const char *s = string - 1;
+  const char *b = cmask - 1;
+  int trash;
+  const char *bb, *bs;
+  char ch;
 
 tryhead:
   while ((toLower(*++s) == *++b) && *s);
@@ -561,9 +561,9 @@ trytail:
 
 int matchdecomp(char *mask, const char *cmask)
 {
-  register char *rtb = mask;
-  register const char *rcm = cmask;
-  register const char *begtail, *endtail;
+  char *rtb = mask;
+  const char *rcm = cmask;
+  const char *begtail, *endtail;
 
   if (rtb == NULL)
     return (-1);
@@ -632,8 +632,8 @@ int matchdecomp(char *mask, const char *cmask)
 
 int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
 {
-  register const char *w, *r, *br, *bw, *rx, *rz;
-  register int eat, trash;
+  const char *w, *r, *br, *bw, *rx, *rz;
+  int eat, trash;
 
   /* First of all rm must have enough non-stars to 'contain' wm */
   if ((trash = rminlen - wminlen) < 0)
@@ -870,13 +870,13 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
 
 int matchcompIP(struct in_mask *imask, const char *mask)
 {
-  register const char *m = mask;
-  register unsigned int bits = 0;
-  register unsigned int filt = 0;
-  register int unco = 0;
-  register int digits = 0;
-  register int shift = 24;
-  register int tmp = 0;
+  const char *m = mask;
+  unsigned int bits = 0;
+  unsigned int filt = 0;
+  int unco = 0;
+  int digits = 0;
+  int shift = 24;
+  int tmp = 0;
 
   do
   {

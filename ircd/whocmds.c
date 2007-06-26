@@ -359,7 +359,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
 int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 {
   Reg1 char *mask;              /* The mask we are looking for              */
-  Reg2 char ch;                 /* Scratch char register                    */
+  Reg2 char ch;                 /* Scratch char                    */
   Reg3 Link *lp, *lp2;
   Reg4 aChannel *chptr;         /* Channel to show                          */
   Reg5 aClient *acptr;          /* Client to show                           */

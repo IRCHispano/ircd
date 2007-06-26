@@ -326,7 +326,7 @@ void free_link(Link *lp)
 
 Dlink *add_dlink(Dlink **lpp, aClient *cp)
 {
-  register Dlink *lp;
+  Dlink *lp;
   lp = (Dlink *)RunMalloc(sizeof(Dlink));
   lp->value.cptr = cp;
   lp->prev = NULL;

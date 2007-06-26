@@ -87,7 +87,7 @@ static struct IPregistry_vector IPregistry_hashtable[HASHTABSIZE];
  */
 #define CALCULATE_HASH(in_addr) \
   struct IPregistry_vector *hash; \
-  do { register unsigned int ip = (in_addr).s_addr; \
+  do { unsigned int ip = (in_addr).s_addr; \
        hash = &IPregistry_hashtable[((ip >> 14) + (ip >> 7) + ip) & (HASHTABSIZE - 1)]; } while(0)
 
 /*

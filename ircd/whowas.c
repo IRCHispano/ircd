@@ -64,7 +64,7 @@ static aWhowas whowas[NICKNAMEHISTORYLENGTH];
 static aWhowas *whowashash[WW_MAX];
 static aWhowas *whowas_next = whowas;
 
-static unsigned int hash_whowas_name(register const char *name);
+static unsigned int hash_whowas_name(const char *name);
 
 extern char *canonize(char *);
 
@@ -158,7 +158,7 @@ typedef union {
  */
 void add_history(aClient *cptr, int still_on)
 {
-  register Current ww;
+  Current ww;
   ww.newww = whowas_next;
 
   /* If this entry has already been used, remove it from the lists */
@@ -282,8 +282,8 @@ aClient *get_history(const char *nick, time_t timelimit)
 
 void count_whowas_memory(int *wwu, size_t *wwum, int *wwa, size_t *wwam)
 {
-  register aWhowas *tmp;
-  register int i;
+  aWhowas *tmp;
+  int i;
   int u = 0, a = 0;
   size_t um = 0, am = 0;
 
@@ -318,8 +318,8 @@ void count_whowas_memory(int *wwu, size_t *wwum, int *wwa, size_t *wwam)
  */
 int m_whowas(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  register aWhowas *temp;
-  register int cur = 0;
+  aWhowas *temp;
+  int cur = 0;
   int max = -1, found = 0;
   char *p, *nick, *s;
 
@@ -371,17 +371,17 @@ int m_whowas(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 void initwhowas(void)
 {
-  register int i;
+  int i;
 
   for (i = 0; i < NICKNAMEHISTORYLENGTH; i++)
     whowas[i].hashv = WHOWAS_UNUSED;
 }
 
-static unsigned int hash_whowas_name(register const char *name)
+static unsigned int hash_whowas_name(const char *name)
 {
-  register unsigned int hash = 0;
-  register unsigned int hash2 = 0;
-  register char lower;
+  unsigned int hash = 0;
+  unsigned int hash2 = 0;
+  char lower;
 
   do
   {

@@ -82,7 +82,7 @@ int dopacket(aClient *cptr, char *buffer, int length)
 {
   Reg1 char *ch1;
   Reg2 char *ch2;
-  register char *cptrbuf;
+  char *cptrbuf;
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
   int microburst = 0;
   char buf_comp[BUFSIZE];
@@ -129,7 +129,7 @@ int dopacket(aClient *cptr, char *buffer, int length)
 
     while (--length >= 0)
     {
-      register char g;
+      char g;
 
       g = (*ch1 = *ch2++);
       /*

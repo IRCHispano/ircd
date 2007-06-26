@@ -1613,10 +1613,10 @@ static int check_time_interval(char *interval, char *reply)
 aMotdItem *read_motd(char *motdfile)
 {
   FBFILE *file = NULL;
-  register aMotdItem *temp, *newmotd, *last;
+  aMotdItem *temp, *newmotd, *last;
   struct stat sb;
   char line[80];
-  register char *tmp;
+  char *tmp;
 
   if (NULL == (file = fbopen(motdfile, "r")))
   {

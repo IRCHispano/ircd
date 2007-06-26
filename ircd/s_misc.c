@@ -286,8 +286,8 @@ void get_sockhost(aClient *cptr, char *host)
 char *my_name_for_link(char *name, aConfItem *aconf)
 {
   static char namebuf[HOSTLEN];
-  register int count = aconf->port;
-  register char *start = name;
+  int count = aconf->port;
+  char *start = name;
 
   if (count <= 0 || count > 5)
     return start;

@@ -87,17 +87,20 @@ static Numeric local_replies[] = {
 
 static Numeric numeric_errors[] = {
 /* 401 */
-    {ERR_NOSUCHNICK, "%s :No such nick"},
+    {ERR_NOSUCHNICK, "%s :No such nick - Nick no presente en IRC"},
 /* 402 */
     {ERR_NOSUCHSERVER, "%s :No such server"},
 /* 403 */
-    {ERR_NOSUCHCHANNEL, "%s :No such channel"},
+    {ERR_NOSUCHCHANNEL, "%s :No such channel - Canal inexistente"},
 /* 404 */
-    {ERR_CANNOTSENDTOCHAN, "%s :Cannot send to channel"},
+    {ERR_CANNOTSENDTOCHAN, "%s :Cannot send to channel - "
+                           "No se puede enviar texto al canal"},
 /* 405 */
-    {ERR_TOOMANYCHANNELS, "%s :You have joined too many channels"},
+    {ERR_TOOMANYCHANNELS, "%s :You have joined too many channels - "
+                          "Ha llegado al máximo de canales permitidos en este servidor"},
 /* 406 */
-    {ERR_WASNOSUCHNICK, "%s :There was no such nickname"},
+    {ERR_WASNOSUCHNICK, "%s :There was no such nickname - "
+                        "El nick que busca no estaba en IRC"},
 /* 407 */
     {ERR_TOOMANYTARGETS, "%s :Duplicate recipients. No message delivered"},
 /* 408 */
@@ -127,7 +130,7 @@ static Numeric numeric_errors[] = {
 /* 420 */
     {ERR_INVALIDBANMASK, "%s :Invalid ban mask: %s"},
 /* 421 */
-    {ERR_UNKNOWNCOMMAND, "%s :Unknown command"},
+    {ERR_UNKNOWNCOMMAND, "%s :Unknown command - Comando desconocido"},
 /* 422 */
     {ERR_NOMOTD, ":MOTD File is missing"},
 /* 423 */
@@ -152,7 +155,10 @@ static Numeric numeric_errors[] = {
     {ERR_INVALIDNICKNAME, "%s :Invalid Nickname"},
 /* 433 */
     {ERR_NICKNAMEINUSE, "%s :Nickname is already in use or registered "
-                        "(missing or wrong password)"},
+                        "(missing or wrong password) - "
+                        "El nick que intenta usar ya se encuentra en IRC "
+                        "o está registrado y necesita contraseña, "
+                        "para más ayuda escriba /msg NiCK HELP"},
 /* 434 */
     {0, (char *)NULL},
 /* 435 */
@@ -162,9 +168,13 @@ static Numeric numeric_errors[] = {
 /* 437 */
     {ERR_BANNICKCHANGE, "%s :Cannot change nickname while banned on channel"},
 /* 438 */
-    {ERR_NICKTOOFAST, "%s :Nick change too fast. Please wait %d seconds"},
+    {ERR_NICKTOOFAST, "%1$s :Nick change too fast. Please wait %2$d seconds"
+                      "Necesita esperar %2$d segundos para volver a "
+                      "cambiarse el nick"},
 /* 439 */
-    {ERR_TARGETTOOFAST, "%s :Target change too fast. Please wait %d seconds"},
+    {ERR_TARGETTOOFAST, "%1$s :Target change too fast. Please wait %2$d seconds"
+                        "Debe esperar %2$d segundos para entrar en otro canal "
+                        "o abrir otro privado"},
 /* 440 */
     {0, (char *)NULL},
 /* 441 */
@@ -228,19 +238,24 @@ static Numeric numeric_errors[] = {
 /* 470 */
     {0, (char *)NULL},
 /* 471 */
-    {ERR_CHANNELISFULL, "%s :Cannot join channel (+l)"},
+    {ERR_CHANNELISFULL, "%s :Cannot join channel (+l) - "
+                        "El canal está limitado y no acepta más usuarios"},
 /* 472 */
     {ERR_UNKNOWNMODE, "%c :is unknown mode char to me"},
 /* 473 */
-    {ERR_INVITEONLYCHAN, "%s :Cannot join channel (+i)"},
+    {ERR_INVITEONLYCHAN, "%s :Cannot join channel (+i) - "
+                         "Necesita ser invitado para poder entrar en el canal"},
 /* 474 */
-    {ERR_BANNEDFROMCHAN, "%s :Cannot join channel (+b)"},
+    {ERR_BANNEDFROMCHAN, "%s :Cannot join channel (+b) - "
+                         "No puedes entrar, estas baneado en el canal"},
 /* 475 */
-    {ERR_BADCHANNELKEY, "%s :Cannot join channel (+k)"},
+    {ERR_BADCHANNELKEY, "%s :Cannot join channel (+k) - "
+                        "Necesita contraseña para entrar en el canal"},
 /* 476 */
     {ERR_BADCHANMASK, "%s :Bad Channel Mask"},
 /* 477 */
-    {ERR_NEEDREGGEDNICK, "%s :Cannot join channel (+R)"},
+    {ERR_NEEDREGGEDNICK, "%s :Necesita registrar su nick para poder entrar en el canal, "
+	                 "para más información escriba: /msg NiCK help REGISTER"},
 /* 478 */
     {ERR_BANLISTFULL, "%s %s :Channel ban/ignore list is full"},
 /* 479 */
@@ -250,7 +265,8 @@ static Numeric numeric_errors[] = {
 /* 481 */
     {ERR_NOPRIVILEGES, ":No tienes privilegios para ejecutar el comando"},
 /* 482 */
-    {ERR_CHANOPRIVSNEEDED, "%s :You're not channel operator"},
+    {ERR_CHANOPRIVSNEEDED, "%s :You're not channel operator - "
+                           "Necesita ser operador (@) del canal para realizar esa acción"},
 /* 483 */
     {ERR_CANTKILLSERVER, ":You cant kill a server!"},
 /* 484 */
@@ -258,7 +274,8 @@ static Numeric numeric_errors[] = {
 /* 485 */
     {0, (char *)NULL},
 /* 486 */
-    {ERR_NONONREG, ":You need +r mode to send a private message to user %s"},
+    {ERR_NONONREG, ":Necesita registrar su nick para poder hablar con %s, " 
+	           "para más información escriba: /msg NiCK help REGISTER"},
 /* 487 */
     {0, (char *)NULL},
 /* 488 */
@@ -304,11 +321,14 @@ static Numeric numeric_errors[] = {
 /* 508 */
     {0, (char *)NULL},
 /* 509 */
-    {ERR_SILECANTBESHOWN, "%s :You can't see another user silence list"},
+    {ERR_SILECANTBESHOWN, "%s :You can't see another user silence list - "
+                          "No puede ver la lista de \"Silence\" de otros usuarios"},
 /* 510 */
-    {ERR_ISSILENCING, ":You can't talk to %s. (S)he is silencing you"},
+    {ERR_ISSILENCING, ":You can't talk to %1$s. (S)he is silencing you - "
+                      "El usuario %1$s le ha silenciado, no recibirá sus mensajes"},
 /* 511 */
-    {ERR_SILELISTFULL, "%s :Your silence list is full"},
+    {ERR_SILELISTFULL, "%s :Your silence list is full - "
+                       "Su lista de \"Silence\" está llena"},
 #if defined(WATCH)
     {ERR_TOOMANYWATCH, "%s :Maximum size for WATCH-list is %d entries"},
 #else
@@ -333,9 +353,11 @@ static Numeric numeric_replies[] = {
 /* 304 */
     {RPL_TEXT, (char *)NULL},
 /* 305 */
-    {RPL_UNAWAY, ":You are no longer marked as being away"},
+    {RPL_UNAWAY, ":You are no longer marked as being away - "
+                 "Ya no está ausente, bienvenido/a a casa"},
 /* 306 */
-    {RPL_NOWAWAY, ":You have been marked as being away"},
+    {RPL_NOWAWAY, ":You have been marked as being away - "
+                  "Acaba de ponerse ausente, hasta pronto ;-)"},
 /* 307 */
     {RPL_WHOISREGNICK, "%s :Tiene el nick Registrado y Protegido"},
 /* 308 */
@@ -733,8 +755,8 @@ static char numbuff[512];
 /* "inline" */
 #define prepbuf(buffer, num, tail)			\
 {							\
-  register char *s = buffer + 4;			\
-  register const char *ap = atoi_tab + (num << 2);	\
+  char *s = buffer + 4;			\
+  const char *ap = atoi_tab + (num << 2);	\
   							\
   strcpy(buffer, ":%s 000 %s ");			\
   *s++ = *ap++;						\

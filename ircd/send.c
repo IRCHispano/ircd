@@ -184,7 +184,9 @@ void sendto_one(aClient *to, char *pattern, ...)
 
 void vsendto_one(aClient *to, char *pattern, va_list vl)
 {
-  vsprintf_irc(sendbuf, pattern, vl);
+  va_list vlcopy;
+  va_copy(vlcopy,vl);
+  vsprintf_irc(sendbuf, pattern, vlcopy);
   sendbufto_one(to);
 }
 
@@ -289,9 +291,11 @@ void sendbufto_one(aClient *to)
     send_queued(to);
 }
 
-static void vsendto_prefix_one(register aClient *to, register aClient *from,
-    char *pattern, va_list vl)
+static void vsendto_prefix_one(aClient *to, aClient *from,
+    char *pattern, va_list vlorig)
 {
+  va_list vl;
+  va_copy(vl,vlorig);
   if (to && from && MyUser(to) && IsUser(from))
   {
     static char sender[HOSTLEN + NICKLEN + USERLEN + 5];
@@ -609,7 +613,7 @@ static int match_it(aClient *one, char *mask, int what)
   }
 }
 
-static void vsendto_prefix_one2(register aClient *to, register aClient *from,
+static void vsendto_prefix_one2(aClient *to, aClient *from,
     char *pattern, ...)
 {
   va_list vl;
@@ -724,12 +728,15 @@ void sendto_lops_butone(aClient *one, char *pattern, ...)
  * Don't try to send to more than one list! That is not supported.
  * Xorath 5/1/97
  */
-void vsendto_op_mask(register snomask_t mask, const char *pattern, va_list vl)
+void vsendto_op_mask(snomask_t mask, const char *pattern, va_list vlorig)
 {
   static char fmt[1024];
   char *fmt_target;
-  register int i = 0;           /* so that 1 points to opsarray[0] */
+  int i = 0;           /* so that 1 points to opsarray[0] */
   Link *opslist;
+  va_list vl;
+
+  va_copy(vl,vlorig);
 
   while ((mask >>= 1))
     i++;
@@ -756,7 +763,7 @@ void vsendto_op_mask(register snomask_t mask, const char *pattern, va_list vl)
  */
 void sendbufto_op_mask(snomask_t mask)
 {
-  register int i = 0;           /* so that 1 points to opsarray[0] */
+  int i = 0;           /* so that 1 points to opsarray[0] */
   Link *opslist;
   while ((mask >>= 1))
     i++;
@@ -776,13 +783,16 @@ void sendbufto_op_mask(snomask_t mask)
  *
  * Send to *local* ops only.
  */
-void vsendto_ops(const char *pattern, va_list vl)
+void vsendto_ops(const char *pattern, va_list vlorig)
 {
   Reg1 aClient *cptr;
   Reg2 int i;
   char fmt[1024];
   char *fmt_target;
+  va_list vl;
 
+  va_copy(vl,vlorig);
+  
   fmt_target = sprintf_irc(fmt, ":%s NOTICE ", me.name);
 
   for (i = 0; i <= highest_fd; i++)

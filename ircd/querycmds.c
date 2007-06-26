@@ -362,7 +362,7 @@ int m_motd(aClient *cptr, aClient *sptr, int parc, char *parv[])
   time_t *TS = &motd_TS;     /* Default: Most general case */
   atrecord *ptr;
   int count;
-  register aMotdItem *temp;
+  aMotdItem *temp;
   int i = 0;
   struct db_reg *reg;
   char tmp_str[16];

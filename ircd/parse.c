@@ -320,10 +320,10 @@ void initmsgtree(void)
  * Generic tree parser which works for both commands and tokens.
  * Optimized by Run.
  */
-static struct Message *msg_tree_parse(register char *cmd, aMessageTree *root)
+static struct Message *msg_tree_parse(char *cmd, aMessageTree *root)
 {
-  register aMessageTree *mtree;
-  register unsigned char r = (0xdf & (unsigned char)*cmd) - 'A';
+  aMessageTree *mtree;
+  unsigned char r = (0xdf & (unsigned char)*cmd) - 'A';
   if (r > 25 || !(mtree = root->pointers[r]))
     return NULL;
   for (;;)
@@ -342,11 +342,11 @@ static struct Message *msg_tree_parse(register char *cmd, aMessageTree *root)
  * This is to avoid confusion with commands like /quake on clients
  * that send unknown commands directly to the server.
  */
-static struct Message *msg_tree_parse_client(register char *cmd,
+static struct Message *msg_tree_parse_client(char *cmd,
     aMessageTree *root)
 {
-  register aMessageTree *mtree;
-  register unsigned char q = (0xdf & (unsigned char)*cmd) - 'A';
+  aMessageTree *mtree;
+  unsigned char q = (0xdf & (unsigned char)*cmd) - 'A';
   if (q > 25 || !(mtree = root->pointers[q]))
     return NULL;
   for (;;)

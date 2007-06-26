@@ -730,7 +730,7 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       break;
     case 'u':
     {
-      register time_t nowr;
+      time_t nowr;
 
       nowr = now - me.serv->boot_timestamp;
       sendto_one(sptr, rpl_str(RPL_STATSUPTIME), me.name, parv[0],

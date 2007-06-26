@@ -67,7 +67,7 @@ void update_load(void)
   static struct current_load_st last_load;  /* The load last time that
                                                update_load() was called. */
   static int initialized;       /* Boolean, set when initialized. */
-  register int diff_time;       /* Temp. variable used to hold time intervals
+  int diff_time;       /* Temp. variable used to hold time intervals
                                    in seconds, minutes or hours. */
 
   /* Update `current_load' */

@@ -233,9 +233,9 @@ void hash_init(void)
    strhash("") _will_ coredump, it's responsibility
    the caller to eventually check BadPtr(nick). */
 
-static HASHREGS strhash(register char *n)
+static HASHREGS strhash(char *n)
 {
-  register HASHREGS hash = hash_weight(*n++);
+  HASHREGS hash = hash_weight(*n++);
   while (*n)
     hash = hash_map[hash] + hash_weight(*n++);
   return hash_map[hash];
@@ -252,8 +252,8 @@ static HASHREGS strhash(register char *n)
    on 16000 real channel names, 1000 loops. I left the code here
    as a bookmark if a strnhash is evetually needed in the future.
 
-   static HASHREGS strnhash(register char *n, register int i) {
-   register HASHREGS hash = hash_weight(*n++);
+   static HASHREGS strnhash(char *n, int i) {
+   HASHREGS hash = hash_weight(*n++);
    i--;
    while(*n && i--)
    hash = hash_map[hash] + hash_weight(*n++);
@@ -282,7 +282,7 @@ static HASHREGS strhash(register char *n)
  */
 int hAddClient(aClient *cptr)
 {
-  register HASHREGS hashv = strhash(cptr->name);
+  HASHREGS hashv = strhash(cptr->name);
 
   cptr->hnext = clientTable[hashv];
   clientTable[hashv] = cptr;
@@ -299,7 +299,7 @@ int hAddClient(aClient *cptr)
  */
 int hAddChannel(aChannel *chptr)
 {
-  register HASHREGS hashv = strhash(chptr->chname);
+  HASHREGS hashv = strhash(chptr->chname);
 
   chptr->hnextch = channelTable[hashv];
   channelTable[hashv] = chptr;
@@ -313,8 +313,8 @@ int hAddChannel(aChannel *chptr)
  */
 int hRemClient(aClient *cptr)
 {
-  register HASHREGS hashv = strhash(PunteroACadena(cptr->name));
-  register aClient *tmp = clientTable[hashv];
+  HASHREGS hashv = strhash(PunteroACadena(cptr->name));
+  aClient *tmp = clientTable[hashv];
 
   if (tmp == cptr)
   {
@@ -351,7 +351,7 @@ int hRemClient(aClient *cptr)
  */
 int hChangeClient(aClient *cptr, char *newname)
 {
-  register HASHREGS newhash = strhash(newname);
+  HASHREGS newhash = strhash(newname);
 
   hRemClient(cptr);
 
@@ -366,8 +366,8 @@ int hChangeClient(aClient *cptr, char *newname)
  */
 int hRemChannel(aChannel *chptr)
 {
-  register HASHREGS hashv = strhash(chptr->chname);
-  register aChannel *tmp = channelTable[hashv];
+  HASHREGS hashv = strhash(chptr->chname);
+  aChannel *tmp = channelTable[hashv];
 
   if (tmp == chptr)
   {
@@ -397,9 +397,9 @@ int hRemChannel(aChannel *chptr)
  */
 aClient *hSeekClient(char *name, int TMask)
 {
-  register HASHREGS hashv = strhash(name);
-  register aClient *cptr = clientTable[hashv];
-  register aClient *prv;
+  HASHREGS hashv = strhash(name);
+  aClient *cptr = clientTable[hashv];
+  aClient *prv;
 
   if (cptr)
     if ((!IsStatMask(cptr, TMask)) || strCasediff(name, cptr->name))
@@ -424,9 +424,9 @@ aClient *hSeekClient(char *name, int TMask)
  */
 aChannel *hSeekChannel(char *name)
 {
-  register HASHREGS hashv = strhash(name);
-  register aChannel *chptr = channelTable[hashv];
-  register aChannel *prv;
+  HASHREGS hashv = strhash(name);
+  aChannel *chptr = channelTable[hashv];
+  aChannel *prv;
 
   if (chptr)
     if (strCasediff(name, chptr->chname))
@@ -483,7 +483,7 @@ int db_hash_registro(char *clave, int hash_size)
  */
 int hAddWatch(aWatch * wptr)
 {
-  register HASHREGS hashv = strhash(wptr->nick);
+  HASHREGS hashv = strhash(wptr->nick);
 
   wptr->next = watchTable[hashv];
   watchTable[hashv] = wptr;
@@ -500,8 +500,8 @@ int hAddWatch(aWatch * wptr)
  */
 int hRemWatch(aWatch * wptr)
 {
-  register HASHREGS hashv = strhash(wptr->nick);
-  register aWatch *tmp = watchTable[hashv];
+  HASHREGS hashv = strhash(wptr->nick);
+  aWatch *tmp = watchTable[hashv];
 
   if (tmp == wptr)
   {
@@ -528,9 +528,9 @@ int hRemWatch(aWatch * wptr)
  */
 aWatch *hSeekWatch(char *nick)
 {
-  register HASHREGS hashv = strhash(nick);
-  register aWatch *wptr = watchTable[hashv];
-  register aWatch *prv;
+  HASHREGS hashv = strhash(nick);
+  aWatch *wptr = watchTable[hashv];
+  aWatch *prv;
 
   if (wptr)
     if (strCasediff(nick, wptr->nick))

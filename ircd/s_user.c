@@ -299,8 +299,8 @@ static int do_nick_name(char *nick)
 char *canonize(char *buffer)
 {
   static char cbuf[BUFSIZ];
-  register char *s, *t, *cp = cbuf;
-  register int l = 0;
+  char *s, *t, *cp = cbuf;
+  int l = 0;
   char *p = NULL, *p2;
 
   *cp = '\0';
@@ -353,7 +353,7 @@ char *canonize(char *buffer)
  */
 static char *clean_user_id(char **dest, char *source, int tilde)
 {
-  register char ch;
+  char ch;
   char *d;
   char *s = source;
   int rlen = USERLEN;
@@ -368,7 +368,7 @@ static char *clean_user_id(char **dest, char *source, int tilde)
   }
   while (ch && !isCntrl(ch) && rlen--)
   {
-    register char nch = *s++;   /* Store next character to copy */
+    char nch = *s++;   /* Store next character to copy */
     *d++ = isIrcUi(ch) ? ch : '_';  /* This possibly overwrites it */
     if (nch == '~')
       ch = '_';
@@ -912,8 +912,8 @@ static int verifica_clave_nick(char *nick, char *hash, char *clave)
  */
 void add_target(aClient *sptr, void *target)
 {
-  register unsigned char *p;
-  register unsigned int tmp = ((size_t)target & 0xffff00) >> 8;
+  unsigned char *p;
+  unsigned int tmp = ((size_t)target & 0xffff00) >> 8;
   unsigned char hash = (tmp * tmp) >> 12;
   if (sptr->targets[0] == hash) /* Last person that we messaged ourself? */
     return;
@@ -939,8 +939,8 @@ void add_target(aClient *sptr, void *target)
 int check_target_limit(aClient *sptr, void *target, const char *name,
     int created)
 {
-  register unsigned char *p;
-  register unsigned int tmp = ((size_t)target & 0xffff00) >> 8;
+  unsigned char *p;
+  unsigned int tmp = ((size_t)target & 0xffff00) >> 8;
   unsigned char hash = (tmp * tmp) >> 12;
 
   if (IsChannelService(sptr))
@@ -1246,7 +1246,7 @@ int whisper(aClient *sptr, int parc, char *parv[], int notice)
   int s_is_member = 0, s_is_voiced = 0, t_is_member = 0;
   aClient *tcptr;
   aChannel *chptr;
-  register Link *lp;
+  Link *lp;
 
   if (!MyUser(sptr))
     return 0;
@@ -1268,7 +1268,7 @@ int whisper(aClient *sptr, int parc, char *parv[], int notice)
   }
   for (lp = chptr->members; lp; lp = lp->next)
   {
-    register aClient *mcptr = lp->value.cptr;
+    aClient *mcptr = lp->value.cptr;
     if (mcptr == sptr)
     {
       s_is_member = 1;
@@ -1471,7 +1471,7 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   char comment2[QUITLEN + 20];
-  register char *comment = (parc > 1 && parv[parc - 1]) ? parv[parc - 1] : "\0";
+  char *comment = (parc > 1 && parv[parc - 1]) ? parv[parc - 1] : "\0";
 
   if (MyUser(sptr))
   {

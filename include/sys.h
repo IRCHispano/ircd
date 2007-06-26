@@ -113,7 +113,7 @@
 #undef IRC_UID
 #undef IRC_GID
 #endif
-
+/*
 #define Reg1 register
 #define Reg2 register
 #define Reg3 register
@@ -124,6 +124,20 @@
 #define Reg8 register
 #define Reg9 register
 #define Reg10 register
+i*/
+
+#define Reg1 
+#define Reg2
+#define Reg3
+#define Reg4
+#define Reg5
+#define Reg6
+#define Reg7
+#define Reg8
+#define Reg9
+#define Reg10
+
+#define register
 
 /* Define FD_SETSIZE to what we want before including sys/types.h on BSD */
 #if  defined(__FreeBSD__) || defined(__NetBSD__) || defined(__bsdi__)

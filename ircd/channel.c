@@ -3320,7 +3320,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
  */
 static int compall(char *key, char *keyring)
 {
-  register char *p1;
+  char *p1;
 
 top:
   p1 = key;                     /* point to the key... */
@@ -4517,7 +4517,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
                */
             case 'i':
             {
-              register int tmp;
+              int tmp;
               prev_mode &= ~MODE_INVITEONLY;
               if (!(tmp = netride ||
                   (current_mode->mode & MODE_INVITEONLY)) || wipeout)
@@ -4531,7 +4531,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
             }
             case 'k':
             {
-              register int tmp;
+              int tmp;
               char *param = parv[++n];
               prev_mode &= ~MODE_KEY;
               if (!(tmp = netride || (current_mode->key &&
@@ -4565,7 +4565,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
             }
             case 'l':
             {
-              register int tmp;
+              int tmp;
               unsigned int param = atoi(parv[++n]);
               prev_mode &= ~MODE_LIMIT;
               if (!(tmp = netride || (current_mode->limit &&
@@ -4586,7 +4586,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
             }
             case 'm':
             {
-              register int tmp;
+              int tmp;
               prev_mode &= ~MODE_MODERATED;
               if (!(tmp = netride ||
                   (current_mode->mode & MODE_MODERATED)) || wipeout)
@@ -4600,7 +4600,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
             }
             case 'R':
             {
-              register int tmp;
+              int tmp;
               prev_mode &= ~MODE_REGNICKS;
               if (!(tmp = netride ||
                   (current_mode->mode & MODE_REGNICKS)) || wipeout)
@@ -4614,7 +4614,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
             }
             case 'A':
             {
-              register int tmp;
+              int tmp;
               prev_mode &= ~MODE_AUTOOP;
               if (!(tmp = netride ||
                   (current_mode->mode & MODE_AUTOOP)) || wipeout)
@@ -4628,7 +4628,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
             }
             case 'S':
             {
-              register int tmp;
+              int tmp;
               prev_mode &= ~MODE_SECUREOP;
               if (!(tmp = netride ||
                   (current_mode->mode & MODE_SECUREOP)) || wipeout)
@@ -4642,7 +4642,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
             }
             case 'M':
             {
-              register int tmp;
+              int tmp;
               prev_mode &= ~MODE_MSGNONREG;
               if (!(tmp = netride ||
                   (current_mode->mode & MODE_MSGNONREG)) || wipeout)
@@ -4656,7 +4656,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
             }
             case 'n':
             {
-              register int tmp;
+              int tmp;
               prev_mode &= ~MODE_NOPRIVMSGS;
               if (!(tmp = netride ||
                   (current_mode->mode & MODE_NOPRIVMSGS)) || wipeout)
@@ -4670,7 +4670,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
             }
             case 'p':
             {
-              register int tmp;
+              int tmp;
 
               /* Special case: */
               if (!netride && !wipeout && (current_mode->mode & MODE_SECRET))
@@ -4689,7 +4689,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
             }
             case 's':
             {
-              register int tmp;
+              int tmp;
               prev_mode &= ~MODE_SECRET;
               if (!(tmp = netride ||
                   (current_mode->mode & MODE_SECRET)) || wipeout)
@@ -4716,7 +4716,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
             }
             case 't':
             {
-              register int tmp;
+              int tmp;
               prev_mode &= ~MODE_TOPICLIMIT;
               if (!(tmp = netride ||
                   (current_mode->mode & MODE_TOPICLIMIT)) || wipeout)
@@ -6351,7 +6351,7 @@ static void send_hack_notice(aClient *cptr, aClient *sptr, int parc,
           strcat(params, " ");
           if (*mode == 'o' || *mode == 'v')
           {
-            register aClient *acptr;
+            aClient *acptr;
             if ((acptr = findNUser(parv[i])) != NULL) /* Convert nicks here */
               strcat(params, acptr->name);
             else

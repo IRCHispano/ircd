@@ -271,10 +271,10 @@ static char scratch_buffer[32];
  *
  * --Run
  */
-char *vsprintf_irc(register char *str,
-    register const char *format, register va_list vl)
+char *vsprintf_irc(char *str,
+    const char *format, va_list vl)
 {
-  register char c;
+  char c;
 
   while ((c = *format++))
   {
@@ -288,7 +288,7 @@ char *vsprintf_irc(register char *str,
       }
       if (c == 's')
       {
-        register const char *p1 = va_arg(vl, const char *);
+        const char *p1 = va_arg(vl, const char *);
         if ((*str = *p1))
           while ((*++str = *++p1));
         continue;
@@ -297,8 +297,8 @@ char *vsprintf_irc(register char *str,
                                          [ 100000000 , 4294967295 ]
                                          Actually prints like "%09lu" */
       {
-        register unsigned long v1, v2;
-        register const char *ap;
+        unsigned long v1, v2;
+        const char *ap;
         ++format;
         v1 = va_arg(vl, unsigned long);
         if (v1 > 999999999L)
@@ -329,8 +329,8 @@ char *vsprintf_irc(register char *str,
       if (c == 'N')             /* Prints "%03u" a numeric value in the
                                    range [ 0, 999 ], padded with zero's */
       {
-        register unsigned int v1;
-        register const char *ap;
+        unsigned int v1;
+        const char *ap;
         v1 = va_arg(vl, unsigned int);
         ap = atoi_tab + (v1 << 2);
         *str++ = *ap++;
@@ -341,9 +341,9 @@ char *vsprintf_irc(register char *str,
 #endif
       if (c == 'd')
       {
-        register unsigned int v1, v2;
-        register const char *ap;
-        register char *s = &scratch_buffer[sizeof(scratch_buffer) - 2];
+        unsigned int v1, v2;
+        const char *ap;
+        char *s = &scratch_buffer[sizeof(scratch_buffer) - 2];
         v1 = va_arg(vl, int);
         if ((int)v1 <= 0)
         {
@@ -371,9 +371,9 @@ char *vsprintf_irc(register char *str,
       }
       if (c == 'u')
       {
-        register unsigned int v1, v2;
-        register const char *ap;
-        register char *s = &scratch_buffer[sizeof(scratch_buffer) - 2];
+        unsigned int v1, v2;
+        const char *ap;
+        char *s = &scratch_buffer[sizeof(scratch_buffer) - 2];
         v1 = va_arg(vl, unsigned int);
         if (v1 == 0)
         {
@@ -407,7 +407,7 @@ char *vsprintf_irc(register char *str,
   return str;
 }
 
-char *sprintf_irc(register char *str, const char *format, ...)
+char *sprintf_irc(char *str, const char *format, ...)
 {
   va_list vl;
   char *ret;

@@ -56,7 +56,7 @@ static unsigned int locations;  /* Counter */
 
 static unsigned int find_location(const char *filename, int line)
 {
-  register unsigned int hash;
+  unsigned int hash;
   hash = line & 0xff;
   while (location[hash].filename && (location[hash].line != line ||
       location[hash].filename != filename))
@@ -194,9 +194,9 @@ void *RunMalloc_memleak(size_t size, int line, const char *filename)
 void *RunMalloc(size_t size)
 #endif
 {
-  register prefix_blk_st *ptr;
-  register hash_entry_st *hash_entry;
-  register hash_entry_st **hashtablep;
+  prefix_blk_st *ptr;
+  hash_entry_st *hash_entry;
+  hash_entry_st **hashtablep;
 
 #if defined(HAS_POSTFIX)
   size += 3;
@@ -262,8 +262,8 @@ void *RunCalloc(size_t nmemb, size_t size)
 
 int RunFree_test(void *memblk_ptr)
 {
-  register prefix_blk_st *prefix_ptr = prefixp(memblk_ptr);
-  register hash_entry_st *hash_entry;
+  prefix_blk_st *prefix_ptr = prefixp(memblk_ptr);
+  hash_entry_st *hash_entry;
   for (hash_entry = hashtable[MallocHash(prefix_ptr)];
       hash_entry && hash_entry->ptr != prefix_ptr;
       hash_entry = hash_entry->next);
@@ -272,8 +272,8 @@ int RunFree_test(void *memblk_ptr)
 
 void RunFree(void *memblk_ptr)
 {
-  register prefix_blk_st *prefix_ptr = prefixp(memblk_ptr);
-  register hash_entry_st *hash_entry, *prev_hash_entry = NULL;
+  prefix_blk_st *prefix_ptr = prefixp(memblk_ptr);
+  hash_entry_st *hash_entry, *prev_hash_entry = NULL;
   unsigned int hash = MallocHash(prefix_ptr);
 
   Debug((DEBUG_DEBUG, "RunFree(%p)", memblk_ptr));
@@ -326,7 +326,7 @@ void RunFree(void *memblk_ptr)
   memset(prefix_ptr, 0xfe, hash_entry->size + SIZEOF_PREFIX);
 #else
   {
-    register char *p = prefix_ptr;
+    char *p = prefix_ptr;
     size_t len = hash_entry->size + SIZEOF_PREFIX;
     for (; len; --len)
       *p++ = 0xfe;
@@ -346,10 +346,10 @@ void *RunRealloc_memleak(void *memblk_ptr, size_t size,
 void *RunRealloc(void *memblk_ptr, size_t size)
 #endif
 {
-  register prefix_blk_st *ptr;
-  register prefix_blk_st *prefix_ptr = prefixp(memblk_ptr);
-  register hash_entry_st *hash_entry, *prev_hash_entry = NULL;
-  register hash_entry_st **hashtablep;
+  prefix_blk_st *ptr;
+  prefix_blk_st *prefix_ptr = prefixp(memblk_ptr);
+  hash_entry_st *hash_entry, *prev_hash_entry = NULL;
+  hash_entry_st **hashtablep;
   unsigned int hash;
 
   if (!memblk_ptr)

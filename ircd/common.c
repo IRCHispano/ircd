@@ -54,9 +54,9 @@ NTL_HDR_strCasediff { NTL_SRC_strCasediff }
 
 int strnChattr(const char *s, const size_t n)
 {
-  register const char *rs = s;
-  register int x = ~0;
-  register int r = n;
+  const char *rs = s;
+  int x = ~0;
+  int r = n;
   while (*rs && r--)
     x &= NTL_char_attrib[*rs++ - CHAR_MIN];
   return x;
@@ -64,8 +64,8 @@ int strnChattr(const char *s, const size_t n)
 
 int strCasecmp(const char *a, const char *b)
 {
-  register const char *ra = a;
-  register const char *rb = b;
+  const char *ra = a;
+  const char *rb = b;
   while (toLower(*ra) == toLower(*rb))
     if (!*ra++)
       return 0;
@@ -76,9 +76,9 @@ int strCasecmp(const char *a, const char *b)
 
 int strnCasecmp(const char *a, const char *b, const size_t n)
 {
-  register const char *ra = a;
-  register const char *rb = b;
-  register int left = n;
+  const char *ra = a;
+  const char *rb = b;
+  int left = n;
   if (!left--)
     return 0;
   while (toLower(*ra) == toLower(*rb))

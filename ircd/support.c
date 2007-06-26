@@ -126,7 +126,7 @@ int inet_netof(struct in_addr in)
 /* This is copied from ircu3.0.0 (with permission), not vica versa. */
 int gettimeofday(struct timeval *tv, void * /*UNUSED*/)
 {
-  register int ret;
+  int ret;
   static struct timespec tp;
 
   if ((ret = getclock(TIMEOFDAY, &tp)))
@@ -195,7 +195,7 @@ void dumpcore(const char *pattern, ...)
 int check_if_ipmask(const char *mask)
 {
   int has_digit = 0;
-  register const char *p;
+  const char *p;
 
   for (p = mask; *p; ++p)
     if (*p != '*' && *p != '?' && *p != '.')

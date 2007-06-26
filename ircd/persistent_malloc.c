@@ -2847,14 +2847,14 @@ static void *persistent_sbrk(int len) {
 void persistent_init(void *p, int len, void *p_top) {
   static int done;
   int page_size;
-  int p2;
+  long p2;
 
   assert(!done);
   done = !0;
 
   done_persistent_init = 1;
 
-  p2 = ((int)p + MALLOC_ALIGN_MASK) & ~MALLOC_ALIGN_MASK;
+  p2 = ((long)p + MALLOC_ALIGN_MASK) & ~MALLOC_ALIGN_MASK;
   av_ = (struct malloc_state *)p2;
 
   if (!p_top)
@@ -2864,8 +2864,8 @@ void persistent_init(void *p, int len, void *p_top) {
   p += sizeof(struct malloc_state);
   len -= sizeof(struct malloc_state);
   page_size = malloc_getpagesize;
-  p2 = ((int)p + page_size - 1) & ~(page_size - 1);
-  len -= p2 - (int)p;
+  p2 = ((long)p + page_size - 1) & ~(page_size - 1);
+  len -= p2 - (long)p;
   len = len & ~(page_size - 1);
 
   init_p = (void *)p2;
