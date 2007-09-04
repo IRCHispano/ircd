@@ -1,3 +1,8 @@
+* 2007/09/04 zoltan@irc-dev.net      (u2.10.H.10.03)                  FIX
+-------------------------------------------------------------------------
+  Corregido una asignacion multiple que no esta permitido en los GCC
+  modernos.
+
 * 2007/09/04 zoltan@irc-dev.net      (u2.10.H.10.02)              FEATURE
 -------------------------------------------------------------------------
   Se agregan dentro del directorio ircd/crypt/tea dos aplicaciones para

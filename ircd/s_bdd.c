@@ -1337,7 +1337,9 @@ void db_persistent_commit(void)
           i);
   }
 
-  p2 = (unsigned char *)p = p_base = (unsigned int *)mmap_cache_pos;
+  p2 = (unsigned char *)p;
+  p = p_base;
+  p_base = (unsigned int *)mmap_cache_pos;
 
   p += 2;                       /* Nos saltamos el HASH, de momento */
   p += 1;                       /* Nos saltamos la version, de momento */
