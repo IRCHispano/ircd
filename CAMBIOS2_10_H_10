@@ -1,3 +1,8 @@
+* 2007/09/04 zoltan@irc-dev.net      (u2.10.H.10.02)              FEATURE
+-------------------------------------------------------------------------
+  Se agregan dentro del directorio ircd/crypt/tea dos aplicaciones para
+  pasar de IP real a IP virtual y viceversa.
+  
 * 2007/06/26 er.krali@gmail.com      (u2.10.H.10.01)                  FIX
 -------------------------------------------------------------------------
   Compilación en amd64 y traducción de los mensajes.
