@@ -44,6 +44,8 @@ int main(int argc, char *argv[])
   plaintext = getpass("plaintext: ");
 
   printf("%s\n", crypt(plaintext, salt));
+  free(plaintext);
+
   return 0;
 }
 

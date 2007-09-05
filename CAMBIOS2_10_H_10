@@ -1,4 +1,8 @@
-* 2007/09/04 zoltan@irc-dev.net      (u2.10.H.10.03)                  FIX
+* 2007/09/06 daijo@irc-dev.net       (u2.10.H.10.04)                  FIX
+-------------------------------------------------------------------------
+  La utilidad mkpasswd contiene una fuga de memoria.
+
+* 2007/09/04 daijo@irc-dev.net       (u2.10.H.10.03)                  FIX
 -------------------------------------------------------------------------
   Corregido una asignacion multiple que no esta permitido en los GCC
   modernos.
