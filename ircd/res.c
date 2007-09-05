@@ -856,7 +856,7 @@ struct hostent *get_res(char *lp)
   aCache *cp = NULL;
   struct sockaddr_in sin;
   int a, max;
-  size_t rc, len = sizeof(sin);
+  socklen_t rc, len = sizeof(sin);
 
   alarm(4);
   rc = recvfrom(resfd, buf, sizeof(buf), 0, (struct sockaddr *)&sin, &len);

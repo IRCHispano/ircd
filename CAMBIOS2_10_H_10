@@ -1,11 +1,26 @@
+* 2007/09/06 daijo@irc-dev.net       (u2.10.H.10.05)                  FIX
+-------------------------------------------------------------------------
+  En los GCC modernos, salen warnings al utilizar size_t en las funciones
+  de red, en lugar de socklen_t que es el actual estandard.
+
+  Se incluye chequeo para comprobar si existe socklen_t en el sistema
+  durante la ejecucion del configure. En algunos sistemas como MacOS X
+  que no tienen socklen_t, y se define como un integer.
+
+  BUG SF ID TRACKER: #1754717
+
 * 2007/09/06 daijo@irc-dev.net       (u2.10.H.10.04)                  FIX
 -------------------------------------------------------------------------
   La utilidad mkpasswd contiene una fuga de memoria.
+
+  BUG SF ID TRACKER: #1754122
 
 * 2007/09/04 daijo@irc-dev.net       (u2.10.H.10.03)                  FIX
 -------------------------------------------------------------------------
   Corregido una asignacion multiple que no esta permitido en los GCC
   modernos.
+
+  BUG SF ID TRACKER: #1754115
 
 * 2007/09/04 zoltan@irc-dev.net      (u2.10.H.10.02)              FEATURE
 -------------------------------------------------------------------------
@@ -17,6 +32,8 @@
   Compilación en amd64 y traducción de los mensajes.
   Principalmente se ha eliminado el uso de variables de tipo "register"
   y se ha actualizado la sintaxis de argumentos variables.
+
+  BUG SF ID TRACKER: #1743535
 
 * 2007/06/26 zoltan@irc-dev.net      (u2.10.H.10.00)              CLEANUP
   -----------------------------------------------------------------------

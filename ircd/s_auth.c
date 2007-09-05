@@ -187,7 +187,7 @@ void send_authports(aClient *cptr)
 {
   struct sockaddr_in us, them;
   char authbuf[32];
-  size_t ulen, tlen;
+  socklen_t ulen, tlen;
 
   Debug((DEBUG_NOTICE, "write_authports(%p) fd %d authfd %d stat %d",
       cptr, cptr->fd, cptr->authfd, cptr->status));

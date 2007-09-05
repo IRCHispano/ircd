@@ -202,7 +202,7 @@ void send_ping(aClient *cptr)
  */
 void read_ping(aClient *cptr)
 {
-  size_t addr_len = sizeof(struct sockaddr_in);
+  socklen_t addr_len = sizeof(struct sockaddr_in);
   struct sockaddr_in remote_addr;
   struct timeval tv;
   int len;

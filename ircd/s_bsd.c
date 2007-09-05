@@ -208,7 +208,7 @@ void report_error(char *text, aClient *cptr)
   Reg1 int errtmp = errno;      /* debug may change 'errno' */
   Reg2 char *host;
   int err;
-  size_t len = sizeof(err);
+  socklen_t len = sizeof(err);
 
   host = (cptr) ? PunteroACadena(cptr->name) : "";
 
@@ -250,7 +250,7 @@ int inetport(aClient *cptr, char *name, unsigned short int port)
 {
   static struct sockaddr_in server;
   int ad[4], opt;
-  size_t len = sizeof(server);
+  socklen_t len = sizeof(server);
   char ipname[20];
 
   ad[0] = ad[1] = ad[2] = ad[3] = 0;
@@ -635,7 +635,7 @@ void write_pidfile(void)
 static int check_init(aClient *cptr, char *sockn)
 {
   struct sockaddr_in sk;
-  size_t len = sizeof(struct sockaddr_in);
+  socklen_t len = sizeof(struct sockaddr_in);
   sockn[HOSTLEN] = 0;
 
 #if defined(UNIXPORT)
@@ -1230,7 +1230,7 @@ void close_connection(aClient *cptr)
  */
 static void set_sock_opts(int fd, aClient *cptr)
 {
-  size_t opt;
+  socklen_t opt;
 #if defined(SO_REUSEADDR)
   opt = 1;
   if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
@@ -1303,7 +1303,7 @@ static void set_sock_opts(int fd, aClient *cptr)
 int get_sockerr(aClient *cptr)
 {
   int errtmp = errno, err = 0;
-  size_t len = sizeof(err);
+  socklen_t len = sizeof(err);
 #if defined(SO_ERROR) && !defined(SOL2)
   if (cptr->fd >= 0)
     if (!getsockopt(cptr->fd, SOL_SOCKET, SO_ERROR, (OPT_TYPE *)&err, &len))
@@ -1399,7 +1399,7 @@ aClient *add_connection(aClient *cptr, int fd, int type)
   {
     Reg1 char *s, *t;
     struct sockaddr_in addr;
-    size_t len = sizeof(struct sockaddr_in);
+    socklen_t len = sizeof(struct sockaddr_in);
 
     if (getpeername(fd, (struct sockaddr *)&addr, &len) == -1)
     {
@@ -2599,7 +2599,7 @@ static void polludp(void)
   Reg1 char *s;
   struct sockaddr_in from;
   int n;
-  size_t fromlen = sizeof(from);
+  socklen_t fromlen = sizeof(from);
   static time_t last = 0;
   static int cnt = 0, mlen = 0;
 
