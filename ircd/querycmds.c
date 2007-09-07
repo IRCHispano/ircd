@@ -193,6 +193,12 @@ int m_links(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char *mask;
   aClient *acptr;
 
+  if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
+  {
+    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+    return 0;
+  }
+
   if (parc > 2)
   {
     if (hunt_server(1, cptr, sptr, ":%s LINKS %s :%s", 1, parc, parv) !=

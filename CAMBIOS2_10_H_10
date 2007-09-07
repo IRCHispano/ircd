@@ -1,3 +1,42 @@
+* 2007/09/07 zoltan@irc-dev.net      (u2.10.H.10.06)              FEATURE
+-------------------------------------------------------------------------
+  Parche de ocultacion de servidores para dificultar donde estan los
+  usuarios, que tipologia lleva la red, entre otros.
+
+  Se activa/desactiva a voluntad en la base de datos distribuida, es el
+  registro "ocultar.servidores" en la tabla z de la BDD.
+
+  Su activacion implica lo siguiente:
+
+  NETSPLIT: Se sustituye el quit de los usuarios cuando se forma un split,
+  en vez de salir los servidores, salen *.net *.split. En el notice que
+  sale teniendo mascara adecuada de +s salen los servidores, que esta 
+  puesto solo para ircops/opers.
+
+  NETJOIN: En los burst, en vez del servidor, sale *.irc-hispano.org
+  al ajustar los modos del canal.
+
+  WHO: No permite buscar usuarios por servidor.
+  En el hopcount sale siempre 3, salvo si es al mismo nick que sale 0
+  por temas de compatibilidad con clientes.
+  Los ircops/opers no tienen estas restricciones.
+
+  WHOWAS: No sale el nombre del servidor, sustituyendo por 
+  *.irc-hispano.org.
+  Los ircops/opers no tienen estas restricciones.
+
+  WHOIS: No sale el nombre del servidor, sustituyendo por
+  *.irc-hispano.org.
+  Para averiguar el idle hay que hacer /whois nick nick aunque hagamos 
+  a un nick en el mismo server.
+  Los ircops/opers no tienen estas restricciones.
+
+  KILL: Los KILL locales no sale el mensaje de "Local kill by..." sino
+  "Killed" como en los KILL remotos para no desvelar procedencia.
+  Tambien en las rutas se ocultan los servidores.
+
+  MAP y LINKS: Se restringen los comandos para solo Ircops y Opers.
+
 * 2007/09/06 daijo@irc-dev.net       (u2.10.H.10.05)                  FIX
 -------------------------------------------------------------------------
   En los GCC modernos, salen warnings al utilizar size_t en las funciones

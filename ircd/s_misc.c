@@ -60,6 +60,7 @@
 #include "IPcheck.h"
 #include "m_watch.h"
 #include "slab_alloc.h"
+#include "s_bdd.h"
 
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
 #include "dbuf.h"
@@ -479,9 +480,17 @@ int exit_client(aClient *cptr,  /* Connection being handled by
 
   if (IsServer(bcptr))
   {
-    strcpy(comment1, bcptr->serv->up->name);
-    strcat(comment1, " ");
-    strcat(comment1, bcptr->name);
+    if (ocultar_servidores)
+    {
+      strcpy(comment1, "*.net *.split");
+    }
+    else
+    {
+      strcpy(comment1, bcptr->serv->up->name);
+      strcat(comment1, " ");
+      strcat(comment1, bcptr->name);
+    }
+
     if (IsUser(sptr))
       sendto_lops_butone(sptr, "%s SQUIT by %s [%s]:",
           (sptr->user->server == bcptr ||
@@ -493,7 +502,8 @@ int exit_client(aClient *cptr,  /* Connection being handled by
     else if (sptr != &me && bcptr->serv->up != sptr)
       sendto_ops("Received SQUIT %s from %s :", bcptr->name,
           IsServer(sptr) ? sptr->name : get_client_name(sptr, FALSE));
-    sendto_op_mask(SNO_NETWORK, "Net break: %s (%s)", comment1, comment);
+    sendto_op_mask(SNO_NETWORK, "Net break: %s %s (%s)",
+                   bcptr->serv->up->name, bcptr->name, comment);
   }
 
   /*

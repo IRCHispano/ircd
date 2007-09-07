@@ -57,6 +57,9 @@
 #include "list.h"
 #include "s_user.h"
 #include "support.h"
+#include "s_bsd.h"
+#include "s_bdd.h"
+#include "network.h"
 
 RCSTAG_CC("$Id: whowas.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
 
@@ -349,7 +352,9 @@ int m_whowas(aClient *cptr, aClient *sptr, int parc, char *parv[])
             me.name, parv[0], temp->name, temp->username,
             temp->hostname, temp->realname);
         sendto_one(sptr, rpl_str(RPL_WHOISSERVER), me.name, parv[0],
-            temp->name, temp->servername, myctime(temp->logoff));
+            temp->name, 
+            (ocultar_servidores && !(IsOper(sptr) || IsHelpOp(sptr))) ? SERVER_NAME :temp->servername, 
+            myctime(temp->logoff));
         if (temp->away)
           sendto_one(sptr, rpl_str(RPL_AWAY),
               me.name, parv[0], temp->name, temp->away);

@@ -63,6 +63,8 @@
 #include "sprintf_irc.h"
 #include "querycmds.h"
 #include "IPcheck.h"
+#include "s_bdd.h"
+#include "network.h"
 
 RCSTAG_CC("$Id: whocmds.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
 
@@ -251,7 +253,8 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
 
   if (!fields || (fields & WHO_FIELD_SER))
   {
-    Reg3 char *p2 = acptr->user->server->name;
+    Reg3 char *p2 = (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr))) ? 
+                     SERVER_NAME : acptr->user->server->name;
     *(p1++) = ' ';
     while ((*p2) && (*(p1++) = *(p2++)));
   }
@@ -322,7 +325,10 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
     *p1++ = ' ';
     if (!fields)
       *p1++ = ':';              /* Place colon here for default reply */
-    p1 = sprintf_irc(p1, "%d", acptr->hopcount);
+    if (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr)))
+      *p1++ = (sptr == acptr) ? '0' : '3';
+    else
+      p1 = sprintf_irc(p1, "%d", acptr->hopcount);
   }
 
   if (!fields || (fields & WHO_FIELD_REN))
@@ -501,6 +507,9 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
     matchsel = WHO_FIELD_DEF;
   if (!fields)
     counter = 7;
+
+  if (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr)))
+    matchsel &= ~WHO_FIELD_SER;
 
   if (qrt && (fields & WHO_FIELD_QTY))
   {
@@ -923,7 +932,11 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
 
         sendto_one(sptr, rpl_str(RPL_WHOISSERVER), me.name,
-            parv[0], name, a2cptr->name, PunteroACadena(a2cptr->info));
+            parv[0], name, 
+            (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr))) ?
+                  SERVER_NAME : a2cptr->name,
+            (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr))) ?
+                  SERVER_INFO : PunteroACadena(a2cptr->info));
 
         if (user)
         {
@@ -957,7 +970,8 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
           if (IsMsgOnlyReg(acptr))
             sendto_one(sptr, rpl_str(RPL_MSGONLYREG), me.name, parv[0], name);
 
-          if (MyConnect(acptr))
+         if (MyConnect(acptr) && (!ocultar_servidores ||
+                  (sptr == acptr || IsAnOper(sptr) || IsHelpOp(sptr) || parc >= 3)))
             sendto_one(sptr, rpl_str(RPL_WHOISIDLE), me.name,
                 parv[0], name, now - user->last, acptr->firsttime);
 

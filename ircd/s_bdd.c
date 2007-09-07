@@ -75,6 +75,7 @@ int ocultar_ip_cifrada_en_la_virtual2;
 int numero_maximo_de_clones_por_defecto;
 char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
+int ocultar_servidores;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -555,6 +556,10 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               clave_de_cifrado_binaria[1] = 0;
               elimina_cache_ips_virtuales(NULL, 0);
             }
+            else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
+            {
+              ocultar_servidores = 0;
+            }
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -766,6 +771,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         clave[6] = tmp;
         clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
         elimina_cache_ips_virtuales(NULL, 0);
+      }
+      else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
+      {
+        ocultar_servidores = !0;
       }
       break;
 

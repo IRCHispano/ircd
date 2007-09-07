@@ -48,6 +48,7 @@
 #include "numnicks.h"
 #include "sprintf_irc.h"
 #include "querycmds.h"
+#include "network.h"
 
 RCSTAG_CC("$Id: channel.c,v 1.4 1999/11/29 00:26:42 bleep Exp $");
 
@@ -4921,7 +4922,8 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
               {
                 modebuf[mblen2] = 0;
                 sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
-                    parv[0], chptr->chname, modebuf, parabuf);
+                    ocultar_servidores ?  SERVER_NAME : parv[0], 
+                    chptr->chname, modebuf, parabuf);
 #if !defined(NO_PROTOCOL9)
                 sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s%s " TIME_T_FMT,
                     parv[0], chptr->chname, modebuf, parabuf,
@@ -4946,7 +4948,8 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       {
         modebuf[mblen2] = 0;
         sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
-            parv[0], chptr->chname, modebuf, parabuf);
+            ocultar_servidores ? SERVER_NAME : parv[0], 
+            chptr->chname, modebuf, parabuf);
 #if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s%s " TIME_T_FMT,
             parv[0], chptr->chname, modebuf, parabuf, chptr->creationtime);
@@ -5087,7 +5090,8 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
         /* Time to send buffer */
         modebuf[mblen2] = 0;
         sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
-            parv[0], chptr->chname, modebuf, parabuf);
+            ocultar_servidores ? SERVER_NAME : parv[0], 
+            chptr->chname, modebuf, parabuf);
 #if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s%s",
             parv[0], chptr->chname, modebuf, parabuf);
@@ -5126,7 +5130,8 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       modebuf[mblen2] = 0;
       sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
-          parv[0], chptr->chname, modebuf, parabuf);
+          ocultar_servidores ? SERVER_NAME : parv[0],
+          chptr->chname, modebuf, parabuf);
 #if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s%s " TIME_T_FMT,
           parv[0], chptr->chname, modebuf, parabuf, chptr->creationtime);

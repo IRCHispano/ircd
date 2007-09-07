@@ -1506,7 +1506,7 @@ int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   aClient *acptr;
-  char *inpath = cptr->name;
+  char *inpath = ocultar_servidores ? SERVER_NAME : cptr->name;
   char *user, *path, *killer;
   int chasing = 0;
 
@@ -1710,7 +1710,7 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
    * the unnecessary QUIT for this. (This flag should never be
    * set in any other place)
    */
-  if (MyConnect(acptr) && MyConnect(sptr) && IsAnOper(sptr))
+  if ((!ocultar_servidores) && MyConnect(acptr) && MyConnect(sptr) && IsAnOper(sptr))
     sprintf_irc(buf2, "Local kill by %s (%s)", sptr->name,
         BadPtr(parv[parc - 1]) ? sptr->name : parv[parc - 1]);
   else

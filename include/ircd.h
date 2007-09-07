@@ -35,6 +35,7 @@ extern void restart(char *mesg);
 extern void server_reboot(void);
 
 extern aClient me;
+extern aClient his;
 extern time_t now;
 extern aClient *client;
 extern time_t TSoffset;

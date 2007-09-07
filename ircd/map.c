@@ -32,6 +32,7 @@
 #include "querycmds.h"
 #include "map.h"
 #include "numnicks.h"
+#include "s_bdd.h"
 
 RCSTAG_CC("$Id: map.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
 
@@ -110,6 +111,13 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask,
  */
 int m_map(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 {
+
+  if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
+  {
+    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+    return 0;
+  }
+
   if (parc < 2)
     parv[1] = "*";
 

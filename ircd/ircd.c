@@ -78,12 +78,14 @@
 #include "IPcheck.h"
 #include "s_bdd.h"
 #include "slab_alloc.h"
+#include "network.h"
 
 RCSTAG_CC("$Id: ircd.c,v 1.2 1999/11/25 02:07:53 bleep Exp $");
 
 extern void init_counters(void);
 
 aClient me;                     /* That's me */
+aClient his;			/* me con ocultacion */
 aClient *client = &me;          /* Pointer to beginning of Client list */
 time_t TSoffset = 0;            /* Global variable; Offset of timestamps to
                                    system clock */
@@ -878,6 +880,14 @@ int main(int argc, char *argv[])
 
   me.lasttime = me.since = me.firsttime = now;
   hAddClient(&me);
+
+/* Ocultacion */
+
+//  strncpy(&his.name, SERVER_NAME, HOSTLEN);
+//  strncpy(&his.info, SERVER_INFO, REALLEN);
+  SlabStringAllocDup(&(his.name), SERVER_NAME, HOSTLEN);
+  SlabStringAllocDup(&(his.name), SERVER_INFO, REALLEN);
+//  &(his.status) = STAT_SERVER;
 
   check_class();
   write_pidfile();
