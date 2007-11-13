@@ -79,6 +79,7 @@
 #include "s_bdd.h"
 #include "slab_alloc.h"
 #include "network.h"
+#include "msg.h"
 
 RCSTAG_CC("$Id: ircd.c,v 1.2 1999/11/25 02:07:53 bleep Exp $");
 

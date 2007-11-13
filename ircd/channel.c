@@ -729,7 +729,7 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
                                    all in one message */
 
       /* (Continued) prefix: "<Y> BURST <channel> <TS>" */
-      sprintf_irc(sendbuf, "%s BURST %s " TIME_T_FMT, NumServ(&me),
+      sprintf_irc(sendbuf, "%s " TOK_BURST " %s " TIME_T_FMT, NumServ(&me),
           chptr->chname, chptr->creationtime);
       sblen = strlen(sendbuf);
 

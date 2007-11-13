@@ -1880,7 +1880,7 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     if ((acptr = FindClient(destination)))
     {
-      if (MyUser(acptr) || Protocol(acptr) < 10))
+      if (MyUser(acptr) || Protocol(acptr) < 10)
         sendto_one(acptr, ":%s PONG %s %s", parv[0], origin, destination);
       else
         sendto_one(acptr, "%s " TOK_PONG " %s %s", NumServ(sptr), origin, destination);

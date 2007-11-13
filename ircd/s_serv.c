@@ -1067,7 +1067,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
 #endif
 
   if (Protocol(cptr) >= 10)
-    sendto_one(cptr, "%s END_OF_BURST", NumServ(&me));
+    sendto_one(cptr, "%s " TOK_END_OF_BURST, NumServ(&me));
   return 0;
 }
 
@@ -1126,14 +1126,14 @@ int m_end_of_burst(aClient *cptr, aClient *sptr, int UNUSED(parc),
 
   sendto_op_mask(SNO_NETWORK, "Completed net.burst from %s.", sptr->name);
 #if defined(NO_PROTOCOL9)
-  sendto_serv_butone(cptr, "%s END_OF_BURST", NumServ(sptr));
+  sendto_serv_butone(cptr, "%s " TOK_END_OF_BURST, NumServ(sptr));
 #else
-  sendto_highprot_butone(cptr, 10, "%s END_OF_BURST", NumServ(sptr));
+  sendto_highprot_butone(cptr, 10, "%s " TOK_END_OF_BURST, NumServ(sptr));
 #endif
   ClearBurst(sptr);
   SetBurstAck(sptr);
   if (MyConnect(sptr))
-    sendto_one(sptr, "%s EOB_ACK", NumServ(&me));
+    sendto_one(sptr, "%s " TOK_END_OF_BURST_ACK, NumServ(&me));
 
   return 0;
 }
