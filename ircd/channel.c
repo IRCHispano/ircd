@@ -993,7 +993,7 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
         sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s %s " TIME_T_FMT,
             parv[0], chptr->chname, modebuf, parabuf,
             (badop == 4) ? (time_t) 0 : chptr->creationtime);
-        sendto_highprot_butone(cptr, 10, "%s MODE %s %s %s " TIME_T_FMT,
+        sendto_highprot_butone(cptr, 10, "%s " TOK_MODE " %s %s %s " TIME_T_FMT,
             NumServ(sptr), chptr->chname, modebuf, nparabuf,
             (badop == 4) ? (time_t) 0 : chptr->creationtime);
       }

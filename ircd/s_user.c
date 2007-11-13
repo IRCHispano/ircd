@@ -1081,9 +1081,16 @@ static int m_message(aClient *cptr, aClient *sptr,
             sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
                 parv[0], cmd, acptr->name, parv[parc - 1]);
           }
-          else
-            sendto_prefix_one(acptr, sptr, ":%s %s %s%s :%s",
-                parv[0], cmd, NumNick(acptr), parv[parc - 1]);
+          else {
+            if (IsServer(sptr))
+              sendto_prefix_one(acptr, sptr, "%s %s %s%s :%s",
+                  NumServ(sptr), notice ? TOK_NOTICE : TOK_PRIVATE,
+                  NumNick(acptr), parv[parc - 1]);
+            else
+              sendto_prefix_one(acptr, sptr, "%s%s %s %s%s :%s",
+                  NumNick(sptr), notice ? TOK_NOTICE : TOK_PRIVATE,
+                  NumNick(acptr), parv[parc - 1]);
+          }
         }
         else
         {
@@ -1320,9 +1327,8 @@ int whisper(aClient *sptr, int parc, char *parv[], int notice)
     sendto_prefix_one(tcptr, sptr, ":%s %s %s :%s",
         parv[0], notice ? "NOTICE" : "PRIVMSG", tcptr->name, parv[3]);
   else
-    sendto_prefix_one(tcptr, sptr, ":%s %s %s%s :%s",
-        parv[0], notice ? "NOTICE" : "PRIVMSG", NumNick(tcptr), parv[3]);
-
+    sendto_prefix_one(tcptr, sptr, "%s%s %s %s%s :%s",
+         NumNick(sptr), notice ? TOK_NOTICE : TOK_PRIVATE, NumNick(tcptr), parv[3]);
   return 0;
 }
 
