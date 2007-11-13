@@ -715,7 +715,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (match(my_name_for_link(me.name, cconf), PunteroACadena(acptr->name)) == 0)
         continue;
       if (Protocol(bcptr) > 9)
-        sendto_one(bcptr, "%s SERVER %s %d 0 %s %s %s%s %ld :%s",
+        sendto_one(bcptr, "%s " TOK_SERVER " %s %d 0 %s %s %s%s %ld :%s",
             NumServ(sptr), PunteroACadena(acptr->name), hop + 1, parv[4], parv[5],
             NumServCap(acptr), boot_timestamp, PunteroACadena(acptr->info));
       else
@@ -918,7 +918,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
     {
       if (Protocol(acptr) > 9)
         sendto_one(acptr,
-            "%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s %ld :%s",
+            "%s " TOK_SERVER " %s 2 0 " TIME_T_FMT " %s%u %s%s %ld :%s",
             NumServ(&me), cptr->name, cptr->serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr), NumServCap(cptr),
             cptr->serv->boot_timestamp, PunteroACadena(cptr->info));
@@ -932,7 +932,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
     else
     {
       if (Protocol(acptr) > 9)
-        sendto_one(acptr, "%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s %ld :%s",
+        sendto_one(acptr, "%s " TOK_SERVER " %s 2 0 " TIME_T_FMT " %s%u %s%s %ld :%s",
             NumServ(&me), cptr->name, cptr->serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr),
             NumServCap(cptr), cptr->serv->boot_timestamp,
@@ -980,7 +980,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
       {
         if (Protocol(cptr) > 9)
           sendto_one(cptr,
-              "%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s %ld :%s",
+              "%s " TOK_SERVER " %s %d 0 " TIME_T_FMT " %s%u %s%s %ld :%s",
               NumServ(acptr->serv->up), acptr->name,
               acptr->hopcount + 1, acptr->serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
@@ -997,7 +997,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
       {
         if (Protocol(cptr) > 9)
           sendto_one(cptr,
-              "%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s %ld :%s",
+              "%s " TOK_SERVER " %s %d 0 " TIME_T_FMT " %s%u %s%s %ld :%s",
               NumServ(acptr->serv->up), acptr->name,
               acptr->hopcount + 1, acptr->serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),

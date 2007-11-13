@@ -61,6 +61,7 @@
 #include "m_watch.h"
 #include "slab_alloc.h"
 #include "s_bdd.h"
+#include "msg.h"
 
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
 #include "dbuf.h"
@@ -443,7 +444,13 @@ int exit_client(aClient *cptr,  /* Connection being handled by
         && IsClient(bcptr))     /* Not a Ping struct or Log file */
     {
       if (IsServer(bcptr) || IsHandshake(bcptr))
-        sendto_one(bcptr, ":%s SQUIT %s 0 :%s", sptr->name, me.name, comment);
+      {
+        if (Protocol(bcptr->from) < 10)
+          sendto_one(bcptr, ":%s SQUIT %s 0 :%s", sptr->name, me.name, comment);
+        else
+          sendto_one(bcptr, "%s " TOK_SQUIT " %s 0 :%s", NumServ(sptr), me.name, comment);
+
+      }
       else if (!IsConnecting(bcptr))
         sendto_one(bcptr, "ERROR :Closing Link: %s by %s (%s)",
             get_client_name(bcptr, FALSE), sptr->name, comment);
