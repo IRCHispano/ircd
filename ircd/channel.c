@@ -892,7 +892,7 @@ int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     sendto_lowprot_butone(cptr, 9, ":%s BMODE %s %s %s %s",
         parv[0], parv[1], chptr->chname, modebuf, parabuf);
-    sendto_highprot_butone(cptr, 10, ":%s BMODE %s %s %s %s",
+    sendto_highprot_butone(cptr, 10, "%s BMODE %s %s %s %s",
         parv[0], parv[1], chptr->chname, modebuf, nparabuf);
   }
   return 0;
@@ -993,8 +993,8 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
         sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s %s " TIME_T_FMT,
             parv[0], chptr->chname, modebuf, parabuf,
             (badop == 4) ? (time_t) 0 : chptr->creationtime);
-        sendto_highprot_butone(cptr, 10, ":%s MODE %s %s %s " TIME_T_FMT,
-            parv[0], chptr->chname, modebuf, nparabuf,
+        sendto_highprot_butone(cptr, 10, "%s MODE %s %s %s " TIME_T_FMT,
+            NumServ(sptr), chptr->chname, modebuf, nparabuf,
             (badop == 4) ? (time_t) 0 : chptr->creationtime);
       }
     }
@@ -1002,8 +1002,12 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s %s",
           parv[0], chptr->chname, modebuf, parabuf);
-      sendto_highprot_butone(cptr, 10, ":%s MODE %s %s %s",
-          parv[0], chptr->chname, modebuf, nparabuf);
+      if (IsServer(sptr))
+        sendto_highprot_butone(cptr, 10, "%s " TOK_MODE " %s %s %s",
+            NumServ(sptr), chptr->chname, modebuf, nparabuf);
+      else
+        sendto_highprot_butone(cptr, 10, "%s%s " TOK_MODE " %s %s %s",
+            NumNick(sptr), chptr->chname, modebuf, nparabuf);
     }
   }
   return 0;
@@ -3174,7 +3178,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
             me.name, chptr->chname, sptr->name,
             *badop == 2 ? (time_t) 0 : chptr->creationtime);
       else
-        sendto_one(cptr, "%s MODE %s -o %s%s " TIME_T_FMT,
+        sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT,
             NumServ(&me), chptr->chname, NumNick(sptr),
             *badop == 2 ? (time_t) 0 : chptr->creationtime);
     }
@@ -3183,7 +3187,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
           me.name, chptr->chname, bmodebuf, bparambuf,
           *badop == 2 ? (time_t) 0 : chptr->creationtime);
     else
-      sendto_one(cptr, "%s MODE %s %s %s " TIME_T_FMT,
+      sendto_one(cptr, "%s " TOK_MODE " %s %s %s " TIME_T_FMT,
           NumServ(&me), chptr->chname, bmodebuf, nbparambuf,
           *badop == 2 ? (time_t) 0 : chptr->creationtime);
   }
@@ -4020,7 +4024,8 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         chptr = get_channel(sptr, name, !CREATE);
         if (chptr && chptr->mode.mode & MODE_SENDTS)
         {                       /* send a TS? */
-          sendto_serv_butone(cptr, ":%s MODE %s + " TIME_T_FMT, me.name, chptr->chname, chptr->creationtime); /* ok, send TS */
+          sendto_lowprot_butone(cptr, 9, ":%s MODE %s + " TIME_T_FMT, me.name, chptr->chname, chptr->creationtime); /* ok, send TS */
+          sendto_highprot_butone(cptr, 10, "%s " TOK_MODE " %s + " TIME_T_FMT, NumServ(&me), chptr->chname, chptr->creationtime); /* ok, send TS */
           chptr->mode.mode &= ~MODE_SENDTS; /* reset flag */
         }
         /*
@@ -4156,8 +4161,8 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
         if (Protocol(cptr) < 10)
           sendto_one(cptr, ":%s MODE %s -o %s 0", me.name, name, sptr->name);
         else
-          sendto_one(cptr, ":%s MODE %s -o %s%s 0",
-              me.name, name, NumNick(sptr));
+          sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s 0",
+              NumServ(&me), name, NumNick(sptr));
         /* This causes a WALLOPS on all downstream servers and a notice to our
            own opers: */
         parv[1] = name;         /* Corrupt parv[1], it is not used anymore anyway */
@@ -4174,7 +4179,7 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_one(cptr, ":%s MODE %s -o %s " TIME_T_FMT, me.name,
               name, sptr->name, chptr->creationtime);
         else
-          sendto_one(cptr, ":%s MODE %s -o %s%s " TIME_T_FMT, me.name,
+          sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT, NumServ(&me),
               name, NumNick(sptr), chptr->creationtime);
       }
     }
@@ -5338,7 +5343,7 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_one(cptr, ":%s MODE %s -o %s " TIME_T_FMT,
               me.name, chptr->chname, sptr->name, chptr->creationtime);
         else
-          sendto_one(cptr, "%s MODE %s -o %s%s " TIME_T_FMT,
+          sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT,
               NumServ(&me), chptr->chname, NumNick(sptr), chptr->creationtime);
       }
 
@@ -5355,7 +5360,7 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_one(cptr, ":%s MODE %s +o %s " TIME_T_FMT,
               me.name, parv[1], who->name, chptr->creationtime);
         else
-          sendto_one(cptr, "%s MODE %s +o %s%s " TIME_T_FMT,
+          sendto_one(cptr, "%s " TOK_MODE " %s +o %s%s " TIME_T_FMT,
               NumServ(&me), parv[1], NumNick(who), chptr->creationtime);
       }
       if (lp->flags & CHFL_VOICE)
@@ -5364,7 +5369,7 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_one(cptr, ":%s MODE %s +v %s " TIME_T_FMT,
               me.name, chptr->chname, who->name, chptr->creationtime);
         else
-          sendto_one(cptr, "%s MODE %s +v %s%s " TIME_T_FMT,
+          sendto_one(cptr, "%s " TOK_MODE " %s +v %s%s " TIME_T_FMT,
               NumServ(&me), parv[1], NumNick(who), chptr->creationtime);
       }
     }
@@ -5600,7 +5605,7 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_one(cptr, ":%s MODE %s -o %s " TIME_T_FMT,
               me.name, chptr->chname, sptr->name, chptr->creationtime);
         else
-          sendto_one(cptr, "%s MODE %s -o %s%s " TIME_T_FMT,
+          sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT,
               NumServ(&me), chptr->chname, NumNick(sptr), chptr->creationtime);
 
         if (chptr->topic)
@@ -5748,7 +5753,7 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(cptr, ":%s MODE %s -o %s " TIME_T_FMT,
           me.name, chptr->chname, sptr->name, chptr->creationtime);
     else
-      sendto_one(cptr, "%s MODE %s -o %s%s " TIME_T_FMT,
+      sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT,
           NumServ(&me), chptr->chname, NumNick(sptr), chptr->creationtime);
 
     sendto_one(sptr, err_str(ERR_CHANOPRIVSNEEDED),

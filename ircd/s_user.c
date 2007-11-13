@@ -1958,7 +1958,10 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     ++nrof.opers;
     sptr->flags |= FLAGS_OPER;
-    sendto_serv_butone(cptr, ":%s MODE %s :+o", parv[0], parv[0]);
+    sendto_lowprot_butone(cptr, 9,
+        ":%s MODE %s :+o", parv[0], parv[0]);
+    sendto_highprot_butone(cptr, 10,
+        "%s%s " TOK_MODE " %s :+o", NumNick(sptr), parv[0]);
     if (IsMe(cptr))
       sendto_one(sptr, rpl_str(RPL_YOUREOPER), me.name, parv[0]);
     return 0;
