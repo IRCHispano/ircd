@@ -403,8 +403,12 @@ static time_t check_pings(void)
       cptr->lasttime = now - ping;
       if (IsUser(cptr))
         sendto_one(cptr, "PING :%s", me.name);
-      else
-        sendto_one(cptr, ":%s PING :%s", me.name, me.name);
+      else {
+        if (Protocol(cptr) < 10)
+          sendto_one(cptr, ":%s PING :%s", me.name, me.name);
+        else
+          sendto_one(cptr, "%s " TOK_PING " :%s", NumServ(&me), me.name);
+      }
     }
   ping_timeout:
     timeout = cptr->lasttime + ping;

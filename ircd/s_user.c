@@ -1802,7 +1802,16 @@ int m_ping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!BadPtr(destination) && strCasediff(destination, me.name) != 0)
   {
     if ((acptr = FindServer(destination)))
-      sendto_one(acptr, ":%s PING %s :%s", parv[0], origin, destination);
+    {
+      if (Protocol(acptr) < 10)
+        sendto_one(acptr, ":%s PING %s :%s", parv[0], origin, destination);
+      else {
+        if (IsUser(sptr))
+          sendto_one(acptr, "%s%s " TOK_PING " %s :%s", NumNick(sptr), origin, destination);
+        else
+          sendto_one(acptr, "%s " TOK_PING " %s :%s", NumServ(sptr), origin, destination);
+      }
+    }
     else
     {
       sendto_one(sptr, err_str(ERR_NOSUCHSERVER),
@@ -1870,7 +1879,12 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!BadPtr(destination) && strCasediff(destination, me.name) != 0)
   {
     if ((acptr = FindClient(destination)))
-      sendto_one(acptr, ":%s PONG %s %s", parv[0], origin, destination);
+    {
+      if (MyUser(acptr) || Protocol(acptr) < 10))
+        sendto_one(acptr, ":%s PONG %s %s", parv[0], origin, destination);
+      else
+        sendto_one(acptr, "%s " TOK_PONG " %s %s", NumServ(sptr), origin, destination);
+    }
     else
     {
       sendto_one(sptr, err_str(ERR_NOSUCHSERVER),
