@@ -847,13 +847,13 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
     envia_config_req(cptr);
 #endif
     if (bconf->passwd[0])
-      sendto_one(cptr, ":%s PASS :%s", me.name, bconf->passwd);
+      sendto_one(cptr, "PASS :%s", bconf->passwd);
     /*
      *  Pass my info to the new server
      */
     sendto_one(cptr,
-        ":%s SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s %ld :%s",
-        me.name, my_name_for_link(me.name, aconf), me.serv->timestamp,
+        "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s %ld :%s",
+        my_name_for_link(me.name, aconf), me.serv->timestamp,
         cptr->serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
         me.serv->boot_timestamp, me.info ? me.info : "IRCers United");
     tx_num_serie_dbs(cptr);
