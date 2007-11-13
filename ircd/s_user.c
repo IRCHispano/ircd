@@ -715,8 +715,8 @@ static int register_user(aClient *cptr, aClient *sptr,
 
   tmpstr = umode_str(sptr, NULL);
   sendto_serv_butone(cptr, *tmpstr ?
-      "%s NICK %s %d %d %s %s +%s %s %s%s :%s" :
-      "%s NICK %s %d %d %s %s %s%s %s%s :%s",
+      "%s " TOK_NICK " %s %d %d %s %s +%s %s %s%s :%s" :
+      "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
       NumServ(user->server), nick, sptr->hopcount + 1, sptr->lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
       inttobase64(ip_base64, ntohl(sptr->ip.s_addr), 6),
@@ -754,8 +754,8 @@ static int register_user(aClient *cptr, aClient *sptr,
 
   /* Now send message to all 2.10 servers */
   sprintf_irc(sendbuf, *tmpstr ?
-      "%s NICK %s %d %d %s %s +%s %s %s%s :%s" :
-      "%s NICK %s %d %d %s %s %s%s %s%s :%s",
+      "%s " TOK_NICK " %s %d %d %s %s +%s %s %s%s :%s" :
+      "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
       NumServ(user->server), nick, sptr->hopcount + 1, (int)(sptr->lastnick),
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
       inttobase64(ip_base64, ntohl(sptr->ip.s_addr), 6),
@@ -4133,7 +4133,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
         "%s KILL %s%s :%s (%s <- %s (older nick overruled))",
         NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);
     if (MyConnect(acptr) && IsServer(cptr) && Protocol(cptr) > 9)
-      sendto_one(cptr, "%s%s QUIT :Local kill by %s (Ghost)",
+      sendto_one(cptr, "%s%s " TOK_QUIT " :Local kill by %s (Ghost)",
           NumNick(acptr), me.name);
     exit_client(cptr, acptr, &me, "Nick collision (older nick overruled)");
   }
@@ -4147,7 +4147,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
         NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);
     if (MyConnect(acptr) && IsServer(cptr) && Protocol(cptr) > 9)
       sendto_one(cptr,
-          "%s%s QUIT :Local kill by %s (Ghost: switched servers too fast)",
+          "%s%s " TOK_QUIT " :Local kill by %s (Ghost: switched servers too fast)",
           NumNick(acptr), me.name);
     exit_client(cptr, acptr, &me, "Nick collision (You collided yourself)");
   }
@@ -4512,12 +4512,12 @@ nickkilldone:
       add_history(sptr, 1);
 #if defined(NO_PROTOCOL9)
       sendto_serv_butone(cptr,
-          "%s%s NICK %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
 #else
       sendto_lowprot_butone(cptr, 9,
           ":%s NICK %s " TIME_T_FMT, parv[0], nick, sptr->lastnick);
       sendto_highprot_butone(cptr, 10,
-          "%s%s NICK %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
 #endif
     }
     else
@@ -4983,7 +4983,7 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
         "%s KILL %s%s :%s (%s <- %s (older nick overruled))",
         NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);
     if (MyConnect(acptr) && Protocol(cptr) > 9)
-      sendto_one(cptr, "%s%s QUIT :Local kill by %s (Ghost)",
+      sendto_one(cptr, "%s%s " TOK_QUIT " :Local kill by %s (Ghost)",
           NumNick(acptr), me.name);
     exit_client(cptr, acptr, &me, "Nick collision (older nick overruled)");
   }
@@ -4997,7 +4997,7 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
         NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);
     if (MyConnect(acptr) && Protocol(cptr) > 9)
       sendto_one(cptr,
-          "%s%s QUIT :Local kill by %s (Ghost: switched servers too fast)",
+          "%s%s " TOK_QUIT " :Local kill by %s (Ghost: switched servers too fast)",
           NumNick(acptr), me.name);
     exit_client(cptr, acptr, &me, "Nick collision (You collided yourself)");
   }
@@ -5154,12 +5154,12 @@ nickkilldone:
       add_history(sptr, 1);
 #if defined(NO_PROTOCOL9)
       sendto_serv_butone(cptr,
-          "%s%s NICK %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
 #else
       sendto_lowprot_butone(cptr, 9,
           ":%s NICK %s " TIME_T_FMT, parv[0], nick, sptr->lastnick);
       sendto_highprot_butone(cptr, 10,
-          "%s%s NICK %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
 #endif
     }
     else

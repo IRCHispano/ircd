@@ -1041,8 +1041,8 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
         char xxx_buf[8];
         char *s = umode_str(acptr, NULL);
         sendto_one(cptr, *s ?
-            "%s NICK %s %d " TIME_T_FMT " %s %s +%s %s %s%s :%s" :
-            "%s NICK %s %d " TIME_T_FMT " %s %s %s%s %s%s :%s",
+            "%s " TOK_NICK " %s %d " TIME_T_FMT " %s %s +%s %s %s%s :%s" :
+            "%s " TOK_NICK " %s %d " TIME_T_FMT " %s %s %s%s %s%s :%s",
             NumServ(acptr->user->server),
             acptr->name, acptr->hopcount + 1, acptr->lastnick,
             PunteroACadena(acptr->user->username),

@@ -445,7 +445,7 @@ int exit_client(aClient *cptr,  /* Connection being handled by
     {
       if (IsServer(bcptr) || IsHandshake(bcptr))
       {
-        if (Protocol(bcptr->from) < 10)
+        if (Protocol(bcptr) < 10)
           sendto_one(bcptr, ":%s SQUIT %s 0 :%s", sptr->name, me.name, comment);
         else
           sendto_one(bcptr, "%s " TOK_SQUIT " %s 0 :%s", NumServ(sptr), me.name, comment);
@@ -520,11 +520,20 @@ int exit_client(aClient *cptr,  /* Connection being handled by
   for (dlp = me.serv->down; dlp; dlp = dlp->next)
     if (dlp->value.cptr != sptr->from && dlp->value.cptr != bcptr)
     {
-      if (IsServer(bcptr))
-        sendto_one(dlp->value.cptr, ":%s SQUIT %s " TIME_T_FMT " :%s",
-            sptr->name, bcptr->name, bcptr->serv->timestamp, comment);
-      else if (IsUser(bcptr) && (bcptr->flags & FLAGS_KILLED) == 0)
-        sendto_one(dlp->value.cptr, ":%s QUIT :%s", bcptr->name, comment);
+      if (Protocol(dlp->value.cptr) < 10)
+      {
+        if (IsServer(bcptr))
+          sendto_one(dlp->value.cptr, ":%s SQUIT %s " TIME_T_FMT " :%s",
+              sptr->name, bcptr->name, bcptr->serv->timestamp, comment);
+        else if (IsUser(bcptr) && (bcptr->flags & FLAGS_KILLED) == 0)
+          sendto_one(dlp->value.cptr, ":%s QUIT :%s", bcptr->name, comment);
+      } else {
+        if (IsServer(bcptr))
+          sendto_one(dlp->value.cptr, "%s " TOK_SQUIT " %s " TIME_T_FMT " :%s",
+              NumServ(sptr), bcptr->name, bcptr->serv->timestamp, comment);
+        else if (IsUser(bcptr) && (bcptr->flags & FLAGS_KILLED) == 0)
+          sendto_one(dlp->value.cptr, "%s " TOK_QUIT " :%s", NumServ(bcptr), comment);
+      }
     }
 
   /* Then remove the client structures */
