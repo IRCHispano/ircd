@@ -75,9 +75,9 @@ static void clean_channelname(char *);
 void del_invite(aClient *, aChannel *);
 
 static char *PartFmt1 = ":%s PART %s";
-static char *PartFmt1Serv = "%s%s PART %s";
+static char *PartFmt1Serv = "%s%s " TOK_PART " %s";
 static char *PartFmt2 = ":%s PART %s :%s";
-static char *PartFmt2Serv = "%s%s PART %s :%s";
+static char *PartFmt2Serv = "%s%s " TOK_PART " %s :%s";
 
 /*
  * some buffers for rebuilding channel/nick lists with ,'s
@@ -3998,15 +3998,15 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         parc > 2 ? ":%s JOIN %s %s" : ":%s JOIN %s", parv[0], jbuf, keysOrTS);
 #else
     sendto_highprot_butone(cptr, 10,
-        parc > 2 ? "%s%s JOIN %s %s" : "%s%s JOIN %s", NumNick(sptr), jbuf,
+        parc > 2 ? "%s%s " TOK_JOIN " %s %s" : "%s%s " TOK_JOIN " %s", NumNick(sptr), jbuf,
         keysOrTS);
 #endif
   if (*mbuf)                    /* and now creation events */
 #if defined(NO_PROTOCOL9)
-    sendto_serv_butone(cptr, "%s%s CREATE %s " TIME_T_FMT,
+    sendto_serv_butone(cptr, "%s%s " TOK_CREATE " %s " TIME_T_FMT,
         NumNick(sptr), mbuf, TStime());
 #else
-    sendto_highprot_butone(cptr, 10, "%s%s CREATE %s " TIME_T_FMT,
+    sendto_highprot_butone(cptr, 10, "%s%s " TOK_CREATE " %s " TIME_T_FMT,
         NumNick(sptr), mbuf, TStime());
 #endif
 
@@ -4192,7 +4192,7 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {                           /* handle badop: convert CREATE into JOIN */
       sendto_lowprot_butone(cptr, 9, ":%s JOIN %s " TIME_T_FMT,
           sptr->name, name, chptr->creationtime);
-      sendto_highprot_butone(cptr, 10, "%s%s JOIN %s " TIME_T_FMT,
+      sendto_highprot_butone(cptr, 10, "%s%s " TOK_JOIN " %s " TIME_T_FMT,
           NumNick(sptr), name, chptr->creationtime);
     }
     else
@@ -4215,11 +4215,11 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (*cbuf)                    /* Any channel accepted with ops ? */
   {
 #if defined(NO_PROTOCOL9)
-    sendto_serv_butone(cptr, "%s%s CREATE %s " TIME_T_FMT,
+    sendto_serv_butone(cptr, "%s%s " TOK_CREATE " %s " TIME_T_FMT,
         NumNick(sptr), cbuf, chanTS);
 #else
     /* send CREATEs to 2.10 servers */
-    sendto_highprot_butone(cptr, 10, "%s%s CREATE %s " TIME_T_FMT,
+    sendto_highprot_butone(cptr, 10, "%s%s " TOK_CREATE " %s " TIME_T_FMT,
         NumNick(sptr), cbuf, chanTS);
 
     /* And JOIN + MODE to 2.9 servers; following
@@ -5379,12 +5379,12 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
             parv[0], chptr->chname, who->name, comment);
         if (IsUser(sptr))
         {
-          sendto_highprot_butone(cptr, 10, "%s%s KICK %s %s%s :%s",
+          sendto_highprot_butone(cptr, 10, "%s%s " TOK_KICK " %s %s%s :%s",
               NumNick(sptr), parv[1], NumNick(who), comment);
         }
         else
         {
-          sendto_highprot_butone(cptr, 10, "%s KICK %s %s%s :%s",
+          sendto_highprot_butone(cptr, 10, "%s " TOK_KICK " %s %s%s :%s",
               NumServ(sptr), parv[1], NumNick(who), comment);
         }
       }
