@@ -1,3 +1,25 @@
+* 2007/11/13 zoltan@irc-dev.net      (u2.10.H.10.07)              FEATURE
+-------------------------------------------------------------------------
+  Se inician los parches de transicion para tener P10 Full manteniendo 
+  el soporte P09 para facilitar la implementacion de nuevos services P10
+  como el Pxys 2.1 y linkar ircds de nueva generacion.
+  Los parches son 100% compatibles con las versiones u2.10.H.09 y u2.10.H.10.
+
+  Los cambios son:
+  (Rev. 15) Revierto los parches u2.10.H.04.35 y u2.10.H.04.36 de JCEA
+  de PASS+SERVER inicial porque eran parches para Olimpo y que rompian
+  el protocolo P10.
+
+  (Rev.16) Comandos SERVER y SQUIT
+  (Rev.17) Comandos NICK y QUIT
+  (Rev.18) Comandos PING y PONG
+  (Rev.19) Comandos BURST, EOB y EOB_ACK
+  (Rev.20) Comandos CREATE, JOIN, PART y KICK
+  (Rev.21) Comando KILL
+  (Rev.22) Comando MODE
+  (Rev.23) Comandos PRIVMSG, CNOTICE y CPRIVMSG
+
+
 * 2007/09/07 zoltan@irc-dev.net      (u2.10.H.10.06)              FEATURE
 -------------------------------------------------------------------------
   Parche de ocultacion de servidores para dificultar donde estan los
