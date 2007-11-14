@@ -1,3 +1,15 @@
+* 2007/11/14 zoltan@irc-dev.net      (u2.10.H.10.08)              CLEANUP
+-------------------------------------------------------------------------
+  Revierto el parche u2.10.H.06.94 de JCEA porque rompe el protocolo P10
+  ya que el penultimo parametro no es para poner un timestamp sino para
+  poner los modos del servidor (+h de hub, +s de service o +6 de IPv6)
+  de los ircu 2.10.12 y superiores.
+  Dejo como Cero fijo, tal como se comportan en los ircu hasta el 2.10.11
+  y que es compatible con versiones superiores.
+
+  No toco nada en la parte del P09 para no afectar el funcionamiento con
+  los services P09.
+
 * 2007/11/13 zoltan@irc-dev.net      (u2.10.H.10.07)              FEATURE
 -------------------------------------------------------------------------
   Se inician los parches de transicion para tener P10 Full manteniendo 

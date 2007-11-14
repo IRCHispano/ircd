@@ -1062,10 +1062,9 @@ static int completed_connection(aClient *cptr)
 #endif
 
   sendto_one(cptr,
-      "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s %ld :%s", me.name,
+      "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s 0 :%s", 
       my_name_for_link(me.name, aconf), me.serv->timestamp, newts,
-      MAJOR_PROTOCOL, NumServCap(&me), me.serv->boot_timestamp,
-      PunteroACadena(me.info));
+      MAJOR_PROTOCOL, NumServCap(&me), PunteroACadena(me.info));
   tx_num_serie_dbs(cptr);
 
   if (!IsDead(cptr))

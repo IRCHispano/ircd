@@ -532,7 +532,7 @@ int exit_client(aClient *cptr,  /* Connection being handled by
           sendto_one(dlp->value.cptr, "%s " TOK_SQUIT " %s " TIME_T_FMT " :%s",
               NumServ(sptr), bcptr->name, bcptr->serv->timestamp, comment);
         else if (IsUser(bcptr) && (bcptr->flags & FLAGS_KILLED) == 0)
-          sendto_one(dlp->value.cptr, "%s " TOK_QUIT " :%s", NumServ(bcptr), comment);
+          sendto_one(dlp->value.cptr, "%s%s " TOK_QUIT " :%s", NumNick(bcptr), comment);
       }
     }
 
