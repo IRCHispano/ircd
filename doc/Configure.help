@@ -671,6 +671,15 @@ BUFFERPOOL
   have less than 4000 local clients.
   Don't forget to specify this value in bytes.
 
+Activar el FERGUSON_FLUSHER
+FERGUSON_FLUSHER
+  If you have a server with a lot of resources available, this option
+  will cause the server to attempt to flush its internal buffers before
+  dropping clients during a net break.  Don't define this if you don't
+  know for certain; if you're not careful this can end up rebooting
+  FreeBSD boxes.  For more information, refer to freebsd.txt, also in
+  this directory.
+
 Max receive queue for clients (bytes)
 CLIENT_FLOOD
   Currently, everything that a client sends to a server is read by the server

@@ -443,6 +443,7 @@ comment 'Configuration'
   else
     int 'Max size of the total of of all sendqs (bytes)' BUFFERPOOL 9000000
   fi
+  bool 'Activar el FERGUSON_FLUSHER' FERGUSON_FLUSHER n
   int 'Max receive queue for clients (bytes)' CLIENT_FLOOD 1536
   int 'Maximum number of network connections (23 - (FD_SETSIZE-4))' MAXCONNECTIONS 252
   int 'Default client listen port' PORTNUM 6667

@@ -1,3 +1,8 @@
+* 2007/11/26 zoltan@irc-dev.net      (u2.10.H.10.09)              FEATURE
+-------------------------------------------------------------------------
+  Aplico el parche de FERGUSON FLUSHER procedente de Undernet para minimizar
+  las caidas por Buffer Allocation Error.
+
 * 2007/11/14 zoltan@irc-dev.net      (u2.10.H.10.08)              CLEANUP
 -------------------------------------------------------------------------
   Revierto el parche u2.10.H.06.94 de JCEA porque rompe el protocolo P10

@@ -243,9 +243,30 @@ static int dbuf_put2(struct Client *cptr, struct DBuf *dyn, const char *buf,
   {
     if (0 == (db = *h))
     {
-      if (0 == (db = dbuf_alloc()))
-        return dbuf_malloc_error(dyn);
-
+      if (0 == (db = dbuf_alloc())) {
+#if defined(FERGUSON_FLUSHER)
+        /*
+         * from "Married With Children" episode were Al bought a REAL toilet
+         * on the black market because he was tired of the wimpy water
+         * conserving toilets they make these days --Bleep
+         */
+        /*
+         * Apparently this doesn't work, the server _has_ to
+         * dump a few clients to handle the load. A fully loaded
+         * server cannot handle a net break without dumping some
+         * clients. If we flush the connections here under a full
+         * load we may end up starving the kernel for mbufs and
+         * crash the machine
+         */
+        /*
+         * attempt to recover from buffer starvation before
+         * bailing this may help servers running out of memory
+         */
+        flush_sendq_except(dyn);
+        if (0 == (db = dbuf_alloc()))
+#endif
+          return dbuf_malloc_error(dyn);
+      }
       dyn->tail = db;
       *h = db;
       db->next = 0;

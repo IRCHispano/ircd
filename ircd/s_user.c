@@ -1926,7 +1926,13 @@ void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh,
     for (i = highest_fd; i >= 0; i--)
       if ((acptr = loc_clients[i]) && IsServer(acptr) &&
           (acptr != cptr) && (acptr != sptr) && *umode_buf)
-        sendto_one(acptr, ":%s MODE %s :%s", sptr->name, sptr->name, umode_buf);
+      {
+        if (Protocol(acptr) < 10)
+          sendto_one(acptr, ":%s MODE %s :%s", sptr->name, sptr->name, umode_buf);
+        else
+          sendto_one(acptr, "%s%s " TOK_MODE " %s :%s", NumNick(sptr), sptr->name, umode_buf);
+
+      }
   }
 
   if (cptr && MyUser(cptr))
@@ -2830,8 +2836,12 @@ void send_umode(aClient *cptr, aClient *sptr, int old, int sendmask, int oldh,
     }
   }
   *m = '\0';
-  if (*umode_buf && cptr)
-    sendto_one(cptr, ":%s MODE %s :%s", sptr->name, sptr->name, umode_buf);
+  if (*umode_buf && cptr) {
+    if (MyUser(cptr) || Protocol(cptr) < 10)
+      sendto_one(cptr, ":%s MODE %s :%s", sptr->name, sptr->name, umode_buf); 
+    else
+      sendto_one(cptr, "%s%s " TOK_MODE " %s :%s", NumNick(sptr), sptr->name, umode_buf);
+  }
 }
 
 /*

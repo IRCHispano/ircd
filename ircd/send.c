@@ -112,6 +112,24 @@ void flush_connections(int fd)
 }
 
 /*
+ * flush_sendq_except - run through local client array and flush
+ * the sendq for each client, if the address of the client sendq
+ * is the same as the one specified, it is skipped. This is used
+ * by dbuf_put to try to get some more memory before bailing and
+ * causing the client to be disconnected.
+ */
+void flush_sendq_except(const struct DBuf *one)
+{
+  int i;
+  struct Client *cptr;
+  for (i = highest_fd; i >= 0; i--)
+  {
+    if ((cptr = loc_clients[i]) && one != &cptr->sendQ)
+      send_queued(cptr);
+  }
+}
+
+/*
  * send_queued
  *
  * This function is called from the main select-loop (or whatever)
