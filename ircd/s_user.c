@@ -2646,6 +2646,14 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       )
     sptr->flags &= ~FLAGS_CHSERV;
 
+/* MODO +s capado para usuarios */
+  if (!(setflags & FLAGS_CHSERV) && !IsServer(cptr)
+      && !IsOper(sptr) && !IsHelpOp(sptr))
+  {
+    sptr->flags &= ~FLAGS_CHSERV;
+    set_snomask(sptr, 0, SNO_SET);
+  }
+
 
 /*
 ** El +X solo se lo pueden poner los admins.

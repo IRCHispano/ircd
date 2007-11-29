@@ -1,3 +1,7 @@
+* 2007/11/29 zoltan@irc-dev.net      (u2.10.H.10.12)                  FIX
+-------------------------------------------------------------------------
+  Capamos el modo +s para usuarios.
+
 * 2007/11/29 zoltan@irc-dev.net      (u2.10.H.10.11)                  FIX
 -------------------------------------------------------------------------
   Del parche de Ocultamiento de Servers faltaban capar los STATS para
