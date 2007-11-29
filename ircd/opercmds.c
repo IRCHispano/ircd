@@ -391,6 +391,14 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       int doall = 0, wilds = 0;
       char *name = "*";
+
+      /* Solo ircops y opers tienen acceso */
+      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
+
       if (parc > 3 && *parv[3])
       {
         char *p;
@@ -456,6 +464,12 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     case 'C':
     case 'c':
+      /* Solo ircops y opers tienen acceso */
+      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
       report_configured_links(sptr, CONF_CONNECT_SERVER);
       break;
     case 'G':
@@ -522,12 +536,24 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(ESNET_NEG)
     case 'f':
     case 'F':
+      /* Solo ircops y opers tienen acceso */
+      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
       report_configured_links(sptr, CONF_NEGOTIATION);
       break;
 #endif
 
     case 'H':
     case 'h':
+      /* Solo ircops y opers tienen acceso */
+      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
       report_configured_links(sptr, CONF_HUB | CONF_LEAF);
       break;
     case 'I':
@@ -701,9 +727,21 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
       break;
     case 'D':
+      /* Solo ircops y opers tienen acceso */
+      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
       report_configured_links(sptr, CONF_CRULEALL);
       break;
     case 'd':
+      /* Solo ircops y opers tienen acceso */
+      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
       report_configured_links(sptr, CONF_CRULE);
       break;
     case 't':
@@ -716,6 +754,13 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       report_configured_links(sptr, CONF_UWORLD);
       {
         struct db_reg *reg;
+
+        /* Solo ircops y opers tienen acceso */
+        if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+        {
+          sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+          return 0;
+        }
 
         for (reg = db_iterador_init(BDD_CONFIGDB); reg;
             reg = db_iterador_next())

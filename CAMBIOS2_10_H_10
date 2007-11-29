@@ -1,3 +1,22 @@
+* 2007/11/29 zoltan@irc-dev.net      (u2.10.H.10.11)                  FIX
+-------------------------------------------------------------------------
+  Del parche de Ocultamiento de Servers faltaban capar los STATS para
+  usuarios normales:
+
+  C de Conexiones
+  D de Crules
+  F de Negociaciones
+  H de Hubs
+  L de Leafs
+  U de Uworld
+
+  Todos muestran informacion sobre hubs.
+
+* 2007/11/29 zoltan@irc-dev.net      (u2.10.H.10.10)                  FIX
+-------------------------------------------------------------------------
+  Bug introducido en el u2.10.H.07 que impedia linkar bajo ciertas
+  condiciones.
+
 * 2007/11/26 zoltan@irc-dev.net      (u2.10.H.10.09)              FEATURE
 -------------------------------------------------------------------------
   Aplico el parche de FERGUSON FLUSHER procedente de Undernet para minimizar

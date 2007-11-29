@@ -231,7 +231,7 @@ int hunt_server(int MustBeOper, aClient *cptr, aClient *sptr, char *command,
   if (IsMe(acptr))
     return (HUNTED_ISME);
 
-  if (MustBeOper && !IsPrivileged(sptr))
+  if (MustBeOper && !IsPrivileged(sptr) && !IsHelpOp(sptr))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, sptr->name);
     return HUNTED_NOSUCH;
