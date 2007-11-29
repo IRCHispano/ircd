@@ -1039,7 +1039,7 @@ static int completed_connection(aClient *cptr)
     return -1;
   }
   if (!BadPtr(aconf->passwd))
-    sendto_one(cptr, "PASS :%s", me.name, aconf->passwd);
+    sendto_one(cptr, "PASS :%s", aconf->passwd);
 
   make_server(cptr);
   /* Create a unique timestamp */
