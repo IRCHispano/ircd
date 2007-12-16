@@ -198,7 +198,7 @@ aClient *next_client(aClient *next, char *ch)
  *    returns: (see #defines)
  */
 int hunt_server(int MustBeOper, aClient *cptr, aClient *sptr, char *command,
-    int server, int parc, char *parv[])
+    char *token, const char *pattern, int server, int parc, char *parv[])
 {
   aClient *acptr;
   char y[8];
@@ -237,24 +237,24 @@ int hunt_server(int MustBeOper, aClient *cptr, aClient *sptr, char *command,
     return HUNTED_NOSUCH;
   }
 
-#if defined(NO_PROTOCOL9)
-  if (MyUser(sptr))
+  if (Protocol(acptr->from) < 10)
   {
-    strcpy(y, acptr->yxx);
-    parv[server] = y;
-  }
-#else
-  if (Protocol(acptr->from) > 9)
-  {
-    strcpy(y, acptr->yxx);
-    parv[server] = y;
-  }
-  else
-    parv[server] = acptr->name;
-#endif
+    if (MyUser(sptr))
+    {
+      strcpy(y, acptr->yxx);
+      parv[server] = y;
 
-  sendto_one(acptr, command, parv[0], parv[1], parv[2], parv[3], parv[4],
+      sendto_one(acptr, "%s%s %s %s", NumNick(sptr), token, pattern, parv[1], parv[2], parv[3], parv[4],
+        parv[5], parv[6], parv[7], parv[8]);
+    } else {
+      sendto_one(acptr, "%s %s %s", NumServ(sptr), token, pattern, parv[1], parv[2], parv[3], parv[4],
+        parv[5], parv[6], parv[7], parv[8]);
+    }
+  } else {
+    parv[server] = acptr->name;
+    sendto_one(acptr, ":%s %s %s", parv[0], command, pattern, parv[1], parv[2], parv[3], parv[4],
       parv[5], parv[6], parv[7], parv[8]);
+  }
 
   return (HUNTED_PASS);
 }

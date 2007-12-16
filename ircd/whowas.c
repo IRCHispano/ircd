@@ -55,6 +55,7 @@
 #include "whowas.h"
 #include "ircd.h"
 #include "list.h"
+#include "msg.h"
 #include "s_user.h"
 #include "support.h"
 #include "s_bsd.h"
@@ -334,7 +335,7 @@ int m_whowas(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (parc > 2)
     max = atoi(parv[2]);
   if (parc > 3)
-    if (hunt_server(1, cptr, sptr, ":%s WHOWAS %s %s :%s", 3, parc, parv))
+    if (hunt_server(1, cptr, sptr, MSG_WHOWAS, TOK_WHOWAS, "%s %s :%s", 3, parc, parv))
       return 0;
 
   parv[1] = canonize(parv[1]);

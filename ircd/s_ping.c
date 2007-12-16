@@ -373,7 +373,7 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
   }
   if (hunt_server(1, cptr, sptr,
-      ":%s UPING %s %s %s %s", 3, parc, parv) != HUNTED_ISME)
+      MSG_UPING, TOK_UPING, "%s %s %s %s", 3, parc, parv) != HUNTED_ISME)
     return 0;
 
   if (BadPtr(parv[4]) || atoi(parv[4]) <= 0)

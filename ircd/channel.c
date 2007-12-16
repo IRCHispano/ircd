@@ -6076,7 +6076,7 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
   int idx, flag, len, mlen;
   char *s, *para = parc > 1 ? parv[1] : NULL;
 
-  if (parc > 2 && hunt_server(1, cptr, sptr, ":%s NAMES %s %s", 2, parc, parv))
+  if (parc > 2 && hunt_server(1, cptr, sptr, MSG_NAMES, TOK_NAMES, "%s %s", 2, parc, parv))
     return 0;
 
   if (parc < 2)

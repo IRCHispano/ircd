@@ -766,7 +766,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
        it with the correct servername - as is needed by hunt_server() */
     if (MyUser(sptr) && (acptr = FindUser(parv[1])))
       parv[1] = acptr->user->server->name;
-    hunt_result = hunt_server(0, cptr, sptr, ":%s WHOIS %s :%s", 1, parc, parv);
+    hunt_result = hunt_server(0, cptr, sptr, MSG_WHOIS, TOK_WHOIS, "%s :%s", 1, parc, parv);
     if (hunt_result == HUNTED_NOSUCH)
       sendto_one(sptr, err_str(ERR_NOSUCHSERVER), me.name, parv[0], parv[2]);
     if (hunt_result != HUNTED_ISME)

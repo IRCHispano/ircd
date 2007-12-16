@@ -1,3 +1,8 @@
+* 2007/12/16 zoltan@irc-dev.net      (u2.10.H.10.15)              FEATURE
+-------------------------------------------------------------------------
+  Se adapta la funcion hunt_server() para que mande en formato P09 o P10
+  FULL segun el caso.
+
 * 2007/12/16 zoltan@irc-dev.net      (u2.10.H.10.14)              FEATURE
 -------------------------------------------------------------------------
   Se completan los parches de transicion para tener P10 Full manteniendo

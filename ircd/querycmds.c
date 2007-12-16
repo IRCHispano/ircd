@@ -135,7 +135,7 @@ int m_version(aClient *cptr, aClient *sptr, int parc, char *parv[])
     parv[1] = acptr->name;
   }
 
-  if (hunt_server(0, cptr, sptr, ":%s VERSION :%s", 1, parc, parv) ==
+  if (hunt_server(0, cptr, sptr, MSG_VERSION, TOK_VERSION, ":%s", 1, parc, parv) ==
       HUNTED_ISME)
     sendto_one(sptr, rpl_str(RPL_VERSION),
         me.name, parv[0], version, debugmode, me.name, serveropts);
@@ -153,7 +153,7 @@ int m_info(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   const char **text = infotext;
 
-  if (hunt_server(1, cptr, sptr, ":%s INFO :%s", 1, parc, parv) == HUNTED_ISME)
+  if (hunt_server(1, cptr, sptr, MSG_INFO, TOK_INFO, ":%s", 1, parc, parv) == HUNTED_ISME)
   {
     while (text[2])
     {
@@ -201,7 +201,7 @@ int m_links(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (parc > 2)
   {
-    if (hunt_server(1, cptr, sptr, ":%s LINKS %s :%s", 1, parc, parv) !=
+    if (hunt_server(1, cptr, sptr, MSG_LINKS, TOK_LINKS, "%s :%s", 1, parc, parv) !=
         HUNTED_ISME)
       return 0;
     mask = parv[2];
@@ -267,7 +267,7 @@ int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char since[15];
 
   if (parc > 2)
-    if (hunt_server(1, cptr, sptr, ":%s USERS %s :%s", 2, parc, parv) !=
+    if (hunt_server(1, cptr, sptr, MSG_USERS, TOK_USERS, "%s :%s", 2, parc, parv) !=
         HUNTED_ISME)
       return 0;
 
@@ -292,7 +292,7 @@ int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   if (parc > 2)
-    if (hunt_server(1, cptr, sptr, ":%s LUSERS %s :%s", 2, parc, parv) !=
+    if (hunt_server(1, cptr, sptr, MSG_LUSERS, TOK_USERS, "%s :%s", 2, parc, parv) !=
         HUNTED_ISME)
       return 0;
 
@@ -333,7 +333,7 @@ int m_admin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     parv[1] = acptr->name;
   }
-  if (hunt_server(0, cptr, sptr, ":%s ADMIN :%s", 1, parc, parv) != HUNTED_ISME)
+  if (hunt_server(0, cptr, sptr, MSG_ADMIN, TOK_ADMIN, ":%s", 1, parc, parv) != HUNTED_ISME)
     return 0;
   if ((aconf = find_admin()))
   {
@@ -380,7 +380,7 @@ int m_motd(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     no_motd = 0;
 #endif
-    if (hunt_server(0, cptr, sptr, ":%s MOTD :%s", 1, parc,
+    if (hunt_server(0, cptr, sptr, MSG_MOTD, TOK_MOTD, ":%s", 1, parc,
         parv) != HUNTED_ISME)
       return 0;
 #if defined(NODEFAULTMOTD)

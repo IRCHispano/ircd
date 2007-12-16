@@ -320,7 +320,7 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
     case 'U':
     case 'u':
     {
-      if (hunt_server(0, cptr, sptr, ":%s STATS %s :%s", 2, parc, parv)
+      if (hunt_server(0, cptr, sptr, MSG_STATS, TOK_STATS, "%s :%s", 2, parc, parv)
           != HUNTED_ISME)
         return 0;
       break;
@@ -338,13 +338,13 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       if (parc > 3)
       {
-        if (hunt_server(0, cptr, sptr, ":%s STATS %s %s :%s", 2, parc, parv)
+        if (hunt_server(0, cptr, sptr, MSG_STATS, TOK_STATS, "%s %s :%s", 2, parc, parv)
             != HUNTED_ISME)
           return 0;
       }
       else
       {
-        if (hunt_server(0, cptr, sptr, ":%s STATS %s :%s", 2, parc, parv)
+        if (hunt_server(0, cptr, sptr, MSG_STATS, TOK_STATS, "%s :%s", 2, parc, parv)
             != HUNTED_ISME)
           return 0;
       }
@@ -358,17 +358,17 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       if (parc == 4)
       {
-        if (hunt_server(1, cptr, sptr, ":%s STATS %s %s :%s", 2, parc, parv)
+        if (hunt_server(1, cptr, sptr, MSG_STATS, TOK_STATS, "%s %s :%s", 2, parc, parv)
             != HUNTED_ISME)
           return 0;
       }
       else if (parc > 4)
       {
-        if (hunt_server(1, cptr, sptr, ":%s STATS %s %s %s :%s", 2, parc,
+        if (hunt_server(1, cptr, sptr, MSG_STATS, TOK_STATS, "%s %s %s :%s", 2, parc,
             parv) != HUNTED_ISME)
           return 0;
       }
-      else if (hunt_server(1, cptr, sptr, ":%s STATS %s :%s", 2, parc, parv)
+      else if (hunt_server(1, cptr, sptr, MSG_STATS, TOK_STATS, "%s :%s", 2, parc, parv)
           != HUNTED_ISME)
         return 0;
       break;
@@ -377,7 +377,7 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       /* oper only, standard # of params */
     default:
     {
-      if (hunt_server(1, cptr, sptr, ":%s STATS %s :%s", 2, parc, parv)
+      if (hunt_server(1, cptr, sptr, MSG_STATS, TOK_STATS, "%s :%s", 2, parc, parv)
           != HUNTED_ISME)
         return 0;
       break;
@@ -885,7 +885,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
     parv[3] = acptr3->name;
   }
 
-  if (hunt_server(1, cptr, sptr, ":%s CONNECT %s %s :%s", 3, parc, parv) !=
+  if (hunt_server(1, cptr, sptr, MSG_CONNECT, TOK_CONNECT, "%s %s :%s", 3, parc, parv) !=
       HUNTED_ISME)
     return 0;
 
@@ -1070,7 +1070,7 @@ int m_wallops(aClient *cptr, aClient *sptr, int parc, char *parv[])
  */
 int m_time(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  if (hunt_server(0, cptr, sptr, ":%s TIME :%s", 1, parc, parv) == HUNTED_ISME)
+  if (hunt_server(0, cptr, sptr, MSG_TIME, TOK_TIME, ":%s", 1, parc, parv) == HUNTED_ISME)
     sendto_one(sptr, rpl_str(RPL_TIME), me.name,
         parv[0], me.name, TStime(), TSoffset, date((long)0));
   return 0;
@@ -1135,7 +1135,7 @@ int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     sprintf_irc(tbuf, TIME_T_FMT, TStime());
     parv[1] = tbuf;
-    if (hunt_server(1, cptr, sptr, ":%s SETTIME %s %s", 2, parc, parv) !=
+    if (hunt_server(1, cptr, sptr, MSG_SETTIME, TOK_SETTIME, "%s %s", 2, parc, parv) !=
         HUNTED_ISME)
       return 0;
   }
@@ -1247,7 +1247,7 @@ int m_rping(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (IsAnOper(sptr))
   {
-    if (hunt_server(1, cptr, sptr, ":%s RPING %s %s :%s", 2, parc, parv) !=
+    if (hunt_server(1, cptr, sptr, MSG_RPING, TOK_RPING, "%s %s :%s", 2, parc, parv) !=
         HUNTED_ISME)
       return 0;
     if (!(acptr = find_match_server(parv[1])) || !IsServer(acptr))
@@ -1264,7 +1264,7 @@ int m_rping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
   else
   {
-    if (hunt_server(1, cptr, sptr, ":%s RPING %s %s %s %s :%s", 1, parc, parv)
+    if (hunt_server(1, cptr, sptr, MSG_RPING, TOK_RPING, "%s %s %s %s :%s", 1, parc, parv)
         != HUNTED_ISME)
       return 0;
     sendto_one(cptr, ":%s RPONG %s %s %s %s :%s", me.name, parv[0],
@@ -1428,7 +1428,7 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
       parc = 3;
       parv[3] = NULL;
       if ((i = hunt_server(IsServer(acptr), cptr, sptr,
-          ":%s TRACE %s :%s", 2, parc, parv)) == HUNTED_NOSUCH)
+          MSG_TRACE, TOK_TRACE, "%s :%s", 2, parc, parv)) == HUNTED_NOSUCH)
       {
         sendto_one(sptr, err_str(ERR_NOSUCHSERVER), me.name, parv[0], parv[2]);
         return 0;
@@ -1446,7 +1446,7 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else
       acptr = FindNServer(parv[2]);
     if ((i = hunt_server(0, cptr, sptr,
-        ":%s TRACE %s :%s", 2, parc, parv)) == HUNTED_NOSUCH)
+        MSG_TRACE, TOK_TRACE, "%s :%s", 2, parc, parv)) == HUNTED_NOSUCH)
       return 0;
     tname = parv[1];
   }

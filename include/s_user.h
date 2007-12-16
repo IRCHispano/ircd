@@ -38,7 +38,7 @@
 extern int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int is_silenced(aClient *sptr, aClient *acptr);
 extern int hunt_server(int, aClient *cptr, aClient *sptr,
-    char *command, int server, int parc, char *parv[]);
+    char *command, char *token, const char *pattern, int server, int parc, char *parv[]);
 extern aClient *next_client(aClient *next, char *ch);
 extern int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_private(aClient *cptr, aClient *sptr, int parc, char *parv[]);
