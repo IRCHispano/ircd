@@ -1765,7 +1765,8 @@ int m_away(aClient *cptr, aClient *sptr, int parc, char *parv[])
       RunFree(away);
       sptr->user->away = NULL;
     }
-    sendto_serv_butone(cptr, ":%s AWAY", parv[0]);
+    sendto_lowprot_butone(cptr, 9, ":%s AWAY", parv[0]);
+    sendto_highprot_butone(cptr, 10, "%s%s " TOK_AWAY, NumNick(sptr));
     if (MyConnect(sptr))
       sendto_one(sptr, rpl_str(RPL_UNAWAY), me.name, parv[0]);
     return 0;
@@ -1775,7 +1776,8 @@ int m_away(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (strlen(awy2) > (size_t)AWAYLEN)
     awy2[AWAYLEN] = '\0';
-  sendto_serv_butone(cptr, ":%s AWAY :%s", parv[0], awy2);
+  sendto_lowprot_butone(cptr, 9, ":%s AWAY :%s ", parv[0], awy2);
+  sendto_highprot_butone(cptr, 10, "%s%s " TOK_AWAY " :%s ", NumNick(sptr), awy2);
 
   if (away)
     away = (char *)RunRealloc(away, strlen(awy2) + 1);
