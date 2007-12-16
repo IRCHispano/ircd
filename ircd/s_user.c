@@ -3019,7 +3019,7 @@ int is_silenced(aClient *sptr, aClient *acptr)
           sendto_one(sptr->from, ":%s SILENCE %s %s", acptr->name,
               sptr->name, lp->value.cp);
         else
-          sendto_one(sptr->from, ":%s SILENCE %s%s %s", acptr->name,
+          sendto_one(sptr->from, "%s " TOK_SILENCE " %s%s %s", NumNick(acptr),
               NumNick(sptr), lp->value.cp);
       }
       return 1;
@@ -3144,9 +3144,15 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if ((c == '-' && !del_silence(sptr, cp)) ||
         (c != '-' && !add_silence(sptr, cp)))
     {
-      sendto_prefix_one(sptr, sptr, ":%s SILENCE %c%s", parv[0], c, cp);
+      if (MyUser(sptr) || Protocol(sptr->from) < 10)
+        sendto_prefix_one(sptr, sptr, ":%s SILENCE %c%s", parv[0], c, cp);
+      else
+        sendto_prefix_one(sptr, sptr, "%s%s " TOK_SILENCE " %c%s", NumNick(sptr), c, cp);
       if (c == '-')
-        sendto_serv_butone(NULL, ":%s SILENCE * -%s", sptr->name, cp);
+      {
+        sendto_lowprot_butone(NULL, 9, ":%s SILENCE * -%s", sptr->name, cp);
+        sendto_highprot_butone(NULL, 10, "%s%s " TOK_SILENCE " * -%s", NumNick(sptr), cp);
+      }
     }
   }
   else if (parc < 3 || *parv[2] == '\0')
@@ -3166,7 +3172,10 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (*parv[2] == '-')
     {
       if (!del_silence(sptr, parv[2] + 1))
-        sendto_serv_butone(cptr, ":%s SILENCE * %s", parv[0], parv[2]);
+      {
+        sendto_lowprot_butone(cptr, 9, ":%s SILENCE * %s", parv[0], parv[2]);
+        sendto_highprot_butone(cptr, 10, "%s%s " TOK_SILENCE " * %s", NumNick(sptr), parv[2]);
+      }
     }
     else
     {
@@ -3176,11 +3185,11 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
         if (Protocol(acptr->from) < 10)
           sendto_one(acptr, ":%s SILENCE %s %s", parv[0], acptr->name, parv[2]);
         else if (IsServer(acptr))
-          sendto_one(acptr, ":%s SILENCE %s %s",
-              parv[0], NumServ(acptr), parv[2]);
+          sendto_one(acptr, "%s%s " TOK_SILENCE " %s %s",
+              NumNick(sptr), NumServ(acptr), parv[2]);
         else
-          sendto_one(acptr, ":%s SILENCE %s%s %s",
-              parv[0], NumNick(acptr), parv[2]);
+          sendto_one(acptr, "%s%s " TOK_SILENCE " %s%s %s",
+              NumNick(sptr), NumNick(acptr), parv[2]);
       }
     }
   }
