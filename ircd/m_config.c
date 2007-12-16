@@ -33,6 +33,7 @@
 #include "s_conf.h"
 #include "m_config.h"
 #include "send.h"
+#include "numnicks.h"
 
 #include <assert.h>
 
@@ -92,7 +93,10 @@ void config_resolve_speculative(aClient *cptr)
 #if defined(ZLIB_ESNET)
     if (!strchr(p, 'z') && (cptr->negociacion & ZLIB_ESNET_OUT_SPECULATIVE))
     {
-      sendto_one(cptr, ":%s " MSG_CONFIG " ACK :zlib", me.name);
+      if (Protocol(cptr) < 10)
+        sendto_one(cptr, ":%s " MSG_CONFIG " ACK :zlib", me.name);
+      else
+        sendto_one(cptr, "%s " TOK_CONFIG " ACK :zlib", NumServ(&me));
       cptr->negociacion &= ~ZLIB_ESNET_OUT_SPECULATIVE;
       cptr->negociacion |= ZLIB_ESNET_OUT;
       cptr->comp_out = RunMalloc(sizeof(z_stream));
@@ -158,7 +162,10 @@ int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
       case ZLIB:
         if (!strchr(p, 'z'))
         {                       /* Permitimos compresion */
-          sendto_one(sptr, ":%s " MSG_CONFIG " ACK :zlib", me.name);
+          if (Protocol(sptr) < 10)
+            sendto_one(sptr, ":%s " MSG_CONFIG " ACK :zlib", me.name);
+          else
+            sendto_one(sptr, "%s " TOK_CONFIG " ACK :zlib", NumServ(&me));
           cptr->negociacion |= ZLIB_ESNET_OUT;
         }
         break;
@@ -230,3 +237,4 @@ void envia_config_req(aClient *cptr)
 }
 
 #endif /* M_CONFIG.C */
+
