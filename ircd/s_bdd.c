@@ -2613,7 +2613,8 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (*servidor == '*')
     {
       /* WOOW, BROADCAST */
-      sendto_serv_butone(cptr, ":%s DBQ * %c %s", parv[0], tabla, clave);
+      sendto_lowprot_butone(cptr, 9, ":%s DBQ * %c %s", parv[0], tabla, clave);
+      sendto_highprot_butone(cptr, 10, "%s%s " TOK_DBQ " * %c %s", parv[0], tabla, clave);
     }
     else
     {
@@ -2626,8 +2627,11 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
       }
 
       if (!IsMe(acptr))         /* no es para mi, a rutar */
-      {
-        sendto_one(acptr, ":%s DBQ %s %c %s", parv[0], servidor, tabla, clave);
+      { 
+        if (Protocol(acptr->from) < 10)
+          sendto_one(acptr, ":%s DBQ %s %c %s", parv[0], servidor, tabla, clave);
+        else
+          sendto_one(acptr, "%s " TOK_DBQ " %s %c %s", NumServ(acptr), servidor, tabla, clave);
         return 0;               /* ok, rutado, fin del trabajo */
       }
     }
