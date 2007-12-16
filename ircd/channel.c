@@ -4119,7 +4119,7 @@ int m_destruct(aClient *cptr, aClient *sptr, int parc, char *parv[])
   chanTS = atoi(parv[2]);
 
   /* Pass on DESTRUCT message */
-  sendto_highprot_butone(cptr, 10, "%s DESTRUCT %s " TIME_T_FMT,
+  sendto_highprot_butone(cptr, 10, "%s " TOK_DESTRUCT " %s " TIME_T_FMT,
       NumServ(sptr), parv[1], chanTS);
 
   return 0;
