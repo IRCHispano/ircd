@@ -1142,9 +1142,14 @@ int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 #if defined(RELIABLE_CLOCK)
   if ((dt > 600) || (dt < -600))
-    sendto_serv_butone((aClient *)NULL,
+  {
+    sendto_lowprot_butone(NULL, 9,
         ":%s WALLOPS :Bad SETTIME from %s: " TIME_T_FMT, me.name, sptr->name,
         t);
+    sendto_highprot_butone(NULL, 10,
+        "%s " TOK_WALLOPS " :Bad SETTIME from %s: " TIME_T_FMT, NumServ(&me), sptr->name,
+        t);    
+  }
   if (IsUser(sptr))
   {
     if (MyUser(sptr) || Protocol(cptr) < 10)

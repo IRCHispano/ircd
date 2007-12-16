@@ -197,10 +197,14 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 /*
 ** Mandamos el aviso a toda la red
 */
-    sendto_serv_butone(cptr,
+    sendto_lowprot_butone(cptr, 9,
         ":%s WALLOPS :Link with %s dropped, excessive TS difference"
         " (mine TS=%ld, theirs TS=%ld, difference=%ld)",
         me.name, host, recv_time, timestamp, desfase);
+    sendto_highprot_butone(cptr, 10,
+        "%s " TOK_WALLOPS " :Link with %s dropped, excessive TS difference"
+        " (mine TS=%ld, theirs TS=%ld, difference=%ld)",
+        NumServ(&me), host, recv_time, timestamp, desfase);
 
     return exit_new_server(cptr, sptr, host, timestamp,
         "Excessive TS difference");
@@ -412,9 +416,12 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
      */
     if (strCasediff(acptr->name, host))
     {
-      sendto_serv_butone(cptr,
+      sendto_lowprot_butone(cptr, 9,
           ":%s WALLOPS :SERVER Numeric Collision: %s != %s",
           me.name, acptr->name, host);
+      sendto_highprot_butone(cptr, 10, 
+          "%s WALLOPS :SERVER Numeric Collision: %s != %s",
+          NumServ(&me), acptr->name, host);
       return exit_client_msg(cptr, cptr, &me,
           "NUMERIC collision between %s and %s."
           " Is your server numeric correct ?", host, acptr->name);
@@ -452,8 +459,12 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       if (!IsServer(sptr))
         return exit_client(cptr, sptr, &me, PunteroACadena(acptr->info));
-      sendto_one(cptr, ":%s WALLOPS :Received :%s SERVER %s from %s !?!",
-          me.name, parv[0], parv[1], cptr->name);
+      if (Protocol(cptr) < 10)
+        sendto_one(cptr, ":%s WALLOPS :Received :%s SERVER %s from %s !?!",
+            me.name, parv[0], parv[1], cptr->name);
+      else
+        sendto_one(cptr, "%s " TOK_WALLOPS " :Received :%s SERVER %s from %s !?!",
+            NumServ(&me), parv[0], parv[1], cptr->name);
       return exit_new_server(cptr, sptr, host, timestamp, "%s",
           PunteroACadena(acptr->info));
     }
@@ -747,9 +758,12 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 /*
 ** Mandamos el aviso a toda la red
 */
-        sendto_serv_butone(cptr,
+        sendto_lowprot_butone(cptr, 9,
             ":%s WALLOPS :To link a P09 server you need an entry in the Distributed DataBase: %s",
             me.name, parv[1]);
+        sendto_highprot_butone(cptr, 10,
+            "%s " TOK_WALLOPS " :To link a P09 server you need an entry in the Distributed DataBase: %s",
+            NumServ(&me), parv[1]);
 
         return exit_client(cptr, cptr, &me,
             "To link a P09 server you need an entry in the Distributed DataBase");
