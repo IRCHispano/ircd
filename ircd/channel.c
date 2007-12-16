@@ -5596,8 +5596,14 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
       chptr->topic_time = now;
       if (!IsLocalChannel(name))
       {
-        sendto_serv_butone(cptr, ":%s TOPIC %s :%s",
+        sendto_lowprot_butone(cptr, 9, ":%s TOPIC %s :%s",
             parv[0], chptr->chname, chptr->topic);
+        if (IsUser(sptr))
+          sendto_highprot_butone(cptr, 10, "%s%s " TOK_TOPIC " %s :%s",
+              NumNick(sptr), chptr->chname, chptr->topic);
+        else
+          sendto_highprot_butone(cptr, 10, "%s " TOK_TOPIC " %s :%s",
+              NumServ(sptr), chptr->chname, chptr->topic);
       }
       sendto_channel_butserv(chptr, sptr, ":%s TOPIC %s :%s",
           parv[0], chptr->chname, chptr->topic);
@@ -5619,12 +5625,23 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
         else
           sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT,
               NumServ(&me), chptr->chname, NumNick(sptr), chptr->creationtime);
-
+	
         if (chptr->topic)
-          sendto_one(cptr, ":%s TOPIC %s :%s",
-              me.name, chptr->chname, chptr->topic);
+        {
+          if (Protocol(cptr) < 10)
+            sendto_one(cptr, ":%s TOPIC %s :%s",
+                me.name, chptr->chname, chptr->topic);
+          else
+            sendto_one(cptr, "%s " TOK_TOPIC " %s :%s",
+                NumServ(&me), chptr->chname, chptr->topic);
+        }
         else
-          sendto_one(cptr, ":%s TOPIC %s :", me.name, chptr->chname);
+        {
+          if (Protocol(cptr) < 10)
+            sendto_one(cptr, ":%s TOPIC %s :", me.name, chptr->chname);
+          else
+            sendto_one(cptr, "%s " TOK_TOPIC " %s :", NumServ(&me), chptr->chname);
+        }
       }
     }
   }
