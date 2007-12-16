@@ -3712,7 +3712,8 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-  sendto_serv_butone(cptr, ":%s RENAME :%s", parv[0], parv[1]);
+  sendto_lowprot_butone(cptr, 9, ":%s RENAME :%s", parv[0], parv[1]);
+  sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " :%s", NumServ(sptr), parv[1]);
 
   sendto_op_mask(SNO_RENAME,
       "El nodo '%s' solicita un cambio de nick para '%s'", sptr->name, parv[1]);
