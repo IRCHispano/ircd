@@ -816,8 +816,12 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_ops("Connected to a net with a timestamp-clock"
         " difference of " STIME_T_FMT " seconds! Used SETTIME to correct"
         " this.", timestamp - recv_time);
-    sendto_one(cptr, ":%s SETTIME " TIME_T_FMT " :%s",
-        me.name, TStime(), me.name);
+    if (Protocol(cptr) < 10)
+      sendto_one(cptr, ":%s SETTIME " TIME_T_FMT " :%s",
+          me.name, TStime(), me.name);
+    else
+      sendto_one(cptr, "%s " TOK_SETTIME " " TIME_T_FMT " :%s",
+          NumServ(&me), TStime(), me.name);
   }
 #endif
 
