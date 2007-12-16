@@ -1249,8 +1249,8 @@ int m_rping(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(acptr, ":%s RPING %s %s %s :%s",
           me.name, acptr->name, sptr->name, militime(NULL, NULL), parv[3]);
     else
-      sendto_one(acptr, ":%s RPING %s %s %s :%s",
-          me.name, NumServ(acptr), sptr->name, militime(NULL, NULL), parv[3]);
+      sendto_one(acptr, "%s " TOK_RPING " %s %s %s :%s",
+          NumServ(&me), NumServ(acptr), sptr->name, militime(NULL, NULL), parv[3]);
   }
   else
   {
