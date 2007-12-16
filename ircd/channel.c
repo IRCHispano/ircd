@@ -562,6 +562,10 @@ int can_send(aClient *cptr, aChannel *chptr)
     {
       return (MODE_BAN);
     }
+    if ((chptr->mode.mode & MODE_NONOTICE))
+    {
+      return (MODE_NONOTICE);
+    }
   }
 
   if (chptr->mode.mode & MODE_MODERATED && flag)
@@ -604,6 +608,13 @@ static void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
     *mbuf++ = 'S';
   if (MsgOnlyRegChannel(chptr))
     *mbuf++ = 'M';
+  if (chptr->mode.mode & MODE_NOCTCP)
+    *mbuf++ = 'C';
+  if (chptr->mode.mode & MODE_NONOTICE)
+    *mbuf++ = 'N';
+  if (chptr->mode.mode & MODE_NOQUITPARTS)
+    *mbuf++ = 'u';
+
   if (chptr->mode.limit)
   {
     *mbuf++ = 'l';
@@ -1143,7 +1154,8 @@ static int canal_flags[] = {
   MODE_LIMIT, 'l',              /* Rarezas del IRCD original. Necesitamos ponerlo para los canales persistentes */
   MODE_REGCHAN, 'r', MODE_REGNICKS, 'R',
   MODE_AUTOOP, 'A', MODE_SECUREOP, 'S',
-  MODE_MSGNONREG, 'M',
+  MODE_MSGNONREG, 'M', MODE_NOCTCP, 'C',
+  MODE_NONOTICE, 'N', MODE_NOQUITPARTS, 'u',
   0x0, 0x0
 };
 
@@ -5207,7 +5219,7 @@ int m_part(aClient *cptr, aClient *sptr, int parc, char *parv[])
         strcat(pbuf, ",");
       strcat(pbuf, name);
     }
-    if (can_send(sptr, chptr) != 0) /* Returns 0 if we CAN send */
+    if ((can_send(sptr, chptr) != 0) || (chptr->mode.mode & MODE_NOQUITPARTS)) /* Returns 0 if we CAN send */
       comment = NULL;
     /* Send part to all clients */
     if (!(lp->flags & CHFL_ZOMBIE))

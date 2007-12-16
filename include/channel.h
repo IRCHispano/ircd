@@ -79,13 +79,16 @@
 #define MODE_LIMIT	0x0400
 #define MODE_SENDTS	0x0800      /* TS was 0 during a local user /join; send
                                  * temporary TS; can be removed when all 2.10 */
-#define MODE_LISTED	0x10000
+#define MODE_LISTED	0x1000
 
-#define MODE_REGCHAN    0x020000
-#define MODE_REGNICKS   0x040000
-#define MODE_AUTOOP     0x080000
-#define MODE_SECUREOP   0x100000
-#define MODE_MSGNONREG  0x0200000
+#define MODE_REGCHAN    0x2000
+#define MODE_REGNICKS   0x4000
+#define MODE_AUTOOP     0x8000
+#define MODE_SECUREOP   0x10000
+#define MODE_MSGNONREG  0x20000
+#define MODE_NOCTCP     0x40000
+#define MODE_NONOTICE   0x80000
+#define MODE_NOQUITPARTS 0x100000
 
 #define RegisteredChannel(x)    ((x) && ((x)->mode.mode & MODE_REGCHAN))
 #define RestrictedChannel(x)    ((x) && ((x)->mode.mode & MODE_REGNICKS))

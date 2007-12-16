@@ -46,9 +46,9 @@ static Numeric local_replies[] = {
 
 /* 004 */
 #if defined(BDD_VIP)
-    {RPL_MYINFO, "%s %s dioswkgxXrRhSB biklmnopstvrRM"},
+    {RPL_MYINFO, "%s %s dioswkgxXrRhSB biklmnopstvrRMCNu"},
 #else
-    {RPL_MYINFO, "%s %s dioswkgrhSB biklmnopstvrRM"}, 
+    {RPL_MYINFO, "%s %s dioswkgrhSB biklmnopstvrRMCNu"}, 
 #endif /* BDD_VIP */
 
 /* 005 */

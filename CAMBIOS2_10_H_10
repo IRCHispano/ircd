@@ -1,3 +1,13 @@
+* 2007/12/16 zoltan@irc-dev.net      (u2.10.H.10.13)              FEATURE
+-------------------------------------------------------------------------
+  Nuevos modos de canal:
+
+  +C No permite enviar CTCP al canal a excepcion del ACTION (/me).
+  +N No permite enviar NOTICES y WALLCHOPS (son notices al @) al canal.
+  +u Limpia los mensajes de QUIT y PART en el canal. Mismo funcionamiento
+     que +b o +m en el sentido de que si el usuario ea en al menos un 
+     canal con +u, se borrara el mensaje comun de QUIT.
+
 * 2007/11/29 zoltan@irc-dev.net      (u2.10.H.10.12)                  FIX
 -------------------------------------------------------------------------
   Capamos el modo +s para usuarios.

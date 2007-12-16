@@ -797,7 +797,7 @@ void send_features(aClient *sptr, char *nick)
   char buf[500];
 
   sprintf(buf, "CHANMODES=b,k,l,imnpst");
-  strcat(buf, "rRM");
+  strcat(buf, "rRMCNu");
   sprintf(buf, "%s CHANTYPES=#&+ KICKLEN=%d MAXBANS=%d", buf, KICKLEN, MAXBANS);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
@@ -1039,6 +1039,14 @@ static int m_message(aClient *cptr, aClient *sptr,
           if (MyUser(sptr) && (chptr->mode.mode & MODE_NOPRIVMSGS) &&
               check_target_limit(sptr, chptr, chptr->chname, 0))
             continue;
+          if (MyUser(sptr) && (chptr->mode.mode & MODE_NOCTCP) && 
+              (*parv[parc - 1] == 1) && !strncmp(parv[parc - 1], "\001ACTION ", 8))
+          {
+            sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
+                me.name, parv[0], chptr->chname);
+            continue;
+          }
+          
           sendto_channel_butone(cptr, sptr, chptr,
               ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
         }
@@ -1059,7 +1067,7 @@ static int m_message(aClient *cptr, aClient *sptr,
       else if ((acptr = findNUser(nick)) && !IsUser(acptr))
         acptr = NULL;
       if (acptr)
-      {
+      {         
         if (MyUser(sptr) && check_target_limit(sptr, acptr, acptr->name, 0))
           continue;
         if (MyUser(sptr) && IsMsgOnlyReg(acptr) && !IsNickRegistered(sptr)
@@ -1485,7 +1493,7 @@ int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       Link *lp;
       for (lp = sptr->user->channel; lp; lp = lp->next)
-        if (can_send(sptr, lp->value.chptr) != 0)
+        if ((can_send(sptr, lp->value.chptr) != 0) || (lp->value.chptr->mode.mode & MODE_NOQUITPARTS))
           return exit_client(cptr, sptr, &me, "Signed off");
 
       if (comment[0])
