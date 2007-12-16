@@ -1875,9 +1875,16 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
       /* forward the message appropriately */
       if (!strCasediff(parv[1], "*")) /* global! */
-        sendto_serv_butone(cptr, active ? ":%s GLINE %s +%s %s :%s" :
+      {
+        sendto_lowprot_butone(cptr, 9, active ? ":%s GLINE %s +%s %s :%s" :
             ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[4]);
-      else if ((
+        if (IsUser(sptr))
+          sendto_highprot_butone(cptr, 10, active ? "%s%s " TOK_GLINE " %s +%s %s :%s" :
+              "%s%s " TOK_GLINE " %s -%s", NumNick(sptr), parv[1], parv[2], parv[3], parv[4]);
+        else
+          sendto_highprot_butone(cptr, 10, active ? "%s " TOK_GLINE " %s +%s %s :%s" :
+              "%s " TOK_GLINE " %s -%s", NumServ(sptr), parv[1], parv[2], parv[3], parv[4]);
+      } else if ((
 #if 1
           /*
            * REMOVE THIS after all servers upgraded to 2.10.01 and
@@ -1897,7 +1904,17 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (IsServer(acptr) || !MyConnect(acptr))
 #endif
       {
-        sendto_one(acptr, active ? ":%s GLINE %s +%s %s :%s" : ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[4]);  /* single destination */
+        if (Protocol(acptr->from) < 10)
+          sendto_one(acptr, active ? ":%s GLINE %s +%s %s :%s" : ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[4]);  /* single destination */ 
+        else 
+        {
+          if (IsUser(sptr))
+            sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s :%s" : "%s%s " TOK_GLINE " %s -%s", 
+                NumNick(sptr), parv[1], parv[2], parv[3], parv[4]);
+          else
+            sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s :%s" : ":%s " TOK_GLINE " %s -%s", 
+                NumServ(sptr), parv[1], parv[2], parv[3], parv[4]);
+        }
         return 0;               /* only the intended  destination
                                    should add this gline */
       }
