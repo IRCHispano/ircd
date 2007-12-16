@@ -1585,7 +1585,7 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
           me.name, parv[0]);
     else if (IsUser(sptr))
       sendto_one(sptr,
-          "%s NOTICE %s%s :KILL target disconnected before I got him :(",
+          "%s " TOK_NOTICE " %s%s :KILL target disconnected before I got him :(",
           NumServ(&me), NumNick(sptr));
     return 0;
   }

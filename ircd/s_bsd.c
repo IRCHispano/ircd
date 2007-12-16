@@ -2181,7 +2181,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
               me.name, by->name, aconf->name, c2ptr->from->name);
         else
 #endif
-          sendto_one(by, "%s NOTICE %s%s :Server %s already present from %s",
+          sendto_one(by, "%s " TOK_NOTICE " %s%s :Server %s already present from %s",
               NumServ(&me), NumNick(by), aconf->name, c2ptr->from->name);
       }
       return -1;
@@ -2195,7 +2195,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
               me.name, by->name, c2ptr->name);
         else
           sendto_one(by,
-              "%s NOTICE %s%s :Connection to %s already in progress",
+              "%s " TOK_NOTICE " %s%s :Connection to %s already in progress",
               NumServ(&me), NumNick(by), c2ptr->name);
       }
       return -1;
@@ -2260,7 +2260,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
             me.name, by->name, cptr->name);
       else
 #endif
-        sendto_one(by, "%s NOTICE %s%s :Couldn't connect to %s",
+        sendto_one(by, "%s " TOK_NOTICE " %s%s :Couldn't connect to %s",
             NumServ(&me), NumNick(by), cptr->name);
     }
     free_client(cptr);
@@ -2285,7 +2285,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
             me.name, by->name, cptr->name, strerror(err));
       else
 #endif
-        sendto_one(by, "%s NOTICE %s%s :Connect to host %s failed: %s",
+        sendto_one(by, "%s " TOK_NOTICE " %s%s :Connect to host %s failed: %s",
             NumServ(&me), NumNick(by), cptr->name, strerror(err));
     }
     close(cptr->fd);
@@ -2321,7 +2321,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
       else
 #endif
         sendto_one(by,
-            "%s NOTICE %s%s :Connect to host %s failed: no C-line",
+            "%s " TOK_NOTICE " %s%s :Connect to host %s failed: no C-line",
             NumServ(&me), NumNick(by), cptr->name);
     }
     det_confs_butmask(cptr, 0);

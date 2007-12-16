@@ -125,7 +125,7 @@ int start_ping(aClient *cptr)
   else
   {
     sendto_one(cptr->acpt,
-        "%s NOTICE %s%s :Sending %d ping%s to %s",
+        "%s " TOK_NOTICE " %s%s :Sending %d ping%s to %s",
         NumServ(&me), NumNick(cptr->acpt), cptr->hopcount,
         (cptr->hopcount == 1) ? "" : "s", cptr->name);
   }
@@ -181,7 +181,7 @@ void send_ping(aClient *cptr)
         sendto_one(cptr->acpt, ":%s NOTICE %s :UPING: sendto() failed: %s",
             me.name, cptr->acpt->name, strerror(get_sockerr(cptr)));
       else
-        sendto_one(cptr->acpt, "%s NOTICE %s%s :UPING: sendto() failed: %s",
+        sendto_one(cptr->acpt, "%s " TOK_NOTICE " %s%s :UPING: sendto() failed: %s",
             NumServ(&me), NumNick(cptr->acpt), strerror(get_sockerr(cptr)));
     }
     Debug((DEBUG_SEND, "send_ping: sendto failed on %d (%d)", cptr->fd, err));
@@ -231,7 +231,7 @@ void read_ping(aClient *cptr)
       sendto_one(cptr->acpt, ":%s NOTICE %s :UPING: recvfrom: %s",
           me.name, cptr->acpt->name, strerror(get_sockerr(cptr)));
     else
-      sendto_one(cptr->acpt, "%s NOTICE %s%s :UPING: recvfrom: %s",
+      sendto_one(cptr->acpt, "%s " TOK_NOTICE " %s%s :UPING: recvfrom: %s",
           NumServ(&me), NumNick(cptr->acpt), strerror(get_sockerr(cptr)));
     Debug((DEBUG_SEND, "read_ping: recvfrom: %d", err));
     if (err != EAGAIN)
@@ -381,7 +381,7 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(sptr, ":%s NOTICE %s :UPING: Invalid number of packets: %s",
           me.name, parv[0], parv[4]);
     else
-      sendto_one(sptr, "%s NOTICE %s%s :UPING: Invalid number of packets: %s",
+      sendto_one(sptr, "%s " TOK_NOTICE " %s%s :UPING: Invalid number of packets: %s",
           NumServ(&me), NumNick(sptr), parv[4]);
     return 0;
   }
@@ -404,7 +404,7 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
           me.name, parv[0], parv[1]);
     else
       sendto_one(sptr,
-          "%s NOTICE %s%s :UPING: Host %s not listed in ircd.conf",
+          "%s " TOK_NOTICE " %s%s :UPING: Host %s not listed in ircd.conf",
           NumServ(&me), NumNick(sptr), parv[1]);
     return 0;
   }
@@ -430,7 +430,7 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
           me.name, parv[0]);
     else
       sendto_one(sptr,
-          "%s NOTICE %s%s :UPING: Unable to create udp ping socket",
+          "%s " TOK_NOTICE " %s%s :UPING: Unable to create udp ping socket",
           NumServ(&me), NumNick(sptr));
 #if defined(USE_SYSLOG)
     syslog(LOG_ERR, "Unable to create udp ping socket");
@@ -446,7 +446,7 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(sptr, ":%s NOTICE %s :UPING: Can't set fd non-blocking",
           me.name, parv[0]);
     else
-      sendto_one(sptr, "%s NOTICE %s%s :UPING: Can't set fd non-blocking",
+      sendto_one(sptr, "%s " TOK_NOTICE " %s%s :UPING: Can't set fd non-blocking",
           NumServ(&me), NumNick(sptr));
     close(fd);
     return 0;
@@ -467,7 +467,7 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(sptr, ":%s NOTICE %s :UPING: error in setsockopt: %s",
           me.name, parv[0], strerror(err));
     else
-      sendto_one(sptr, "%s NOTICE %s%s :UPING: error in setsockopt: %s",
+      sendto_one(sptr, "%s " TOK_NOTICE " %s%s :UPING: error in setsockopt: %s",
           NumServ(&me), NumNick(sptr), strerror(err));
     close(fd);
     return 0;
@@ -480,7 +480,7 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(sptr, ":%s NOTICE %s :UPING: All connections in use",
           me.name, parv[0]);
     else
-      sendto_one(sptr, "%s NOTICE %s%s :UPING: All connections in use",
+      sendto_one(sptr, "%s " TOK_NOTICE " %s%s :UPING: All connections in use",
           NumServ(&me), NumNick(sptr));
     close(fd);
     return 0;
@@ -551,10 +551,10 @@ void end_ping(aClient *cptr)
       {
         if (cptr->receiveB != cptr->hopcount) /* Received any pings at all? */
         {
-          sendto_one(cptr->acpt, "%s NOTICE %s%s :UPING %s%s",
+          sendto_one(cptr->acpt, "%s " TOK_NOTICE " %s%s :UPING %s%s",
               NumServ(&me), NumNick(cptr->acpt), cptr->name, cptr->buffer);
           sendto_one(cptr->acpt,
-              "%s NOTICE %s%s :UPING Stats: sent %d recvd %d ; "
+              "%s " TOK_NOTICE " %s%s :UPING Stats: sent %d recvd %d ; "
               "min/avg/max = %u/%u/%u ms",
               NumServ(&me), NumNick(cptr->acpt), cptr->hopcount - cptr->sendB,
               cptr->hopcount - cptr->receiveB, cptr->receiveK,
@@ -563,13 +563,13 @@ void end_ping(aClient *cptr)
         }
         else
           sendto_one(cptr->acpt,
-              "%s NOTICE %s%s :UPING: no response from %s within %d seconds",
+              "%s " TOK_NOTICE " %s%s :UPING: no response from %s within %d seconds",
               NumServ(&me), NumNick(cptr->acpt), cptr->name,
               (int)(now + cptr->since - cptr->firsttime));
       }
       else
         sendto_one(cptr->acpt,
-            "%s NOTICE %s%s :UPING: Could not start ping to %s %d",
+            "%s " TOK_NOTICE " %s%s :UPING: Could not start ping to %s %d",
             NumServ(&me), NumNick(cptr->acpt), cptr->name, cptr->port);
     }
   }

@@ -901,7 +901,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(sptr, ":%s NOTICE %s :Connect: Server %s %s %s.",
           me.name, parv[0], parv[1], "already exists from", acptr->from->name);
     else
-      sendto_one(sptr, "%s NOTICE %s%s :Connect: Server %s %s %s.",
+      sendto_one(sptr, "%s " TOK_NOTICE " %s%s :Connect: Server %s %s %s.",
           NumServ(&me), NumNick(sptr), parv[1], "already exists from",
           acptr->from->name);
     return 0;
@@ -926,7 +926,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
           me.name, parv[0], parv[1]);
     else
       sendto_one(sptr,
-          "%s NOTICE %s%s :Connect: Host %s not listed in ircd.conf",
+          "%s " TOK_NOTICE " %s%s :Connect: Host %s not listed in ircd.conf",
           NumServ(&me), NumNick(sptr), parv[1]);
     return 0;
   }
@@ -944,7 +944,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
         sendto_one(sptr,
             ":%s NOTICE %s :Connect: Invalid port number", me.name, parv[0]);
       else
-        sendto_one(sptr, "%s NOTICE %s%s :Connect: Invalid port number",
+        sendto_one(sptr, "%s " TOK_NOTICE " %s%s :Connect: Invalid port number",
             NumServ(&me), NumNick(sptr));
       return 0;
     }
@@ -955,7 +955,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(sptr, ":%s NOTICE %s :Connect: missing port number",
           me.name, parv[0]);
     else
-      sendto_one(sptr, "%s NOTICE %s%s :Connect: missing port number",
+      sendto_one(sptr, "%s " TOK_NOTICE " %s%s :Connect: missing port number",
           NumServ(&me), NumNick(sptr));
     return 0;
   }
@@ -975,7 +975,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_one(sptr, ":%s NOTICE %s :Connect: Disallowed by rule: %s",
               me.name, parv[0], cconf->name);
         else
-          sendto_one(sptr, "%s NOTICE %s%s :Connect: Disallowed by rule: %s",
+          sendto_one(sptr, "%s " TOK_NOTICE " %s%s :Connect: Disallowed by rule: %s",
               NumServ(&me), NumNick(sptr), cconf->name);
         return 0;
       }
@@ -1003,7 +1003,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
             me.name, parv[0], aconf->name);
       else
         sendto_one(sptr,
-            "%s NOTICE %s%s :*** Connecting to %s.",
+            "%s " TOK_NOTICE " %s%s :*** Connecting to %s.",
             NumServ(&me), NumNick(sptr), aconf->name);
       break;
     case -1:
@@ -1014,7 +1014,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
         sendto_one(sptr, ":%s NOTICE %s :*** Host %s is unknown.",
             me.name, parv[0], aconf->name);
       else
-        sendto_one(sptr, "%s NOTICE %s%s :*** Host %s is unknown.",
+        sendto_one(sptr, "%s " TOK_NOTICE " %s%s :*** Host %s is unknown.",
             NumServ(&me), NumNick(sptr), aconf->name);
       break;
     default:
@@ -1024,7 +1024,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
             me.name, parv[0], aconf->name, strerror(retval));
       else
         sendto_one(sptr,
-            "%s NOTICE %s%s :*** Connection to %s failed: %s",
+            "%s " TOK_NOTICE " %s%s :*** Connection to %s failed: %s",
             NumServ(&me), NumNick(sptr), aconf->name, strerror(retval));
   }
   aconf->port = tmpport;
@@ -1147,7 +1147,7 @@ int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
           "RELIABLE_CLOCK is defined", me.name, parv[0],
           (dt < 0) ? -dt : dt, (dt <= 0) ? "forwards" : "backwards");
     else
-      sendto_one(sptr, "%s NOTICE %s%s :clock is not set %ld seconds %s : "
+      sendto_one(sptr, "%s " TOK_NOTICE " %s%s :clock is not set %ld seconds %s : "
           "RELIABLE_CLOCK is defined", NumServ(&me), NumNick(sptr),
           (dt < 0) ? -dt : dt, (dt <= 0) ? "forwards" : "backwards");
   }
@@ -1161,7 +1161,7 @@ int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(sptr, ":%s NOTICE %s :clock is set %ld seconds %s", me.name,
           parv[0], (dt < 0) ? -dt : dt, (dt <= 0) ? "forwards" : "backwards");
     else
-      sendto_one(sptr, "%s NOTICE %s%s :clock is set %ld seconds %s",
+      sendto_one(sptr, "%s " TOK_NOTICE " %s%s :clock is set %ld seconds %s",
           NumServ(&me), NumNick(sptr),
           (dt < 0) ? -dt : dt, (dt <= 0) ? "forwards" : "backwards");
   }

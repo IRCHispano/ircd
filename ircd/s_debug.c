@@ -401,7 +401,7 @@ void send_usage(aClient *cptr, char *nick)
       sendto_one(cptr, ":%s NOTICE %s :Getruseage error: %s.",
           me.name, nick, strerror(errno));
     else
-      sendto_one(cptr, "%s NOTICE %s%s :Getruseage error: %s.",
+      sendto_one(cptr, "%s " TOK_NOTICE " %s%s :Getruseage error: %s.",
           NumServ(&me), NumNick(cptr), strerror(errno));
     return;
   }

@@ -2663,7 +2663,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
           me.name, parv[0], tabla, cn);
     else
       sendto_one(cptr,
-          "%s NOTICE %s%s :DBQ ERROR Tabla='%c' Clave='%s' TABLA_NO_RESIDENTE",
+          "%s " TOK_NOTICE " %s%s :DBQ ERROR Tabla='%c' Clave='%s' TABLA_NO_RESIDENTE",
           NumServ(&me), NumNick(sptr), tabla, cn);
     return 0;
   }
@@ -2700,7 +2700,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
           me.name, parv[0], tabla, cn);
     else
       sendto_one(cptr,
-          "%s NOTICE %s%s :DBQ ERROR No tienes permiso para acceder a Tabla='%c' Clave='%s'",
+          "%s " TOK_NOTICE " %s%s :DBQ ERROR No tienes permiso para acceder a Tabla='%c' Clave='%s'",
           NumServ(&me), NumNick(sptr), tabla, cn);
     return 0;
   }
@@ -2714,7 +2714,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
           me.name, parv[0], tabla, cn);
     else
       sendto_one(cptr,
-          "%s NOTICE %s%s :DBQ ERROR Tabla='%c' Clave='%s' REGISTRO_NO_ENCONTRADO",
+          "%s " TOK_NOTICE " %s%s :DBQ ERROR Tabla='%c' Clave='%s' REGISTRO_NO_ENCONTRADO",
           NumServ(&me), NumNick(sptr), tabla, cn);
     return 0;
   }
@@ -2726,7 +2726,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
         me.name, parv[0], tabla, reg->clave, reg->valor);
   else
     sendto_one(cptr,
-        "%s NOTICE %s%s :DBQ OK Tabla='%c' Clave='%s' Valor='%s'",
+        "%s " TOK_NOTICE " %s%s :DBQ OK Tabla='%c' Clave='%s' Valor='%s'",
         NumServ(&me), NumNick(sptr), tabla, reg->clave, reg->valor);
   return 0;
 }

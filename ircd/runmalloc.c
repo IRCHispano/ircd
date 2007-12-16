@@ -172,7 +172,7 @@ void report_memleak_stats(aClient *sptr, int parc, char *parv[])
           me.name, parv[0], from, parc > 4 ? parv[4] : "0", till,
           parc > 3 ? parv[3] : "0");
     else
-      sendto_one(sptr, "%s NOTICE %s%s :Memory allocated between " TIME_T_FMT
+      sendto_one(sptr, "%s " TOK_NOTICE " %s%s :Memory allocated between " TIME_T_FMT
           " (server start + %s s) and " TIME_T_FMT " (now - %s s):",
           NumServ(&me), NumNick(sptr), from, parc > 4 ? parv[4] : "0", till,
           parc > 3 ? parv[3] : "0");

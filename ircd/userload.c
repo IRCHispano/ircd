@@ -258,10 +258,10 @@ void calc_load(aClient *sptr)
   }
   else
   {
-    sendto_one(sptr, "%s NOTICE %s%s :%s", NumServ(&me), NumNick(sptr), header);
+    sendto_one(sptr, "%s " TOK_NOTICE " %s%s :%s", NumServ(&me), NumNick(sptr), header);
     for (i = 0; i < 3; ++i)
       sendto_one(sptr,
-          "%s NOTICE %s%s :%4d.%1d  %4d.%1d  %4d  %4d  %4d   %s",
+          "%s " TOK_NOTICE " %s%s :%4d.%1d  %4d.%1d  %4d  %4d  %4d   %s",
           NumServ(&me), NumNick(sptr),
           times[0][i] / 10, times[0][i] % 10,
           times[1][i] / 10, times[1][i] % 10,

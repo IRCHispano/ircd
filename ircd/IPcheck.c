@@ -381,7 +381,8 @@ int IPcheck_remote_connect(aClient *cptr, const char *UNUSED(hostname),
   {
 #if defined(GODMODE)
     sendto_one(cptr,
-        "%s NOTICE %s%s :I saw your face before my friend (connected: %u; connect_attempts %u; free_targets %u)",
+        "%s " TOK_NOTICE " %s%s :I saw your face before my friend (connected: %u; connect_attempts %u; free_targets 
+%u)",
         NumServ(&me), NumNick(cptr), entry->connected, entry->connect_attempts,
         FREE_TARGETS(entry));
 #endif

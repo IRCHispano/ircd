@@ -885,7 +885,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
       sendto_one(acptr, ":%s NOTICE %s :Link with %s established.",
           me.name, acptr->name, inpath);
     else
-      sendto_one(acptr, "%s NOTICE %s%s :Link with %s established.",
+      sendto_one(acptr, "%s " TOK_NOTICE " %s%s :Link with %s established.",
           NumServ(&me), NumNick(acptr), inpath);
   }
   else

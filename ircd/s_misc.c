@@ -469,7 +469,7 @@ int exit_client(aClient *cptr,  /* Connection being handled by
                 me.name, acptr->name, bcptr->name, comment);
           else
             sendto_one(acptr,
-                "%s NOTICE %s%s :Link with %s cancelled: %s",
+                "%s " TOK_NOTICE " %s%s :Link with %s cancelled: %s",
                 NumServ(&me), NumNick(acptr), bcptr->name, comment);
         }
         else
