@@ -55,6 +55,7 @@
 #include "s_serv.h"
 #include "res.h"
 #include "channel.h"
+#include "msg.h"
 #include "numnicks.h"
 
 RCSTAG_CC("$Id: s_debug.c,v 1.4 1999/11/29 00:26:42 bleep Exp $");

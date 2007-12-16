@@ -36,6 +36,7 @@
 #include "userload.h"
 #include "ircd.h"
 #include "numnicks.h"
+#include "msg.h"
 #include "s_serv.h"
 #include "querycmds.h"
 

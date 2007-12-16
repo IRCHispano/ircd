@@ -1,3 +1,28 @@
+* 2007/12/16 zoltan@irc-dev.net      (u2.10.H.10.14)              FEATURE
+-------------------------------------------------------------------------
+  Se completan los parches de transicion para tener P10 Full manteniendo
+  el soporte P09 para facilitar la implementacion de nuevos services P10
+  como el Pxys 2.1 y linkar ircds de nueva generacion.
+  Los parches son 100% compatibles con las versiones u2.10.H.09 y u2.10.H.10.
+
+  Los cambios son:
+
+  (Rev.54) Comando AWAY
+  (Rev.55) Comando CONFIG
+  (Rev.56) Comando DBQ
+  (Rev.57) Comando GLINE
+  (Rev.58) Comando DESTRUCT
+  (Rev.59) Comando NOTICE
+  (Rev.60) Comando RENAME
+  (Rev.61) Comando RPING
+  (Rev.62) Comando SETTIME
+  (Rev.63) Comando SILENCE
+  (Rev.64) Comando TOPIC
+  (Rev.65) Comando WALLOPS
+
+  NOTA: El comando DB manda en formato P10 a servidores P09, no lo corrigo
+  por desconocer la posible incidencia con los actuales deep.space.
+
 * 2007/12/16 zoltan@irc-dev.net      (u2.10.H.10.13)              FEATURE
 -------------------------------------------------------------------------
   Nuevos modos de canal:

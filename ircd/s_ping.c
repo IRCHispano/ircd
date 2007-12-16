@@ -58,6 +58,7 @@
 #include "common.h"
 #include "s_user.h"
 #include "numnicks.h"
+#include "msg.h"
 #include "slab_alloc.h"
 
 
