@@ -1316,7 +1316,7 @@ int whisper(aClient *sptr, int parc, char *parv[], int notice)
   {
     sendto_one(sptr, err_str(ERR_NONONREG), me.name, parv[0],
         tcptr->name);
-    continue;
+    return 0;
   }
   if (is_silenced(sptr, tcptr))
   {
