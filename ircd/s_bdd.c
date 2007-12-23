@@ -76,6 +76,7 @@ int numero_maximo_de_clones_por_defecto;
 char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
 int ocultar_servidores;
+int activar_modos;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -560,6 +561,10 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               ocultar_servidores = 0;
             }
+            else if (!strcmp(c, BDD_ACTIVAR_MODOS))
+            {
+              activar_modos = 0;
+            }
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -775,6 +780,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
       {
         ocultar_servidores = !0;
+      }
+      else if (!strcmp(c, BDD_ACTIVAR_MODOS))
+      {
+        activar_modos = !0;
       }
       break;
 

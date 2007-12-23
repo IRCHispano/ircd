@@ -1,3 +1,13 @@
+* 2007/12/23 zoltan@irc-dev.net      (u2.10.H.10.17)              FEATURE
+-------------------------------------------------------------------------
+  Para evitar lios de los usuarios en la aplicacion del parche u2.10.H.13
+  el ajuste de los nuevos modos +CNu por usuarios locales se desactiva
+  por defecto y se activa al insertar un registro en la tabla z de la BDD
+  llamada "activar.modos".
+
+  La operacion se debe realizar cuando TODOS los nodos tengan la version
+  u2.10.H.10.17 o superior.
+
 * 2007/12/23 zoltan@irc-dev.net      (u2.10.H.10.16)                  FIX
 -------------------------------------------------------------------------
   Correcciones de los ultimos 3 parches.
