@@ -237,24 +237,16 @@ int hunt_server(int MustBeOper, aClient *cptr, aClient *sptr, char *command,
     return HUNTED_NOSUCH;
   }
 
-  if (Protocol(acptr->from) < 10)
+  if (Protocol(acptr->from) > 9)
   {
-    if (MyUser(sptr))
-    {
-      strcpy(y, acptr->yxx);
-      parv[server] = y;
-
-      sendto_one(acptr, "%s%s %s %s", NumNick(sptr), token, pattern, parv[1], parv[2], parv[3], parv[4],
-        parv[5], parv[6], parv[7], parv[8]);
-    } else {
-      sendto_one(acptr, "%s %s %s", NumServ(sptr), token, pattern, parv[1], parv[2], parv[3], parv[4],
-        parv[5], parv[6], parv[7], parv[8]);
-    }
-  } else {
-    parv[server] = acptr->name;
-    sendto_one(acptr, ":%s %s %s", parv[0], command, pattern, parv[1], parv[2], parv[3], parv[4],
-      parv[5], parv[6], parv[7], parv[8]);
+    strcpy(y, acptr->yxx);
+    parv[server] = y;
   }
+  else
+    parv[server] = acptr->name;
+
+  sendto_one_hunt(acptr, sptr, command, token, pattern, parv[1], parv[2], parv[3], parv[4],
+      parv[5], parv[6], parv[7], parv[8]);
 
   return (HUNTED_PASS);
 }
@@ -1040,7 +1032,13 @@ static int m_message(aClient *cptr, aClient *sptr,
               check_target_limit(sptr, chptr, chptr->chname, 0))
             continue;
           if (MyUser(sptr) && (chptr->mode.mode & MODE_NOCTCP) && 
-              (*parv[parc - 1] == 1) && !strncmp(parv[parc - 1], "\001ACTION ", 8))
+              (*parv[parc - 1] == 1) && strncmp(parv[parc - 1], "\001ACTION ", 8))
+          {
+            sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
+                me.name, parv[0], chptr->chname);
+            continue;
+          }
+          if (MyUser(sptr) && notice && (chptr->mode.mode & MODE_NONOTICE))
           {
             sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
                 me.name, parv[0], chptr->chname);

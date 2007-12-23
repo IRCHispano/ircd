@@ -38,6 +38,7 @@
 #include "s_user.h"
 #include "slab_alloc.h"
 #include "sprintf_irc.h"
+#include "numnicks.h"
 
 RCSTAG_CC("$Id: send.c,v 1.3 2000/01/11 02:34:42 danny Exp $");
 
@@ -198,6 +199,28 @@ void sendto_one(aClient *to, char *pattern, ...)
   va_start(vl, pattern);
   vsendto_one(to, pattern, vl);
   va_end(vl);
+}
+
+void sendto_one_hunt(aClient *to, aClient *from, char *cmd, char *token, const char *pattern, ...)
+{
+  char nbuf[512];
+  va_list vl;
+
+  if (Protocol(to->from) > 9)
+  {
+    if (IsUser(from))
+      sprintf_irc(nbuf, "%s%s %s ", NumNick(from), token);
+    else
+      sprintf_irc(nbuf, "%s %s ", NumServ(from), token);
+  } else 
+    sprintf_irc(nbuf, ":%s %s ", from->name, cmd);
+
+  va_start(vl, pattern);
+  vsprintf_irc(nbuf + strlen(nbuf), pattern, vl);
+  va_end(vl);
+  
+  sprintf_irc(sendbuf, nbuf);
+  sendbufto_one(to);
 }
 
 void vsendto_one(aClient *to, char *pattern, va_list vl)

@@ -562,10 +562,6 @@ int can_send(aClient *cptr, aChannel *chptr)
     {
       return (MODE_BAN);
     }
-    if ((chptr->mode.mode & MODE_NONOTICE))
-    {
-      return (MODE_NONOTICE);
-    }
   }
 
   if (chptr->mode.mode & MODE_MODERATED && flag)

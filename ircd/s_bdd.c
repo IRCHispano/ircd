@@ -2614,7 +2614,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       /* WOOW, BROADCAST */
       sendto_lowprot_butone(cptr, 9, ":%s DBQ * %c %s", parv[0], tabla, clave);
-      sendto_highprot_butone(cptr, 10, "%s%s " TOK_DBQ " * %c %s", parv[0], tabla, clave);
+      sendto_highprot_butone(cptr, 10, "%s%s " TOK_DBQ " * %c %s", NumNick(sptr), tabla, clave);
     }
     else
     {
