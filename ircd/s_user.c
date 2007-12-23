@@ -1311,6 +1311,13 @@ int whisper(aClient *sptr, int parc, char *parv[], int notice)
         me.name, parv[0], tcptr->name, chptr->chname);
     return 0;
   }
+  if (MyUser(sptr) && IsMsgOnlyReg(tcptr) && !IsNickRegistered(sptr)
+      && !IsAnOper(sptr))
+  {
+    sendto_one(sptr, err_str(ERR_NONONREG), me.name, parv[0],
+        tcptr->name);
+    continue;
+  }
   if (is_silenced(sptr, tcptr))
   {
     if (MyUser(sptr) || (Protocol(sptr->from) < 10))

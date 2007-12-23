@@ -1,3 +1,8 @@
+* 2007/12/24 zoltan@irc-dev.net      (u2.10.H.10.18)                  FIX
+-------------------------------------------------------------------------
+  Se corrige un viejo bug introducido hace mucho tiempo, en un CPRIVMSG
+  se podia enviar mensajes privados sin tener +r hacia un usuario con +R.
+
 * 2007/12/23 zoltan@irc-dev.net      (u2.10.H.10.17)              FEATURE
 -------------------------------------------------------------------------
   Para evitar lios de los usuarios en la aplicacion del parche u2.10.H.13
