@@ -195,6 +195,8 @@ int m_links(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
   {
+    sendto_one(sptr, rpl_str(RPL_ENDOFLINKS), me.name, parv[0],
+      parc < 2 ? "*" : parv[1]);
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;
   }
