@@ -3860,7 +3860,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
    */
   if ((strlen(nick) == 1) && (*nick == '*')) {
      rename_user(sptr, NULL);
-     return;
+     return 0;
   }
 
   /*
