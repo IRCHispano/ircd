@@ -1,3 +1,8 @@
+* 2007/12/25 zoltan@irc-dev.net      (u2.10.H.10.19)              FEATURE
+-------------------------------------------------------------------------
+  Si especificamos un nick '*' se pone un nick de invitado. Esta indicado
+  para webchats.
+
 * 2007/12/24 zoltan@irc-dev.net      (u2.10.H.10.18)                  FIX
 -------------------------------------------------------------------------
   Se corrige un viejo bug introducido hace mucho tiempo, en un CPRIVMSG

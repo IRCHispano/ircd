@@ -1125,7 +1125,7 @@ int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
     for (lp = me.serv->down; lp; lp = lp->next)
       if (cptr != lp->value.cptr && DBufLength(&lp->value.cptr->sendQ) < 8000)
       {
-        if (Protocol(lp->value.cptr->from) < 10)
+        if (Protocol(lp->value.cptr) < 10)
           sendto_one(lp->value.cptr, ":%s SETTIME %s", parv[0], parv[1]);
         else
           sendto_one(lp->value.cptr, "%s " TOK_SETTIME " %s", NumServ(sptr), parv[1]);

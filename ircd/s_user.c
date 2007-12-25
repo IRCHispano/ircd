@@ -3853,6 +3853,16 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   strncpy(nick, parv[1], NICKLEN + 1);
   nick[sizeof(nick) - 1] = 0;
 
+  /* CASO ESPECIAL
+   * NICK *
+   * Sirve para poner un nick aleatorio
+   * especial para webchats
+   */
+  if ((strlen(nick) == 1) && (*nick == '*')) {
+     rename_user(sptr, NULL);
+     return;
+  }
+
   /*
    * If do_nick_name() returns a null name OR if the server sent a nick
    * name and do_nick_name() changed it in some way (due to rules of nick
