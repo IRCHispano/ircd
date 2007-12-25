@@ -336,6 +336,9 @@ char serveropts[] = {
     '-',
 #endif
     '.','G','7',
+#if defined(HISPANO_WEBCHAT)
+    '+','W','E','B','C','H','A','T',
+#endif
     '\0'
 };
 

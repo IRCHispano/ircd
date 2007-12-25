@@ -1,3 +1,14 @@
+* 2007/12/25 zoltan@irc-dev.net      (u2.10.H.10.20)              FEATURE
+-------------------------------------------------------------------------
+  Para facilitar el registro de nicks/canales/apoyos desde la web,
+  mientras no esten los nuevos servicios, permito que un usuario con +k
+  pueda hacer rename a un usuario. 
+
+  Ese codigo solo se activara declarando lo siguiente:
+  #define HISPANO_WEBCHAT
+
+  Requiere la actualizacion de toda la red para que funcione correctamente.
+
 * 2007/12/25 zoltan@irc-dev.net      (u2.10.H.10.19)              FEATURE
 -------------------------------------------------------------------------
   Si especificamos un nick '*' se pone un nick de invitado. Esta indicado
