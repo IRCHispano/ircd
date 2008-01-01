@@ -1293,7 +1293,7 @@ int find_kill(aClient *cptr)
     if ((tmp->status & CONF_KLINE) && tmp->host && tmp->name &&
         (match(tmp->host, host) == 0 ||
         ((tmp->status == CONF_IPKILL) &&
-        match(tmp->host, inetntoa(cptr->ip)) == 0)) &&
+        match(tmp->host, inetntoa_c(cptr)) == 0)) &&
         (!username || match(tmp->name, username) == 0) &&
         (!tmp->port || (tmp->port == cptr->acpt->port)))
     {

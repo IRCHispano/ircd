@@ -36,6 +36,8 @@
 #include "sprintf_irc.h"
 #include "common.h"
 #include "fileio.h"
+#include "struct.h"
+#include "s_serv.h"
 
 RCSTAG_CC("$Id: support.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
 
@@ -101,6 +103,19 @@ char *inetntoa(struct in_addr in)
 
   return buf;
 }
+
+char *inetntoa_c(aClient *cptr)
+{
+#ifdef HISPANO_WEBCHAT
+  if (MyUser(cptr))
+    return inetntoa(cptr->ip_real);
+  else
+    return inetntoa(cptr->ip);
+#else
+  return inetntoa(cptr->ip);
+#endif
+}
+
 
 #if !defined(HAVE_INET_NETOF)
 /*

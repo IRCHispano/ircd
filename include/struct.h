@@ -94,6 +94,9 @@ struct Client {
   unsigned int hopcount;        /* number of servers to this 0 = local */
   short status;                 /* Client type */
   struct in_addr ip;            /* Real ip# - NOT defined for remote servers! */
+#ifdef HISPANO_WEBCHAT
+  struct in_addr ip_real;	/* IP real del usuario */
+#endif
   char *name;                   /* Unique name of the client, nick or host */
   char *username;               /* username here now for auth stuff */
   char *info;                   /* Free form additional client information */

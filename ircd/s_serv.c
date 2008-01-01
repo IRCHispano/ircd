@@ -1064,7 +1064,11 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
             acptr->name, acptr->hopcount + 1, acptr->lastnick,
             PunteroACadena(acptr->user->username),
             PunteroACadena(acptr->user->host), s, inttobase64(xxx_buf,
+#ifdef HISPANO_WEBCHAT
+            MyUser(acptr) ? ntohl(acptr->ip_real.s_addr) : ntohl(acptr->ip.s_addr), 6), NumNick(acptr),
+#else
             ntohl(acptr->ip.s_addr), 6), NumNick(acptr),
+#endif
             PunteroACadena(acptr->info));
       }
     }

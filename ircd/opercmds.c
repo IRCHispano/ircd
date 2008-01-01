@@ -1762,7 +1762,7 @@ static void add_gline(aClient *sptr, int ip_mask, char *host, char *comment,
                                    find_kill for safety's sake */
 
       if ((GlineIsIpMask(agline) ?
-          match(agline->host, inetntoa(acptr->ip)) :
+          match(agline->host, inetntoa_c(acptr)) :
           match(agline->host, PunteroACadena(acptr->sockhost))) == 0 &&
           (!acptr->user->username ||
           match(agline->name, acptr->user->username) == 0))

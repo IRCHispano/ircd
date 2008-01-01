@@ -1493,6 +1493,10 @@ aClient *add_connection(aClient *cptr, int fd, int type)
    * If it is a connection to a user port and if the site has been throttled,
    * reject the user.
    */
+#ifdef HISPANO_WEBCHAT
+  /* No ponemos throttle */
+  IPcheck_local_connect(acptr);
+#else
   if (IPcheck_local_connect(acptr) == -1 && IsUserPort(acptr))
   {
     ircstp->is_ref++;
@@ -1500,6 +1504,7 @@ aClient *add_connection(aClient *cptr, int fd, int type)
         "Your host is trying to (re)connect too fast -- throttled");
     return NULL;
   }
+#endif
 
   start_auth(acptr);
   return acptr;

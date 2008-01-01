@@ -235,7 +235,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
 #endif
 
     if (!p2)
-      p2 = inetntoa(acptr->ip);
+      p2 = inetntoa_c(acptr);
     *(p1++) = ' ';
     while ((*p2) && (*(p1++) = *(p2++)));
   }
@@ -630,9 +630,15 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               || matchexec(PunteroACadena(acptr->info), mymask, minlen))
               && ((!(matchsel & WHO_FIELD_NIP)) || (IsHidden(acptr)
               && !IsHiddenViewer(sptr))
+#ifdef HISPANO_WEBCHAT
+              || (((((MyUser(acptr) ? acptr->ip_real.s_addr : acptr->ip.s_addr) & imask.mask.s_addr) !=
+              imask.bits.s_addr)) || (imask.fall
+              && matchexec(MyUser(acptr) ? inet_ntoa(acptr->ip_real) : inet_ntoa(acptr->ip), mymask, minlen)))))
+#else
               || ((((acptr->ip.s_addr & imask.mask.s_addr) !=
               imask.bits.s_addr)) || (imask.fall
               && matchexec(inet_ntoa(acptr->ip), mymask, minlen)))))
+#endif
             continue;
 #else
           if ((mask) &&
@@ -687,9 +693,15 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             || matchexec(PunteroACadena(acptr->info), mymask, minlen))
             && ((!(matchsel & WHO_FIELD_NIP))
             || (IsHidden(acptr) && !IsHiddenViewer(sptr))
+#ifdef HISPANO_WEBCHAT
+            || (((((MyUser(acptr) ? acptr->ip_real.s_addr : acptr->ip.s_addr) & imask.mask.s_addr) != imask.bits.s_addr))
+            || (imask.fall
+            && matchexec(MyUser(acptr) ? inet_ntoa(acptr->ip_real) : inet_ntoa(acptr->ip), mymask, minlen)))))
+#else
             || ((((acptr->ip.s_addr & imask.mask.s_addr) != imask.bits.s_addr))
             || (imask.fall
             && matchexec(inet_ntoa(acptr->ip), mymask, minlen)))))
+#endif
           continue;
 #else
         if ((mask) &&

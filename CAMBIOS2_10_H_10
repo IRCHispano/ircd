@@ -1,3 +1,16 @@
+* 2008/01/01 zoltan@irc-dev.net      (u2.10.H.10.21)              FEATURE
+-------------------------------------------------------------------------
+  Bajo el define de HISPANO_WEBCHAT esta el codigo especifico para que
+  los clientes de Webchat puedan mostrar su IP real en USERIP, Silences,
+  Bans, Glines, asi como propagar su IP real bajo el comando NICK del P10.
+
+  El webchat cuando tiene que conectar, tiene que mandar en el ultimo
+  parametro del comando USER, la IP real en vez del realname. El ircd 
+  pondra un realname especifico.
+
+  Lo malo es que a la hora de contablizar los clones, lo hace a la IP de
+  la web, pero es un mal menor. Esto si, se quita el chequeo de throttle.
+
 * 2007/12/25 zoltan@irc-dev.net      (u2.10.H.10.20)              FEATURE
 -------------------------------------------------------------------------
   Para facilitar el registro de nicks/canales/apoyos desde la web,

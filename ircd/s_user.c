@@ -39,6 +39,8 @@
 #define _NOTSENDER_INCLUIDO_
 
 #include <assert.h>
+#include <netdb.h>
+#include <netinet/in.h>
 
 #include "h.h"
 #include "s_debug.h"
@@ -467,9 +469,11 @@ static int register_user(aClient *cptr, aClient *sptr,
     }
     if (IsUnixSocket(sptr))
       SlabStringAllocDup(&(user->host), me.name, HOSTLEN);
+#ifndef HISPANO_WEBCHAT
     else
       SlabStringAllocDup(&(user->host), PunteroACadena(sptr->sockhost),
           HOSTLEN);
+#endif
     aconf = sptr->confs->value.aconf;
 
 #if !defined(HACER_IDENT)
@@ -654,7 +658,7 @@ static int register_user(aClient *cptr, aClient *sptr,
     sprintf_irc(sendbuf,
         ":%s NOTICE * :*** Notice -- Client connecting: %s (%s@%s) [%s] {%d}",
         me.name, nick, PunteroACadena(user->username),
-        PunteroACadena(user->host), inetntoa(sptr->ip), get_client_class(sptr));
+        PunteroACadena(user->host), inetntoa_c(sptr), get_client_class(sptr));
     sendbufto_op_mask(SNO_CONNEXIT);
 #else /* SNO_CONNEXIT_IP */
     sprintf_irc(sendbuf,
@@ -711,7 +715,11 @@ static int register_user(aClient *cptr, aClient *sptr,
       "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
       NumServ(user->server), nick, sptr->hopcount + 1, sptr->lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
+#ifdef HISPANO_WEBCHAT
+      inttobase64(ip_base64, MyUser(sptr) ? ntohl(sptr->ip_real.s_addr)  : ntohl(sptr->ip.s_addr), 6),
+#else
       inttobase64(ip_base64, ntohl(sptr->ip.s_addr), 6),
+#endif
       NumNick(sptr), PunteroACadena(sptr->info));
 
 #else /* Remove the following when all servers are 2.10 */
@@ -750,7 +758,11 @@ static int register_user(aClient *cptr, aClient *sptr,
       "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
       NumServ(user->server), nick, sptr->hopcount + 1, (int)(sptr->lastnick),
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
+#ifdef HISPANO_WEBCHAT
+      inttobase64(ip_base64, MyUser(sptr) ? ntohl(sptr->ip_real.s_addr) : ntohl(sptr->ip.s_addr), 6),
+#else
       inttobase64(ip_base64, ntohl(sptr->ip.s_addr), 6),
+#endif
       NumNick(sptr), PunteroACadena(sptr->info));
   for (lp = me.serv->down; lp; lp = lp->next)
   {
@@ -1469,14 +1481,35 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
     set_snomask(sptr, (isDigit(*server) && !strchr(server, '.')) ?
         (atoi(server) & SNO_USER) : SNO_DEFAULT, SNO_SET);
   user->server = &me;
+
+#ifdef HISPANO_WEBCHAT
+  struct hostent *hp;
+  struct sockaddr_in addr;
+
+  hp = gethostbyname(realname);
+
+  if (hp) {
+    memcpy(&addr.sin_addr,hp->h_addr,hp->h_length);
+    memcpy(&sptr->ip_real, &addr.sin_addr, sizeof(struct in_addr)); 
+  } else 
+    return exit_client(cptr, sptr, &me, "Conexion Ilegal al Webchat");
+
+  SlabStringAllocDup(&(user->host), realname, HOSTLEN);
+  SlabStringAllocDup(&(sptr->info), "Chat desde la Web http://www.irc-hispano.es", REALLEN);
+
+#else
   SlabStringAllocDup(&(sptr->info), realname, REALLEN);
+#endif
+
   if (sptr->name && sptr->cookie == COOKIE_VERIFIED)
     /* NICK and PONG already received, now we have USER... */
     return register_user(cptr, sptr, sptr->name, username);
   else
   {
     SlabStringAllocDup(&(sptr->user->username), username, USERLEN);
+#ifndef HISPANO_WEBCHAT
     SlabStringAllocDup(&(user->host), host, HOSTLEN);
+#endif
   }
   return 0;
 }
@@ -2355,7 +2388,7 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
           || IsHelpOp(acptr)) ? "*" : "", (acptr->user->away) ? '-' : '+',
           PunteroACadena(acptr->user->username), (sptr == acptr
           || IsHiddenViewer(sptr)
-          || !IsHidden(acptr)) ? inetntoa(acptr->ip) : "0.0.0.0");
+          || !IsHidden(acptr)) ? inetntoa_c(acptr) : "0.0.0.0");
     }
     else
     {
@@ -3003,7 +3036,7 @@ int is_silenced(aClient *sptr, aClient *acptr)
   sprintf_irc(sender, "%s!%s@%s", sptr->name, PunteroACadena(user->username),
       PunteroACadena(user->host));
   sprintf_irc(senderip, "%s!%s@%s", sptr->name, PunteroACadena(user->username),
-      inetntoa(sptr->ip));
+      inetntoa_c(sptr));
 #if defined(BDD_VIP)
   sprintf_irc(sendervirtual, "%s!%s@%s", sptr->name,
       PunteroACadena(user->username), get_virtualhost(sptr));
@@ -3317,7 +3350,11 @@ void make_virtualhost(aClient *acptr, int mostrar)
     x[0] = x[1] = 0;
 
     v[0] = (clave_de_cifrado_binaria[0] & 0xffff0000) + ts;
+#ifdef HISPANO_WEBCHAT
+    v[1] = MyUser(acptr) ? ntohl((unsigned long)acptr->ip_real.s_addr) : ntohl((unsigned long)acptr->ip.s_addr);
+#else
     v[1] = ntohl((unsigned long)acptr->ip.s_addr);
+#endif
 
     tea(v, clave_de_cifrado_binaria, x);
 
@@ -3442,7 +3479,11 @@ void rename_user(aClient *sptr, char *nick_nuevo)
         if (x[0] >= 4294000000ul)
           continue;
 
+#ifdef HISPANO_WEBCHAT
+        sprintf_irc(resultado, "webchat-%.6d", (int)(x[0] % 1000000));
+#else
         sprintf_irc(resultado, "invitado-%.6d", (int)(x[0] % 1000000));
+#endif
 
         nick_nuevo = resultado;
 
@@ -3940,7 +3981,11 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if ((strlen(nick) == 15) && (!IsServer(cptr)))
   {
+#ifdef HISPANO_WEBCHAT
+    if ((!strncasecmp(nick, "invitado-", 9) || strncasecmp(nick, "webchat-", 8)) && strIsDigit(nick + 9))
+#else
     if (!strncasecmp(nick, "invitado-", 9) && strIsDigit(nick + 9))
+#endif
     {
       sendto_one(sptr, err_str(ERR_NICKNAMEINUSE), me.name,
           /* parv[0] is empty when connecting */
