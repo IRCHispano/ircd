@@ -90,6 +90,7 @@ __END_DECLS
 /* *INDENT-ON* */
 
 static char buf[BUFSIZE], buf2[BUFSIZE];
+static char *nuevo_nick_aleatorio(aClient *cptr);
 
 /*
  * m_functions execute protocol messages on this server:
@@ -3451,47 +3452,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
   assert(!nick_nuevo);
 
   if (!nick_nuevo)
-  {
-    aClient *acptr;
-
-    {
-      unsigned int v[2], k[2], x[2];
-      char resultado[NICKLEN + 1];
-
-      k[0] = k[1] = x[0] = x[1] = 0;
-
-      v[0] = base64toint(sptr->yxx);
-      v[1] = base64toint(me.yxx);
-
-      acptr = sptr;
-
-      do
-      {
-        tea(v, k, x);
-
-        v[1] += 4096;
-
-/*  
- ** El 'if' que sigue lo necesitamos
- ** para que todos los valores tengan
- ** la misma probabilidad.
- */
-        if (x[0] >= 4294000000ul)
-          continue;
-
-#ifdef HISPANO_WEBCHAT
-        sprintf_irc(resultado, "webchat-%.6d", (int)(x[0] % 1000000));
-#else
-        sprintf_irc(resultado, "invitado-%.6d", (int)(x[0] % 1000000));
-#endif
-
-        nick_nuevo = resultado;
-
-        acptr = FindClient(nick_nuevo);
-      }
-      while (acptr);
-    }
-  }
+    nick_nuevo = nuevo_nick_aleatorio(sptr);
 
   {
     int of, oh;
@@ -3760,7 +3721,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
    * pero hoy por hoy no podemos modificarlo
    * y tenemos que hacer un apanio.
    */
-  if (!IsChannelService(sptr) || !IsServer(cptr) || !IsServer(sptr) || parc != 2)
+  if ((!IsChannelService(sptr) && (!IsServer(cptr) || !IsServer(sptr))) || parc != 2)
     return 0;
 #else
   if (!IsServer(cptr) || !IsServer(sptr) || parc != 2)
@@ -3915,18 +3876,16 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_ops("bad NICK param count for %s from %s", parv[1], cptr->name);
     return 0;
   }
-  strncpy(nick, parv[1], NICKLEN + 1);
-  nick[sizeof(nick) - 1] = 0;
 
   /* CASO ESPECIAL
    * NICK *
    * Sirve para poner un nick aleatorio
-   * especial para webchats
    */
-  if ((strlen(nick) == 1) && (*nick == '*')) {
-     rename_user(sptr, NULL);
-     return 0;
-  }
+  if ((strlen(parv[1]) == 1) && (*parv[1] == '*'))
+     parv[1] = nuevo_nick_aleatorio(sptr);
+
+  strncpy(nick, parv[1], NICKLEN + 1);
+  nick[sizeof(nick) - 1] = 0;
 
   /*
    * If do_nick_name() returns a null name OR if the server sent a nick
@@ -3982,7 +3941,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if ((strlen(nick) == 15) && (!IsServer(cptr)))
   {
 #ifdef HISPANO_WEBCHAT
-    if ((!strncasecmp(nick, "invitado-", 9) || strncasecmp(nick, "webchat-", 8)) && strIsDigit(nick + 9))
+    if ((!strncasecmp(nick, "invitado-", 9) || strncasecmp(nick, "webchat", 7)) && strIsDigit(nick + 9))
 #else
     if (!strncasecmp(nick, "invitado-", 9) && strIsDigit(nick + 9))
 #endif
@@ -5420,4 +5379,48 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return m_nick_local(cptr, sptr, parc, parv);
   else
     return m_nick_remoto(cptr, sptr, parc, parv);
+}
+
+
+static char *nuevo_nick_aleatorio(aClient *cptr)
+{
+  aClient *acptr;
+  char *nick_nuevo;
+  unsigned int v[2], k[2], x[2];
+  char resultado[NICKLEN + 1];
+
+  k[0] = k[1] = x[0] = x[1] = 0;
+
+  v[0] = base64toint(cptr->yxx);
+  v[1] = base64toint(me.yxx);
+
+  acptr = cptr;
+
+  do
+  {
+    tea(v, k, x);
+
+    v[1] += 4096;
+
+/*
+ ** El 'if' que sigue lo necesitamos
+ ** para que todos los valores tengan
+ ** la misma probabilidad.
+ */
+    if (x[0] >= 4294000000ul)
+      continue;
+
+#ifdef HISPANO_WEBCHAT
+    sprintf_irc(resultado, "webchat%.6d", (int)(x[0] % 1000000));
+#else
+    sprintf_irc(resultado, "invitado-%.6d", (int)(x[0] % 1000000));
+#endif
+
+    nick_nuevo = resultado;
+
+    acptr = FindClient(nick_nuevo);
+  }
+  while (acptr);
+
+  return nick_nuevo;
 }

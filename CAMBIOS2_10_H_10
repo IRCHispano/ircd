@@ -1,3 +1,8 @@
+* 2008/01/02 zoltan@irc-dev.net      (u2.10.H.10.23)                  FIX
+-------------------------------------------------------------------------
+  Modifico la forma de poner un nick aleatorio con NICK * porque el codigo
+  de rename_user generaba core dumped. 
+
 * 2008/01/01 zoltan@irc-dev.net      (u2.10.H.10.22)              FEATURE
 -------------------------------------------------------------------------
   Paso de int de 8 bits a int de 16 bits el contador de numero de clones
