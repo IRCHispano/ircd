@@ -1,3 +1,14 @@
+* 2008/01/01 zoltan@irc-dev.net      (u2.10.H.10.22)              FEATURE
+-------------------------------------------------------------------------
+  Paso de int de 8 bits a int de 16 bits el contador de numero de clones
+  que puede tener una IP.
+  En vez de 255 clones, ahora son 65535 clones como el ircd de irc-dev o 
+  el de Undernet.
+  Es para curarse en salud por el webchat por si hayas de 250 usuarios
+  que usen el webchat.
+  Requiere que toda la red este actualizada para poder admitir mas de 255
+  clientes.
+
 * 2008/01/01 zoltan@irc-dev.net      (u2.10.H.10.21)              FEATURE
 -------------------------------------------------------------------------
   Bajo el define de HISPANO_WEBCHAT esta el codigo especifico para que

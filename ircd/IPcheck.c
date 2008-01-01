@@ -64,7 +64,7 @@ struct IPregistry {
 
   unsigned int last_connect:16; /* Time of last connect (attempt), see BITMASK below,
                                    or time of last disconnect when `connected' is zero. */
-  unsigned int connected:8;     /* Used for IP# throttling: Number of currently on-line clients with this IP number */
+  unsigned int connected:16;     /* Used for IP# throttling: Number of currently on-line clients with this IP number */
   unsigned int connect_attempts:4;  /* Used for connect speed throttling: Number of clients that connected with this IP number
                                        or `15' when then real value is >= 15.  This value is only valid when the last connect
                                        was less then IPCHECK_CLONE_PERIOD seconds ago, it should considered to be 0 otherwise. */
@@ -310,7 +310,7 @@ int IPcheck_local_connect(aClient *cptr)
       entry->connected, entry->connect_attempts, FREE_TARGETS(entry));
 #endif
   /* Note that this also connects server connects.  It is hard and not interesting, to change that. */
-  if (++(entry->connected) == 0)  /* Don't allow more then 255 connects from one IP number, ever */
+  if (++(entry->connected) == 0)  /* Don't allow more then 65535 connects from one IP number, ever */
     return -2;
   if ((CONNECTED_SINCE(entry) > IPCHECK_CLONE_PERIOD)
 #if defined(BDD_CLONES)
@@ -386,7 +386,7 @@ int IPcheck_remote_connect(aClient *cptr, const char *UNUSED(hostname),
         NumServ(&me), NumNick(cptr), entry->connected, entry->connect_attempts,
         FREE_TARGETS(entry));
 #endif
-    if (++(entry->connected) == 0)  /* Don't allow more then 255 connects from one IP number, ever */
+    if (++(entry->connected) == 0)  /* Don't allow more then 65535 connects from one IP number, ever */
       return -1;
     if (CONNECTED_SINCE(entry) > IPCHECK_CLONE_PERIOD)
       entry->connect_attempts = 0;

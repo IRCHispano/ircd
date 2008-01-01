@@ -705,7 +705,7 @@ static int register_user(aClient *cptr, aClient *sptr,
         (acptr != &me)) == -1)
       /* We ran out of bits to count this */
       return exit_client(cptr, sptr, &me,
-          "More then 255 connections from this IP number");
+          "More then 65535 connections from this IP number");
   }
 #if defined(NO_PROTOCOL9)       /* Use this when all servers are 2.10 (but test it first) --Run */
 
