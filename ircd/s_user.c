@@ -2388,6 +2388,9 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
           (IsAnOper(acptr)
           || IsHelpOp(acptr)) ? "*" : "", (acptr->user->away) ? '-' : '+',
           PunteroACadena(acptr->user->username), (sptr == acptr
+#ifdef HISPANO_WEBCHAT
+          || IsChannelService(sptr)
+#endif
           || IsHiddenViewer(sptr)
           || !IsHidden(acptr)) ? inetntoa_c(acptr) : "0.0.0.0");
     }

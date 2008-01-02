@@ -9,7 +9,7 @@
   que puede tener una IP.
   En vez de 255 clones, ahora son 65535 clones como el ircd de irc-dev o 
   el de Undernet.
-  Es para curarse en salud por el webchat por si hayas de 250 usuarios
+  Es para curarse en salud por el webchat por si hay mas de 250 usuarios
   que usen el webchat.
   Requiere que toda la red este actualizada para poder admitir mas de 255
   clientes.
@@ -35,8 +35,6 @@
 
   Ese codigo solo se activara declarando lo siguiente:
   #define HISPANO_WEBCHAT
-
-  Requiere la actualizacion de toda la red para que funcione correctamente.
 
 * 2007/12/25 zoltan@irc-dev.net      (u2.10.H.10.19)              FEATURE
 -------------------------------------------------------------------------
@@ -105,6 +103,8 @@
 * 2007/11/29 zoltan@irc-dev.net      (u2.10.H.10.12)                  FIX
 -------------------------------------------------------------------------
   Capamos el modo +s para usuarios.
+
+  FEATURE SF ID TRACKER: #1743993
 
 * 2007/11/29 zoltan@irc-dev.net      (u2.10.H.10.11)                  FIX
 -------------------------------------------------------------------------
