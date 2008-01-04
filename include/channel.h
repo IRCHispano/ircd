@@ -63,6 +63,7 @@
 #define CHFL_BANVALID		0x0800  /* CHFL_BANNED bit is valid */
 #define CHFL_BANNED		0x1000    /* Channel member is banned */
 #define CHFL_SILENCE_IPMASK	0x2000  /* silence mask is an IP-number mask */
+#define CHFL_DELAYED		0x4000  /* User's join message is delayed */
 
 /* Channel Visibility macros */
 
@@ -89,6 +90,8 @@
 #define MODE_NOCTCP     0x40000
 #define MODE_NONOTICE   0x80000
 #define MODE_NOQUITPARTS 0x100000
+#define MODE_DELJOINS   0x200000
+#define MODE_WASDELJOINS 0x400000
 
 #define RegisteredChannel(x)    ((x) && ((x)->mode.mode & MODE_REGCHAN))
 #define RestrictedChannel(x)    ((x) && ((x)->mode.mode & MODE_REGNICKS))

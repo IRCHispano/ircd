@@ -1,3 +1,9 @@
+* 2008/01/04 zoltan@irc-dev.net      (u2.10.H.10.24)              FEATURE
+-------------------------------------------------------------------------
+  Se da soporte limitado del modo +D de canales de "Delayed-join", no
+  hace ningun efecto y el modo solo pueden poner los servidores, es un
+  parche de transicion al nuevo IRCD.
+
 * 2008/01/02 zoltan@irc-dev.net      (u2.10.H.10.23)                  FIX
 -------------------------------------------------------------------------
   Modifico la forma de poner un nick aleatorio con NICK * porque el codigo
