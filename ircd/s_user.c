@@ -3944,7 +3944,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if ((strlen(nick) == 15) && (!IsServer(cptr)))
   {
 #ifdef HISPANO_WEBCHAT
-    if ((!strncasecmp(nick, "invitado-", 9) || strncasecmp(nick, "webchat", 7)) && strIsDigit(nick + 9))
+    if ((!strncasecmp(nick, "invitado-", 9) || strncasecmp(nick, "webchat-", 8)) && strIsDigit(nick + 9))
 #else
     if (!strncasecmp(nick, "invitado-", 9) && strIsDigit(nick + 9))
 #endif
@@ -5414,7 +5414,7 @@ static char *nuevo_nick_aleatorio(aClient *cptr)
       continue;
 
 #ifdef HISPANO_WEBCHAT
-    sprintf_irc(resultado, "webchat%.6d", (int)(x[0] % 1000000));
+    sprintf_irc(resultado, "webchat-%.6d", (int)(x[0] % 1000000));
 #else
     sprintf_irc(resultado, "invitado-%.6d", (int)(x[0] % 1000000));
 #endif

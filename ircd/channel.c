@@ -1156,6 +1156,7 @@ static int canal_flags[] = {
   MODE_AUTOOP, 'A', MODE_SECUREOP, 'S',
   MODE_MSGNONREG, 'M', MODE_NOCTCP, 'C',
   MODE_NONOTICE, 'N', MODE_NOQUITPARTS, 'u',
+  MODE_DELJOINS, 'D',
   0x0, 0x0
 };
 
@@ -1721,10 +1722,10 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
     activacion_modos = (~(oldm.mode)) & newmode;
     if (activar_modos)
       newmode &=
-          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP));
+          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_DELJOINS));
     else
       newmode &=
-          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_NOCTCP | MODE_NONOTICE | MODE_NOQUITPARTS));
+          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_NOCTCP | MODE_NONOTICE | MODE_NOQUITPARTS | MODE_DELJOINS));
   }
 
 /*
