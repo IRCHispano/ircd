@@ -724,6 +724,10 @@ int parse_server(aClient *cptr, char *buffer, char *bufend)
      *
      * Clients/unreg servers always receive/
      * send long commands   -record
+     *
+     * IRC-Hispano
+     * A partir de ahora se manda en Tkn y
+     * pueden recibir Tkn y Long.
      */
 
     /*
