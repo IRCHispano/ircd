@@ -168,11 +168,11 @@ static Numeric numeric_errors[] = {
 /* 437 */
     {ERR_BANNICKCHANGE, "%s :Cannot change nickname while banned on channel"},
 /* 438 */
-    {ERR_NICKTOOFAST, "%1$s :Nick change too fast. Please wait %2$d seconds"
+    {ERR_NICKTOOFAST, "%1$s :Nick change too fast. Please wait %2$d seconds - "
                       "Necesita esperar %2$d segundos para volver a "
                       "cambiarse el nick"},
 /* 439 */
-    {ERR_TARGETTOOFAST, "%1$s :Target change too fast. Please wait %2$d seconds"
+    {ERR_TARGETTOOFAST, "%1$s :Target change too fast. Please wait %2$d seconds - "
                         "Debe esperar %2$d segundos para entrar en otro canal "
                         "o abrir otro privado"},
 /* 440 */
