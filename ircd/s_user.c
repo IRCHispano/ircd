@@ -3455,7 +3455,47 @@ void rename_user(aClient *sptr, char *nick_nuevo)
   assert(!nick_nuevo);
 
   if (!nick_nuevo)
-    nick_nuevo = nuevo_nick_aleatorio(sptr);
+  {
+    aClient *acptr;
+
+    {
+      unsigned int v[2], k[2], x[2];
+      char resultado[NICKLEN + 1];
+
+      k[0] = k[1] = x[0] = x[1] = 0;
+
+      v[0] = base64toint(sptr->yxx);
+      v[1] = base64toint(me.yxx);
+
+      acptr = sptr;
+
+      do
+      {
+        tea(v, k, x);
+
+        v[1] += 4096;
+
+/*
+ ** El 'if' que sigue lo necesitamos
+ ** para que todos los valores tengan
+ ** la misma probabilidad.
+ */
+        if (x[0] >= 4294000000ul)
+          continue;
+
+#ifdef HISPANO_WEBCHAT
+        sprintf_irc(resultado, "webchat-%.6d", (int)(x[0] % 1000000));
+#else
+        sprintf_irc(resultado, "invitado-%.6d", (int)(x[0] % 1000000));
+#endif
+
+        nick_nuevo = resultado;
+
+        acptr = FindClient(nick_nuevo);
+      }
+      while (acptr);
+    }
+  }
 
   {
     int of, oh;

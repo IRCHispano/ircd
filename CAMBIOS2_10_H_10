@@ -1,3 +1,11 @@
+* 2008/01/05 zoltan@irc-dev.net      (u2.10.H.10.25)                  FIX
+-------------------------------------------------------------------------
+  Las GLINES a usuarios de Webch solo se hacian efecto en el momento y
+  no al reentrar.
+
+  Los renames provocados por la BDD (registro de nicks) provocaba un
+  efecto raro, danio colateral del parche 10.19.
+
 * 2008/01/04 zoltan@irc-dev.net      (u2.10.H.10.24)              FEATURE
 -------------------------------------------------------------------------
   Se da soporte limitado del modo +D de canales de "Delayed-join", no
