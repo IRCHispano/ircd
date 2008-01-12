@@ -3820,6 +3820,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   int nick_suspendido = 0;      /* Nick SUSPENDido */
   int nick_equivalentes = 0;
   int nick_autentificado_en_bdd = 0;
+  int nick_aleatorio = 0;
   aClient *acptr;
   aClient *server = NULL;
   char nick[NICKLEN + 2];
@@ -3885,7 +3886,10 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
    * Sirve para poner un nick aleatorio
    */
   if ((strlen(parv[1]) == 1) && (*parv[1] == '*'))
+  {
      parv[1] = nuevo_nick_aleatorio(sptr);
+     nick_aleatorio = 1;
+  }
 
   strncpy(nick, parv[1], NICKLEN + 1);
   nick[sizeof(nick) - 1] = 0;
@@ -3930,7 +3934,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 #if !0
 /* Esto hay que quitarlo en algun momento... */
-  if ((strlen(nick) == 14) && (!IsServer(cptr)))
+  if ((strlen(nick) == 14) && (!IsServer(cptr)) && !nick_aleatorio)
   {
     if (!strncasecmp(nick, "webchat-", 8) && strIsDigit(nick + 8))
     {
@@ -3941,7 +3945,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
   }
 
-  if ((strlen(nick) == 15) && (!IsServer(cptr)))
+  if ((strlen(nick) == 15) && (!IsServer(cptr)) && !nick_aleatorio)
   {
     if (!strncasecmp(nick, "invitado-", 9) && strIsDigit(nick + 9))
     {
