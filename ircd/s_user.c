@@ -3930,21 +3930,14 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 #if !0
 /* Esto hay que quitarlo en algun momento... */
-  if ((strlen(nick) == 9) && (!IsServer(cptr)))
-  {
-    if (!strncasecmp(nick, "inv", 3) && strIsDigit(nick + 3))
-    {
-      sendto_one(sptr, err_str(ERR_NICKNAMEINUSE), me.name,
-          /* parv[0] is empty when connecting */
-          BadPtr(parv[0]) ? "*" : parv[0], nick);
-      return 0;                 /* NICK message ignored */
-    }
-  }
-
   if ((strlen(nick) == 15) && (!IsServer(cptr)))
   {
 #ifdef HISPANO_WEBCHAT
-    if ((!strncasecmp(nick, "invitado-", 9) || strncasecmp(nick, "webchat-", 8)) && strIsDigit(nick + 9))
+/*
+    if ((!strncasecmp(nick, "invitado-", 9) && strIsDigit(nick + 9)) ||
+       (!strncasecmp(nick, "webchat-", 8) && strIsDigit(nick + 8)))
+*/
+    if (!strncasecmp(nick, "webchat-", 8) && strIsDigit(nick + 8))
 #else
     if (!strncasecmp(nick, "invitado-", 9) && strIsDigit(nick + 9))
 #endif

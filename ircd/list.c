@@ -463,7 +463,7 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
     /* Does gline match? */
     /* Added a check against the user's IP address as well -Kev */
     if ((GlineIsIpMask(agline) ?
-        match(agline->host, inetntoa(cptr->ip)) :
+        match(agline->host, inetntoa_c(cptr)) :
         match(agline->host, PunteroACadena(cptr->sockhost))) == 0 &&
         match(agline->name, PunteroACadena(cptr->user->username)) == 0)
     {
