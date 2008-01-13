@@ -309,6 +309,11 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
   unsigned char stat = parc > 1 ? parv[1][0] : '\0';
   Reg1 int i;
 
+#ifdef HISPANO_WEBCHAT
+  if (!IsAnOper(sptr))
+    return 0;
+#endif
+
 /* m_stats is so obnoxiously full of special cases that the different
  * hunt_server() possiblites were becoming very messy. It now uses a
  * switch() so as to be easier to read and update as params change. 

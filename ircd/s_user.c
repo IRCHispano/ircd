@@ -1482,25 +1482,7 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
     set_snomask(sptr, (isDigit(*server) && !strchr(server, '.')) ?
         (atoi(server) & SNO_USER) : SNO_DEFAULT, SNO_SET);
   user->server = &me;
-
-#ifdef HISPANO_WEBCHAT
-  struct hostent *hp;
-  struct sockaddr_in addr;
-
-  hp = gethostbyname(realname);
-
-  if (hp) {
-    memcpy(&addr.sin_addr,hp->h_addr,hp->h_length);
-    memcpy(&sptr->ip_real, &addr.sin_addr, sizeof(struct in_addr)); 
-  } else 
-    return exit_client(cptr, sptr, &me, "Conexion Ilegal al Webchat");
-
-  SlabStringAllocDup(&(user->host), realname, HOSTLEN);
-  SlabStringAllocDup(&(sptr->info), "Chat desde la Web http://www.irc-hispano.es", REALLEN);
-
-#else
   SlabStringAllocDup(&(sptr->info), realname, REALLEN);
-#endif
 
   if (sptr->name && sptr->cookie == COOKIE_VERIFIED)
     /* NICK and PONG already received, now we have USER... */
@@ -1508,9 +1490,7 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
   else
   {
     SlabStringAllocDup(&(sptr->user->username), username, USERLEN);
-#ifndef HISPANO_WEBCHAT
     SlabStringAllocDup(&(user->host), host, HOSTLEN);
-#endif
   }
   return 0;
 }
