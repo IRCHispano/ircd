@@ -107,7 +107,7 @@ char *inetntoa(struct in_addr in)
 char *inetntoa_c(aClient *cptr)
 {
 #ifdef HISPANO_WEBCHAT
-  if (MyUser(cptr))
+  if (MyConnect(cptr))
     return inetntoa(cptr->ip_real);
   else
     return inetntoa(cptr->ip);
