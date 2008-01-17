@@ -61,7 +61,6 @@ static int add_banid(aClient *, aChannel *, char *, int, int);
 static Link *next_overlapped_ban(void);
 static Link *next_removed_overlapped_ban(void);
 static int can_join(aClient *, aChannel *, char *);
-static void channel_modes(aClient *, char *, char *, aChannel *);
 static int del_banid(aChannel *, char *, int);
 static int is_banned(aClient *, aChannel *, Link *);
 static int is_invited(aClient *, aChannel *);
@@ -582,7 +581,7 @@ int can_send(aClient *cptr, aChannel *chptr)
  * write the "simple" list of channel modes for channel chptr onto buffer mbuf
  * with the parameters in pbuf.
  */
-static void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
+void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
     aChannel *chptr)
 {
   *mbuf++ = '+';
@@ -3597,48 +3596,6 @@ static int is_invited(aClient *cptr, aChannel *chptr)
   return 0;
 }
 
-/* List and skip all channels that are listen */
-void list_next_channels(aClient *cptr, int nr)
-{
-  aListingArgs *args = cptr->listing;
-  aChannel *chptr = args->chptr;
-  chptr->mode.mode &= ~MODE_LISTED;
-  while (is_listed(chptr) || --nr >= 0)
-  {
-    for (; chptr; chptr = chptr->nextch)
-    {
-      if (!cptr->user || (SecretChannel(chptr) && !IsMember(cptr, chptr)))
-        continue;
-      if (chptr->users > args->min_users && chptr->users < args->max_users &&
-          chptr->creationtime > args->min_time &&
-          chptr->creationtime < args->max_time &&
-          (!args->topic_limits || (chptr->topic &&
-          chptr->topic_time > args->min_topic_time &&
-          chptr->topic_time < args->max_topic_time)))
-      {
-        sendto_one(cptr, rpl_str(RPL_LIST), me.name, cptr->name,
-            ShowChannel(cptr, chptr) ? chptr->chname : "*",
-            chptr->users, ShowChannel(cptr,
-            chptr) ? PunteroACadena(chptr->topic) : "");
-        chptr = chptr->nextch;
-        break;
-      }
-    }
-    if (!chptr)
-    {
-      RunFree(cptr->listing);
-      cptr->listing = NULL;
-      sendto_one(cptr, rpl_str(RPL_LISTEND), me.name, cptr->name);
-      break;
-    }
-  }
-  if (chptr)
-  {
-    cptr->listing->chptr = chptr;
-    chptr->mode.mode |= MODE_LISTED;
-  }
-}
-
 /*
  *  Subtract one user from channel i (and free channel
  *  block, if channel became empty).
@@ -3660,6 +3617,7 @@ void sub1_from_channel(aChannel *chptr)
   if (chptr->mode.mode & MODE_REGCHAN)
     return;
 
+#if 0
   /* Channel became (or was) empty: Remove channel */
   if (is_listed(chptr))
   {
@@ -3675,6 +3633,7 @@ void sub1_from_channel(aChannel *chptr)
       }
     }
   }
+#endif
   /*
    * Now, find all invite links from channel structure
    */
@@ -5845,6 +5804,248 @@ static int number_of_zombies(aChannel *chptr)
   return count;
 }
 
+#define LPARAM_ERROR    -1
+#define LPARAM_SUCCESS   0
+#define LPARAM_CHANNEL   1
+
+
+static struct ListingArgs la_init = {
+  2147483647,                 /* max_time */
+  0,                          /* min_time */
+  4294967295U,                /* max_users */
+  0,                          /* min_users */
+  0,                          /* flags */
+  2147483647,                 /* max_topic_time */
+  0,                          /* min_topic_time */
+  0,                          /* bucket */
+  {0}                         /* wildcard */
+};
+
+static struct ListingArgs la_default = {
+  2147483647,                 /* max_time */
+  0,                          /* min_time */
+  4294967295U,                /* max_users */
+  10,                         /* min_users */
+  0,                          /* flags */
+  2147483647,                 /* max_topic_time */
+  0,                          /* min_topic_time */
+  0,                          /* bucket */
+  {0}                         /* wildcard */
+};
+
+
+static int
+show_usage(aClient *sptr)
+{
+  if (!sptr) { /* configuration file error... */
+    return LPARAM_ERROR;
+  }
+
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+        "Usage: \002/QUOTE LIST\002 \037parameters\037");
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+        "Where \037parameters\037 is a space or comma seperated "
+        "list of one or more of:");
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+        " \002<\002\037max_users\037    ; Show all channels with less "
+        "than \037max_users\037.");
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+        " \002>\002\037min_users\037    ; Show all channels with more "
+        "than \037min_users\037.");
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+        " \002C<\002\037max_minutes\037 ; Channels that exist less "
+        "than \037max_minutes\037.");
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+        " \002C>\002\037min_minutes\037 ; Channels that exist more "
+        "than \037min_minutes\037.");
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+        " \002T<\002\037max_minutes\037 ; Channels with a topic last "
+        "set less than \037max_minutes\037 ago.");
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+        " \002T>\002\037min_minutes\037 ; Channels with a topic last "
+        "set more than \037min_minutes\037 ago.");
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+             " \037pattern\037       ; Channels with names matching "
+             "\037pattern\037. ");
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+             " !\037pattern\037      ; Channels with names not "
+             "matching \037pattern\037. ");
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+             "Note: Patterns may contain * and ?. "
+             "You may only give one pattern match constraint.");
+    if (IsAnOper(sptr) && IsHelpOp(sptr))
+      sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+               " \002S\002             ; Show secret channels.");
+    if (IsAnOper(sptr) || IsHelpOp(sptr))
+      sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+               " \002M\002             ; Show channel modes.");
+
+    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
+        "Example: LIST <3,>1,C<10,T>0,#a*  ; 2 users, younger than 10 min., "
+        "topic set., starts with #a");
+ 
+  return LPARAM_ERROR; /* return error condition */
+}
+
+static int
+param_parse(aClient *sptr, const char *param, aListingArgs *args,
+            int permit_chan)
+{
+  int is_time = 0;
+  char dir;
+  unsigned int val;
+  char *tmp1, *tmp2;
+
+  assert(0 != args);
+
+  if (!param) /* NULL param == default--no list param */
+    return LPARAM_SUCCESS;
+
+  while (1) {
+    switch (*param) {
+    case 'T':
+    case 't':
+      is_time++;
+      args->flags |= LISTARG_TOPICLIMITS;
+      /*FALLTHROUGH*/
+
+    case 'C':
+    case 'c':
+      is_time++;
+      param++;
+      if (*param != '<' && *param != '>')
+        return show_usage(sptr);
+      /*FALLTHROUGH*/
+
+    case '<':
+    case '>':
+      dir = *(param++);
+
+      if (!isDigit(*param)) /* must start with a digit */
+        return show_usage(sptr);
+
+      val = strtol(param, (char **)&param, 10); /* convert it... */
+
+      if (*param != ',' && *param != ' ' && *param != '\0') /* check syntax */
+        return show_usage(sptr);
+
+      if (is_time && val < 80000000) {
+        /* Convert age to timestamp and reverse direction */
+        val = TStime() - val * 60;
+        dir = (dir == '>') ? '<' : '>';
+      }
+
+      switch (is_time) {
+      case 0: /* number of users on channel */
+        if (dir == '<')
+          args->max_users = val;
+        else
+          args->min_users = val;
+        break;
+
+      case 1: /* channel creation time */
+        if (dir == '<')
+          args->max_time = val;
+        else
+          args->min_time = val;
+        break;
+
+      case 2: /* channel topic */
+        if (dir == '<')
+          args->max_topic_time = val;
+        else
+          args->min_topic_time = val;
+        break;
+      }
+      break;
+
+    case 'S':
+    case 's':
+      /* Admins have no business making the default LIST include
+       * secret channels, even if it is just for opers with the
+       * LIST_CHAN privilege. */
+      if (!sptr)
+        break;
+
+      if (!(IsAnOper(sptr) && IsHelpOp(sptr)))
+        return show_usage(sptr);
+
+      args->flags |= LISTARG_SHOWSECRET;
+      param++;
+
+      if (*param != ',' && *param != ' ' && *param != '\0') /* check syntax */
+        return show_usage(sptr);
+      break;
+
+    case 'M':
+    case 'm':
+      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+        return show_usage(sptr);
+
+      args->flags |= LISTARG_SHOWMODES;
+      param++;
+
+      if (*param != ',' && *param != ' ' && *param != '\0') /* check syntax */
+        return show_usage(sptr);
+      break;
+
+    default:
+      /* It might be a wildcard... */
+      if (strchr(param, '*') ||
+          strchr(param, '?'))
+      {
+        if (param[0] == '!')
+        {
+          param++;
+          args->flags |= LISTARG_NEGATEWILDCARD;
+        }
+
+        /* Only one wildcard allowed... */
+        if (args->wildcard[0] != 0)
+          return show_usage(sptr);
+
+        /* If its not going to match anything, don't bother. */
+        if (param[0] != '*' &&
+            param[0] != '?' &&
+            param[0] != '#' &&
+            param[0] != '&')
+          return show_usage(sptr);
+
+        tmp1 = strchr(param, ',');
+        tmp2 = strchr(param, ' ');
+        if (tmp2 && (!tmp1 || (tmp2 < tmp1)))
+          tmp1 = tmp2;
+
+        if (tmp1)
+          *tmp1++ = 0;
+
+        strncpy(args->wildcard, param, CHANNELLEN-1);
+        args->wildcard[CHANNELLEN-1] = 0;
+
+        if (tmp1 == NULL)
+          return LPARAM_SUCCESS;
+
+        param = tmp1;
+        continue;
+      }
+
+      /* channel name? */
+      if (!permit_chan || !IsChannelName(param))
+        return show_usage(sptr);
+
+      return LPARAM_CHANNEL;
+    }
+
+    if (!*param) /* hit end of string? */
+      break;
+
+    param++;
+  }
+
+  return LPARAM_SUCCESS;
+}
+
+
 /*
  * m_list
  *
@@ -5856,197 +6057,59 @@ int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 {
   aChannel *chptr;
   char *name, *p = NULL;
-  int show_usage = 0, show_channels = 0, param;
-  aListingArgs args = {
-    2147483647,                 /* max_time */
-    0,                          /* min_time */
-    4294967295U,                /* max_users */
-    0,                          /* min_users */
-    0,                          /* topic_limits */
-    2147483647,                 /* max_topic_time */
-    0,                          /* min_topic_time */
-    NULL                        /* chptr */
-  };
+  int show_channels = 0, param;
+  struct ListingArgs args;
 
   if (sptr->listing)            /* Already listing ? */
   {
-    sptr->listing->chptr->mode.mode &= ~MODE_LISTED;
     RunFree(sptr->listing);
     sptr->listing = NULL;
     sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, sptr->name);
-    if (parc < 2)
-      return 0;                 /* Let LIST abort a listing. */
+    if (parc < 2 || !strcmp("STOP", parv[1]))
+      return 0;                 /* Let LIST or LIST STOP abort a listing. */
   }
 
   if (parc < 2)                 /* No arguments given to /LIST ? */
   {
-#if defined(DEFAULT_LIST_PARAM)
-    static char *defparv[MAXPARA + 1];
-    static int defparc = 0;
-    static char lp[] = DEFAULT_LIST_PARAM;
-    int i;
+#if 0 /*defined(DEFAULT_LIST_PARAM)*/
+    la_default = la_init; /* start off with a clean slate... */
 
-    if (!defparc)
-    {
-      char *s = lp, *t;
+    if (param_parse(0, DEFAULT_LIST_PARAM, &la_default, 0) !=
+      LPARAM_SUCCESS)
+      la_default = la_init; /* recover from error by switching to default */
+#endif
+    args = la_default;
+  } else {
+    args = la_init;
 
-      defparc = 1;
-      defparv[defparc++] = t = strtok(s, " ");
-      while (t && defparc < MAXPARA)
-      {
-        if ((t = strtok(NULL, " ")))
-          defparv[defparc++] = t;
+    /* Decode command */
+    for (param = 1; parv[param]; param++) { /* process each parameter */
+      switch (param_parse(sptr, parv[param], &args, parc == 2)) {
+      case LPARAM_ERROR: /* error encountered, usage already sent, return */
+        return 0;
+
+      case LPARAM_CHANNEL: /* show channel instead */
+        show_channels++;
+        break;
+
+      case LPARAM_SUCCESS: /* parse succeeded */
+        break;
       }
     }
-    for (i = 1; i < defparc; i++)
-      parv[i] = defparv[i];
-    parv[i] = NULL;
-    parc = defparc;
-#endif /* DEFAULT_LIST_PARAM */
-  }
-
-  /* Decode command */
-  for (param = 1; !show_usage && parv[param]; param++)
-  {
-    char *p = parv[param];
-    do
-    {
-      int is_time = 0;
-      switch (*p)
-      {
-        case 'T':
-        case 't':
-          is_time++;
-          args.topic_limits = 1;
-          /* Fall through */
-        case 'C':
-        case 'c':
-          is_time++;
-          p++;
-          if (*p != '<' && *p != '>')
-          {
-            show_usage = 1;
-            break;
-          }
-          /* Fall through */
-        case '<':
-        case '>':
-        {
-          p++;
-          if (!isDigit(*p))
-            show_usage = 1;
-          else
-          {
-            if (is_time)
-            {
-              time_t val = atoi(p);
-              if (p[-1] == '<')
-              {
-                if (val < 80000000) /* Toggle UTC/offset */
-                {
-                  /*
-                   * Demands that
-                   * 'TStime() - chptr->creationtime < val * 60'
-                   * Which equals
-                   * 'chptr->creationtime > TStime() - val * 60'
-                   */
-                  if (is_time == 1)
-                    args.min_time = TStime() - val * 60;
-                  else
-                    args.min_topic_time = TStime() - val * 60;
-                }
-                else if (is_time == 1)  /* Creation time in UTC was entered */
-                  args.max_time = val;
-                else            /* Topic time in UTC was entered */
-                  args.max_topic_time = val;
-              }
-              else if (val < 80000000)
-              {
-                if (is_time == 1)
-                  args.max_time = TStime() - val * 60;
-                else
-                  args.max_topic_time = TStime() - val * 60;
-              }
-              else if (is_time == 1)
-                args.min_time = val;
-              else
-                args.min_topic_time = val;
-            }
-            else if (p[-1] == '<')
-              args.max_users = atoi(p);
-            else
-              args.min_users = atoi(p);
-            if ((p = strchr(p, ',')))
-              p++;
-          }
-          break;
-        }
-        default:
-          if (!IsChannelName(p))
-          {
-            show_usage = 1;
-            break;
-          }
-          if (parc != 2)        /* Don't allow a mixture of channels with <,> */
-            show_usage = 1;
-          show_channels = 1;
-          p = NULL;
-          break;
-      }
-    }
-    while (!show_usage && p);   /* p points after comma, or is NULL */
-  }
-
-  if (show_usage)
-  {
-    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, parv[0],
-        "Usage: \002/QUOTE LIST\002 \037parameters\037");
-    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, parv[0],
-        "Where \037parameters\037 is a space or comma seperated "
-        "list of one or more of:");
-    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, parv[0],
-        " \002<\002\037max_users\037	; Show all channels with less "
-        "than \037max_users\037.");
-    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, parv[0],
-        " \002>\002\037min_users\037	; Show all channels with more "
-        "than \037min_users\037.");
-    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, parv[0],
-        " \002C<\002\037max_minutes\037 ; Channels that exist less "
-        "than \037max_minutes\037.");
-    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, parv[0],
-        " \002C>\002\037min_minutes\037 ; Channels that exist more "
-        "than \037min_minutes\037.");
-    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, parv[0],
-        " \002T<\002\037max_minutes\037 ; Channels with a topic last "
-        "set less than \037max_minutes\037 ago.");
-    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, parv[0],
-        " \002T>\002\037min_minutes\037 ; Channels with a topic last "
-        "set more than \037min_minutes\037 ago.");
-    sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, parv[0],
-        "Example: LIST <3,>1,C<10,T>0  ; 2 users, younger than 10 min., "
-        "topic set.");
-    return 0;
   }
 
   sendto_one(sptr, rpl_str(RPL_LISTSTART), me.name, parv[0]);
 
   if (!show_channels)
   {
-    if (args.max_users > args.min_users + 1 && args.max_time > args.min_time && args.max_topic_time > args.min_topic_time)  /* Sanity check */
+    if (args.max_users > args.min_users + 1 && args.max_time > args.min_time &&
+        args.max_topic_time > args.min_topic_time)      /* Sanity check */
     {
-      if ((sptr->listing = (aListingArgs *)RunMalloc(sizeof(aListingArgs))))
-      {
-        memcpy(sptr->listing, &args, sizeof(aListingArgs));
-        if ((sptr->listing->chptr = channel))
-        {
-          int m = channel->mode.mode & MODE_LISTED;
-          list_next_channels(sptr, 64);
-          channel->mode.mode |= m;
-          return 0;
-        }
-        RunFree(sptr->listing);
-        sptr->listing = NULL;
-      }
+      sptr->listing = (aListingArgs *)RunMalloc(sizeof(aListingArgs));
+      assert(0 != sptr->listing);
+      memcpy(sptr->listing, &args, sizeof(aListingArgs));
+      list_next_channels(sptr);
+      return 0;
     }
     sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, parv[0]);
     return 0;
@@ -6055,11 +6118,12 @@ int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
   for (; (name = strtoken(&p, parv[1], ",")); parv[1] = NULL)
   {
     chptr = FindChannel(name);
-    if (chptr && ShowChannel(sptr, chptr) && sptr->user)
+    if (!chptr)
+        continue;
+    if (ShowChannel(sptr, chptr)
+        || (IsAnOper(sptr) && IsHelpOp(sptr)))
       sendto_one(sptr, rpl_str(RPL_LIST), me.name, parv[0],
-          ShowChannel(sptr, chptr) ? chptr->chname : "*",
-          chptr->users - number_of_zombies(chptr),
-          PunteroACadena(chptr->topic));
+          chptr->chname, chptr->users - number_of_zombies(chptr), PunteroACadena(chptr->topic));
   }
 
   sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, parv[0]);

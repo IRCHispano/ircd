@@ -1,4 +1,15 @@
-* 2008/01/05 zoltan@irc-dev.net      (u2.10.H.10.25)                  FIX
+* 2008/01/17 zoltan@irc-dev.net      (u2.10.H.10.27)              FEATURE
+-------------------------------------------------------------------------
+  Reforma del comando LIST, los cambios son:
+
+  - Uso de mascaras/comodines para filtrar busqueda.
+  - Lista de canales ordenados alfabeticamente
+  - LIST M para indicar los modos del canal, solo ircops y helpers.
+
+  El valor por defecto, cuando se hace /LIST sin parametros, es un minimo
+  de 10 usuarios.
+
+* 2008/01/17 zoltan@irc-dev.net      (u2.10.H.10.26)                  FIX
 -------------------------------------------------------------------------
   Bajo ciertas circunstancias se propagaba un SILENCE con el origen de un
   servidor, que provocaba un core dump al hub.

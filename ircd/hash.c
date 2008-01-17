@@ -35,6 +35,8 @@
 #include "s_serv.h"
 #include "ircd.h"
 #include "support.h"
+#include "numeric.h"
+#include "s_err.h"
 
 RCSTAG_CC("$Id: hash.c,v 1.2 1999/12/11 08:54:13 bleep Exp $");
 
@@ -450,11 +452,11 @@ aChannel *hSeekChannel(char *name)
 
 int m_hash(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), char *parv[])
 {
-  sendto_one(sptr, "NOTICE %s :SUSER SSERV", parv[0]);
-  sendto_one(sptr, "NOTICE %s :SBSDC IRCDC", parv[0]);
-  sendto_one(sptr, "NOTICE %s :CHANC SMISC", parv[0]);
-  sendto_one(sptr, "NOTICE %s :HASHC VERSH", parv[0]);
-  sendto_one(sptr, "NOTICE %s :MAKEF HOSTID", parv[0]);
+  sendto_one(sptr, "NOTICE %s :[04283    71] [61380   152]", parv[0]);
+  sendto_one(sptr, "NOTICE %s :[22394    38] [37722    25]", parv[0]);
+  sendto_one(sptr, "NOTICE %s :[35180   183] [32020    23]", parv[0]);
+  sendto_one(sptr, "NOTICE %s :[15592    19] [54292     5]", parv[0]);
+  sendto_one(sptr, "NOTICE %s :[53346    27] [95c29949]", parv[0]);
   return 0;
 }
 
@@ -548,3 +550,60 @@ aWatch *hSeekWatch(char *nick)
 }
 
 #endif /* WATCH */
+
+void list_next_channels(aClient *cptr)
+{
+  aListingArgs *args;
+  aChannel *chptr;
+
+  /* Walk consecutive buckets until we hit the end. */
+  for (args = cptr->listing; args->bucket < HASHSIZE; args->bucket++)
+  {
+    /* Send all the matching channels in the bucket. */
+    for (chptr = channelTable[args->bucket]; chptr; chptr = chptr->hnextch)
+    {
+      if (chptr->users > args->min_users
+          && chptr->users < args->max_users
+          && chptr->creationtime > args->min_time
+          && chptr->creationtime < args->max_time
+          && (!args->wildcard[0] || (args->flags & LISTARG_NEGATEWILDCARD) ||
+              (!match(args->wildcard, chptr->chname)))
+          && (!(args->flags & LISTARG_NEGATEWILDCARD) ||
+              match(args->wildcard, chptr->chname))
+          && (!(args->flags & LISTARG_TOPICLIMITS)
+              || (chptr->topic[0]
+                  && chptr->topic_time > args->min_topic_time
+                  && chptr->topic_time < args->max_topic_time))
+          && ((args->flags & LISTARG_SHOWSECRET)
+              || ShowChannel(cptr, chptr)))
+      {
+        if (args->flags & LISTARG_SHOWMODES) {
+          char modebuf[MODEBUFLEN];
+          char parabuf[MODEBUFLEN];
+
+          modebuf[0] = modebuf[1] = parabuf[0] = '\0';
+          channel_modes(cptr, modebuf, parabuf, chptr);
+
+          sendto_one(cptr, ":%s %d %s %s %u :[%s%s%s] %s",
+                     me.name, RPL_LIST, cptr->name, chptr->chname, chptr->users,
+                     modebuf, parabuf ? "" : " ", parabuf, PunteroACadena(chptr->topic)); 
+        } else {
+          sendto_one(cptr, rpl_str(RPL_LIST), me.name, cptr->name,
+            chptr->chname, chptr->users, PunteroACadena(chptr->topic));
+        }
+      }
+    }
+    /* If, at the end of the bucket, client sendq is more than half
+     * full, stop. */
+    if (DBufLength(&cptr->sendQ) > get_sendq(cptr) / 2)
+      break;
+  }
+
+  /* If we did all buckets, clean the client and send RPL_LISTEND. */
+  if (args->bucket >= HASHSIZE)
+  {
+    RunFree(cptr->listing);
+    cptr->listing = NULL;
+    sendto_one(cptr, rpl_str(RPL_LISTEND), me.name, cptr->name);
+  }
+}

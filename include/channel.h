@@ -80,8 +80,6 @@
 #define MODE_LIMIT	0x0400
 #define MODE_SENDTS	0x0800      /* TS was 0 during a local user /join; send
                                  * temporary TS; can be removed when all 2.10 */
-#define MODE_LISTED	0x1000
-
 #define MODE_REGCHAN    0x2000
 #define MODE_REGNICKS   0x4000
 #define MODE_AUTOOP     0x8000
@@ -144,6 +142,14 @@ extern int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 #define MODE_ADD       0x40000000
 #define MODE_DEL       0x20000000
 
+
+/* used in ListingArgs.flags */
+
+#define LISTARG_TOPICLIMITS     0x0001
+#define LISTARG_SHOWSECRET      0x0002
+#define LISTARG_NEGATEWILDCARD  0x0004
+#define LISTARG_SHOWMODES       0x0008
+
 /*=============================================================================
  * Structures
  */
@@ -179,10 +185,11 @@ struct ListingArgs {
   time_t min_time;
   unsigned int max_users;
   unsigned int min_users;
-  unsigned int topic_limits;
+  unsigned int flags;
   time_t max_topic_time;
   time_t min_topic_time;
-  struct Channel *chptr;
+  unsigned int bucket;
+  char wildcard[CHANNELLEN];
 };
 
 /*=============================================================================
@@ -200,7 +207,6 @@ extern void send_channel_modes(aClient *cptr, aChannel *chptr);
 extern int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern char *pretty_mask(char *mask);
 extern void del_invite(aClient *cptr, aChannel *chptr);
-extern void list_next_channels(aClient *cptr, int nr);
 extern void sub1_from_channel(aChannel *chptr);
 extern aChannel *get_channel(aClient *sptr, char *chname, int flag);
 extern int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[]);
@@ -216,7 +222,7 @@ extern void send_user_joins(aClient *cptr, aClient *user);
 
 extern char *adapta_y_visualiza_canal_flags(aChannel *chptr, int add, int del);
 extern void mascara_canal_flags(char *modos, int *add, int *del);
-
+void channel_modes(aClient *cptr, char *mbuf, char *pbuf, aChannel *chptr);
 extern aChannel *channel;
 
 #endif /* CHANNEL_H */

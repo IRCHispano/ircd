@@ -2103,7 +2103,7 @@ int read_message(time_t delay)
       if (!write_err)
       {
         if (cptr->listing && DBufLength(&cptr->sendQ) < 2048)
-          list_next_channels(cptr, 64);
+          list_next_channels(cptr);
         send_queued(cptr);
       }
       if (IsDead(cptr) || write_err)

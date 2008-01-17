@@ -81,4 +81,6 @@ extern aWatch *hSeekWatch(char *nick);
 #define FindWatch(nick)          (BadPtr((nick))?NULL:SeekWatch(nick))
 #endif /* WATCH */
 
+extern void list_next_channels(struct Client *cptr);
+
 #endif /* HASH_H */

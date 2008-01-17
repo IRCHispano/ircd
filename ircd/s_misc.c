@@ -599,7 +599,6 @@ static void exit_one_client(aClient *bcptr, char *comment)
     /* Stop a running /LIST clean */
     if (MyUser(bcptr) && bcptr->listing)
     {
-      bcptr->listing->chptr->mode.mode &= ~MODE_LISTED;
       RunFree(bcptr->listing);
       bcptr->listing = NULL;
     }
