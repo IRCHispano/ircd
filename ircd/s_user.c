@@ -3041,7 +3041,7 @@ int is_silenced(aClient *sptr, aClient *acptr)
           sendto_one(sptr->from, ":%s SILENCE %s %s", acptr->name,
               sptr->name, lp->value.cp);
         else
-          sendto_one(sptr->from, "%s " TOK_SILENCE " %s%s %s", NumNick(acptr),
+          sendto_one(sptr->from, "%s%s " TOK_SILENCE " %s%s %s", NumNick(acptr),
               NumNick(sptr), lp->value.cp);
       }
       return 1;

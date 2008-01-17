@@ -1,5 +1,12 @@
 * 2008/01/05 zoltan@irc-dev.net      (u2.10.H.10.25)                  FIX
 -------------------------------------------------------------------------
+  Bajo ciertas circunstancias se propagaba un SILENCE con el origen de un
+  servidor, que provocaba un core dump al hub.
+  Se trata de un error del parche de migracion al P10 FULL del comando 
+  SILENCE.
+
+* 2008/01/05 zoltan@irc-dev.net      (u2.10.H.10.25)                  FIX
+-------------------------------------------------------------------------
   Las GLINES a usuarios de Webch solo se hacian efecto en el momento y
   no al reentrar.
 
