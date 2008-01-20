@@ -1044,14 +1044,15 @@ static int m_message(aClient *cptr, aClient *sptr,
           if (MyUser(sptr) && (chptr->mode.mode & MODE_NOPRIVMSGS) &&
               check_target_limit(sptr, chptr, chptr->chname, 0))
             continue;
-          if (MyUser(sptr) && (chptr->mode.mode & MODE_NOCTCP) && 
-              (*parv[parc - 1] == 1) && strncmp(parv[parc - 1], "\001ACTION ", 8))
+          if (MyUser(sptr) && (chptr->mode.mode & MODE_NOCTCP) &&
+              (*parv[parc - 1] == 1) && strncmp(parv[parc - 1], "\001ACTION ", 8) &&
+              !IsChannelService(sptr))
           {
             sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
                 me.name, parv[0], chptr->chname);
             continue;
           }
-          if (MyUser(sptr) && notice && (chptr->mode.mode & MODE_NONOTICE))
+          if (MyUser(sptr) && notice && (chptr->mode.mode & MODE_NONOTICE) && !IsChannelService(sptr))
           {
             sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
                 me.name, parv[0], chptr->chname);
