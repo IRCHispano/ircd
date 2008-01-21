@@ -1114,16 +1114,8 @@ static int m_message(aClient *cptr, aClient *sptr,
         }
         else
         {
-          if (MyUser(sptr) || (Protocol(sptr->from) < 10))
-          {
-            sendto_one(sptr, err_str(ERR_ISSILENCING), me.name, sptr->name,
-                acptr->name);
-          }
-          else
-          {
-            sendto_one(sptr, err_str(ERR_ISSILENCING), me.name, sptr->name,
-                acptr->name);
-          }
+          sendto_one(sptr, err_str(ERR_ISSILENCING), me.name, sptr->name,
+              acptr->name);
         }
       }
       else if (MyUser(sptr) || Protocol(cptr) < 10)
@@ -1334,16 +1326,8 @@ int whisper(aClient *sptr, int parc, char *parv[], int notice)
   }
   if (is_silenced(sptr, tcptr))
   {
-    if (MyUser(sptr) || (Protocol(sptr->from) < 10))
-    {
-      sendto_one(sptr, err_str(ERR_ISSILENCING), me.name, sptr->name,
-          tcptr->name);
-    }
-    else
-    {
-      sendto_one(sptr, err_str(ERR_ISSILENCING), me.name, sptr->name,
-          tcptr->name);
-    }
+    sendto_one(sptr, err_str(ERR_ISSILENCING), me.name, sptr->name,
+        tcptr->name);
     return 0;
   }
 
@@ -2959,7 +2943,10 @@ void set_snomask(aClient *cptr, snomask_t newmask, int what)
   else if (what != SNO_SET)     /* absolute set, no math needed */
     sendto_ops("setsnomask called with %d ?!", what);
 
-  newmask &= (IsAnOper(cptr) ? SNO_ALL : SNO_USER);
+  if (IsAnOper(cptr) || IsHelpOp(cptr))
+    newmask &= (IsAnOper(cptr) ? SNO_ALL : SNO_USER);
+  else
+    newmask = 0;
 
   diffmask = oldmask ^ newmask;
 

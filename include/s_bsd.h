@@ -154,7 +154,11 @@
 #define SNO_ALL		0x1ffff       /* Don't make it larger then significant,
                                  * that looks nicer */
 
+/* Capado +s */
+/*
 #define SNO_USER	(SNO_ALL & ~SNO_OPER)
+*/
+#define SNO_USER	0
 
 #define SNO_DEFAULT (SNO_NETWORK|SNO_OPERKILL|SNO_GLINE)
 #define SNO_OPERDEFAULT (SNO_DEFAULT|SNO_HACK2|SNO_HACK4|SNO_THROTTLE|SNO_OLDSNO)

@@ -1,4 +1,9 @@
-* 2008/01/21 zoltan@irc-dev.net      (u2.10.H.10.28)              FEATURE
+* 2008/01/21 zoltan@irc-dev.net      (u2.10.H.10.29)                  FIX
+-------------------------------------------------------------------------
+  Los usuarios, aun teniendo +s capado reciben service notices. Corrigo
+  poniendo a piñon la mascara a 0 cuando no es +o/+h
+
+* 2008/01/21 zoltan@irc-dev.net      (u2.10.H.10.28)                  FIX
 -------------------------------------------------------------------------
   Los usuarios con +k se saltan los +CN.
 
