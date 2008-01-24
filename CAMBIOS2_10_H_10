@@ -1,3 +1,9 @@
+* 2008/01/24 zoltan@irc-dev.net      (u2.10.H.10.30)                  FIX
+-------------------------------------------------------------------------
+  Con ocultacion de servidores activado, haciendo un invite a un usuario
+  sale un Wallchops con el nombre de servidor del invitado.
+  Corregido.
+
 * 2008/01/21 zoltan@irc-dev.net      (u2.10.H.10.29)                  FIX
 -------------------------------------------------------------------------
   Los usuarios, aun teniendo +s capado reciben service notices. Corrigo

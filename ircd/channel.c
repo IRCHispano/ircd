@@ -5780,7 +5780,7 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     add_invite(acptr, chptr);
     sendto_lchanops_butone(&me, &me, chptr,
-        ":%s NOTICE @%s :%s invited %s into channel %s", me.name, parv[2],
+        ":%s NOTICE @%s :%s invited %s into channel %s", (ocultar_servidores) ? SERVER_NAME : me.name, parv[2],
         parv[0], acptr->name, parv[2]);
     sendto_chanopsserv_butone(&me, &me, chptr,
         ":%s WC %s :%s invited %s into channel %s", me.name, parv[2], parv[0],

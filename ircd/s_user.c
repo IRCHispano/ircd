@@ -1389,8 +1389,12 @@ int m_wallchops(aClient *cptr, aClient *sptr, int parc, char *parv[])
           check_target_limit(sptr, chptr, chptr->chname, 0))
         return 0;
       /* Send to local clients: */
-      sendto_lchanops_butone(cptr, sptr, chptr,
-          ":%s NOTICE @%s :%s", parv[0], parv[1], parv[parc - 1]);
+      if (IsUser(sptr))
+        sendto_lchanops_butone(cptr, sptr, chptr,
+            ":%s NOTICE @%s :%s", parv[0], parv[1], parv[parc - 1]);
+      else
+        sendto_lchanops_butone(cptr, sptr, chptr,
+            ":%s NOTICE @%s :%s", (ocultar_servidores) ? SERVER_NAME : parv[0], parv[1], parv[parc - 1]);
 #if defined(NO_PROTOCOL9)
       /* And to other servers: */
       sendto_chanopsserv_butone(cptr, sptr, chptr,
