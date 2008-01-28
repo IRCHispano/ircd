@@ -254,7 +254,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
   if (!fields || (fields & WHO_FIELD_SER))
   {
     Reg3 char *p2 = (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr))) ? 
-                     SERVER_NAME : acptr->user->server->name;
+                     his.name : acptr->user->server->name;
     *(p1++) = ' ';
     while ((*p2) && (*(p1++) = *(p2++)));
   }
@@ -944,11 +944,11 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
 
         sendto_one(sptr, rpl_str(RPL_WHOISSERVER), me.name,
-            parv[0], name, 
+            parv[0], name,
             (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr))) ?
-                  SERVER_NAME : a2cptr->name,
+                  his.name : a2cptr->name,
             (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr))) ?
-                  SERVER_INFO : PunteroACadena(a2cptr->info));
+                  his.info : PunteroACadena(a2cptr->info));
 
         if (user)
         {

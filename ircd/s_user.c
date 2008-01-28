@@ -1394,7 +1394,7 @@ int m_wallchops(aClient *cptr, aClient *sptr, int parc, char *parv[])
             ":%s NOTICE @%s :%s", parv[0], parv[1], parv[parc - 1]);
       else
         sendto_lchanops_butone(cptr, sptr, chptr,
-            ":%s NOTICE @%s :%s", (ocultar_servidores) ? SERVER_NAME : parv[0], parv[1], parv[parc - 1]);
+            ":%s NOTICE @%s :%s", (ocultar_servidores) ? his.name : parv[0], parv[1], parv[parc - 1]);
 #if defined(NO_PROTOCOL9)
       /* And to other servers: */
       sendto_chanopsserv_butone(cptr, sptr, chptr,
@@ -1528,7 +1528,7 @@ int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   aClient *acptr;
-  char *inpath = ocultar_servidores ? SERVER_NAME : cptr->name;
+  char *inpath = ocultar_servidores ? his.name : cptr->name;
   char *user, *path, *killer;
   int chasing = 0;
 

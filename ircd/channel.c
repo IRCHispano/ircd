@@ -4903,7 +4903,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
               {
                 modebuf[mblen2] = 0;
                 sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
-                    ocultar_servidores ?  SERVER_NAME : parv[0], 
+                    ocultar_servidores ?  his.name : parv[0],
                     chptr->chname, modebuf, parabuf);
 #if !defined(NO_PROTOCOL9)
                 sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s%s " TIME_T_FMT,
@@ -4929,7 +4929,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       {
         modebuf[mblen2] = 0;
         sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
-            ocultar_servidores ? SERVER_NAME : parv[0], 
+            ocultar_servidores ? his.name : parv[0],
             chptr->chname, modebuf, parabuf);
 #if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s%s " TIME_T_FMT,
@@ -5071,7 +5071,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
         /* Time to send buffer */
         modebuf[mblen2] = 0;
         sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
-            ocultar_servidores ? SERVER_NAME : parv[0], 
+            ocultar_servidores ? his.name : parv[0],
             chptr->chname, modebuf, parabuf);
 #if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s%s",
@@ -5111,7 +5111,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       modebuf[mblen2] = 0;
       sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
-          ocultar_servidores ? SERVER_NAME : parv[0],
+          ocultar_servidores ? his.name : parv[0],
           chptr->chname, modebuf, parabuf);
 #if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s%s " TIME_T_FMT,
@@ -5780,7 +5780,7 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     add_invite(acptr, chptr);
     sendto_lchanops_butone(&me, &me, chptr,
-        ":%s NOTICE @%s :%s invited %s into channel %s", (ocultar_servidores) ? SERVER_NAME : me.name, parv[2],
+        ":%s NOTICE @%s :%s invited %s into channel %s", (ocultar_servidores) ? his.name : me.name, parv[2],
         parv[0], acptr->name, parv[2]);
     sendto_chanopsserv_butone(&me, &me, chptr,
         ":%s WC %s :%s invited %s into channel %s", me.name, parv[2], parv[0],

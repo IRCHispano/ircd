@@ -59,6 +59,7 @@
 #include "channel.h"
 #include "querycmds.h"
 #include "IPcheck.h"
+#include "network.h"
 #include "slab_alloc.h"
 
 #include "s_bdd.h"
@@ -565,6 +566,14 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               activar_modos = 0;
             }
+            else if (!strcmp(c, BDD_SERVER_NAME))
+            {
+              SlabStringAllocDup(&(his.name), SERVER_NAME, HOSTLEN);
+            }
+            else if (!strcmp(c, BDD_SERVER_INFO))
+            {
+              SlabStringAllocDup(&(his.info), SERVER_INFO, REALLEN);
+            }
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -784,6 +793,14 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if (!strcmp(c, BDD_ACTIVAR_MODOS))
       {
         activar_modos = !0;
+      }
+      else if (!strcmp(c, BDD_SERVER_NAME))
+      {
+        SlabStringAllocDup(&(his.name), v, HOSTLEN);
+      }
+      else if (!strcmp(c, BDD_SERVER_INFO))
+      {
+        SlabStringAllocDup(&(his.info), v, REALLEN);
       }
       break;
 

@@ -1,3 +1,11 @@
+* 2008/01/17 zoltan@irc-dev.net      (u2.10.H.10.31)              FEATURE
+-------------------------------------------------------------------------
+  Por peticion de NiKoLaS, se implementa la posibilidad de configurar el
+  nombre de servidor y descripcion bajo el modo obfuscado.
+
+  Se usan los registros "servidor.oculto" y "servidor.info.oculto" respe-
+  ctivamente en la tabla z.
+
 * 2008/01/24 zoltan@irc-dev.net      (u2.10.H.10.30)                  FIX
 -------------------------------------------------------------------------
   Con ocultacion de servidores activado, haciendo un invite a un usuario

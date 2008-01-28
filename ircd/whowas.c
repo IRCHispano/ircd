@@ -353,8 +353,8 @@ int m_whowas(aClient *cptr, aClient *sptr, int parc, char *parv[])
             me.name, parv[0], temp->name, temp->username,
             temp->hostname, temp->realname);
         sendto_one(sptr, rpl_str(RPL_WHOISSERVER), me.name, parv[0],
-            temp->name, 
-            (ocultar_servidores && !(IsOper(sptr) || IsHelpOp(sptr))) ? SERVER_NAME :temp->servername, 
+            temp->name,
+            (ocultar_servidores && !(IsOper(sptr) || IsHelpOp(sptr))) ? his.name : temp->servername,
             myctime(temp->logoff));
         if (temp->away)
           sendto_one(sptr, rpl_str(RPL_AWAY),

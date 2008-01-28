@@ -45,6 +45,8 @@
 #define BDD_OCULTAR_IP_CIFRADA_EN_LA_VIRTUAL2	"ocultar.ip.cifrada.en.la.virtual2"
 #define BDD_OCULTAR_SERVIDORES			"ocultar.servidores"
 #define BDD_ACTIVAR_MODOS			"activar.modos"
+#define BDD_SERVER_NAME				"servidor.oculto"
+#define BDD_SERVER_INFO				"servidor.info.oculto"
 
 /* Para las features de los pseudoBOTS */
 #define BDD_CHANSERV      "ChanServ"

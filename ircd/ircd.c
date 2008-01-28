@@ -888,11 +888,8 @@ int main(int argc, char *argv[])
 
 /* Ocultacion */
 
-//  strncpy(&his.name, SERVER_NAME, HOSTLEN);
-//  strncpy(&his.info, SERVER_INFO, REALLEN);
   SlabStringAllocDup(&(his.name), SERVER_NAME, HOSTLEN);
-  SlabStringAllocDup(&(his.name), SERVER_INFO, REALLEN);
-//  &(his.status) = STAT_SERVER;
+  SlabStringAllocDup(&(his.info), SERVER_INFO, REALLEN);
 
   check_class();
   write_pidfile();
