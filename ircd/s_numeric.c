@@ -34,6 +34,7 @@
 #include "hash.h"
 #include "numnicks.h"
 #include "s_numeric.h"
+#include "s_bdd.h"
 
 RCSTAG_CC("$Id: s_numeric.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
 
@@ -95,10 +96,10 @@ int do_numeric(int numeric, int nnn, aClient *cptr, aClient *sptr,
 
   if (acptr)
     sendto_prefix_one(acptr, sptr, ":%s %d %s%s",
-        sptr->name, numeric, acptr->name, buffer);
+        (ocultar_servidores && !(IsHelpOp(acptr) || IsAnOper(acptr))) ? me.name : sptr->name, numeric, acptr->name, buffer);
   else
     sendto_channel_butone(cptr, sptr, achptr, ":%s %d %s%s",
-        sptr->name, numeric, achptr->chname, buffer);
+        ocultar_servidores ? me.name : sptr->name, numeric, achptr->chname, buffer);
 
   return 0;
 }
