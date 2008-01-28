@@ -37,7 +37,7 @@
 #define NICKLEN		15
 #define USERLEN		10
 #define HOSTLEN		63
-#define REALLEN		50
+#define REALLEN		70
 #define PASSWDLEN	20
 #define BUFSIZE		512           /* WARNING: *DONT* CHANGE THIS!!!! */
 #define MAXTARGETS	20

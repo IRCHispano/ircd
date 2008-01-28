@@ -1,4 +1,9 @@
-* 2008/01/17 zoltan@irc-dev.net      (u2.10.H.10.31)              FEATURE
+* 2008/01/28 zoltan@irc-dev.net      (u2.10.H.10.32)              FEATURE
+-------------------------------------------------------------------------
+  Se aumenta el REALLEN de 50 a 70 que es el maximo que admite en el
+  textbox de Realname del mIRC.
+
+* 2008/01/28 zoltan@irc-dev.net      (u2.10.H.10.31)              FEATURE
 -------------------------------------------------------------------------
   Por peticion de NiKoLaS, se implementa la posibilidad de configurar el
   nombre de servidor y descripcion bajo el modo obfuscado.
