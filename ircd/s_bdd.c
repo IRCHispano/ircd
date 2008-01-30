@@ -76,9 +76,9 @@ int ocultar_ip_cifrada_en_la_virtual2;
 int numero_maximo_de_clones_por_defecto;
 char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
-int ocultar_servidores;
-int activar_modos;
-int activar_ident;
+int ocultar_servidores = 0;
+int activar_modos = 0;
+int activar_ident = 0;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -799,10 +799,12 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         activar_modos = !0;
       }
+#ifndef HISPANO_WEBCHAT
       else if (!strcmp(c, BDD_ACTIVAR_IDENT))
       {
         activar_ident = !0;
       }
+#endif
       else if (!strcmp(c, BDD_SERVER_NAME))
       {
         SlabStringAllocDup(&(his.name), v, HOSTLEN);

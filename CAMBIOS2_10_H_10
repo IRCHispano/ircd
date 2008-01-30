@@ -1,3 +1,7 @@
+* 2008/01/29 zoltan@irc-dev.net      (u2.10.H.10.35)                  FIX
+-------------------------------------------------------------------------
+  Bajo el define de HISPANO_WEBCHAT no se comprueba el IDENT.
+
 * 2008/01/30 zoltan@irc-dev.net      (u2.10.H.10.34)              FEATURE
 -------------------------------------------------------------------------
   Hacemos que el chequeo de IDENT vuelva a estar disponible.
