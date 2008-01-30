@@ -3416,8 +3416,6 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 {
   assert(MyConnect(sptr));
 
-  assert(!nick_nuevo);
-
   if (!nick_nuevo)
   {
     aClient *acptr;
@@ -3723,19 +3721,18 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 
 #ifdef HISPANO_WEBCHAT
-  /* Permitimos que pueda solicitar un rename 
-   * Esto deberia ser a traves de un Service 
+  /* Permitimos que pueda solicitar un rename
+   * Esto deberia ser a traves de un Service
    * pero hoy por hoy no podemos modificarlo
    * y tenemos que hacer un apanio.
    */
-  if ((!IsChannelService(sptr) && (!IsServer(cptr) || !IsServer(sptr))) || parc != 2)
+  if ((!IsChannelService(sptr) && (!IsServer(cptr) || !IsServer(sptr))) || parc < 2)
     return 0;
 #else
-  if (!IsServer(cptr) || !IsServer(sptr) || parc != 2)
+  if (!IsServer(cptr) || !IsServer(sptr) || parc < 2)
     return 0;
 #endif
 
-#if 0
   /* Quitamos la exigencia de U-line */
   if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
   {
@@ -3747,21 +3744,37 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
         "cambio de nick para '%s'", cptr->name, sptr->name, parv[1]);
     return 0;
   }
-#endif
-
+ 
+  if (parc < 3) {
+    /* Un solo parametro, sin nick nuevo */
 #ifdef HISPANO_WEBCHAT
-  if (IsUser(sptr)) {
-    sendto_lowprot_butone(cptr, 9, ":%s RENAME :%s", me.name, parv[1]);
-    sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " :%s", NumServ(&me), parv[1]);
-  } else {
+    if (IsUser(sptr)) {
+      sendto_lowprot_butone(cptr, 9, ":%s RENAME :%s", me.name, parv[1]);
+      sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " :%s", NumServ(&me), parv[1]);
+    } else {
+      sendto_lowprot_butone(cptr, 9, ":%s RENAME :%s", parv[0], parv[1]);
+      sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " :%s", NumServ(sptr), parv[1]);
+    }
+#else
     sendto_lowprot_butone(cptr, 9, ":%s RENAME :%s", parv[0], parv[1]);
     sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " :%s", NumServ(sptr), parv[1]);
-  }
+#endif
+  } else {
+    /* Dos parametros, con nick nuevo */
+#ifdef HISPANO_WEBCHAT
+    if (IsUser(sptr)) {
+      sendto_lowprot_butone(cptr, 9, ":%s RENAME %s :%s", me.name, parv[1], parv[2]);
+      sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " %s :%s", NumServ(&me), parv[1], parv[2]);
+    } else {
+      sendto_lowprot_butone(cptr, 9, ":%s RENAME %s :%s", parv[0], parv[1], parv[2]);
+      sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " %s :%s", NumServ(sptr), parv[1], parv[2]);
+    }
 #else
-  sendto_lowprot_butone(cptr, 9, ":%s RENAME :%s", parv[0], parv[1]);
-  sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " :%s", NumServ(sptr), parv[1]);
+    sendto_lowprot_butone(cptr, 9, ":%s RENAME %s :%s", parv[0], parv[1], parv[2]);
+    sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " %s :%s", NumServ(sptr), parv[1], parv[2]);
 #endif
 
+  }
   sendto_op_mask(SNO_RENAME,
       "El nodo '%s' solicita un cambio de nick para '%s'", sptr->name, parv[1]);
 
@@ -3781,7 +3794,23 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-  rename_user(acptr, NULL);
+  if (parc < 3)
+    rename_user(acptr, NULL);
+  else {
+    char *nick;
+
+    strncpy(nick, parv[2], NICKLEN + 1);
+    nick[sizeof(nick) - 1] = 0;
+ 
+    if (!do_nick_name(buf))
+     return 0;
+
+   if (FindUser(nick))
+     return 0;
+
+   rename_user(acptr, nick);
+  }
+
 
   sendto_op_mask(SNO_RENAME | SNO_RENAME2,
       "Cambiamos el nick '%s' a '%s', a peticion del nodo '%s'", parv[1],

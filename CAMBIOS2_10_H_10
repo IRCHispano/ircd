@@ -1,4 +1,10 @@
-* 2008/01/29 zoltan@irc-dev.net      (u2.10.H.10.35)                  FIX
+* 2008/01/30 zoltan@irc-dev.net      (u2.10.H.10.36)              FEATURE
+-------------------------------------------------------------------------
+  Implementacion de RENAME a un nick en concreto, es el segundo parametro.
+  Requiere actualizacion de todos los servidores para que funcione corre-
+  ctamente.
+
+* 2008/01/30 zoltan@irc-dev.net      (u2.10.H.10.35)                  FIX
 -------------------------------------------------------------------------
   Bajo el define de HISPANO_WEBCHAT no se comprueba el IDENT.
 
