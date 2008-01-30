@@ -401,7 +401,12 @@ static int register_user(aClient *cptr, aClient *sptr,
     char *nick, char *username)
 {
   Reg1 aConfItem *aconf;
-  char *parv[3], *tmpstr;
+  char *parv[3], *tmpstr, *tmpstr2;
+  char c = 0 /* not alphanum */ , d = 'a' /* not a digit */ ;
+  short upper = 0;
+  short lower = 0;
+  short pos = 0, leadcaps = 0, other = 0, digits = 0, badid = 0;
+  short digitgroups = 0;
   anUser *user = sptr->user;
   Dlink *lp;
   char ip_base64[8];
@@ -477,9 +482,8 @@ static int register_user(aClient *cptr, aClient *sptr,
 #endif
     aconf = sptr->confs->value.aconf;
 
-#if !defined(HACER_IDENT)
-    sptr->flags &= ~FLAGS_DOID;
-#endif
+    if (!activar_ident)
+      sptr->flags &= ~FLAGS_DOID;
 
     if (sptr->flags & FLAGS_GOTID)
       assert(sptr->username);
@@ -523,19 +527,6 @@ static int register_user(aClient *cptr, aClient *sptr,
     }
 #endif
 
-#if 0
-
-/*
- * Estas comprobaciones ya no tienen mucho sentido...
- * Tampoco tiene sentido verificar que sptr->username y username
- * sean iguales, pues no comprobamos el ident y nos
- * quedamos con el que nos mande el cliente.
- *
- * Comentamos todo el bloque por si en el futuro...
- *
- * nikolas@irc-dev.net 27/08/2002
- */
-
     /*
      * Check for mixed case usernames, meaning probably hacked.  Jon2 3-94
      * Summary of rules now implemented in this patch:         Ensor 11-94
@@ -552,6 +543,8 @@ static int register_user(aClient *cptr, aClient *sptr,
      * No other special characters are allowed.
      * Name must contain at least one letter.
      */
+  if (activar_ident)
+  {
     tmpstr2 = tmpstr = (username[0] == '~' ? &username[1] : username);
     while (*tmpstr && !badid)
     {
@@ -614,8 +607,7 @@ static int register_user(aClient *cptr, aClient *sptr,
           me.name, ERR_INVALIDUSERNAME, cptr->name);
       return exit_client(cptr, sptr, &me, "USER: Bad username");
     }
-
-#endif
+  } /* activar_ident */
 
     Count_unknownbecomesclient(sptr, nrof);
   }

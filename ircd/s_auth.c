@@ -57,6 +57,7 @@
 #include "s_auth.h"
 #include "slab_alloc.h"
 #include "sprintf_irc.h"
+#include "s_bdd.h"
 
 RCSTAG_CC("$Id: s_auth.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
 
@@ -82,18 +83,20 @@ void start_auth(aClient *cptr)
   struct sockaddr_in sock;
   int err;
 
-#if !defined(HACER_IDENT)
-  cptr->count = 0;
-  cptr->authfd = -1;
-  ClearAuth(cptr);
-  if (!DoingDNS(cptr))
-    SetAccess(cptr);
+  /* Sin IDENT */
+  if (!activar_ident)
+  {
+    cptr->count = 0;
+    cptr->authfd = -1;
+    ClearAuth(cptr);
+    if (!DoingDNS(cptr))
+      SetAccess(cptr);
 
-  cptr->flags &= ~FLAGS_DOID;
-  return;
+    cptr->flags &= ~FLAGS_DOID;
+    return;
+  }
 
-#endif
-
+  /* Con IDENT */
 
   Debug((DEBUG_NOTICE, "start_auth(%p) fd %d status %d",
       cptr, cptr->fd, cptr->status));

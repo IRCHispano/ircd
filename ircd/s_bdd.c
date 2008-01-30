@@ -78,6 +78,7 @@ char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
 int ocultar_servidores;
 int activar_modos;
+int activar_ident;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -566,6 +567,10 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               activar_modos = 0;
             }
+            else if (!strcmp(c, BDD_ACTIVAR_IDENT))
+            {
+              activar_ident = 0;
+            }
             else if (!strcmp(c, BDD_SERVER_NAME))
             {
               SlabStringAllocDup(&(his.name), SERVER_NAME, HOSTLEN);
@@ -793,6 +798,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if (!strcmp(c, BDD_ACTIVAR_MODOS))
       {
         activar_modos = !0;
+      }
+      else if (!strcmp(c, BDD_ACTIVAR_IDENT))
+      {
+        activar_ident = !0;
       }
       else if (!strcmp(c, BDD_SERVER_NAME))
       {

@@ -1,3 +1,10 @@
+* 2008/01/30 zoltan@irc-dev.net      (u2.10.H.10.34)              FEATURE
+-------------------------------------------------------------------------
+  Hacemos que el chequeo de IDENT vuelva a estar disponible.
+
+  Esta vez es activable/desactivable por la BDD usando el registro
+  "activar.ident" en la tabla z.
+
 * 2008/01/28 zoltan@irc-dev.net      (u2.10.H.10.33)                  FIX
 -------------------------------------------------------------------------
   Obfuscamos el origen de los mensajes de numericos remotos como un whois
