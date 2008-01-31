@@ -198,6 +198,10 @@ void add_history(aClient *cptr, int still_on)
       RunFree(ww.oldww->username);
     if (ww.oldww->hostname)
       RunFree(ww.oldww->hostname);
+#if defined(BDD_VIP)
+    if (ww.oldww->virtualhost)
+      RunFree(ww.oldww->virtualhost);
+#endif
     if (ww.oldww->servername)
       RunFree(ww.oldww->servername);
     if (ww.oldww->realname)
@@ -211,10 +215,9 @@ void add_history(aClient *cptr, int still_on)
   ww.newww->logoff = now;
   DupString(ww.newww->name, cptr->name);
   DupString(ww.newww->username, PunteroACadena(cptr->user->username));
-#if defined(BDD_VIP)
-  DupString(ww.newww->hostname, get_visiblehost(cptr, NULL));
-#else
   DupString(ww.newww->hostname, cptr->user->host);
+#if defined(BDD_VIP)
+  DupString(ww.newww->virtualhost, get_virtualhost(cptr));
 #endif
   /* Should be changed to server numeric */
   DupString(ww.newww->servername, cptr->user->server->name);
@@ -298,6 +301,9 @@ void count_whowas_memory(int *wwu, size_t *wwum, int *wwa, size_t *wwam)
       um += (strlen(tmp->name) + 1);
       um += (strlen(tmp->username) + 1);
       um += (strlen(tmp->hostname) + 1);
+#ifdef BDD_VIP
+      um += (strlen(tmp->virtualhost) + 1);
+#endif
       um += (strlen(tmp->servername) + 1);
       if (tmp->away)
       {
@@ -349,9 +355,19 @@ int m_whowas(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       if (!strCasediff(nick, temp->name))
       {
+#ifdef BDD_VIP
+        sendto_one(sptr, rpl_str(RPL_WHOWASUSER),
+            me.name, parv[0], temp->name, temp->username,
+            temp->virtualhost, temp->realname);
+#else
         sendto_one(sptr, rpl_str(RPL_WHOWASUSER),
             me.name, parv[0], temp->name, temp->username,
             temp->hostname, temp->realname);
+#endif
+       if (IsHiddenViewer(sptr))
+          sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY), me.name, parv[0],
+            temp->name, temp->username, temp->hostname, "<untracked>");
+
         sendto_one(sptr, rpl_str(RPL_WHOISSERVER), me.name, parv[0],
             temp->name,
             (ocultar_servidores && !(IsOper(sptr) || IsHelpOp(sptr))) ? his.name : temp->servername,

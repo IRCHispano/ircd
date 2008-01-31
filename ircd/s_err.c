@@ -38,7 +38,7 @@ static Numeric local_replies[] = {
 /* 000 */
     {0, (char *)NULL},
 /* 001 */
-    {RPL_WELCOME, ":Welcome to the %s Internet Relay Network %s"},
+    {RPL_WELCOME, ":Welcome to the %s IRC Network, %s"},
 /* 002 */
     {RPL_YOURHOST, ":Your host is %s, running version %s"},
 /* 003 */
@@ -122,7 +122,7 @@ static Numeric numeric_errors[] = {
 /* 416 */
     {ERR_QUERYTOOLONG, "%s :Too many lines in the output, restrict your query"},
 /* 417 */
-    {0, (char *)NULL},
+    {ERR_INPUTTOOLONG, ":Input line was too long"},
 /* 418 */
     {0, (char *)NULL},
 /* 419 */
@@ -305,7 +305,7 @@ static Numeric numeric_errors[] = {
 /* 500 */
     {0, (char *)NULL},
 /* 501 */
-    {ERR_UMODEUNKNOWNFLAG, ":Unknown MODE flag"},
+    {ERR_UMODEUNKNOWNFLAG, ":Unknown user MODE flag"},
 /* 502 */
     {ERR_USERSDONTMATCH, ":Cant change mode for other users"},
 /* 503 */
@@ -421,7 +421,7 @@ static Numeric numeric_replies[] = {
 /* 337 */
     {0, (char *)NULL},
 /* 338 */
-    {0, (char *)NULL},
+    {RPL_WHOISACTUALLY, "%s %s@%s %s :Actual user@host, Actual IP"},
 /* 339 */
     {0, (char *)NULL},
 /* 340 */
@@ -505,7 +505,7 @@ static Numeric numeric_replies[] = {
 /* 377 */
     {0, (char *)NULL},
 /* 378 */
-    {RPL_WHOISHOST, "%s :Dirección VIRTUAL %s"},
+    {0, (char *)NULL},
 /* 379 */
     {RPL_WHOISMODES, "%s :Utiliza los modos [%s]"},
 /* 380 */

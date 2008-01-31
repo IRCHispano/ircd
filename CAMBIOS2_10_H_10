@@ -1,3 +1,24 @@
+* 2008/01/31 zoltan@irc-dev.net      (u2.10.H.10.37)              FEATURE
+-------------------------------------------------------------------------
+  Nuevos numericos RAW:
+
+  417 - ERR_INPUTTOOLONG - ":Input line was too long"
+
+  Se muestra cuando se manda mas de 510 caracteres, para indicar que por
+  la longitud, no se envia a la red.
+
+  338 - RPL_WHOISACTUALLY - "%s %s@%s %s :Actual user@host, Actual IP"
+
+  Indica el user@host y la IP del usuario. Solo sale si se hace un whois
+  a si mismo teniendo +x o un +X a cualquier nick con +x. 
+  Se cambia la forma de mostrar en el whois, si hay +x, no se muestra
+  la IP en el 311, sino el vhost.
+  Como consecuencia del cambio se elimina el 378 al no ser un estandar
+  y no estar reconocido por los clientes, y en cambio, el 338 si.
+
+  Tambien se muestra en el WHOWAS para los que tienen +X, hasta ahora no
+  se guardaban los hosts de los usuarios con +x.
+
 * 2008/01/30 zoltan@irc-dev.net      (u2.10.H.10.36)              FEATURE
 -------------------------------------------------------------------------
   Implementacion de RENAME a un nick en concreto, es el segundo parametro.

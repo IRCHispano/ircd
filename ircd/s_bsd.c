@@ -1760,6 +1760,7 @@ static int read_packet(aClient *cptr, fd_setp_t rfd)
           break;
         }
         DBufClear(&cptr->recvQ);
+        sendto_one(cptr, err_str(ERR_INPUTTOOLONG), me.name, cptr->name);
         break;
       }
       else if (CPTR_KILLED == client_dopacket(cptr, dolen))

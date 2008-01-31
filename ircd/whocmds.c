@@ -857,7 +857,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(BDD_VIP)
           sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
               parv[0], name, PunteroACadena(user->username),
-              get_visiblehost(acptr, sptr), PunteroACadena(acptr->info));
+              get_virtualhost(acptr), PunteroACadena(acptr->info));
 #else
           sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
               parv[0], name, PunteroACadena(user->username), user->host,
@@ -968,12 +968,6 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
           if (IsHelpOp(acptr))
             sendto_one(sptr, rpl_str(RPL_WHOISHELPOP), me.name, parv[0], name);
-#if defined(BDD_VIP)
-          if (IsHidden(acptr) && (IsHiddenViewer(sptr) || acptr == sptr))
-            sendto_one(sptr, rpl_str(RPL_WHOISHOST),
-                me.name, parv[0], name, get_visiblehost(acptr, NULL));
-#endif /* BDD_VIP */
-
 
           if (IsAnOper(acptr))
             sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR),
@@ -982,13 +976,17 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
           if (IsMsgOnlyReg(acptr))
             sendto_one(sptr, rpl_str(RPL_MSGONLYREG), me.name, parv[0], name);
 
+          if (IsHidden(acptr) && (IsHiddenViewer(sptr) || acptr == sptr))
+            sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY),  me.name, parv[0],
+                name, user->username, user->host, inetntoa_c(acptr));
+
+          sendto_one(sptr, rpl_str(RPL_WHOISMODES), me.name,
+              parv[0], name, umode_str(acptr, sptr));
+
          if (MyConnect(acptr) && (!ocultar_servidores ||
                   (sptr == acptr || IsAnOper(sptr) || IsHelpOp(sptr) || parc >= 3)))
             sendto_one(sptr, rpl_str(RPL_WHOISIDLE), me.name,
                 parv[0], name, now - user->last, acptr->firsttime);
-
-          sendto_one(sptr, rpl_str(RPL_WHOISMODES), me.name,
-              parv[0], name, umode_str(acptr, sptr));
         }
         if (found == 2 || total++ >= MAX_WHOIS_LINES)
           break;
@@ -1006,7 +1004,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(BDD_VIP)
         sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
             parv[0], name, PunteroACadena(user->username),
-            get_visiblehost(acptr, sptr), PunteroACadena(acptr->info));
+            get_virtualhost(acptr), PunteroACadena(acptr->info));
 #else
         sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
             parv[0], name, PunteroACadena(user->username), user->host,

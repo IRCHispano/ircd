@@ -74,7 +74,7 @@
 /*      ERR_BADMASK          415          IRCnet extension */
 #define ERR_QUERYTOOLONG     416  /* Undernet extension */
 /*      ERR_TOOMANYMATCHES   416          IRCnet extension */
-
+#define ERR_INPUTTOOLONG     417
 /*      ERR_LENGTHTRUNCATED  419          Aircd */
 
 #define ERR_INVALIDBANMASK   420  /* Hispano extension */
@@ -262,7 +262,7 @@
 #define RPL_TOPICWHOTIME     333  /* Undernet extension */
 #define RPL_LISTUSAGE	     334  /* Undernet extension */
 
-/*      RPL_WHOISACTUALLY    338          Undernet & Dalnet extension */
+#define RPL_WHOISACTUALLY    338        /* Undernet extension, dalnet */
 /*      RPL_CHANPASSOK       338           IRCnet extension */
 /*      RPL_BADCHANPASS      339           IRCnet & Dalnet extension */
 #define RPL_USERIP           340  /* Undernet extension */
@@ -298,7 +298,6 @@
 #define RPL_ENDOFMOTD	     376
 /*      RPL_KICKEXPIRED      377          Aircd */
 /*      RPL_SPAM            377           Austnet */
-#define RPL_WHOISHOST	     378  /* Hispano extension */
 /*      RPL_BANEXPIRED       378          Aircd */
 /*      RPL_KICKLINKED       379          Aircd */
 #define RPL_WHOISMODES       379  /* Hispano extension */

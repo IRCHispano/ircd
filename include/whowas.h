@@ -41,6 +41,7 @@ struct Whowas {
   char *name;
   char *username;
   char *hostname;
+  char *virtualhost;
   char *servername;
   char *realname;
   char *away;
