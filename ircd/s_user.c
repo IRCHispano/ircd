@@ -3469,6 +3469,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
     {                           /* Parche DB69 */
       ClearNickRegistered(sptr);
       ClearNickSuspended(sptr);
+      ClearMsgOnlyReg(sptr);
 
       /* 23-Oct-2003: mount@irc-dev.net
        *
@@ -3515,7 +3516,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       ":%s NICK %s " TIME_T_FMT, sptr->name, nick_nuevo, sptr->lastnick);
 
   sendto_highprot_butone(NULL, 10,
-      "%s%s NICK %s " TIME_T_FMT, NumNick(sptr), nick_nuevo, sptr->lastnick);
+      "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick_nuevo, sptr->lastnick);
 
   if (sptr->name)
   {
@@ -3548,35 +3549,70 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 
   {
     struct db_reg *reg;
-    char *nombre_bot;
 
-    int of, oh;
-
-    of = sptr->flags;
-    oh = sptr->hmodes;
-
-    /* Antes de nada, encontramos a 'Nick Virtual' */
-    nombre_bot = (reg =
-        db_buscar_registro(BDD_BOTSDB, BDD_NICKSERV)) ? reg->valor : me.name;
-
-
-/*
-** El "rename" no debe mandarnos a nicks registrados. Cuando
-** esta funcion se llame desde "m_nick_*", habrá que reprogramar.
-*/
-    assert(!db_buscar_registro(ESNET_NICKDB, sptr->name));
-
-    /* Gestión de PRIVILEGIOS */
-    if ((reg = db_buscar_registro(BDD_OPERDB, sptr->name)))
+    reg = db_buscar_registro(ESNET_NICKDB, sptr->name);
+    if (reg)
     {
-      if (atoi(reg->valor) >= 5)
+      int of, oh;
+      char *nombre_bot;
+      char c;
+
+      of = sptr->flags;
+      oh = sptr->hmodes;
+
+      /* Rename a un nick registrado */
+      c = reg->valor[strlen(reg->valor) - 1];
+      if (c == '+')
+        SetNickSuspended(sptr);
+      else
+        SetNickRegistered(sptr);
+
+#if 0
+      /* Antes de nada, encontramos a 'Nick Virtual' */
+      nombre_bot = (reg =
+          db_buscar_registro(BDD_BOTSDB, BDD_NICKSERV)) ? reg->valor : me.name;
+
+      sendto_one(cptr,
+          ":%s NOTICE %s :*** Renombrando a tu nick anterior.",
+          botname, nick_nuevo);
+#endif
+
+#if defined(BDD_VIP)
+#if defined(BDD_VIP2)           /* Pongo +x al usuario si el ircd esta
+                                 * compilado de forma que solo los usuarios
+                                 * registrados puedan tener +x, en el caso
+                                 * contrario dejo el modo tal como esta.
+                                 */
+      SetHidden(sptr);
+#else
+      /* Puede que tenga una ip virtual personalizada */
+      if (IsNickSuspended(sptr))
       {
-        ++nrof.helpers;
-        SetHelpOp(sptr);
+        ClearHidden(sptr);
       }
+      else if (db_buscar_registro(BDD_IPVIRTUAL2DB, sptr->name))
+      {                         /* Ponemos este primero porque es mas frecuente */
+        SetHidden(sptr);
+      }
+      else if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
+      {
+        SetHidden(sptr);
+      }
+      else
+      {
+        ClearHidden(sptr);
+      }
+#endif
+#endif
+
+      if (db_buscar_registro(BDD_OPERDB, sptr->name) && !IsNickSuspended(sptr))
+      {
+        SetHelpOp(sptr);
+        ++nrof.helpers;
+      }
+      send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
     }
 
-    send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
   }
 
 #if defined(WATCH)
@@ -3719,7 +3755,6 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char buf[NICKLEN + 2];
   aClient *acptr;
 
-
 #ifdef HISPANO_WEBCHAT
   /* Permitimos que pueda solicitar un rename
    * Esto deberia ser a traves de un Service
@@ -3731,9 +3766,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #else
   if (!IsServer(cptr) || !IsServer(sptr) || parc < 2)
     return 0;
-#endif
 
-  /* Quitamos la exigencia de U-line */
   if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
   {
     sendto_serv_butone(cptr,
@@ -3744,6 +3777,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
         "cambio de nick para '%s'", cptr->name, sptr->name, parv[1]);
     return 0;
   }
+#endif
  
   if (parc < 3) {
     /* Un solo parametro, sin nick nuevo */
@@ -3797,16 +3831,36 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (parc < 3)
     rename_user(acptr, NULL);
   else {
-    char *nick;
+    char nick[NICKLEN + 2];
+    struct db_reg *reg;
+    char c;
 
     strncpy(nick, parv[2], NICKLEN + 1);
     nick[sizeof(nick) - 1] = 0;
  
-    if (!do_nick_name(buf))
+    if (!do_nick_name(nick))
      return 0;
 
    if (FindUser(nick))
      return 0;
+
+   /* No se puede poner nicks prohibidos */
+   reg = db_buscar_registro(ESNET_NICKDB, nick);
+   if (reg)
+   {
+     char c = reg->valor[strlen(reg->valor) - 1];
+
+     if (c == '*')
+     {      
+       sendto_serv_butone(cptr,
+           ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' ha intentado poner un "
+           "nick forbid '%s' para el nick '%s'", me.name, cptr->name, sptr->name, parv[2], parv[1]);
+       sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_RENAME | SNO_RENAME2,
+           "HACK(4): El nodo '%s' dice que '%s' ha intentado poner un "
+           "nick forbid '%s' para el nick '%s'", cptr->name, sptr->name, parv[2], parv[1]);
+       return 0;
+     }
+   }
 
    rename_user(acptr, nick);
   }
