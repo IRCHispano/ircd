@@ -75,10 +75,6 @@ aparece en la tabla "v" o "w".
 
 Estudiar implicaciones en cosas como cambios de nick.
 
-21/Jun/02
-Comprobar que KICK, JOIN, PART efectivamente son ya
-100% puros.
-
 12/Jun/02
 > /watch L
 >  1 no esta en irc, ultimo paso el Tue May 21 17:30:18 2002
@@ -187,13 +183,6 @@ que seamos tambien "+o" o "+h". Lo logico seria que
 el modo "+w" solo se pueda poner si somos "+h" o "+o",
 o que su funcionalidad se pase a una máscara "+s".
 
-26/Abr/01
-El notice que informa del "silence" deberia
-enviarse en la misma rutina que envia el "silence" en
-si, para evitar duplicar codigo.
-
-Ojo cuando se manda un mensaje a varios destinos.
-
 25/Abr/01
 Meter RC4 en el servidor, tanto para los enlaces
 server<->server como server<->cliente.
@@ -219,21 +208,10 @@ server<->server como server<->cliente.
   durante unos ocho meses. Por lo tanto, no me preocupo de este tema
   de momento...
 
-11/Abr/01
-Por defecto, solo se deberia mostrar canales
-con mas de X usuarios.
-
 22/Mar/01
 Tener un sistema para poder hacer seguimientos
 de cambios de un nick determinado, aunque no
 estemos en un canal comun.
-
-13/Dic/00
-El servidor deberia reconocer un "nick *"
-como una orden para ponerse un nick
-de la forma "invnnnnnn". Esto es util
-para temas como el IRCQ, y demas
-servicios automaticos.
 
 07/Dic/00
 Cuando un usuario cambia de nick, su IP virtual no
@@ -276,10 +254,6 @@ nombre de canal, por ejemplo, el filtrado en si lo hace
 el cliente, no el servidor!. O eso es lo que pasa en
 el mIRC.
 
-16/Oct/00
-El mensaje de "Too many connections from same IP for *.*.*.*"
-no deberia ser visible para usuarios normales.
-
 15/Oct/00
 Cuando usamos el modo +x en un canal, deberia aparecer
 +x-x, para que no quede como "modo" del canal.
@@ -303,10 +277,6 @@ Lo mismo se aplica para privsmg, part, quit, etc.
 
 28/Jun/00
 Eliminar la cache interna del IRCD para DNS.
-
-23/Jun/00
-?Que informacion se guarda en el WHOWAS si un usuario sale
-y nadie en el nodo local le ha hecho un who/whois?
 
 22/Jun/00
 Cuando sabemos que es un usuario, deberia completarse la
@@ -403,17 +373,6 @@ alta y de expiracion.
 Las ILINES deben ser "case insensible", y lo que
 se propaga por base de datos debe ser minusculas.
 Corregir las que ya estan metidas.
-
-18/Feb/00
-Cuando un cliente sale del IRC, se almacena en el WHOWAS
-su IP cifrada si estaba protegido. Los Operadores de la
-red deberian tener acceso tambien a la IP real.
-
-20/Ene/00
-Cuando un usuario con nick registrado se pone un nick
-sin registrar, aparece su IP real. Perfecto. Lo malo
-es que si luego recupera su nick registrado,
-su nick antiguo y su IP real aparecen en un "/whowas".
 
 19/Ene/00
 Verificar que cuando un servidor no inicia una conexion,
