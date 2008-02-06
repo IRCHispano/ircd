@@ -1,6 +1,10 @@
+* 2008/02/07 zoltan@irc-dev.net      (u2.10.H.10.39)                  FIX
+-------------------------------------------------------------------------
+  Efecto colateral del parche u2.10.H.10.37, en el whois.
+
 * 2008/02/03 zoltan@irc-dev.net      (u2.10.H.10.38)                  FIX
 -------------------------------------------------------------------------
-  Estaba incompleto el parche u2.10.H.10.37 porque el codigo no estaba
+  Estaba incompleto el parche u2.10.H.10.36 porque el codigo no estaba
   nada claro.
 
 * 2008/01/31 zoltan@irc-dev.net      (u2.10.H.10.37)              FEATURE

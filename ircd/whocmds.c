@@ -857,7 +857,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(BDD_VIP)
           sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
               parv[0], name, PunteroACadena(user->username),
-              get_virtualhost(acptr), PunteroACadena(acptr->info));
+              get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
 #else
           sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
               parv[0], name, PunteroACadena(user->username), user->host,
@@ -1004,7 +1004,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(BDD_VIP)
         sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
             parv[0], name, PunteroACadena(user->username),
-            get_virtualhost(acptr), PunteroACadena(acptr->info));
+            get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
 #else
         sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
             parv[0], name, PunteroACadena(user->username), user->host,
