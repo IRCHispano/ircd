@@ -1,3 +1,8 @@
+* 2008/02/07 zoltan@irc-dev.net      (u2.10.H.10.40)                  FIX
+-------------------------------------------------------------------------
+  Un nick si ea baneado, o ea en un canal +R/+M sin +r o si esta en +m
+  no podra cambiarse de nick.
+
 * 2008/02/07 zoltan@irc-dev.net      (u2.10.H.10.39)                  FIX
 -------------------------------------------------------------------------
   Efecto colateral del parche u2.10.H.10.37, en el whois.
