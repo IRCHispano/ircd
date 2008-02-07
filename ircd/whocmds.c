@@ -945,9 +945,9 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
         sendto_one(sptr, rpl_str(RPL_WHOISSERVER), me.name,
             parv[0], name,
-            (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr))) ?
+            (ocultar_servidores && !buscar_uline(cptr->confs, a2cptr->name) && !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr))) ?
                   his.name : a2cptr->name,
-            (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr))) ?
+            (ocultar_servidores && !buscar_uline(cptr->confs, a2cptr->name) && !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr))) ?
                   his.info : PunteroACadena(a2cptr->info));
 
         if (user)
