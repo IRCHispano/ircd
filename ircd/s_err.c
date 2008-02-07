@@ -166,7 +166,7 @@ static Numeric numeric_errors[] = {
 /* 436 */
     {ERR_NICKCOLLISION, "%s :Nickname collision KILL"},
 /* 437 */
-    {ERR_BANNICKCHANGE, "%s :Cannot change nickname while banned on channel or channel is moderated"},
+    {ERR_BANNICKCHANGE, "%s :Cannot change nickname while banned on channel"},
 /* 438 */
     {ERR_NICKTOOFAST, "%1$s :Nick change too fast. Please wait %2$d seconds - "
                       "Necesita esperar %2$d segundos para volver a "

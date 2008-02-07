@@ -4585,8 +4585,7 @@ nickkilldone:
       int cansend;
 
       for (lp = cptr->user->channel; lp; lp = lp->next)
-        cansend = can_send(cptr, lp->value.chptr);
-        if (cansend && cansend != MODE_NOPRIVMSGS)
+        if (can_send(cptr, lp->value.chptr) == MODE_BAN)
         {
           sendto_one(cptr, err_str(ERR_BANNICKCHANGE), me.name, parv[0],
               lp->value.chptr->chname);
