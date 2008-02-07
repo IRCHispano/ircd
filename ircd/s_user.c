@@ -4582,9 +4582,10 @@ nickkilldone:
      */
     if (IsUser(sptr))
     {
-      for (lp = cptr->user->channel; lp; lp = lp->next)
-        int cansend = can_send(cptr, lp->value.chptr);
+      int cansend;
 
+      for (lp = cptr->user->channel; lp; lp = lp->next)
+        cansend = can_send(cptr, lp->value.chptr);
         if (cansend && cansend != MODE_NOPRIVMSGS)
         {
           sendto_one(cptr, err_str(ERR_BANNICKCHANGE), me.name, parv[0],
