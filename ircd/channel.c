@@ -4469,7 +4469,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
   *modebuf = '+';
   mblen2 = 1;
   cnt = 0;
-  prefix_len = sblen = sprintf_irc(sendbuf, "%s BURST %s " TIME_T_FMT,
+  prefix_len = sblen = sprintf_irc(sendbuf, "%s " TOK_BURST " %s " TIME_T_FMT,
       NumServ(sptr), chptr->chname, chptr->creationtime) - sendbuf;
 
   /* Run over all remaining parameters */

@@ -1,3 +1,7 @@
+* 2008/04/08 zoltan@irc-dev.net      (u2.10.H.10.43)                  FIX
+-------------------------------------------------------------------------
+  En un caso, se mandaba el BURST sin token.
+    
 * 2008/02/07 zoltan@irc-dev.net      (u2.10.H.10.41)              FEATURE
 -------------------------------------------------------------------------
   Un whois a un nick de un service (u-line) muestra el servidor.
