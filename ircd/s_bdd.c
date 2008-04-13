@@ -563,10 +563,6 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               ocultar_servidores = 0;
             }
-            else if (!strcmp(c, BDD_ACTIVAR_MODOS))
-            {
-              activar_modos = 0;
-            }
             else if (!strcmp(c, BDD_ACTIVAR_IDENT))
             {
               activar_ident = 0;
@@ -794,10 +790,6 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
       {
         ocultar_servidores = !0;
-      }
-      else if (!strcmp(c, BDD_ACTIVAR_MODOS))
-      {
-        activar_modos = !0;
       }
 #ifndef HISPANO_WEBCHAT
       else if (!strcmp(c, BDD_ACTIVAR_IDENT))

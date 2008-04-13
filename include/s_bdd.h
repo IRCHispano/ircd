@@ -44,7 +44,6 @@
 #define BDD_CLAVE_DE_CIFRADO_DE_IPS		"clave.de.cifrado.de.ips"
 #define BDD_OCULTAR_IP_CIFRADA_EN_LA_VIRTUAL2	"ocultar.ip.cifrada.en.la.virtual2"
 #define BDD_OCULTAR_SERVIDORES			"ocultar.servidores"
-#define BDD_ACTIVAR_MODOS			"activar.modos"
 #define BDD_SERVER_NAME				"servidor.oculto"
 #define BDD_SERVER_INFO				"servidor.info.oculto"
 #define BDD_ACTIVAR_IDENT			"activar.ident"
@@ -86,7 +85,6 @@ extern int numero_maximo_de_clones_por_defecto;
 extern char *clave_de_cifrado_de_ips;
 extern unsigned int clave_de_cifrado_binaria[2];
 extern int ocultar_servidores;
-extern int activar_modos;
 extern int activar_ident;
 
 /* -- mman.h no contiene algunas definicieones en plataformas antiguas -- */

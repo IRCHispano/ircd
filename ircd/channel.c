@@ -1719,12 +1719,8 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
 ** y si alguno no esta soportado, lo eliminamos.
 */
     activacion_modos = (~(oldm.mode)) & newmode;
-    if (activar_modos)
-      newmode &=
+    newmode &=
           ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_DELJOINS));
-    else
-      newmode &=
-          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_NOCTCP | MODE_NONOTICE | MODE_NOQUITPARTS | MODE_DELJOINS));
   }
 
 /*

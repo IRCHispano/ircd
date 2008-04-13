@@ -1,3 +1,8 @@
+* 2008/04/13 zoltan@irc-dev.net      (u2.10.H.10.44)              CLEANUP
+-------------------------------------------------------------------------
+  Dado que todos los servidores estan actualizados, eliminamos codigo
+  temporal de activacion de modos introducido en u2.10.H.10.17.
+  
 * 2008/04/08 zoltan@irc-dev.net      (u2.10.H.10.43)                  FIX
 -------------------------------------------------------------------------
   En un caso, se mandaba el BURST sin token.
