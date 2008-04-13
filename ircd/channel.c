@@ -613,6 +613,8 @@ void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
     *mbuf++ = 'N';
   if (chptr->mode.mode & MODE_NOQUITPARTS)
     *mbuf++ = 'u';
+  if (chptr->mode.mode & MODE_DELJOINS)
+    *mbuf++ = 'D';
 
   if (chptr->mode.limit)
   {
@@ -4630,6 +4632,62 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
               }
               if (!tmp)
                 modebuf[mblen2++] = 'M';
+              break;
+            }
+            case 'C':
+            {
+              int tmp;
+              prev_mode &= ~MODE_NOCTCP;
+              if (!(tmp = netride ||
+                  (current_mode->mode & MODE_NOCTCP)) || wipeout)
+              {
+                bmodebuf[mblen++] = 'C';
+                current_mode->mode |= MODE_NOCTCP;
+              }
+              if (!tmp)
+                modebuf[mblen2++] = 'C';
+              break;
+            }
+            case 'N':
+            {
+              int tmp;
+              prev_mode &= ~MODE_NONOTICE;
+              if (!(tmp = netride ||
+                  (current_mode->mode & MODE_NONOTICE)) || wipeout)
+              {
+                bmodebuf[mblen++] = 'N';
+                current_mode->mode |= MODE_NONOTICE;
+              }
+              if (!tmp)
+                modebuf[mblen2++] = 'N';
+              break;
+            }
+            case 'u':
+            {
+              int tmp;
+              prev_mode &= ~MODE_NOQUITPARTS;
+              if (!(tmp = netride ||
+                  (current_mode->mode & MODE_NOQUITPARTS)) || wipeout)
+              {
+                bmodebuf[mblen++] = 'u';
+                current_mode->mode |= MODE_NOQUITPARTS;
+              }
+              if (!tmp)
+                modebuf[mblen2++] = 'u';
+              break;
+            }
+            case 'D':
+            {
+              int tmp;
+              prev_mode &= ~MODE_DELJOINS;
+              if (!(tmp = netride ||
+                  (current_mode->mode & MODE_DELJOINS)) || wipeout)
+              {
+                bmodebuf[mblen++] = 'D';
+                current_mode->mode |= MODE_DELJOINS;
+              }
+              if (!tmp)
+                modebuf[mblen2++] = 'D';
               break;
             }
             case 'n':

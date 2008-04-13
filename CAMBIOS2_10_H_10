@@ -1,3 +1,7 @@
+* 2008/04/13 zoltan@irc-dev.net      (u2.10.H.10.45)                  FIX
+-------------------------------------------------------------------------
+  En un caso del BURST no se procesan los nuevos modos +CNuD.
+  
 * 2008/04/13 zoltan@irc-dev.net      (u2.10.H.10.44)              CLEANUP
 -------------------------------------------------------------------------
   Dado que todos los servidores estan actualizados, eliminamos codigo
