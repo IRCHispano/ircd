@@ -5035,6 +5035,23 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       current_mode->key = NULL;
       cancel_mode(sptr, chptr, 'k', prev_key, &count);
     }
+    if ((prev_mode & MODE_REGNICKS))
+      cancel_mode(sptr, chptr, 'R', NULL, &count);
+    if ((prev_mode & MODE_AUTOOP))
+      cancel_mode(sptr, chptr, 'A', NULL, &count);
+    if ((prev_mode & MODE_SECUREOP))
+      cancel_mode(sptr, chptr, 'S', NULL, &count);
+    if ((prev_mode & MODE_MSGNONREG))
+      cancel_mode(sptr, chptr, 'M', NULL, &count);
+    if ((prev_mode & MODE_NOCTCP))
+      cancel_mode(sptr, chptr, 'C', NULL, &count);
+    if ((prev_mode & MODE_NONOTICE))
+      cancel_mode(sptr, chptr, 'N', NULL, &count);
+    if ((prev_mode & MODE_NOQUITPARTS))
+      cancel_mode(sptr, chptr, 'u', NULL, &count);
+    if ((prev_mode & MODE_DELJOINS))
+      cancel_mode(sptr, chptr, 'D', NULL, &count);
+      
     prev_mode &= ~(MODE_REGCHAN); /* Mantenemos estos modos aunque el canal que llega sea mas antiguo */
     current_mode->mode &= ~prev_mode;
 
