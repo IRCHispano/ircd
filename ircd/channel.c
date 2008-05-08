@@ -5976,8 +5976,10 @@ param_parse(aClient *sptr, const char *param, aListingArgs *args,
     switch (*param) {
     case 'T':
     case 't':
+    /*
       is_time++;
       args->flags |= LISTARG_TOPICLIMITS;
+      */
       /*FALLTHROUGH*/
 
     case 'C':

@@ -1,3 +1,8 @@
+* 2008/04/23 zoltan@irc-dev.net      (u2.10.H.10.47)                  FIX
+-------------------------------------------------------------------------
+  En ciertas circustancias se moria el IRCD, efecto colateral del parche
+  u2.10.H.10.27.
+  
 * 2008/04/13 zoltan@irc-dev.net      (u2.10.H.10.46)                  FIX
 -------------------------------------------------------------------------
   En el caso de WIPEOUT en un burst, no se ajustaban los modos introducidos
@@ -15,7 +20,11 @@
 * 2008/04/08 zoltan@irc-dev.net      (u2.10.H.10.43)                  FIX
 -------------------------------------------------------------------------
   En un caso, se mandaba el BURST sin token.
-    
+
+* 2008/xx/xx zoltan@irc-dev.net      (u2.10.H.10.43)                  FIX
+-------------------------------------------------------------------------
+ 
+     
 * 2008/02/07 zoltan@irc-dev.net      (u2.10.H.10.41)              FEATURE
 -------------------------------------------------------------------------
   Un whois a un nick de un service (u-line) muestra el servidor.
