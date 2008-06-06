@@ -1,5 +1,6 @@
 $Id: todo.jcea,v 1.357 2003/11/12 15:54:23 jcea Exp $
 
+
 11/Jul/03
 El campo de "nick" ocupa 64 bytes. Optimizar eso.
 Slab Allocator?
