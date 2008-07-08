@@ -1064,9 +1064,15 @@ static int completed_connection(aClient *cptr)
 #endif
 
   sendto_one(cptr,
-      "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s 0 :%s", 
+      "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s +%s :%s", 
       my_name_for_link(me.name, aconf), me.serv->timestamp, newts,
-      MAJOR_PROTOCOL, NumServCap(&me), PunteroACadena(me.info));
+      MAJOR_PROTOCOL, NumServCap(&me),
+#if defined(HUB)
+      "h",
+#else
+      "",
+#endif  
+      PunteroACadena(me.info));
   tx_num_serie_dbs(cptr);
 
   if (!IsDead(cptr))
@@ -2048,7 +2054,7 @@ int read_message(time_t delay)
           if (count > 0)
           {
             if (!last_time)
-              last_time = me.serv->boot_timestamp;
+              last_time = me.since;
             sendto_ops
                 ("All connections in use!  Had to refuse %d clients in the last "
                 STIME_T_FMT " minutes", count, (now - last_time) / 60);

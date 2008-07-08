@@ -1,3 +1,10 @@
+* 2008/06/24 zoltan@irc-dev.net      (u2.10.H.10.48)              FEATURE
+-------------------------------------------------------------------------
+  Para que el nuevo IRCD funcione sin problemas, he agregado soporte de
+  +h (HUB) y +s (Services) en la propagacion de SERVER.
+  
+  Mas info en u2.10.H.10.08.
+  
 * 2008/04/23 zoltan@irc-dev.net      (u2.10.H.10.47)                  FIX
 -------------------------------------------------------------------------
   En ciertas circustancias se moria el IRCD, efecto colateral del parche

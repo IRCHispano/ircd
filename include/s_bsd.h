@@ -39,6 +39,20 @@
 
 #define MODE_ISWATCH    0x80000000  /* Se enviara WATCH para este nick */
 
+#define SERVER_HUB      0x2000
+#define SERVER_SERVICE  0x4000
+#define SERVER_IPV6     0x8000
+
+#define IsHub(x)      ((x)->flags & SERVER_HUB)
+#define IsService(x)  ((x)->flags & SERVER_SERVICE)
+#define IsIPv6(x)     ((x)->flags & SERVER_IPV6)
+
+#define SetHub(x)     ((x)->flags |= SERVER_HUB)
+#define SetService(x) ((x)->flags |= SERVER_SERVICE)
+#define SetIPv6(x)    ((x)->flags |= SERVER_IPV6)
+
+
+
 /* Flags LOCALES */
 #define FLAGS_DOINGDNS  0x00002000  /* client is waiting for a DNS response */
 #define FLAGS_AUTH      0x00004000  /* client is waiting on rfc931 response */

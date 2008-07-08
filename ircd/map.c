@@ -33,6 +33,7 @@
 #include "map.h"
 #include "numnicks.h"
 #include "s_bdd.h"
+#include "s_serv.h"
 
 RCSTAG_CC("$Id: map.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
 
@@ -64,7 +65,7 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask,
     else if (server->serv->lag < 0)
       strcpy(lag, "(0s)");
     else
-      sprintf(lag, "(%is)", server->serv->lag);
+      sprintf(lag, "(%is) (hub %s) (service %s)", server->serv->lag, IsHub(server) ? "h" : "", IsService(server) ? "s" : "");
     sprintf(buf, "%s:%d", NumServ(server), base64toint(NumServ(server)));
     clientes_float =
         (int)((1000.0 * (server ==

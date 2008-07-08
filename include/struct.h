@@ -164,7 +164,6 @@ struct Server {
   struct User *user;            /* who activated this connection */
   struct ConfItem *cline;       /* C-line pointer for this server */
   time_t timestamp;             /* Remotely determined connect try time */
-  time_t boot_timestamp;        /* TS de arranque del nodo. Si no se conoce, sera CERO */
   time_t ghost;                 /* Local time at which a new server
                                    caused a Ghost */
 

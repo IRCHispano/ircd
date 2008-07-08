@@ -879,7 +879,6 @@ int main(int argc, char *argv[])
   me.serv->prot = atoi(MAJOR_PROTOCOL);
   me.serv->up = &me;
   me.serv->down = NULL;
-  me.serv->boot_timestamp = now;
 
   SetYXXCapacity(&me, MAXCLIENTS);
 

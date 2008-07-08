@@ -410,7 +410,7 @@ void send_usage(aClient *cptr, char *nick)
     return;
   }
   secs = rus.ru_utime.tv_sec + rus.ru_stime.tv_sec;
-  rup = now - me.serv->boot_timestamp;
+  rup = now - me.since;
   if (secs == 0)
     secs = 1;
 

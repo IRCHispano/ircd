@@ -93,6 +93,15 @@ static int a_kills_b_too(aClient *a, aClient *b)
   return (a == b ? 1 : 0);
 }
 
+static void set_server_flags(aClient *cptr, const char *flags)
+{
+    while (*flags) switch (*flags++) {
+      case 'h': SetHub(cptr); break;
+      case 's': SetService(cptr); break;
+      case '6': SetIPv6(cptr); break;
+    }
+}
+
 extern unsigned short server_port;
 
 /*
@@ -108,7 +117,7 @@ extern unsigned short server_port;
  *  If cptr is P10:
  *    parv[6] = "YMM", where 'Y' is the server numeric and "MM" is the
  *              numeric nick mask of this server.
- *    parv[7] = Futuro uso
+ *    parv[7] = +h: Hub +s: Service +6: IPv6
  */
 int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
@@ -119,8 +128,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
   aConfItem *aconf = NULL, *bconf = NULL, *cconf = NULL, *lhconf = NULL;
   int hop, ret, active_lh_line = 0;
   unsigned short int prot;
-  time_t start_timestamp, timestamp = 0, boot_timestamp = 0, recv_time, ghost =
-      0;
+  time_t start_timestamp, timestamp = 0, recv_time, ghost = 0;
 #if defined(CHECK_TS_LINKS)
   time_t desfase;
 #endif
@@ -160,11 +168,6 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
    * till all servers are 2.10: */
   if (IsServer(cptr) && prot > Protocol(cptr))
     prot = Protocol(cptr);
-
-  if ((prot >= 10) && (parc >= 9))
-  {
-    boot_timestamp = atoi(parv[7]);
-  }
 
   hop = atoi(parv[2]);
   start_timestamp = atoi(parv[3]);
@@ -685,7 +688,6 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     make_server(acptr);
     acptr->serv->prot = prot;
     acptr->serv->timestamp = timestamp;
-    acptr->serv->boot_timestamp = boot_timestamp;
     acptr->hopcount = hop;
 
     SlabStringAllocDup(&(acptr->name), host, HOSTLEN);
@@ -701,6 +703,17 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
       acptr->flags |= FLAGS_TS8;
     add_client_to_list(acptr);
     hAddClient(acptr);
+    
+    if (*parv[7] == '+')
+      set_server_flags(acptr, parv[7] + 1);
+    
+    /* Si recibimos un P09, ponemos +hs ya que siempre es un service y hub */
+    if (Protocol(acptr) < 10)
+    {
+      SetHub(acptr);
+      SetService(acptr);
+    }
+    
     if (*parv[5] == 'J')
     {
       if (Protocol(acptr) > 9)
@@ -726,13 +739,14 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (match(my_name_for_link(me.name, cconf), PunteroACadena(acptr->name)) == 0)
         continue;
       if (Protocol(bcptr) > 9)
-        sendto_one(bcptr, "%s " TOK_SERVER " %s %d 0 %s %s %s%s 0 :%s",
+        sendto_one(bcptr, "%s " TOK_SERVER " %s %d 0 %s %s %s%s +%s%s%s :%s",
             NumServ(sptr), PunteroACadena(acptr->name), hop + 1, parv[4], parv[5],
-            NumServCap(acptr), PunteroACadena(acptr->info));
+            NumServCap(acptr), IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", 
+            IsIPv6(acptr) ? "6" : "", PunteroACadena(acptr->info));
       else
-        sendto_one(bcptr, ":%s SERVER %s %d 0 %s %s %s%s %ld :%s",
+        sendto_one(bcptr, ":%s SERVER %s %d 0 %s %s %s%s 0 :%s",
             parv[0], PunteroACadena(acptr->name), hop + 1, parv[4], parv[5],
-            NumServCap(acptr), boot_timestamp, PunteroACadena(acptr->info));
+            NumServCap(acptr), PunteroACadena(acptr->info));
     }
     return 0;
   }
@@ -773,7 +787,6 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     make_server(cptr);
     cptr->serv->timestamp = timestamp;
     cptr->serv->prot = prot;
-    cptr->serv->boot_timestamp = boot_timestamp;
     cptr->serv->ghost = ghost;
     cptr->serv->esnet_db = 0;   /* De momento exigimos un BURST de la base de datos */
     SetServerYXX(cptr, cptr, parv[6]);
@@ -870,10 +883,15 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
      *  Pass my info to the new server
      */
     sendto_one(cptr,
-        "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s %ld :%s",
+        "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s +%s :%s",
         my_name_for_link(me.name, aconf), me.serv->timestamp,
         cptr->serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
-        me.serv->boot_timestamp, me.info ? me.info : "IRCers United");
+#if defined(HUB)
+        "h",
+#else        
+        "", 
+#endif        
+        me.info ? me.info : "IRCers United");
     tx_num_serie_dbs(cptr);
 
     IPcheck_connect_fail(cptr); /* Don't charge this IP# for connecting */
@@ -936,30 +954,31 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
     {
       if (Protocol(acptr) > 9)
         sendto_one(acptr,
-            "%s " TOK_SERVER " %s 2 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
+            "%s " TOK_SERVER " %s 2 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
             NumServ(&me), cptr->name, cptr->serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr), NumServCap(cptr),
+            IsHub(cptr) ? "h" : "", IsService(cptr) ? "s" : "", IsIPv6(cptr) ? "6" : "",
             PunteroACadena(cptr->info));
       else
         sendto_one(acptr,
-            ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s %ld :%s", me.name,
+            ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s 0 :%s", me.name,
             cptr->name, cptr->serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr), NumServCap(cptr),
-            cptr->serv->boot_timestamp, PunteroACadena(cptr->info));
+            PunteroACadena(cptr->info));
     }
     else
     {
       if (Protocol(acptr) > 9)
-        sendto_one(acptr, "%s " TOK_SERVER " %s 2 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
+        sendto_one(acptr, "%s " TOK_SERVER " %s 2 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
             NumServ(&me), cptr->name, cptr->serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr),
-            NumServCap(cptr), PunteroACadena(cptr->info));
+            NumServCap(cptr), IsHub(cptr) ? "h" : "", IsService(cptr) ? "s" : "", 
+            IsIPv6(cptr) ? "6" : "", PunteroACadena(cptr->info));
       else
-        sendto_one(acptr, ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s %ld :%s",
+        sendto_one(acptr, ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
             me.name, cptr->name, cptr->serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr),
-            NumServCap(cptr), cptr->serv->boot_timestamp,
-            PunteroACadena(cptr->info));
+            NumServCap(cptr), PunteroACadena(cptr->info));
     }
   }
 
@@ -997,35 +1016,37 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
       {
         if (Protocol(cptr) > 9)
           sendto_one(cptr,
-              "%s " TOK_SERVER " %s %d 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
+              "%s " TOK_SERVER " %s %d 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
               NumServ(acptr->serv->up), acptr->name,
               acptr->hopcount + 1, acptr->serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
+              IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", IsIPv6(acptr) ? "6" : "",
               PunteroACadena(acptr->info));
         else
           sendto_one(cptr,
-              ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s %ld :%s",
+              ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
               acptr->serv->up->name, acptr->name,
               acptr->hopcount + 1, acptr->serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
-              acptr->serv->boot_timestamp, PunteroACadena(acptr->info));
+              PunteroACadena(acptr->info));
       }
       else
       {
         if (Protocol(cptr) > 9)
           sendto_one(cptr,
-              "%s " TOK_SERVER " %s %d 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
+              "%s " TOK_SERVER " %s %d 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
               NumServ(acptr->serv->up), acptr->name,
               acptr->hopcount + 1, acptr->serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
+              IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", IsIPv6(acptr) ? "6" : "",
               PunteroACadena(acptr->info));
         else
           sendto_one(cptr,
-              ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s %ld :%s",
+              ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
               acptr->serv->up->name, acptr->name,
               acptr->hopcount + 1, acptr->serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
-              acptr->serv->boot_timestamp, PunteroACadena(acptr->info));
+              PunteroACadena(acptr->info));
       }
     }
   }

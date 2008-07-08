@@ -782,7 +782,7 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       time_t nowr;
 
-      nowr = now - me.serv->boot_timestamp;
+      nowr = now - me.since;
       sendto_one(sptr, rpl_str(RPL_STATSUPTIME), me.name, parv[0],
           nowr / 86400, (nowr / 3600) % 24, (nowr / 60) % 60, nowr % 60);
       sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],

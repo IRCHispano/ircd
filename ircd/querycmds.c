@@ -269,7 +269,7 @@ void init_counters(void)
  */
 int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  Reg1 struct tm *since_t = localtime(&me.serv->boot_timestamp);
+  Reg1 struct tm *since_t = localtime(&me.since);
   char since[15];
 
   if (parc > 2)
