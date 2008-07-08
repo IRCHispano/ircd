@@ -1,4 +1,10 @@
-* 2008/06/24 zoltan@irc-dev.net      (u2.10.H.10.48)              FEATURE
+
+* 2008/07/08 zoltan@irc-dev.net      (u2.10.H.10.49)              FEATURE
+-------------------------------------------------------------------------
+  Agrego soporte limitado de +c de colores, solo para reconocer y 
+  propagar el modo. Parche de transicion.
+
+* 2008/07/07 zoltan@irc-dev.net      (u2.10.H.10.48)              FEATURE
 -------------------------------------------------------------------------
   Para que el nuevo IRCD funcione sin problemas, he agregado soporte de
   +h (HUB) y +s (Services) en la propagacion de SERVER.

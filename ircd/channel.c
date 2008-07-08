@@ -609,6 +609,8 @@ void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
     *mbuf++ = 'M';
   if (chptr->mode.mode & MODE_NOCTCP)
     *mbuf++ = 'C';
+  if (chptr->mode.mode & MODE_NOCOLOUR)
+    *mbuf++ = 'c';
   if (chptr->mode.mode & MODE_NONOTICE)
     *mbuf++ = 'N';
   if (chptr->mode.mode & MODE_NOQUITPARTS)
@@ -1157,7 +1159,7 @@ static int canal_flags[] = {
   MODE_AUTOOP, 'A', MODE_SECUREOP, 'S',
   MODE_MSGNONREG, 'M', MODE_NOCTCP, 'C',
   MODE_NONOTICE, 'N', MODE_NOQUITPARTS, 'u',
-  MODE_DELJOINS, 'D',
+  MODE_DELJOINS, 'D', MODE_NOCOLOUR, 'c',
   0x0, 0x0
 };
 
@@ -1722,7 +1724,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
 */
     activacion_modos = (~(oldm.mode)) & newmode;
     newmode &=
-          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_DELJOINS));
+          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_DELJOINS | MODE_NOCOLOUR));
   }
 
 /*
@@ -4648,6 +4650,20 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 modebuf[mblen2++] = 'C';
               break;
             }
+            case 'c':
+            {
+              int tmp;
+              prev_mode &= ~MODE_NOCOLOUR;
+              if (!(tmp = netride ||
+                  (current_mode->mode & MODE_NOCOLOUR)) || wipeout)
+              {
+                bmodebuf[mblen++] = 'c';
+                current_mode->mode |= MODE_NOCOLOUR;
+              }
+              if (!tmp)
+                modebuf[mblen2++] = 'c';
+              break;
+            }            
             case 'N':
             {
               int tmp;
@@ -5045,6 +5061,8 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       cancel_mode(sptr, chptr, 'M', NULL, &count);
     if ((prev_mode & MODE_NOCTCP))
       cancel_mode(sptr, chptr, 'C', NULL, &count);
+    if ((prev_mode & MODE_NOCOLOUR))
+      cancel_mode(sptr, chptr, 'c', NULL, &count);
     if ((prev_mode & MODE_NONOTICE))
       cancel_mode(sptr, chptr, 'N', NULL, &count);
     if ((prev_mode & MODE_NOQUITPARTS))

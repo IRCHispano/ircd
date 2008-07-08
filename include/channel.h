@@ -90,6 +90,8 @@
 #define MODE_NOQUITPARTS 0x100000
 #define MODE_DELJOINS   0x200000
 #define MODE_WASDELJOINS 0x400000
+#define MODE_NOCOLOUR    0x800000
+
 
 #define RegisteredChannel(x)    ((x) && ((x)->mode.mode & MODE_REGCHAN))
 #define RestrictedChannel(x)    ((x) && ((x)->mode.mode & MODE_REGNICKS))
