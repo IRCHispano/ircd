@@ -1,4 +1,7 @@
-
+* 2008/08/03 zoltan@irc-dev.net      (u2.10.H.10.50)                  FIX
+-------------------------------------------------------------------------
+  Fix del parche u2.10.H.10.48.
+  
 * 2008/07/08 zoltan@irc-dev.net      (u2.10.H.10.49)              FEATURE
 -------------------------------------------------------------------------
   Agrego soporte limitado de +c de colores, solo para reconocer y 

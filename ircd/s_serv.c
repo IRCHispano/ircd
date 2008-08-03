@@ -790,6 +790,19 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     cptr->serv->ghost = ghost;
     cptr->serv->esnet_db = 0;   /* De momento exigimos un BURST de la base de datos */
     SetServerYXX(cptr, cptr, parv[6]);
+    
+    /* Si recibimos un P09, ponemos +hs ya que siempre es un service y hub */
+    if (Protocol(cptr) < 10)
+    {
+      SetHub(cptr);
+      SetService(cptr);
+    }
+    else 
+    {
+      if (*parv[7] == '+')
+        set_server_flags(cptr, parv[7] + 1);
+    }
+                                          
     if (start_timestamp > 780000000)
     {
 #if !defined(RELIABLE_CLOCK)
