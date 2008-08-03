@@ -65,7 +65,7 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask,
     else if (server->serv->lag < 0)
       strcpy(lag, "(0s)");
     else
-      sprintf(lag, "(%is) (hub %s) (service %s)", server->serv->lag, IsHub(server) ? "h" : "", IsService(server) ? "s" : "");
+      sprintf(lag, "(%is)", server->serv->lag);
     sprintf(buf, "%s:%d", NumServ(server), base64toint(NumServ(server)));
     clientes_float =
         (int)((1000.0 * (server ==
