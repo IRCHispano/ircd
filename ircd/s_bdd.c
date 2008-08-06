@@ -72,7 +72,6 @@
 #include "support.h"
 
 
-int ocultar_ip_cifrada_en_la_virtual2;
 int numero_maximo_de_clones_por_defecto;
 char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
@@ -398,8 +397,7 @@ static struct db_reg *db_busca_db_reg(unsigned char tabla, char *clave)
  * Elimina la caché de las ips virtuales cuando se cambia el valor de la clave de cifrado
  *
  */
-static inline void elimina_cache_ips_virtuales(char *nickname,
-    int solo_ips_personalizadas)
+static inline void elimina_cache_ips_virtuales(char *nickname)
 {
   aClient *acptr;
 
@@ -408,7 +406,7 @@ static inline void elimina_cache_ips_virtuales(char *nickname,
     /* A limpiar la cache */
     for (acptr = client; acptr; acptr = acptr->next)
     {
-      if (solo_ips_personalizadas && !TieneIpVirtualPersonalizada(acptr))
+      if (TieneIpVirtualPersonalizada(acptr))
         continue;
 
       if (IsUser(acptr))
@@ -421,13 +419,13 @@ static inline void elimina_cache_ips_virtuales(char *nickname,
   {
     /*
      * Soporte para el cambio instantáneo de un host virtual si se cambia el valor de la tabla
-     * 'v' o 'w' correspondiente a un nick existente. Se utiliza make_virtualhost para notificar
+     * 'v' correspondiente a un nick existente. Se utiliza make_virtualhost para notificar
      * al usuario en cuestión del cambio. -RyDeN
      *
      */
 
     assert(IsUser(acptr));
-    if (solo_ips_personalizadas && !TieneIpVirtualPersonalizada(acptr))
+    if (TieneIpVirtualPersonalizada(acptr))
       return;
 
     if (MyUser(acptr))
@@ -543,12 +541,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
         case BDD_CONFIGDB:
           if (!reemplazar)
           {
-            if (!strcmp(c, BDD_OCULTAR_IP_CIFRADA_EN_LA_VIRTUAL2))
-            {
-              ocultar_ip_cifrada_en_la_virtual2 = 0;
-              elimina_cache_ips_virtuales(NULL, 1);
-            }
-            else if (!strcmp(c, BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO))
+            if (!strcmp(c, BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO))
             {
               numero_maximo_de_clones_por_defecto = 0;
             }
@@ -557,7 +550,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               clave_de_cifrado_de_ips = NULL;
               clave_de_cifrado_binaria[0] = 0;
               clave_de_cifrado_binaria[1] = 0;
-              elimina_cache_ips_virtuales(NULL, 0);
+              elimina_cache_ips_virtuales(NULL);
             }
             else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
             {
@@ -579,9 +572,8 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
           break;
 
         case BDD_IPVIRTUALDB:
-        case BDD_IPVIRTUAL2DB:
           if (!reemplazar)
-            elimina_cache_ips_virtuales(reg->clave, 0);
+            elimina_cache_ips_virtuales(reg->clave);
           break;
       }
       p_free(reg);
@@ -764,12 +756,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       break;
 
     case BDD_CONFIGDB:
-      if (!strcmp(c, BDD_OCULTAR_IP_CIFRADA_EN_LA_VIRTUAL2))
-      {
-        ocultar_ip_cifrada_en_la_virtual2 = !0;
-        elimina_cache_ips_virtuales(NULL, 1);
-      }
-      else if (!strcmp(c, BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO))
+      if (!strcmp(c, BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO))
       {
         numero_maximo_de_clones_por_defecto = atoi(v);
       }
@@ -785,7 +772,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         clave_de_cifrado_binaria[0] = base64toint(clave); /* BINARIO */
         clave[6] = tmp;
         clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
-        elimina_cache_ips_virtuales(NULL, 0);
+        elimina_cache_ips_virtuales(NULL);
       }
       else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
       {
@@ -808,8 +795,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       break;
 
     case BDD_IPVIRTUALDB:
-    case BDD_IPVIRTUAL2DB:
-      elimina_cache_ips_virtuales(reg->clave, 0);
+      elimina_cache_ips_virtuales(reg->clave);
       break;
   }
 }
@@ -2088,8 +2074,8 @@ void initdb(void)
   tabla_residente_y_len[BDD_OPERDB] = 256;
   tabla_residente_y_len[BDD_CHANDB] = 256;
   tabla_residente_y_len[BDD_BOTSDB] = 256;
-  tabla_residente_y_len[BDD_IPVIRTUALDB] = 256;
-  tabla_residente_y_len[BDD_IPVIRTUAL2DB] = 256;
+  tabla_residente_y_len[BDD_IPVIRTUALDB] = 4096;
+  tabla_residente_y_len[BDD_IPVIRTUAL_OLD] = 256;
   tabla_residente_y_len[BDD_CONFIGDB] = 256;
 
   cache = mmap_cache();
@@ -2120,11 +2106,6 @@ void initdb(void)
       {
         crea_canal_persistente(reg->clave, reg->valor, 1);
       }
-    }
-
-    if (db_buscar_registro(BDD_CONFIGDB, BDD_OCULTAR_IP_CIFRADA_EN_LA_VIRTUAL2))
-    {
-      ocultar_ip_cifrada_en_la_virtual2 = !0;
     }
     if ((reg =
         db_buscar_registro(BDD_CONFIGDB,

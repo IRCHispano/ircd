@@ -1,3 +1,9 @@
+* 2008/08/06 zoltan@irc-dev.net      (u2.10.H.10.52)              CLEANUP
+-------------------------------------------------------------------------
+  Se elimina el soporte de tabla w ya que se deja de usar en IRC-Hispano.
+  Se optimiza el codigo de vhosts y se aumenta de 256 a 4096 las tablas
+  hash para la tabla v.
+
 * 2008/08/06 zoltan@irc-dev.net      (u2.10.H.10.51)              CLEANUP
 -------------------------------------------------------------------------
   Se deshace el parche u2.10.H.05.34 de NiKoLaS de bans con caracteres

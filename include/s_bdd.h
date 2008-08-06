@@ -31,7 +31,7 @@
 #define BDD_CHANDB        'c'
 #define BDD_BOTSDB        'b'
 #define BDD_IPVIRTUALDB   'v'
-#define BDD_IPVIRTUAL2DB  'w'
+#define BDD_IPVIRTUAL_OLD 'w'
 #define BDD_CHANDB_OLD    'z'
 #define BDD_CONFIGDB      'z'
 
@@ -42,7 +42,6 @@
 #define BDD_MENSAJE_DE_DEMASIADOS_CLONES	"mensaje.de.demasiados.clones"
 #define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA	"mensaje.de.capacidad.superada"
 #define BDD_CLAVE_DE_CIFRADO_DE_IPS		"clave.de.cifrado.de.ips"
-#define BDD_OCULTAR_IP_CIFRADA_EN_LA_VIRTUAL2	"ocultar.ip.cifrada.en.la.virtual2"
 #define BDD_OCULTAR_SERVIDORES			"ocultar.servidores"
 #define BDD_SERVER_NAME				"servidor.oculto"
 #define BDD_SERVER_INFO				"servidor.info.oculto"
@@ -80,7 +79,6 @@ void db_persistent_commit(void);
 
 int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 
-extern int ocultar_ip_cifrada_en_la_virtual2;
 extern int numero_maximo_de_clones_por_defecto;
 extern char *clave_de_cifrado_de_ips;
 extern unsigned int clave_de_cifrado_binaria[2];

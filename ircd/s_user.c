@@ -2598,8 +2598,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(BDD_VIP) && !defined(BDD_VIP2)
     if (MyConnect(sptr))
     {
-      if (!db_buscar_registro(BDD_IPVIRTUAL2DB, sptr->name)
-          && !db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
+      if (!db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
       {
         ClearHidden(sptr);
       }
@@ -2624,8 +2623,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(BDD_VIP) && !defined(BDD_VIP2)
     if (MyConnect(sptr))
     {
-      if (!db_buscar_registro(BDD_IPVIRTUAL2DB, sptr->name)
-          && !db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
+      if (!db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
       {
         ClearHidden(sptr);
       }
@@ -3252,12 +3250,10 @@ char *get_visiblehost(aClient *sptr, aClient *acptr)
 void make_virtualhost(aClient *acptr, int mostrar)
 {
   struct db_reg *reg = NULL;
-  enum { NO, TABLA_BDD_IPVIRTUALDB,
-    TABLA_BDD_IPVIRTUAL2DB
-  } encontramos_nueva_ip_virtual_personalizada = NO;
   unsigned int v[2], x[2];
   int ts = 0;
   char ip_virtual_temporal[HOSTLEN + 1];
+  int encontramos_nueva_ip_virtual_personalizada = 0;
 
   assert(!mostrar || MyUser(acptr));
 
@@ -3269,11 +3265,7 @@ void make_virtualhost(aClient *acptr, int mostrar)
   {
     if ((reg = db_buscar_registro(BDD_IPVIRTUALDB, acptr->name)))
     {
-      encontramos_nueva_ip_virtual_personalizada = TABLA_BDD_IPVIRTUALDB;
-    }
-    else if ((reg = db_buscar_registro(BDD_IPVIRTUAL2DB, acptr->name)))
-    {
-      encontramos_nueva_ip_virtual_personalizada = TABLA_BDD_IPVIRTUAL2DB;
+      encontramos_nueva_ip_virtual_personalizada = !0;
     }
   }
 
@@ -3281,7 +3273,7 @@ void make_virtualhost(aClient *acptr, int mostrar)
 ** Si tenia una IP personalizada, hay que recalcularla. Si era
 ** la IP virtual generica (la IP cifrada), no hace falta recalcular.
 */
-  if ((encontramos_nueva_ip_virtual_personalizada == NO)
+  if ((!encontramos_nueva_ip_virtual_personalizada)
       && (acptr->user->virtualhost != NULL)
       && !TieneIpVirtualPersonalizada(acptr))
   {
@@ -3290,7 +3282,7 @@ void make_virtualhost(aClient *acptr, int mostrar)
 
   /* Busco dirección virtual fija para este nick */
   /* Si esta suspendido, no hay vhost personalizado */
-  if (encontramos_nueva_ip_virtual_personalizada == TABLA_BDD_IPVIRTUALDB)
+  if (encontramos_nueva_ip_virtual_personalizada)
   {
     SlabStringAllocDup(&(acptr->user->virtualhost), reg->valor, HOSTLEN);
     SetIpVirtualPersonalizada(acptr);
@@ -3346,52 +3338,12 @@ void make_virtualhost(aClient *acptr, int mostrar)
     }
   }
 
-  /* Busco dirección virtual fija para este nick */
-  /* Si esta suspendido, no hay vhost personalizado */
-  if (encontramos_nueva_ip_virtual_personalizada == TABLA_BDD_IPVIRTUAL2DB)
-  {
-    assert(strlen(reg->valor) < (HOSTLEN - 24));
-
-/*
-** A partir de u2.10.H.06.06 no se incluye la IP cifrada
-** en los usuarios con IP Virtual personalizada porque
-** ello incrementa su "sex appeal" cara a los usuarios.
-** El perder esa informacion queda compensado con el
-** hecho de que las entradas de los usuarios +r quedan
-** registradas en los bots, incluyendo sus IPs.
-** No me acaba de gustar, pero es una peticion de Sisco.
-** 09/Oct/02 - jcea@argo.es
-*/
-
-/*
-** 04/Sep/03 - jcea@argo.es
-** A partir de u2.10.H.07.52, la eleccion la determina 
-** un registro en la BDD. Hacemos cache de dicho
-** registro en una variable por una cuestion de rendimiento.
-*/
-
-    if (ocultar_ip_cifrada_en_la_virtual2)
-    {
-      strcpy(ip_virtual_temporal, reg->valor);
-      strcat(ip_virtual_temporal, ".virtual");
-    }
-    else
-    {
-      *(ip_virtual_temporal + 13) = '.';
-      strcpy(ip_virtual_temporal + 14, reg->valor);
-      strcat(ip_virtual_temporal + 14, ".virtual");
-    }
-    SetIpVirtualPersonalizada(acptr);
-  }
-  else
-  {
 #if defined(BDD_VIP3)
-    if (MyConnect(acptr))
-    {
-      strcpy(ip_virtual_temporal, PunteroACadena(acptr->user->host));
-    }
-#endif
+  if (MyConnect(acptr))
+  {
+    strcpy(ip_virtual_temporal, PunteroACadena(acptr->user->host));
   }
+#endif
   SlabStringAllocDup(&(acptr->user->virtualhost), ip_virtual_temporal, HOSTLEN);
 
   if (mostrar)
@@ -3485,8 +3437,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 #if !defined(BDD_VIP2)
       if (MyConnect(sptr))
       {
-        if (!db_buscar_registro(BDD_IPVIRTUAL2DB, sptr->name)
-            && !db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
+        if (!db_buscar_registro(BDD_IPVIRTUAL2DB, sptr->name))
         {
           ClearHidden(sptr);
         }
@@ -3589,10 +3540,6 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       if (IsNickSuspended(sptr))
       {
         ClearHidden(sptr);
-      }
-      else if (db_buscar_registro(BDD_IPVIRTUAL2DB, sptr->name))
-      {                         /* Ponemos este primero porque es mas frecuente */
-        SetHidden(sptr);
       }
       else if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
       {
@@ -4779,10 +4726,6 @@ nickkilldone:
     {
       ClearHidden(sptr);
     }
-    else if (db_buscar_registro(BDD_IPVIRTUAL2DB, sptr->name))
-    {                           /* Ponemos este primero porque es mas frecuente */
-      SetHidden(sptr);          /* Tiene una ip virtual personalizada */
-    }
     else if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
     {
       SetHidden(sptr);          /* Tiene una ip virtual personalizada */
@@ -4827,10 +4770,6 @@ nickkilldone:
       if (nick_suspendido)
       {
         ClearHidden(sptr);
-      }
-      else if (db_buscar_registro(BDD_IPVIRTUAL2DB, sptr->name))
-      {                         /* Ponemos este primero porque es mas frecuente */
-        SetHidden(sptr);
       }
       else if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
       {
@@ -5427,10 +5366,9 @@ nickkilldone:
   {
     /* Para nicks remotos, no enviamos el */
     /* WATCH para nicks en las tablas 'v' */
-    /* o 'v' y lo marcamos para enviarlo  */
+    /* y lo marcamos para enviarlo        */
     /* despues desde m_umode              */
-    if (!db_buscar_registro(BDD_IPVIRTUALDB, sptr->name) &&
-        !db_buscar_registro(BDD_IPVIRTUAL2DB, sptr->name))
+    if (!db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
     {
       chequea_estado_watch(sptr, RPL_LOGON, NULL, NULL);
     }
