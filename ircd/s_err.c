@@ -128,7 +128,7 @@ static Numeric numeric_errors[] = {
 /* 419 */
     {0, (char *)NULL},
 /* 420 */
-    {ERR_INVALIDBANMASK, "%s :Invalid ban mask: %s"},
+    {0, (char *)NULL},
 /* 421 */
     {ERR_UNKNOWNCOMMAND, "%s :Unknown command - Comando desconocido"},
 /* 422 */

@@ -1,3 +1,8 @@
+* 2008/08/06 zoltan@irc-dev.net      (u2.10.H.10.51)              CLEANUP
+-------------------------------------------------------------------------
+  Se deshace el parche u2.10.H.05.34 de NiKoLaS de bans con caracteres
+  invalidos.
+
 * 2008/08/03 zoltan@irc-dev.net      (u2.10.H.10.50)                  FIX
 -------------------------------------------------------------------------
   Fix del parche u2.10.H.10.48.

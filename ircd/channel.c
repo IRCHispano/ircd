@@ -1498,22 +1498,6 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
           break;
         if (whatt == MODE_ADD)
         {
-          invalid_banmask = 0;
-          for (p = *parv; *p; p++)
-          {
-            if (*p < 32)
-            {
-              sendto_one(cptr, err_str(ERR_INVALIDBANMASK), me.name,
-                  cptr->name, chptr->chname, *parv);
-              invalid_banmask = 1;
-              break;
-            }
-          }
-          if (invalid_banmask)
-          {
-            invalid_banmask = 0;
-            break;
-          }
           lp = &chops[opcnt++];
           lp->value.cp = *parv;
           lp->flags = MODE_ADD | MODE_BAN;

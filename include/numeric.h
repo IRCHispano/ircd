@@ -77,7 +77,6 @@
 #define ERR_INPUTTOOLONG     417
 /*      ERR_LENGTHTRUNCATED  419          Aircd */
 
-#define ERR_INVALIDBANMASK   420  /* Hispano extension */
 #define ERR_UNKNOWNCOMMAND   421
 #define ERR_NOMOTD	     422
 #define ERR_NOADMININFO	     423
