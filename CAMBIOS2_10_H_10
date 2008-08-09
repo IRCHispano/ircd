@@ -1,3 +1,10 @@
+* 2008/07/09 zoltan@irc-dev.net      (u2.10.H.10.54)              FEATURE
+-------------------------------------------------------------------------
+  Burst de TOPIC como en los modernos IRCU de Undernet.
+  Se ha ampliado el comando TOPIC en P10 para mandar los TS de creacion
+  del canal y del topic para que en un burst solo se acepte el topic mas
+  reciente en un canal igual o mas viejo.
+
 * 2008/08/09 zoltan@irc-dev.net      (u2.10.H.10.53)                  FIX
 -------------------------------------------------------------------------
   Fix del parche de mount de rename_user que no se ajustaba localmente

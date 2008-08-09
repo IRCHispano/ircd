@@ -838,6 +838,10 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
     }                           /* Continue when there was something
                                    that didn't fit (full==1) */
   }
+  /* Burst de TOPIC */
+  if (chptr->topic)
+    sendto_one(cptr, "%s " TOK_TOPIC " %s " TIME_T_FMT " " TIME_T_FMT " :%s",
+                     NumServ(&me), chptr->chname, chptr->creationtime, chptr->topic_time, chptr->topic);
 }
 
 /*
@@ -5544,14 +5548,17 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
  *
  * parv[0]        = sender prefix
  * parv[1]        = channel
- * parv[parc - 1] = topic (if parc > 2)
+ * parv[2]        = channel creation timestamp (optional)
+ * parv[3]        = topic's timestap (optional)
+ * parv[parc - 1] = topic
  */
 int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   aChannel *chptr;
   char *topic = NULL, *name, *p = NULL;
   int b = 0;
-
+  time_t ts = 0;
+  
   if (parc < 2)
   {
     sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "TOPIC");
@@ -5565,7 +5572,7 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     chptr = NULL;
     if (!IsChannelName(name) || !(chptr = FindChannel(name)) ||
-        (!IsServicesBot(sptr) && ((topic || SecretChannel(chptr))
+        (!(IsServicesBot(sptr) || IsServer(sptr)) && ((topic || SecretChannel(chptr))
         && !IsMember(sptr, chptr))))
     {
       sendto_one(sptr, err_str(chptr ? ERR_NOTONCHANNEL : ERR_NOSUCHCHANNEL),
@@ -5580,6 +5587,17 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     if (IsLocalChannel(name) && !MyUser(sptr))
       continue;
+      
+    /* If existing channel is older or has newer topic, ignore */
+    if (IsServer(sptr))
+    {
+      if (parc > 3 && (ts = atoi(parv[2])) && chptr->creationtime < ts)
+         continue;
+              
+      if (parc > 4 && (ts = atoi(parv[3])) && chptr->topic_time > ts)
+         continue;
+    }
+                              
 
     if (!topic)                 /* only asking  for topic  */
     {
@@ -5596,12 +5614,19 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     else if ((((chptr->mode.mode & MODE_TOPICLIMIT) == 0 &&
         !(b = is_banned(sptr, chptr, NULL))) || is_chan_op(sptr, chptr)
-        || IsServicesBot(sptr)) && topic)
+        || IsServicesBot(sptr) || IsServer(sptr)) && topic)
     {
+      aClient *from;
+      
       /* setting a topic */
       {
         int len, len2;
 
+        if (ocultar_servidores && IsServer(sptr))
+          from = &his;
+        else
+          from = sptr;
+          
         len = strlen(topic);
         if (len > TOPICLEN)
         {
@@ -5609,7 +5634,7 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
           topic[len] = '\0';
         }
 
-        len2 = len + strlen(sptr->name) + 2;  /* El +2 es por los dos '\0' */
+        len2 = len + strlen(from->name) + 2;  /* El +2 es por los dos '\0' */
         if (chptr->topic)
         {
           if (chptr->topic_nick + strlen(chptr->topic_nick) + 1 - chptr->topic <
@@ -5628,21 +5653,21 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
         strcpy(chptr->topic, topic);
         chptr->topic_nick = chptr->topic + len + 1; /* Ponemos el nick justo a continuacion */
-        strcpy(chptr->topic_nick, sptr->name);
+        strcpy(chptr->topic_nick, from->name);
       }
-      chptr->topic_time = now;
+      chptr->topic_time = ts ? ts : now;
       if (!IsLocalChannel(name))
       {
         sendto_lowprot_butone(cptr, 9, ":%s TOPIC %s :%s",
             parv[0], chptr->chname, chptr->topic);
         if (IsUser(sptr))
-          sendto_highprot_butone(cptr, 10, "%s%s " TOK_TOPIC " %s :%s",
-              NumNick(sptr), chptr->chname, chptr->topic);
+          sendto_highprot_butone(cptr, 10, "%s%s " TOK_TOPIC " %s %lu %lu :%s",
+              NumNick(sptr), chptr->chname, chptr->creationtime, chptr->topic_time, chptr->topic);
         else
-          sendto_highprot_butone(cptr, 10, "%s " TOK_TOPIC " %s :%s",
-              NumServ(sptr), chptr->chname, chptr->topic);
+          sendto_highprot_butone(cptr, 10, "%s " TOK_TOPIC " %s %lu %lu :%s",
+              NumServ(sptr), chptr->chname, chptr->creationtime, chptr->topic_time, chptr->topic);
       }
-      sendto_channel_butserv(chptr, sptr, ":%s TOPIC %s :%s",
+      sendto_channel_butserv(chptr, from, ":%s TOPIC %s :%s",
           parv[0], chptr->chname, chptr->topic);
     }
     else
