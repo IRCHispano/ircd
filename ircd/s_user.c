@@ -3435,13 +3435,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 
 #if defined(BDD_VIP)
 #if !defined(BDD_VIP2)
-      if (MyConnect(sptr))
-      {
-        if (!db_buscar_registro(BDD_IPVIRTUAL2DB, sptr->name))
-        {
-          ClearHidden(sptr);
-        }
-      }
+      ClearHidden(sptr);
 #endif
 #endif
       if (!IsAnOper(sptr))
@@ -3485,13 +3479,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 
 #if defined(BDD_VIP)
   BorraIpVirtual(sptr);
-
-  /* 23-Oct-2003: mount@irc-dev.net
-   *
-   * Regeneramos la "IP Virtual" del usuario
-   */
-  make_virtualhost(sptr, 1);
-#endif
+#endif 
 
 /* 23-Oct-2003: mount@irc-dev.net
  *
@@ -3550,6 +3538,18 @@ void rename_user(aClient *sptr, char *nick_nuevo)
         ClearHidden(sptr);
       }
 #endif
+
+/* Al cambiar de nick a otro se
+** regenera la ip virtual SIEMPRE.
+*/
+      if (IsHidden(sptr))
+      {
+        make_virtualhost(sptr, 1);
+      }
+      else
+      {
+        BorraIpVirtual(sptr);
+      }                                                      
 #endif
 
       if (db_buscar_registro(BDD_OPERDB, sptr->name) && !IsNickSuspended(sptr))

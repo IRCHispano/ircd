@@ -1,3 +1,8 @@
+* 2008/08/09 zoltan@irc-dev.net      (u2.10.H.10.53)                  FIX
+-------------------------------------------------------------------------
+  Fix del parche de mount de rename_user que no se ajustaba localmente
+  un vhost si lo tiene personalizado al hacer un rename.
+  
 * 2008/08/06 zoltan@irc-dev.net      (u2.10.H.10.52)              CLEANUP
 -------------------------------------------------------------------------
   Se elimina el soporte de tabla w ya que se deja de usar en IRC-Hispano.
