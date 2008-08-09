@@ -5668,7 +5668,7 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
               NumServ(sptr), chptr->chname, chptr->creationtime, chptr->topic_time, chptr->topic);
       }
       sendto_channel_butserv(chptr, from, ":%s TOPIC %s :%s",
-          parv[0], chptr->chname, chptr->topic);
+          from->name, chptr->chname, chptr->topic);
     }
     else
     {
