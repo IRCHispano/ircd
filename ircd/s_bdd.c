@@ -78,6 +78,7 @@ unsigned int clave_de_cifrado_binaria[2];
 int ocultar_servidores = 0;
 int activar_modos = 0;
 int activar_ident = 0;
+int auto_invisible = 0;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -568,6 +569,10 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               SlabStringAllocDup(&(his.info), SERVER_INFO, REALLEN);
             }
+            else if (!strcmp(c, BDD_AUTOINVISIBLE))
+            {
+              auto_invisible = 0;
+            }
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -792,6 +797,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         SlabStringAllocDup(&(his.info), v, REALLEN);
       }
+      else if (!strcmp(c, BDD_AUTOINVISIBLE))
+      {
+        auto_invisible = !0;
+      } 
       break;
 
     case BDD_IPVIRTUALDB:

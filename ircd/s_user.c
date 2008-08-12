@@ -4738,6 +4738,10 @@ nickkilldone:
     SetHidden(sptr);            /* lo oculto */
 #endif /* !defined(BDD_VIP2) */
 #endif /* defined(BDD_VIP) */
+
+   if (auto_invisible)
+     SetInvisible(sptr);
+     
     send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));
   }
 
