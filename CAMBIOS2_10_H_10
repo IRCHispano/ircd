@@ -1,4 +1,8 @@
-* 2008/07/09 zoltan@irc-dev.net      (u2.10.H.10.54)              FEATURE
+* 2008/08/12 zoltan@irc-dev.net      (u2.10.H.10.55)                  FIX
+-------------------------------------------------------------------------
+  Fix para compilar sin problemas en Solaris 10.
+  
+* 2008/08/09 zoltan@irc-dev.net      (u2.10.H.10.54)              FEATURE
 -------------------------------------------------------------------------
   Burst de TOPIC como en los modernos IRCU de Undernet.
   Se ha ampliado el comando TOPIC en P10 para mandar los TS de creacion
