@@ -343,7 +343,7 @@ int IPcheck_local_connect(aClient *cptr)
     }
 #endif
 #if !defined(DEBUGMODE)
-    if (now - me.serv->boot_timestamp > IPCHECK_CLONE_DELAY)
+    if (now - me.since > IPCHECK_CLONE_DELAY)
       /* Don't refuse connection when we just rebooted the server */
 #endif
       return -1;                /* Throttle */
