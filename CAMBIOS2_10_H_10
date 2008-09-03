@@ -1,3 +1,7 @@
+* 2008/09/03 zoltan@irc-dev.net      (u2.10.H.10.58)              CLEANUP
+-------------------------------------------------------------------------
+  Para normalizar, los registros de Uworld los muevo a la tabla u.
+
 * 2008/08/12 zoltan@irc-dev.net      (u2.10.H.10.57)              FEATURE
 -------------------------------------------------------------------------
   Soporte de AUTO +i al conectar. Activable mediante tabla z, registro

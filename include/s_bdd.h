@@ -30,6 +30,7 @@
 #define BDD_OPERDB        'o'
 #define BDD_CHANDB        'c'
 #define BDD_BOTSDB        'b'
+#define BDD_UWORLDDB      'u'
 #define BDD_IPVIRTUALDB   'v'
 #define BDD_IPVIRTUAL_OLD 'w'
 #define BDD_CHANDB_OLD    'z'

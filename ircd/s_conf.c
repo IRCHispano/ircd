@@ -542,12 +542,8 @@ aConfItem *find_conf(Link *lp, const char *name, int statmask)
 
 int buscar_uline(Link *lp, char *host)
 {
-  char tmp_host[HOSTLEN + 10];
 
-  strcpy(tmp_host, "u:");
-  strcpy(tmp_host + 2, host);
-
-  if (db_buscar_registro(BDD_CONFIGDB, tmp_host))
+  if (db_buscar_registro(BDD_UWORLDDB, host))
     return 1;
 
   if (find_conf_host(lp, host, CONF_UWORLD))

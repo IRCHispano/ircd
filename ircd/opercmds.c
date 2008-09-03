@@ -760,21 +760,11 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       {
         struct db_reg *reg;
 
-        /* Solo ircops y opers tienen acceso */
-        if (!IsAnOper(sptr) && !IsHelpOp(sptr))
-        {
-          sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
-          return 0;
-        }
-
-        for (reg = db_iterador_init(BDD_CONFIGDB); reg;
+        for (reg = db_iterador_init(BDD_UWORLDDB); reg;
             reg = db_iterador_next())
         {
-          if (!strncasecmp(reg->clave, "u:", 2))
-          {
-            sendto_one(sptr, rpl_str(RPL_STATSULINE), me.name, sptr->name, 'U',
-                reg->clave + 2, "<NULL>", "(Base de Datos Distribuida)", 0, -1);
-          }
+          sendto_one(sptr, rpl_str(RPL_STATSULINE), me.name, sptr->name, 'U',
+              reg->clave, "<NULL>", "(Base de Datos Distribuida)", 0, -1);
         }
       }
       break;
