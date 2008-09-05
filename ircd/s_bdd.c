@@ -2083,7 +2083,9 @@ void initdb(void)
   tabla_residente_y_len[BDD_OPERDB] = 256;
   tabla_residente_y_len[BDD_CHANDB] = 256;
   tabla_residente_y_len[BDD_BOTSDB] = 256;
+  tabla_residente_y_len[BDD_FEATURESDB] = 256;
   tabla_residente_y_len[BDD_JUPEDB] = 512;
+  tabla_residente_y_len[BDD_PRIVDB] = 256;
   tabla_residente_y_len[BDD_UWORLDDB] = 256;
   tabla_residente_y_len[BDD_IPVIRTUALDB] = 4096;
   tabla_residente_y_len[BDD_IPVIRTUAL_OLD] = 256;

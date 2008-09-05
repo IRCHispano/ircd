@@ -27,15 +27,17 @@
 #define ESNET_NICKDB      'n'
 #define ESNET_CLONESDB    'i'
 
-#define BDD_OPERDB        'o'
-#define BDD_CHANDB        'c'
 #define BDD_BOTSDB        'b'
+#define BDD_CHANDB        'c'
+#define BDD_FEATURESDB    'f'
 #define BDD_JUPEDB        'j'
+#define BDD_OPERDB        'o'
+#define BDD_PRIVDB        'p'
 #define BDD_UWORLDDB      'u'
 #define BDD_IPVIRTUALDB   'v'
 #define BDD_IPVIRTUAL_OLD 'w'
-#define BDD_CHANDB_OLD    'z'
 #define BDD_CONFIGDB      'z'
+#define BDD_CHANDB_OLD    'z'
 
 /*
 ** Registros de configuracion en la tabla 'z'
