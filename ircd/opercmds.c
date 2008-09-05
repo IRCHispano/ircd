@@ -1340,7 +1340,7 @@ int m_rpong(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 /*
  * m_rehash
  */
-int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
+static int m_rehash_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
 #if !defined(LOCOP_REHASH)
   if (!MyUser(sptr) || !IsOper(sptr))
@@ -1365,11 +1365,69 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 #endif
 
+static int m_rehash_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  int flag = 0;
+  const char *target;
+
+  if (parc < 2)
+  {
+    sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], 
+        "REHASH");
+    return 0;
+  }
+          
+  target = parv[1];
+            
+  /* is it a message we should pay attention to? */
+  if (target[0] != '*' || target[1] != '\0')
+  {
+    if (hunt_server(1, cptr, sptr, MSG_REHASH, TOK_REHASH, parc > 2 ?
+           "%s %s" : "%s", 1, parc, parv) != HUNTED_ISME)  
+      return 0;
+  } else if (parc > 2) /* must forward the message with flags */
+     sendto_highprot_butone(cptr, 10, "%s " TOK_REHASH " * %s", 
+         NumServ(sptr), parv[2]);
+  else /* just have to forward the message */
+     sendto_highprot_butone(cptr, 10, "%s " TOK_REHASH " *", 
+         NumServ(sptr));
+      
+  /* OK, the message has been forwarded, but before we can act... */
+  /*
+  if (!feature_bool(FEAT_NETWORK_REHASH))
+    return 0;
+  */
+
+  if (parc > 2) { /* special processing */
+    if (*parv[2] == 'q')
+      flag = 2;
+  }  
+                                     
+  sendto_ops("%s is rehashing Server config file", sptr->name);
+#if defined(USE_SYSLOG)
+  syslog(LOG_INFO, "REHASH From %s\n", get_client_name(sptr, FALSE));
+#endif
+  return rehash(cptr, flag);
+
+}
+
+int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  if (MyUser(sptr))
+#if defined(OPER_REHASH) || defined(LOCOP_REHASH)
+    return m_rehash_local(cptr, sptr, parc, parv);
+#else
+    return 0;
+#endif
+  else
+    return m_rehash_remoto(cptr, sptr, parc, parv);
+}             
+
 #if defined(OPER_RESTART) || defined(LOCOP_RESTART)
 /*
  * m_restart
  */
-int m_restart(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc),
+static int m_restart_local(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc),
     char *parv[])
 {
 #if !defined(LOCOP_RESTART)
@@ -1391,8 +1449,58 @@ int m_restart(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc),
   server_reboot();
   return 0;
 }
-
 #endif
+
+static int m_restart_remoto(aClient *cptr, aClient *sptr, int parc,
+    char *parv[])
+{
+  const char *target, *when, *reason;
+  
+  if (parc < 4)
+  {
+    sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "RESTART");
+    return 0;
+  }
+        
+  target = parv[1];
+  when = parv[2];
+  reason = parv[parc - 1];
+              
+  /* is it a message we should pay attention to? */
+  if (target[0] != '*' || target[1] != '\0')
+  {
+    if (hunt_server(1, cptr, sptr, MSG_RESTART, TOK_RESTART, "%s %s :%s", 1, parc, parv) !=
+            HUNTED_ISME)
+      return 0;
+  } else /* must forward the message */
+    sendto_highprot_butone(cptr, 10, "%s " TOK_RESTART " * %s :%s", 
+        NumServ(sptr), when, reason);  
+                                      
+  /* OK, the message has been forwarded, but before we can act... */
+/*  
+  if (!feature_bool(FEAT_NETWORK_RESTART))
+    return 0;
+*/    
+
+#if defined(USE_SYSLOG)
+  syslog(LOG_WARNING, "Server RESTART by %s: %s\n", get_client_name(sptr, FALSE), reason);
+#endif
+  server_reboot();
+  return 0;                                                            
+
+}
+
+int m_restart(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  if (MyUser(sptr))
+#if defined(OPER_RESTART) || defined(LOCOP_RESTART)  
+    return m_restart_local(cptr, sptr, parc, parv);
+#else
+    return 0;
+#endif    
+  else
+    return m_restart_remoto(cptr, sptr, parc, parv);
+}
 
 /*
  * m_trace
@@ -1679,7 +1787,7 @@ int m_close(aClient *cptr, aClient *sptr, int UNUSED(parc), char *parv[])
 /*
  * m_die
  */
-int m_die(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), char *parv[])
+static int m_die_local(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), char *parv[])
 {
   Reg1 aClient *acptr;
   Reg2 int i;
@@ -1723,8 +1831,77 @@ int m_die(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), char *parv[])
 #endif
   return 0;
 }
-
 #endif
+
+static int m_die_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  Reg1 aClient *acptr;
+  Reg2 int i;
+  const char *target, *when, *reason;
+  
+  if (parc < 4)
+  {
+    sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "DIE");
+    return 0;
+  }  
+        
+  target = parv[1];
+  when = parv[2];
+  reason = parv[parc - 1];
+              
+  /* is it a message we should pay attention to? */
+  if (target[0] != '*' || target[1] != '\0')
+  {
+    if (hunt_server(1, cptr, sptr, MSG_DIE, TOK_DIE, "%s %s :%s", 1, parc, parv) !=
+                HUNTED_ISME)  
+      return 0;
+  } else /* must forward the message */
+      sendto_highprot_butone(cptr, 10, "%s " TOK_DIE " * %s :%s", 
+          NumServ(sptr), when, reason);
+                                      
+  /* OK, the message has been forwarded, but before we can act... */
+  /*
+  if (!feature_bool(FEAT_NETWORK_DIE))
+    return 0;
+    */
+  
+  for (i = 0; i <= highest_fd; i++)
+  {
+    if (!(acptr = loc_clients[i]))
+      continue;
+    if (IsUser(acptr))
+      sendto_one(acptr, ":%s NOTICE %s :Server Terminating. %s: %s",
+          me.name, PunteroACadena(acptr->name), get_client_name(sptr, FALSE), reason);
+    else if (IsServer(acptr))
+      sendto_one(acptr, ":%s ERROR :Terminated by %s: %s",
+          me.name, get_client_name(sptr, FALSE), reason);
+  }
+                                                        
+  flush_connections(me.fd);
+                                             
+#if defined(BDD_MMAP)
+  db_persistent_commit();
+#endif
+                                                            
+#if defined(__cplusplus)
+  s_die(0);
+#else
+  s_die();
+#endif
+  return 0;        
+}
+
+int m_die(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  if (MyUser(sptr))
+#if defined(OPER_DIE) || defined(LOCOP_DIE)  
+    return m_die_local(cptr, sptr, parc, parv);
+#else
+    return 0;
+#endif        
+  else
+    return m_die_remoto(cptr, sptr, parc, parv);
+}
 
 static void add_gline(aClient *sptr, int ip_mask, char *host, char *comment,
     char *user, time_t expire, int local)

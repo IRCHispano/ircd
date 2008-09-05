@@ -117,16 +117,9 @@ aMessage msgtab[] = {
     {CLASS_END_OF_BURST_ACK, MSG_END_OF_BURST_ACK, TOK_END_OF_BURST_ACK, m_end_of_burst_ack, 0, MAXPARA, 1, 0L},
     {CLASS_HASH,	MSG_HASH,	TOK_HASH,	m_hash,		0, MAXPARA,	MFLG_SLOW|MFLG_UNREG,	0L},
     {CLASS_DNS,		MSG_DNS,	TOK_DNS,	m_dns,		0, MAXPARA,	MFLG_SLOW,	0L},
-#if defined(OPER_REHASH) || defined(LOCOP_REHASH)
     {CLASS_REHASH,	MSG_REHASH,	TOK_REHASH,	m_rehash,	0, MAXPARA,	MFLG_SLOW,	0L},
-#endif
-#if defined(OPER_RESTART) || defined(LOCOP_RESTART)
     {CLASS_RESTART,	MSG_RESTART,	TOK_RESTART,	m_restart,	0, MAXPARA,	MFLG_SLOW,	0L},
-#endif
-#if defined(OPER_DIE) || defined(LOCOP_DIE)
     {CLASS_DIE,		MSG_DIE,	TOK_DIE,	m_die,		0, MAXPARA,	MFLG_SLOW,	0L},
-#endif
-
     {CLASS_DB,          MSG_DB,         TOK_DB,         m_db,           0, MAXPARA,     MFLG_SLOW,      0L},
     {CLASS_DBQ,         MSG_DBQ,        TOK_DBQ,        m_dbq,          0, MAXPARA,     MFLG_SLOW,      0L},
     {CLASS_BMODE,       MSG_BMODE,      TOK_BMODE,      m_botmode,      0, MAXPARA,     MFLG_SLOW,      0L},

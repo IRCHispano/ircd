@@ -1,3 +1,16 @@
+* 2008/09/05 zoltan@irc-dev.net      (u2.10.H.10.61)              FEATURE
+------------------------------------------------------------------------
+  Soporte de REHASH, RESTART y DIE remotos en P10 usando los mismos
+  parametros que el ircu de undernet.
+  
+  <Num> RH <target> [q opcional]
+  <Num> RS <target> <tiempo> :<motivo> 
+  <Num> DI <target> <tiempo> :<motivo>
+  
+  En tiempo se ignora debido a que el ircd no soporta restart/die diferido
+  pero se mantiene por compatibilidad para una red mixta ircd actual con
+  ircd futuro.
+  
 * 2008/09/05 zoltan@irc-dev.net      (u2.10.H.10.60)              FEATURE
 -------------------------------------------------------------------------
   Para la transicion al nuevo ircd, doy de alta 2 tablas para residir en

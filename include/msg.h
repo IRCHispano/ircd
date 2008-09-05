@@ -290,11 +290,11 @@
 #define CLASS_SERVSET		LEVEL_CLIENT
 
 #define MSG_REHASH		"REHASH"	/* REHA */
-#define TOK_REHASH		"REHASH"
+#define TOK_REHASH		"RH"
 #define CLASS_REHASH		LEVEL_MAP
 
 #define MSG_RESTART		"RESTART"	/* REST */
-#define TOK_RESTART		"RESTART"
+#define TOK_RESTART		"RS"
 #define CLASS_RESTART		LEVEL_MAP
 
 #define MSG_CLOSE		"CLOSE"		/* CLOS */
@@ -302,7 +302,7 @@
 #define CLASS_CLOSE		LEVEL_CLIENT
 
 #define MSG_DIE			"DIE"		/* DIE	*/
-#define TOK_DIE			"DIE"
+#define TOK_DIE			"DI"
 #define CLASS_DIE		LEVEL_MAP
 
 #define MSG_HASH		"HASH"		/* HASH */
