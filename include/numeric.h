@@ -345,6 +345,7 @@
 /*      RPL_STATSBLINE       220          Dalnet extension */
 #define RPL_UMODEIS	     221
 /*     RPL_SQLINE_NICK      222           Dalnet extension */
+#define RPL_STATSJLINE      222   /* Undernet extension */
 /*     RPL_STATSELINE       223           Dalnet extension */
 /*     RPL_STATSGLINE       223           Unreal */
 #define RPL_STATSELINE      223 /* EFNet extension. ELINES */

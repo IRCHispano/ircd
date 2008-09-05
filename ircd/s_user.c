@@ -3846,7 +3846,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
  */
 int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  struct db_reg *reg;
+  struct db_reg *reg, *regj;
   char hflag = '-';
   int clave_ok = 0;             /* Clave correcta */
   int hacer_ghost = 0;          /* Ha especificado nick! */
@@ -3991,6 +3991,15 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 
 #endif
+
+  regj = db_buscar_registro(BDD_JUPEDB, nick);
+  if (regj)
+  {
+    sendto_one(cptr, ":%s %d %s %s :Nickname is juped - El nick está jupeado: %s", me.name, ERR_NICKNAMEINUSE,
+        BadPtr(parv[0]) ? "*" : parv[0], nick, regj->valor);
+    return 0;
+  }
+            
 
   /*
    * Check against nick name collisions.

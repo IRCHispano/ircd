@@ -831,6 +831,24 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
       }
       break;
+    case 'J':
+    case 'j':
+      /* Solo ircops y opers tienen acceso */
+      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
+      {
+        struct db_reg *reg;
+             
+        for (reg = db_iterador_init(BDD_JUPEDB); reg;
+             reg = db_iterador_next())
+        {
+          sendto_one(sptr, rpl_str(RPL_STATSJLINE), me.name, sptr->name, reg->clave, reg->valor);
+        }
+      }                                                  
+      break;
     default:
       stat = '*';
       break;

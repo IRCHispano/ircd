@@ -597,7 +597,7 @@ static Numeric numeric_replies[] = {
 /* 221 */
     {RPL_UMODEIS, "%s"},
 /* 222 */
-    {0, (char *)NULL},
+    {RPL_STATSJLINE, "J %s :%s"},
 /* 223 */
     {RPL_STATSELINE, "%c %s * %s %d %d"},
 /* 224 */
