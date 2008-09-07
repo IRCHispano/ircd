@@ -1,4 +1,8 @@
-* 2008/09/05 zoltan@irc-dev.net      (u2.10.H.10.61)              FEATURE
+* 2008/09/08 zoltan@irc-dev.net      (u2.10.H.10.62)             FEATURE
+------------------------------------------------------------------------
+  Jupe de servidores via BDD de forma analoga al parche u2.10.H.10.59.
+  
+* 2008/09/05 zoltan@irc-dev.net      (u2.10.H.10.61)             FEATURE
 ------------------------------------------------------------------------
   Soporte de REHASH, RESTART y DIE remotos en P10 usando los mismos
   parametros que el ircu de undernet.

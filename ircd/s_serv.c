@@ -155,6 +155,14 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return exit_client(cptr, cptr, &me, "Need more parameters");
   }
   host = parv[1];
+  
+  {
+    struct db_reg *reg;
+   
+    reg = db_buscar_registro(BDD_JUPEDB, host);
+    if (reg)
+      return exit_client_msg(cptr, sptr, &me, "Juped: %s", reg->valor);
+  }
 
   /* Detect protocol */
   if (strlen(parv[5]) != 3 || (parv[5][0] != 'P' && parv[5][0] != 'J'))
