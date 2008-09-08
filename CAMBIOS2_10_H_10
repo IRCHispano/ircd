@@ -1,3 +1,8 @@
+* 2008/09/08 zoltan@irc-dev.net      (u2.10.H.10.63)             FEATURE
+------------------------------------------------------------------------
+  Se da la posibilidad de establecer un vhost diferente en el whois
+  usando la tabla w. Por ejemplo Whois de colores.
+
 * 2008/09/08 zoltan@irc-dev.net      (u2.10.H.10.62)             FEATURE
 ------------------------------------------------------------------------
   Jupe de servidores via BDD de forma analoga al parche u2.10.H.10.59.

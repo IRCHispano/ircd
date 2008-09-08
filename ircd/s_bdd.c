@@ -2088,7 +2088,7 @@ void initdb(void)
   tabla_residente_y_len[BDD_PRIVDB] = 256;
   tabla_residente_y_len[BDD_UWORLDDB] = 256;
   tabla_residente_y_len[BDD_IPVIRTUALDB] = 4096;
-  tabla_residente_y_len[BDD_IPVIRTUAL_OLD] = 256;
+  tabla_residente_y_len[BDD_IPVIRTUAL2DB] = 1024;
   tabla_residente_y_len[BDD_CONFIGDB] = 256;
 
   cache = mmap_cache();

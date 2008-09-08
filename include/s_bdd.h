@@ -35,7 +35,7 @@
 #define BDD_PRIVDB        'p'
 #define BDD_UWORLDDB      'u'
 #define BDD_IPVIRTUALDB   'v'
-#define BDD_IPVIRTUAL_OLD 'w'
+#define BDD_IPVIRTUAL2DB  'w'
 #define BDD_CONFIGDB      'z'
 #define BDD_CHANDB_OLD    'z'
 
