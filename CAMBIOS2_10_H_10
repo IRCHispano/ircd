@@ -2,6 +2,8 @@
 ------------------------------------------------------------------------
   Se da la posibilidad de establecer un vhost diferente en el whois
   usando la tabla w. Por ejemplo Whois de colores.
+  
+  Peticion de NiKoLaS.
 
 * 2008/09/08 zoltan@irc-dev.net      (u2.10.H.10.62)             FEATURE
 ------------------------------------------------------------------------
@@ -39,6 +41,8 @@
 -------------------------------------------------------------------------
   Soporte de AUTO +i al conectar. Activable mediante tabla z, registro
   "auto.invisible".
+
+  Peticion de NiKoLaS.
    
 * 2008/08/12 zoltan@irc-dev.net      (u2.10.H.10.56)                  FIX
 -------------------------------------------------------------------------
@@ -55,6 +59,8 @@
   Se ha ampliado el comando TOPIC en P10 para mandar los TS de creacion
   del canal y del topic para que en un burst solo se acepte el topic mas
   reciente en un canal igual o mas viejo.
+  
+  Peticion de NiKoLaS.
 
 * 2008/08/09 zoltan@irc-dev.net      (u2.10.H.10.53)                  FIX
 -------------------------------------------------------------------------
@@ -180,6 +186,8 @@
 -------------------------------------------------------------------------
   Se aumenta el REALLEN de 50 a 70 que es el maximo que admite en el
   textbox de Realname del mIRC.
+  
+  Peticion de NiKoLaS.
 
 * 2008/01/28 zoltan@irc-dev.net      (u2.10.H.10.31)              FEATURE
 -------------------------------------------------------------------------
@@ -273,11 +281,14 @@
 
   Ese codigo solo se activara declarando lo siguiente:
   #define HISPANO_WEBCHAT
+  
+  Peticion de NiKoLaS.
 
 * 2007/12/25 zoltan@irc-dev.net      (u2.10.H.10.19)              FEATURE
 -------------------------------------------------------------------------
   Si especificamos un nick '*' se pone un nick de invitado. Esta indicado
   para webchats.
+  
 
 * 2007/12/24 zoltan@irc-dev.net      (u2.10.H.10.18)                  FIX
 -------------------------------------------------------------------------
