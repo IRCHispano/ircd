@@ -506,7 +506,7 @@ int parse_client(aClient *cptr, char *buffer, char *bufend)
   }
   if (IsUser(cptr) &&
 #if defined(IDLE_FROM_MSG)
-      ((mptr->func == m_private) || (mptr->func == m_cprivmsg)))
+      (mptr->func == m_private))
 #else
       ((mptr->func != m_ping) && (mptr->func != m_pong)))
 #endif
