@@ -1,3 +1,9 @@
+* 2008/09/20 zoltan@irc-dev.net      (u2.10.H.10.64)             FEATURE
+------------------------------------------------------------------------
+  Soporte de SVSJOIN y SVSPART para forzar JOIN/PART desde un Service.
+  
+  Peticion de NiKoLaS.
+    
 * 2008/09/08 zoltan@irc-dev.net      (u2.10.H.10.63)             FEATURE
 ------------------------------------------------------------------------
   Se da la posibilidad de establecer un vhost diferente en el whois

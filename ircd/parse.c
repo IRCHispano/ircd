@@ -132,6 +132,8 @@ aMessage msgtab[] = {
 /* Esto hay que quitarlo en algun momento... */
     {CLASS_RENAME,       MSG_RENAME,      TOK_RENAME,      m_rename,      0, MAXPARA,   MFLG_SLOW,      0L},
 #endif
+    {CLASS_SVSJOIN,      MSG_SVSJOIN,     TOK_SVSJOIN,     m_svsjoin,     0, MAXPARA,   MFLG_SLOW,      0L},
+    {CLASS_SVSPART,      MSG_SVSPART,     TOK_SVSPART,     m_svspart,     0, MAXPARA,   MFLG_SLOW,      0L},    
 
 #if defined(WATCH)
     {CLASS_WATCH,      MSG_WATCH,      TOK_WATCH,      m_watch,        0, 1,   MFLG_SLOW,      0L},

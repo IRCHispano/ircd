@@ -70,6 +70,14 @@
 #define CLASS_RENAME		LEVEL_PROPAGATE
 #endif
 
+#define MSG_SVSJOIN    "SVSJOIN"
+#define TOK_SVSJOIN    "SJ"
+#define CLASS_SVSJOIN    LEVEL_PROPAGATE
+
+#define MSG_SVSPART    "SVSPART" 
+#define TOK_SVSPART    "SL"
+#define CLASS_SVSPART    LEVEL_PROPAGATE
+
 #if defined(WATCH)
 #define MSG_WATCH              "WATCH"         /* Comando WATCH */
 #define TOK_WATCH              "WATCH"

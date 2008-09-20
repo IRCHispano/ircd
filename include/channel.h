@@ -220,6 +220,8 @@ extern int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_list(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+extern int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+extern int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern void send_user_joins(aClient *cptr, aClient *user);
 
 extern char *adapta_y_visualiza_canal_flags(aChannel *chptr, int add, int del);

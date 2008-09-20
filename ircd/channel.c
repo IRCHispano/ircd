@@ -4035,6 +4035,150 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
   return 0;
 }
 
+
+/*
+ * m_svsjoin
+ *
+ * parv[0] = sender prefix
+ * parv[1] = nick
+ * parv[2] = channel
+ */
+int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+  Reg3 aChannel *chptr;
+  Reg4 char *name;
+  int i = 0, zombie = 0, sendcreate = 0;
+  unsigned int flags = 0;
+  
+  if (!IsServer(cptr) || !IsServer(sptr) || parc < 3)
+    return 0;
+
+  if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
+  {
+    sendto_serv_butone(cptr,
+        ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
+        "entrada de canal '%s' para el nick '%s'", me.name, cptr->name, 
+        sptr->name, parv[2], parv[1]);
+    sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_RENAME | SNO_RENAME2,
+        "HACK(4): El nodo '%s' dice que '%s' solicita "
+        "entrada de canal '%s' para el nick '%s'", cptr->name, sptr->name, parv[2], parv[1]);
+    return 0;
+  }
+  
+  sendto_lowprot_butone(cptr, 9, ":%s SVSJOIN %s :%s", sptr->name, parv[1], parv[2]);
+  sendto_highprot_butone(cptr, 10, "%s " TOK_SVSJOIN " %s :%s", NumServ(sptr), parv[1], parv[2]);
+  
+  acptr= findNUser(parv[1]);
+  if (!acptr)
+    acptr = FindClient(parv[1]);
+  if ((!acptr) || (!MyUser(acptr)))
+    return 0;
+      
+  name = parv[2];
+  
+  clean_channelname(name);
+  if (IsLocalChannel(name))
+    return 0;
+  
+  if (!IsChannelName(name))
+    return 0;
+  
+  if (ChannelExists(name))
+  {
+    flags = CHFL_DEOPPED;
+    sendcreate = 0;
+  }
+  else if (strlen(name) > CHANNELLEN)
+  {
+    *(name + CHANNELLEN) = '\0';
+    if (ChannelExists(name))
+    {
+      flags = CHFL_DEOPPED;
+      sendcreate = 0;
+    }
+    else
+    {
+      flags = IsModelessChannel(name) ? CHFL_DEOPPED : CHFL_CHANOP;
+      sendcreate = 1;
+    }
+  }
+                                    
+  chptr = get_channel(acptr, name, CREATE);
+
+  if (chptr && (lp = find_user_link(chptr->members, acptr)))
+  {
+    if (lp->flags & CHFL_ZOMBIE)
+    {
+      zombie = 1;
+      flags = lp->flags & (CHFL_DEOPPED | CHFL_SERVOPOK);
+      remove_user_from_channel(acptr, chptr);
+      chptr = get_channel(acptr, name, CREATE);
+    }
+    else
+     return 0;
+  }
+ 
+  if (!chptr->creationtime) /* A remote JOIN created this channel ? */
+    chptr->creationtime = MAGIC_REMOTE_JOIN_TS;
+  if (!zombie)
+    flags |= CHFL_SERVOPOK;
+
+  /*
+   * Complete user entry to the new channel (if any)
+   */
+  add_user_to_channel(chptr, acptr, flags);
+                       
+  /*
+   * Notify all other users on the new channel
+   */
+  sendto_channel_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
+                                                    
+  del_invite(acptr, chptr);
+  if (chptr->topic)
+  {
+    sendto_one(acptr, rpl_str(RPL_TOPIC), me.name, acptr->name, name, chptr->topic);
+    sendto_one(acptr, rpl_str(RPL_TOPICWHOTIME), me.name, acptr->name, name,
+        chptr->topic_nick, chptr->topic_time);
+  }
+  
+  parv[0] = acptr->name;
+  parv[1] = name;
+  m_names(cptr, acptr, 2, parv);
+                                                                                                                      
+                                                                                      
+  /* Propagate joins to P09 servers */
+  sendto_lowprot_butone(NULL, 9,  ":%s JOIN %s", acptr->name, name);
+              
+  if (!sendcreate)              /* Propgate joins to P10 servers */
+    sendto_highprot_butone(NULL, 10, "%s%s " TOK_JOIN " %s",  NumNick(acptr), name);
+  else                         /* and now creation events */
+    sendto_highprot_butone(NULL, 10, "%s%s " TOK_CREATE " %s " TIME_T_FMT,
+        NumNick(acptr), name, TStime());
+                          
+  /* shouldn't ever set TS for remote JOIN's */
+  if (!sendcreate)
+  {                           /* check for channels that need TS's */
+    chptr = get_channel(acptr, name, !CREATE);
+    if (chptr && chptr->mode.mode & MODE_SENDTS)
+    {                       /* send a TS? */
+      sendto_lowprot_butone(NULL, 9, ":%s MODE %s + " TIME_T_FMT, me.name, chptr->chname, chptr->creationtime); /* ok, send TS */
+      sendto_highprot_butone(NULL, 10, "%s " TOK_MODE " %s + " TIME_T_FMT, NumServ(&me), chptr->chname, chptr->creationtime); /* ok, send TS */
+      chptr->mode.mode &= ~MODE_SENDTS; 
+      /* reset flag */
+    }
+  }                                         
+
+  if (sendcreate)
+  {                           /* ok, send along modes for creation events to P09 */
+    chptr = get_channel(acptr, name, !CREATE);
+    sendto_lowprot_butone(NULL, 9, ":%s MODE %s +o %s " TIME_T_FMT, me.name, 
+        chptr->chname, acptr->name, chptr->creationtime);
+  }
+  
+}
+
 /*
  * m_destruct
  *
@@ -5296,6 +5440,97 @@ int m_part(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
   }
   return 0;
+}
+
+/*
+ * m_svspart
+ *
+ * parv[0] = sender prefix
+ * parv[1] = nick
+ * parv[2] = channel
+ * parv[parc - 1] = comment
+ */
+int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  Reg1 aChannel *chptr;
+  Reg2 Link *lp;
+  Reg3 aClient *acptr;
+  char *name;
+  char *comment = (parc > 3 && !BadPtr(parv[parc - 1])) ? parv[parc - 1] : NULL;
+
+  if (!IsServer(cptr) || !IsServer(sptr) || parc < 3)
+      return 0;
+
+  if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
+  {
+    sendto_serv_butone(cptr,
+        ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
+        "salida de canal '%s' para el nick '%s'", me.name, cptr->name,
+        sptr->name, parv[2], parv[1]);
+    sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_RENAME | SNO_RENAME2,
+        "HACK(4): El nodo '%s' dice que '%s' solicita "
+        "salida de canal '%s' para el nick '%s'", cptr->name, sptr->name, 
+        parv[2], parv[1]);
+    return 0;
+  }      
+  
+  if (parc < 4)
+  {
+    sendto_lowprot_butone(cptr, 9, ":%s SVSPART %s %s", sptr->name, parv[1], parv[2]);
+    sendto_highprot_butone(cptr, 10, "%s " TOK_SVSPART " %s %s", NumServ(sptr), parv[1], parv[2]);
+  }
+  else
+  {
+    sendto_lowprot_butone(cptr, 9, ":%s SVSPART %s %s :%s", sptr->name, parv[1], parv[2], parv[3]);
+    sendto_highprot_butone(cptr, 10, "%s " TOK_SVSPART " %s %s :%s", NumServ(sptr), parv[1], parv[2], parv[3]);
+  }
+  
+  acptr = findNUser(parv[1]);
+  if (!acptr)
+    acptr = FindClient(parv[1]);
+  if ((!acptr) || (!MyUser(acptr)))
+    return 0;
+
+  acptr->flags &= ~FLAGS_TS8;
+  name = parv[2];
+  
+  chptr = get_channel(acptr, name, !CREATE);
+  if (!chptr)
+    return 0;
+
+  if (*name == '&')
+    return 0;
+
+  /* Do not use IsMember here: zombies must be able to part too */
+  if (!(lp = find_user_link(chptr->members, acptr)))
+    return 0;
+
+  /* Send part to all clients */
+  if (!(lp->flags & CHFL_ZOMBIE))
+  {
+    if (comment)
+      sendto_channel_butserv(chptr, acptr, PartFmt2, acptr->name, chptr->chname, comment);
+    else
+      sendto_channel_butserv(chptr, acptr, PartFmt1, acptr->name,  chptr->chname);
+  }
+  if (comment)
+    sendto_one(acptr, PartFmt2, acptr->name, chptr->chname, comment);
+  else
+    sendto_one(acptr, PartFmt1, acptr->name, chptr->chname);
+
+  remove_user_from_channel(acptr, chptr);
+  
+  /* Send out the parts to all servers... -Kev */
+  if (comment)
+  {
+    sendto_lowprot_butone(NULL, 9, PartFmt2, acptr->name, name, comment);
+    sendto_highprot_butone(NULL, 10, PartFmt2Serv, NumNick(acptr), name, comment);
+  }
+  else
+  {
+    sendto_lowprot_butone(NULL, 9, PartFmt1, acptr->name, name);
+    sendto_highprot_butone(NULL, 10, PartFmt1Serv, NumNick(acptr), name);
+  }    
 }
 
 /*
