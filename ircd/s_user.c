@@ -3444,6 +3444,8 @@ void rename_user(aClient *sptr, char *nick_nuevo)
     }
   }
 
+  sendto_op_mask(SNO_SERVICE,
+      "Cambiamos el nick '%s' a '%s'", sptr->name, nick_nuevo);
 
   sptr->lastnick = now;
 
@@ -3699,7 +3701,6 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
 /* Esto hay que quitarlo en algun momento... */
 int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  char buf[NICKLEN + 2];
   aClient *acptr;
 
 #ifdef HISPANO_WEBCHAT
@@ -3719,7 +3720,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_serv_butone(cptr,
         ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
         "cambio de nick para '%s'", me.name, cptr->name, sptr->name, parv[1]);
-    sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_RENAME | SNO_RENAME2,
+    sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
         "HACK(4): El nodo '%s' dice que '%s' solicita "
         "cambio de nick para '%s'", cptr->name, sptr->name, parv[1]);
     return 0;
@@ -3756,13 +3757,17 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 
   }
-  sendto_op_mask(SNO_RENAME,
-      "El nodo '%s' solicita un cambio de nick para '%s'", sptr->name, parv[1]);
 
   acptr = findNUser(parv[1]);
   if (!acptr)
     acptr = FindUser(parv[1]);
-  if ((!acptr) || (!MyUser(acptr)))
+  if (!acptr)
+    return 0;
+
+  sendto_op_mask(SNO_SERVICE,
+        "El nodo '%s' solicita un cambio de nick para '%s'", sptr->name, acptr->name);
+    
+  if (!MyUser(acptr)) 
     return 0;
 
   if (parc < 3)
@@ -3792,7 +3797,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
        sendto_serv_butone(cptr,
            ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' ha intentado poner un "
            "nick forbid '%s' para el nick '%s'", me.name, cptr->name, sptr->name, parv[2], parv[1]);
-       sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_RENAME | SNO_RENAME2,
+       sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
            "HACK(4): El nodo '%s' dice que '%s' ha intentado poner un "
            "nick forbid '%s' para el nick '%s'", cptr->name, sptr->name, parv[2], parv[1]);
        return 0;
@@ -3801,11 +3806,6 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
    rename_user(acptr, nick);
   }
-
-
-  sendto_op_mask(SNO_RENAME | SNO_RENAME2,
-      "Cambiamos el nick '%s' a '%s', a peticion del nodo '%s'", parv[1],
-      acptr->name, sptr->name);
 
   return 0;
 }

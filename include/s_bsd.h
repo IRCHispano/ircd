@@ -162,8 +162,7 @@
 #define SNO_OLDREALOP	0x2000    /* old oper-only messages */
 #define SNO_CONNEXIT	0x4000    /* client connect/exit (ugh) */
 
-#define SNO_RENAME	0x8000      /* Informa de peticiones de cambio de nicks */
-#define SNO_RENAME2	0x10000     /* Informa de cambios de nick locales */
+#define SNO_SERVICE	0x8000      /* Informa de ejecucion de comandos de SVS* */
 
 #define SNO_ALL		0x1ffff       /* Don't make it larger then significant,
                                  * that looks nicer */
@@ -173,7 +172,7 @@
 #define SNO_DEFAULT (SNO_NETWORK|SNO_OPERKILL|SNO_GLINE)
 #define SNO_OPERDEFAULT (SNO_DEFAULT|SNO_HACK2|SNO_HACK4|SNO_THROTTLE|SNO_OLDSNO)
 
-#define SNO_OPER (SNO_CONNEXIT|SNO_OLDREALOP|SNO_RENAME|SNO_RENAME2)
+#define SNO_OPER (SNO_CONNEXIT|SNO_OLDREALOP|SNO_SERVICE)
 
 #define SNO_NOISY (SNO_SERVKILL|SNO_UNAUTH)
 

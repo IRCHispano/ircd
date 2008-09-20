@@ -1,3 +1,10 @@
+* 2008/09/20 zoltan@irc-dev.net      (u2.10.H.10.66)                 FIX
+------------------------------------------------------------------------
+  Suprimo SNO_RENAME y SNO_RENAME2 de las mascaras de +s, creo el
+  SNO_SERVICE para notificaciones de comandos SVS*.
+  
+  Correccion de los mensajes de SNO_SERVICE.
+  
 * 2008/09/20 zoltan@irc-dev.net      (u2.10.H.10.65)                 FIX
 ------------------------------------------------------------------------
   Si mandamos SVSNICK/SN, lo trata como un rename. Admite numericos.

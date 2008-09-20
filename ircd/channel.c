@@ -4061,7 +4061,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
         ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
         "entrada de canal '%s' para el nick '%s'", me.name, cptr->name, 
         sptr->name, parv[2], parv[1]);
-    sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_RENAME | SNO_RENAME2,
+    sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
         "HACK(4): El nodo '%s' dice que '%s' solicita "
         "entrada de canal '%s' para el nick '%s'", cptr->name, sptr->name, parv[2], parv[1]);
     return 0;
@@ -4073,7 +4073,13 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   acptr= findNUser(parv[1]);
   if (!acptr)
     acptr = FindClient(parv[1]);
-  if ((!acptr) || (!MyUser(acptr)))
+  if (!acptr)
+    return 0;
+    
+  sendto_op_mask(SNO_SERVICE,
+        "El nodo '%s' solicita una entrada de canal '%s' para el nick '%s'", sptr->name, parv[2], acptr->name);
+    
+  if (!MyUser(acptr))
     return 0;
       
   name = parv[2];
@@ -5467,7 +5473,7 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
         ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
         "salida de canal '%s' para el nick '%s'", me.name, cptr->name,
         sptr->name, parv[2], parv[1]);
-    sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_RENAME | SNO_RENAME2,
+    sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
         "HACK(4): El nodo '%s' dice que '%s' solicita "
         "salida de canal '%s' para el nick '%s'", cptr->name, sptr->name, 
         parv[2], parv[1]);
@@ -5488,7 +5494,13 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
   acptr = findNUser(parv[1]);
   if (!acptr)
     acptr = FindClient(parv[1]);
-  if ((!acptr) || (!MyUser(acptr)))
+  if (!acptr)
+    return 0;
+    
+  sendto_op_mask(SNO_SERVICE,
+      "El nodo '%s' solicita una salida de canal '%s' para el nick '%s'", sptr->name, parv[2], acptr->name);
+            
+  if (!MyUser(acptr))
     return 0;
 
   acptr->flags &= ~FLAGS_TS8;
