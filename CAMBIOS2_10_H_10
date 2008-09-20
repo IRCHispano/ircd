@@ -1,6 +1,18 @@
+* 2008/09/20 zoltan@irc-dev.net      (u2.10.H.10.65)                 FIX
+------------------------------------------------------------------------
+  Si mandamos SVSNICK/SN, lo trata como un rename. Admite numericos.
+  
 * 2008/09/20 zoltan@irc-dev.net      (u2.10.H.10.64)             FEATURE
 ------------------------------------------------------------------------
   Soporte de SVSJOIN y SVSPART para forzar JOIN/PART desde un Service.
+  
+  En P09
+  <:nombre> SVSJOIN <nick> <canal>
+  <:nombre> SVSPART <nick> <canal> [:mensaje]
+  
+  En P10
+  <num> SJ <numerico nick> <canal>
+  <num> SL <numerico nick> <canal> [:mensaje]
   
   Peticion de NiKoLaS.
     

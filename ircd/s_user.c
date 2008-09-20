@@ -3759,21 +3759,11 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
   sendto_op_mask(SNO_RENAME,
       "El nodo '%s' solicita un cambio de nick para '%s'", sptr->name, parv[1]);
 
-  strncpy(buf, parv[1], sizeof(buf));
-  buf[sizeof(buf) - 1] = '\0';
-
-  if (!do_nick_name(buf))
-    return 0;
-
-  if (FindServer(buf))
-    return 0;
-
-  acptr = FindClient(buf);
-
+  acptr = findNUser(parv[1]);
+  if (!acptr)
+    acptr = FindUser(parv[1]);
   if ((!acptr) || (!MyUser(acptr)))
-  {
     return 0;
-  }
 
   if (parc < 3)
     rename_user(acptr, NULL);
