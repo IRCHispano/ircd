@@ -2005,7 +2005,9 @@ static void add_gline(aClient *sptr, int ip_mask, char *host, char *comment,
  * parv[1] = Target: server numeric
  * parv[2] = [+|-]<G-line mask>
  * parv[3] = Expiration offset
- * parv[4] = Comment
+ * parv[4] = G-line last modification (En nuevo IRCD, reserva)
+ * parv[5] = G-line lifetime (En nuevo IRCD, reserva)
+ * parv[parc - 1] = Comment
  *
  * From client:
  *
@@ -2058,7 +2060,7 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     if (buscar_uline(cptr->confs, sptr->name))
     {
-      if (parc < 3 || (*parv[2] != '-' && (parc < 5 || *parv[4] == '\0')))
+      if (parc < 3 || (*parv[2] != '-' && (parc < 5 || *parv[parc - 1] == '\0')))
       {
         sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0],
             "GLINE");
@@ -2077,13 +2079,13 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (!strCasediff(parv[1], "*")) /* global! */
       {
         sendto_lowprot_butone(cptr, 9, active ? ":%s GLINE %s +%s %s :%s" :
-            ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[4]);
+            ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[parc - 1]);
         if (IsUser(sptr))
           sendto_highprot_butone(cptr, 10, active ? "%s%s " TOK_GLINE " %s +%s %s :%s" :
-              "%s%s " TOK_GLINE " %s -%s", NumNick(sptr), parv[1], parv[2], parv[3], parv[4]);
+              "%s%s " TOK_GLINE " %s -%s", NumNick(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
         else
           sendto_highprot_butone(cptr, 10, active ? "%s " TOK_GLINE " %s +%s %s :%s" :
-              "%s " TOK_GLINE " %s -%s", NumServ(sptr), parv[1], parv[2], parv[3], parv[4]);
+              "%s " TOK_GLINE " %s -%s", NumServ(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
       } else if ((
 #if 1
           /*
@@ -2105,15 +2107,15 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
       {
         if (Protocol(acptr->from) < 10)
-          sendto_one(acptr, active ? ":%s GLINE %s +%s %s :%s" : ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[4]);  /* single destination */ 
+          sendto_one(acptr, active ? ":%s GLINE %s +%s %s :%s" : ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[parc - 1]);  /* single destination */ 
         else 
         {
           if (IsUser(sptr))
             sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s :%s" : "%s%s " TOK_GLINE " %s -%s", 
-                NumNick(sptr), parv[1], parv[2], parv[3], parv[4]);
+                NumNick(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
           else
             sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s :%s" : ":%s " TOK_GLINE " %s -%s", 
-                NumServ(sptr), parv[1], parv[2], parv[3], parv[4]);
+                NumServ(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
         }
         return 0;               /* only the intended  destination
                                    should add this gline */
@@ -2188,7 +2190,7 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
               return 0;         /* found an existing G-line that matches */
 
           /* add the line: */
-          add_gline(sptr, ip_mask, host, parv[4], user, expire, 0);
+          add_gline(sptr, ip_mask, host, parv[parc - 1], user, expire, 0);
         }
       }
     }

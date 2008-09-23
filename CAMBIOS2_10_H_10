@@ -1,3 +1,8 @@
+* 2008/09/23 zoltan@irc-dev.net      (u2.10.H.10.68)             FEATURE
+------------------------------------------------------------------------
+  Modificacion en m_gline() para permitir 2 parametros opcionales que 
+  se usaran en el futuro.
+  
 * 2008/09/23 zoltan@irc-dev.net      (u2.10.H.10.67)             FEATURE
 ------------------------------------------------------------------------
   Soporte de SVSMODE para forzar modos de usuario desde un Service.
