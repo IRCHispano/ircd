@@ -36,6 +36,7 @@
  */
 
 extern int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+extern int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int is_silenced(aClient *sptr, aClient *acptr);
 extern int hunt_server(int, aClient *cptr, aClient *sptr,
     char *command, char *token, const char *pattern, int server, int parc, char *parv[]);

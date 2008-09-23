@@ -917,6 +917,39 @@ int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 }
 
 /*
+ * m_svsmode
+ * parv[0] - sender
+ * parv[1] - nick/channel
+ * parv[2] - modes
+ */
+    
+int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  
+  if (!IsServer(cptr) || !IsServer(sptr) || parc < 3)
+      return 0;
+      
+  if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
+  {
+    sendto_serv_butone(cptr,
+        ":%s DESYNC :HACK(2): El nodo '%s' dice que '%s' solicita "
+        "cambio de modos '%s' para el nick '%s'", me.name, cptr->name,
+        sptr->name, parv[2], parv[1]);
+    sendto_op_mask(SNO_HACK2 | SNO_SERVICE,
+        "HACK(2): El nodo '%s' dice que '%s' solicita "
+        "cambio de modos  '%s' para el nick '%s'", cptr->name, sptr->name, parv[2], parv[1]);
+    return 0;
+  }  
+  
+  if (!IsChannelName(parv[1]))
+    return m_svsumode(cptr, sptr, parc, parv);
+  
+  /* NO hay soporte de SVSMODE para canales */
+  return 0;
+  
+}
+
+/*
  * m_mode
  * parv[0] - sender
  * parv[1] - channel

@@ -133,6 +133,7 @@ aMessage msgtab[] = {
     {CLASS_RENAME,       MSG_RENAME,      TOK_RENAME,      m_rename,      0, MAXPARA,   MFLG_SLOW,      0L},
 #endif
     {CLASS_SVSNICK,      MSG_SVSNICK,     TOK_SVSNICK,     m_rename,      0, MAXPARA,   MFLG_SLOW,      0L},
+    {CLASS_SVSMODE,      MSG_SVSMODE,     TOK_SVSMODE,     m_svsmode,     0, MAXPARA,   MFLG_SLOW,      0L},
     {CLASS_SVSJOIN,      MSG_SVSJOIN,     TOK_SVSJOIN,     m_svsjoin,     0, MAXPARA,   MFLG_SLOW,      0L},
     {CLASS_SVSPART,      MSG_SVSPART,     TOK_SVSPART,     m_svspart,     0, MAXPARA,   MFLG_SLOW,      0L},    
 

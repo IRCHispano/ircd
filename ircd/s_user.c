@@ -2733,6 +2733,137 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 }
 
 /*
+ * m_svsumode()
+ *
+ * parv[0] - sender
+ * parv[1] - username to change mode for
+ * parv[2] - modes to change
+*/
+int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  aClient *acptr;
+  Reg1 int flag;
+  Reg2 int *s;
+  Reg3 char **p, *m;
+  int what, setflags;
+  int sethmodes;
+  snomask_t tmpmask = 0;  
+                
+  what = MODE_ADD;  
+  
+  acptr = findNUser(parv[1]);
+  if (!acptr)
+    acptr = FindUser(parv[1]);
+  if (!acptr)
+    return 0;
+    
+
+  /* find flags already set for user */
+  setflags = 0;
+  for (s = user_modes; (flag = *s); s += 2)
+    if (acptr->flags & flag)
+      setflags |= flag;
+      
+  sethmodes = 0;
+  for (s = user_hmodes; (flag = *s); s += 2)
+    if (acptr->hmodes & flag)
+      sethmodes |= flag;
+
+  /*
+   * parse mode change string(s)
+   */
+  for (p = &parv[2]; *p; p++)   /* p is changed in loop too */
+    for (m = *p; *m; m++)
+      switch (*m)
+      {
+        case '+':
+          what = MODE_ADD;
+          break;
+        case '-':
+          what = MODE_DEL;
+          break;
+        /*
+         * We may not get these, but they shouldnt be in default:
+         */
+        case ' ':
+        case '\n':
+        case '\r':
+        case '\t':
+        case 'r': /* Se ignora +r por seguridad */
+        case 'S':
+          break;
+        default:                                                                                                                     
+          for (s = user_modes; (flag = *s); s += 2)
+            if (*m == (char)(*(s + 1)))
+            {
+              if (what == MODE_ADD)
+                acptr->flags |= flag;
+              else if ((flag & (FLAGS_OPER | FLAGS_LOCOP)))
+              {
+                acptr->flags &= ~(FLAGS_OPER | FLAGS_LOCOP);
+                if (MyConnect(acptr))
+                  tmpmask = acptr->snomask & ~SNO_OPER;
+              }
+              /* allow either -o or -O to reset all operator status's... */
+              else
+                acptr->flags &= ~flag;
+              break;
+            }        
+            if (flag == 0)
+              for (s = user_hmodes; (flag = *s); s += 2)
+                if (*m == (char)(*(s + 1)))
+                {
+                  if (what == MODE_ADD)
+                    acptr->hmodes |= flag;
+                  else
+                    acptr->hmodes &= ~flag;
+                  break;
+                }            
+            break;
+      }
+      
+      
+  /*
+   * Compare new flags with old flags and send string which
+   * will cause servers to update correctly.
+   */
+           
+  if ((setflags & FLAGS_OPER) && !IsOper(acptr))
+    --nrof.opers;
+  if (!(setflags & FLAGS_OPER) && IsOper(acptr))
+    ++nrof.opers;
+  if ((sethmodes & HMODE_HELPOP) && !IsHelpOp(acptr))
+    --nrof.helpers;
+  if (!(sethmodes & HMODE_HELPOP) && IsHelpOp(acptr))
+    ++nrof.helpers;
+  if ((setflags & FLAGS_INVISIBLE) && !IsInvisible(acptr))
+    --nrof.inv_clients;
+  if (!(setflags & FLAGS_INVISIBLE) && IsInvisible(acptr))
+    ++nrof.inv_clients;
+
+  if (MyUser(acptr))
+  {
+    if (tmpmask != acptr->snomask)
+      set_snomask(acptr, tmpmask, SNO_SET);
+  }      
+  
+#if 1 /* ALTERNATIVA SVSMODE A TODOS */
+
+  if (MyUser(acptr))
+    send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, SEND_HMODES);
+    
+  sendto_lowprot_butone(cptr, 9, ":%s SVSMODE %s %s", acptr->name, acptr->name, parv[2]);
+  sendto_highprot_butone(cptr, 10, "%s " TOK_SVSMODE " %s %s", NumServ(sptr), parv[1], parv[2]);
+
+#else /* ALTERNATIVA SVSMODE AL NODO MAS PROXIMO Y MODE AL RESTO */
+
+  send_umode_out(cptr, acptr, setflags, sethmodes, IsRegistered(acptr));
+
+#endif  
+}
+
+      
+/*
  * Build umode string for BURST command
  * --Run
  * Se amplia la funcion para devolver los

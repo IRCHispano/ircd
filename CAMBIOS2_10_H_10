@@ -1,3 +1,17 @@
+* 2008/09/23 zoltan@irc-dev.net      (u2.10.H.10.67)             FEATURE
+------------------------------------------------------------------------
+  Soporte de SVSMODE para forzar modos de usuario desde un Service.
+  
+  En P09
+    <:nombre> SVSMODE <nick> <modos>
+        
+  En P10
+    <num> SM <numerico nick> <modos>
+
+  Se propaga un SVSMODE a todos los nodos P10 y un MODE a los nodos P09.
+              
+  Peticion de NiKoLaS.
+                
 * 2008/09/20 zoltan@irc-dev.net      (u2.10.H.10.66)                 FIX
 ------------------------------------------------------------------------
   Suprimo SNO_RENAME y SNO_RENAME2 de las mascaras de +s, creo el
