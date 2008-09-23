@@ -2081,7 +2081,8 @@ void initdb(void)
   tabla_residente_y_len[ESNET_CLONESDB] = 512;
 #endif
   tabla_residente_y_len[BDD_OPERDB] = 256;
-  tabla_residente_y_len[BDD_CHANDB] = 256;
+  tabla_residente_y_len[BDD_CHANDB] = 2048;
+  tabla_residente_y_len[BDD_CHAN2DB] = 8192;
   tabla_residente_y_len[BDD_BOTSDB] = 256;
   tabla_residente_y_len[BDD_FEATURESDB] = 256;
   tabla_residente_y_len[BDD_JUPEDB] = 512;

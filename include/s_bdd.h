@@ -29,6 +29,7 @@
 
 #define BDD_BOTSDB        'b'
 #define BDD_CHANDB        'c'
+#define BDD_CHAN2DB       'd'
 #define BDD_FEATURESDB    'f'
 #define BDD_JUPEDB        'j'
 #define BDD_OPERDB        'o'

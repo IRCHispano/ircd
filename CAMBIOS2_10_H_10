@@ -1,3 +1,7 @@
+* 2008/09/23 zoltan@irc-dev.net      (u2.10.H.10.69)             FEATURE
+------------------------------------------------------------------------
+  Habilito la tabla d para registros de usuarios en los canales.
+
 * 2008/09/23 zoltan@irc-dev.net      (u2.10.H.10.68)             FEATURE
 ------------------------------------------------------------------------
   Modificacion en m_gline() para permitir 2 parametros opcionales que 
