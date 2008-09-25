@@ -52,6 +52,7 @@
 #define BDD_SERVER_INFO				"servidor.info.oculto"
 #define BDD_ACTIVAR_IDENT			"activar.ident"
 #define BDD_AUTOINVISIBLE     "auto.invisible"
+#define BDD_NICKLEN           "nicklen"
 
 /* Para las features de los pseudoBOTS */
 #define BDD_CHANSERV      "ChanServ"

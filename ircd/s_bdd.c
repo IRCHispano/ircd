@@ -573,6 +573,10 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               auto_invisible = 0;
             }
+            else if (!strcmp(c, BDD_NICKLEN))
+            {
+              nicklen = 9;  /* Nicklen original por RFC1459 */
+            }
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -801,6 +805,21 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         auto_invisible = !0;
       } 
+      else if (!strcmp(c, BDD_NICKLEN))
+      {
+        int x;
+        
+        x = atoi(v);
+        /* Solo admitimos un minimo de 9 por el RFC1459 y un maximo de
+         * NICKLEN que tiene que ser igual en toda la red.
+         */
+        if (x < 9)
+          nicklen = 9;
+        else if (x > NICKLEN)
+          nicklen = NICKLEN;
+        else
+          nicklen = x;
+      }
       break;
 
     case BDD_IPVIRTUALDB:

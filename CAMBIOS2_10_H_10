@@ -1,3 +1,10 @@
+* 2008/09/25 zoltan@irc-dev.net      (u2.10.H.10.71)             FEATURE
+------------------------------------------------------------------------
+  Longitud de nicks dinamica, el minimo es 9 por el RFC1459 y el maximo
+  por el macro NICKLEN que tiene que tener el mismo valor en TODA la red.
+  
+  Ajustable via BDD mediante el valor "nicklen" en la tabla z.
+  
 * 2008/09/25 zoltan@irc-dev.net      (u2.10.H.10.70)             FEATURE
 ------------------------------------------------------------------------
   Personalizo los mensajes del numerico 433 (ERR_NICKNAMEINUSE) para ser

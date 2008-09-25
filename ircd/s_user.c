@@ -799,7 +799,7 @@ void send_features(aClient *sptr, char *nick)
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
   sprintf(buf, "MAXCHANNELS=%d CHANNELLEN=%d MAXTARGETS=%d MODES=%d NICKLEN=%d",
-      MAXCHANNELSPERUSER, CHANNELLEN, MAXTARGETS, MAXMODEPARAMS, NICKLEN);
+      MAXCHANNELSPERUSER, CHANNELLEN, MAXTARGETS, MAXMODEPARAMS, nicklen);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
   sprintf(buf, "PREFIX=(ov)@+ SILENCE=%d TOPICLEN=%d WALLCHOPS WHOX",
@@ -3908,7 +3908,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
     struct db_reg *reg;
     char c;
 
-    strncpy(nick, parv[2], NICKLEN + 1);
+    strncpy(nick, parv[2], nicklen + 1);
     nick[sizeof(nick) - 1] = 0;
  
     if (!do_nick_name(nick))
@@ -4046,7 +4046,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
      nick_aleatorio = 1;
   }
 
-  strncpy(nick, parv[1], NICKLEN + 1);
+  strncpy(nick, parv[1], nicklen + 1);
   nick[sizeof(nick) - 1] = 0;
 
   /*

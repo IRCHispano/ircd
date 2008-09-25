@@ -48,5 +48,6 @@ extern unsigned short int portnum;
 extern char *configfile;
 extern int debuglevel;
 extern char *debugmode;
+extern int nicklen;
 
 #endif /* IRCD_H */

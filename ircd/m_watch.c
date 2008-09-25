@@ -52,7 +52,9 @@
 ** comunicado a su autor pero, mientras tanto, hay que vivir con ello.
 */
 #if (MAXWATCH*NICKLEN) > CLIENT_FLOOD
-#error El numero de entradas WATCH especificadas puede provocar caida de los clientes por flood. Reduzca MAXWATCH o incremente CLIENT_FLOOD en 'make config'.
+/* #error El numero de entradas WATCH especificadas puede provocar caida 
+de los clientes por flood. Reduzca MAXWATCH o incremente CLIENT_FLOOD en 'make config'.
+*/
 #endif
 #endif
 
@@ -440,8 +442,8 @@ int m_watch(aClient *cptr, aClient *sptr, int parc, char *parv[])
         continue;
 
       /* Solo aceptamos longitud de "NICKLEN" caracteres */
-      if (strlen(nick) > NICKLEN)
-        nick[NICKLEN] = '\0';
+      if (strlen(nick) > nicklen)
+        nick[nicklen] = '\0';
 
       if (!*nick)
         continue;
