@@ -154,11 +154,8 @@ static Numeric numeric_errors[] = {
 /* 432 */
     {ERR_INVALIDNICKNAME, "%s :Invalid Nickname"},
 /* 433 */
-    {ERR_NICKNAMEINUSE, "%s :Nickname is already in use or registered "
-                        "(missing or wrong password) - "
-                        "El nick que intenta usar ya se encuentra en IRC "
-                        "o está registrado y necesita contraseña, "
-                        "para más ayuda escriba /msg NiCK HELP"},
+    {ERR_NICKNAMEINUSE, "%s :Nickname is already in use - "
+                        "El nick que intenta usar ya se encuentra en IRC "},
 /* 434 */
     {0, (char *)NULL},
 /* 435 */

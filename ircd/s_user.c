@@ -4093,7 +4093,8 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     if (!strncasecmp(nick, "webchat-", 8) && strIsDigit(nick + 8))
     {
-      sendto_one(sptr, err_str(ERR_NICKNAMEINUSE), me.name,
+      sendto_one(sptr, ":%s %d %s %s :Nickname is reserved for webchat - El nick está reservado para webchat",
+          me.name, ERR_NICKNAMEINUSE,
           /* parv[0] is empty when connecting */
           BadPtr(parv[0]) ? "*" : parv[0], nick);
       return 0;                 /* NICK message ignored */
@@ -4104,10 +4105,12 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     if (!strncasecmp(nick, "invitado-", 9) && strIsDigit(nick + 9))
     {
-      sendto_one(sptr, err_str(ERR_NICKNAMEINUSE), me.name,
+      sendto_one(sptr, ":%s %d %s %s :Nickname is reserved for guest users - El nick está reservado para usuarios invitados",
+          me.name, ERR_NICKNAMEINUSE,
           /* parv[0] is empty when connecting */
           BadPtr(parv[0]) ? "*" : parv[0], nick);
-      return 0;                 /* NICK message ignored */
+      return 0;                
+       /* NICK message ignored */
     }
   }
 
@@ -4530,7 +4533,8 @@ nickkilldone:
       sendto_one(cptr,
           ":%s NOTICE %s :*** El nick %s está prohibido, no puede ser utilizado.",
           botname, nombre, nick);
-      sendto_one(cptr, err_str(ERR_NICKNAMEINUSE), me.name, parv[0], nick);
+      sendto_one(cptr, ":%s %d %s %s :Nickname is forbided, can not be used - El nick está prohibido, no puede ser utilizado",
+          me.name, ERR_NICKNAMEINUSE, parv[0], nick);
       return 0;
     }
     else
@@ -4552,7 +4556,9 @@ nickkilldone:
           ":%s NOTICE %s :*** Utiliza \002/NICK %s%sclave\002 para identificarte.",
           botname, nombre, nick, hacer_ghost ? "!" : ":");
 
-      sendto_one(cptr, err_str(ERR_NICKREGISTERED), me.name, parv[0], nick);
+      sendto_one(cptr, ":%s %d %s %s :Nickname is registered (missing or wrong password) - "
+          "El nick está registrado (contraseña ausente o incorrecta)",
+          me.name, ERR_NICKREGISTERED, parv[0], nick);
 
       return 0;
     }

@@ -1,3 +1,8 @@
+* 2008/09/25 zoltan@irc-dev.net      (u2.10.H.10.70)             FEATURE
+------------------------------------------------------------------------
+  Personalizo los mensajes del numerico 433 (ERR_NICKNAMEINUSE) para ser
+  mas explicitos.
+  
 * 2008/09/23 zoltan@irc-dev.net      (u2.10.H.10.69)             FEATURE
 ------------------------------------------------------------------------
   Habilito la tabla d para registros de usuarios en los canales.
