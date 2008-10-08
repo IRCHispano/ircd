@@ -2789,8 +2789,6 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
         case '\n':
         case '\r':
         case '\t':
-        case 'r': /* Se ignora +r por seguridad */
-        case 'S':
           break;
         default:                                                                                                                     
           for (s = user_modes; (flag = *s); s += 2)
