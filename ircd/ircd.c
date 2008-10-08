@@ -100,7 +100,7 @@ char *debugmode = "";           /*  -"-    -"-   -"-  */
 int dorehash = 0;
 int restartFlag = 0;
 static char *dpath = DPATH;
-nicklen = 9; /* Nicklen Original */
+int nicklen = 9; /* Nicklen Original */
 
 time_t nextconnect = 1;         /* time for next try_connections call */
 time_t nextping = 1;            /* same as above for check_pings() */
