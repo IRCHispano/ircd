@@ -1,3 +1,7 @@
+* 2008/10/08 zoltan@irc-dev.net      (u2.10.H.10.74)             FEATURE
+------------------------------------------------------------------------
+  Soporte de jupe de nicks con mascara, se permite comodines * y ?.
+  
 * 2008/10/08 zoltan@irc-dev.net      (u2.10.H.10.73)                 FIX
 ------------------------------------------------------------------------
   Fix del parche u2.10.H.10.67.

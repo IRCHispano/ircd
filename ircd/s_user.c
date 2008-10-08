@@ -4085,46 +4085,21 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-#if !0
-/* Esto hay que quitarlo en algun momento... */
-  if ((strlen(nick) == 14) && (!IsServer(cptr)) && !nick_aleatorio)
+  if ((!IsServer(cptr)) && !nick_aleatorio)
   {
-    if (!strncasecmp(nick, "webchat-", 8) && strIsDigit(nick + 8))
+    struct db_reg *regj;
+     
+    /* Al usar match, hay que iterar */               
+    for (regj = db_iterador_init(BDD_JUPEDB); regj; regj = db_iterador_next())
     {
-      sendto_one(sptr, ":%s %d %s %s :Nickname is reserved for webchat - El nick está reservado para webchat",
-          me.name, ERR_NICKNAMEINUSE,
-          /* parv[0] is empty when connecting */
-          BadPtr(parv[0]) ? "*" : parv[0], nick);
-      return 0;                 /* NICK message ignored */
+      if (!match(regj->clave, nick))
+      {
+        sendto_one(cptr, ":%s %d %s %s :Nickname is juped - El nick no está permitido: %s",
+            me.name, ERR_NICKNAMEINUSE, BadPtr(parv[0]) ? "*" : parv[0], nick, regj->valor);
+        return 0;
+      }                             
     }
   }
-
-  if ((strlen(nick) == 15) && (!IsServer(cptr)) && !nick_aleatorio)
-  {
-    if (!strncasecmp(nick, "invitado-", 9) && strIsDigit(nick + 9))
-    {
-      sendto_one(sptr, ":%s %d %s %s :Nickname is reserved for guest users - El nick está reservado para usuarios invitados",
-          me.name, ERR_NICKNAMEINUSE,
-          /* parv[0] is empty when connecting */
-          BadPtr(parv[0]) ? "*" : parv[0], nick);
-      return 0;                
-       /* NICK message ignored */
-    }
-  }
-
-#endif
-
-  if (!IsServer(cptr))
-  {
-    regj = db_buscar_registro(BDD_JUPEDB, nick);
-    if (regj)
-    {
-      sendto_one(cptr, ":%s %d %s %s :Nickname is juped - El nick está jupeado: %s", 
-          me.name, ERR_NICKNAMEINUSE,
-          BadPtr(parv[0]) ? "*" : parv[0], nick, regj->valor);
-      return 0;
-    }
-  }        
 
   /*
    * Check against nick name collisions.
