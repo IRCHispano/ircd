@@ -43,15 +43,9 @@ struct Gline {
  * Proto types
  */
 
-#if defined(OPER_REHASH) || defined(LOCOP_REHASH)
 extern int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-#endif
-#if defined(OPER_RESTART) || defined(LOCOP_RESTART)
 extern int m_restart(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-#endif
-#if defined(OPER_DIE) || defined(LOCOP_DIE)
 extern int m_die(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-#endif
 extern int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[]);
