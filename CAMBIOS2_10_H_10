@@ -1,3 +1,7 @@
+* 2008/10/15 zoltan@irc-dev.net      (u2.10.H.10.75)                 FIX
+------------------------------------------------------------------------
+  En el parche u2.10.H.10.63 no contemplaba 1 de los 2 casos del WHOIS.
+  
 * 2008/10/08 zoltan@irc-dev.net      (u2.10.H.10.74)             FEATURE
 ------------------------------------------------------------------------
   Soporte de jupe de nicks con mascara, se permite comodines * y ?.

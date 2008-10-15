@@ -1005,14 +1005,23 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
       /* No wildcards */
       if ((acptr = FindUser(nick)))
       {
+#if defined(BDD_VIP)
+        struct db_reg *reg = db_buscar_registro(BDD_IPVIRTUAL2DB, nick);
+#endif      
         found = 2;              /* Make sure we exit the loop after passing it once */
         user = acptr->user;
         name = (!acptr->name) ? "?" : acptr->name;
         a2cptr = user->server;
+        
 #if defined(BDD_VIP)
-        sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
-            parv[0], name, PunteroACadena(user->username),
-            get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
+        if (IsHidden(acptr) && reg)
+          sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
+              parv[0], name, PunteroACadena(user->username),
+              reg->valor, PunteroACadena(acptr->info));        
+        else
+          sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
+              parv[0], name, PunteroACadena(user->username),
+              get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
 #else
         sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
             parv[0], name, PunteroACadena(user->username), user->host,
