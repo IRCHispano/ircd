@@ -559,7 +559,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
           if (!reemplazar)
           {
             aClient *sptr;
-            if ((sptr = FindUser(clave)) && IsUser(sptr))
+            if ((sptr = FindUser(c)) && IsUser(sptr))
             {
               if (MyUser(sptr))
                 make_virtualhost(sptr, 1);
@@ -810,7 +810,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         aClient *sptr;
         
-        if ((sptr = FindUser(clave)) && IsUser(sptr))
+        if ((sptr = FindUser(c)) && IsUser(sptr))
         {
           if (MyUser(sptr))
             make_virtualhost(sptr, 1);
