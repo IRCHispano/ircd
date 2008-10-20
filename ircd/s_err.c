@@ -496,7 +496,7 @@ static Numeric numeric_replies[] = {
 /* 374 */
     {RPL_ENDOFINFO, ":End of /INFO list"},
 /* 375 */
-    {RPL_MOTDSTART, ":- %s Message of the Day - "},
+    {RPL_MOTDSTART, ":- %s Mensaje de bienvenida -  "},
 /* 376 */
     {RPL_ENDOFMOTD, ":End of /MOTD command"},
 /* 377 */
