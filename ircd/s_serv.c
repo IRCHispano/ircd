@@ -903,16 +903,24 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
     /*
      *  Pass my info to the new server
      */
-    sendto_one(cptr,
-        "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s +%s :%s",
-        my_name_for_link(me.name, aconf), me.serv->timestamp,
-        cptr->serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
+    if (Protocol(cptr) > 9)
+      sendto_one(cptr,
+          "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s +%s :%s",
+          my_name_for_link(me.name, aconf), me.serv->timestamp,
+          cptr->serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
 #if defined(HUB)
-        "h",
+          "h",
 #else        
-        "", 
+          "", 
 #endif        
-        me.info ? me.info : "IRCers United");
+          me.info ? me.info : "IRCers United");
+    else
+      sendto_one(cptr,
+          "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s 0 :%s",
+           my_name_for_link(me.name, aconf), me.serv->timestamp,
+           cptr->serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me), 
+           me.info ? me.info : "IRCers United");
+
     tx_num_serie_dbs(cptr);
 
     IPcheck_connect_fail(cptr); /* Don't charge this IP# for connecting */
