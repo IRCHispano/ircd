@@ -1,3 +1,8 @@
+* 2008/10/20 zoltan@irc-dev.net      (u2.10.H.10.76)                 FIX
+------------------------------------------------------------------------
+  Al hacer cleanup en el parche u2.10.H.10.52, habia algun cabo suelto
+  por el codigo ininteligible. Lo pongo mas clarito.
+  
 * 2008/10/15 zoltan@irc-dev.net      (u2.10.H.10.75)                 FIX
 ------------------------------------------------------------------------
   En el parche u2.10.H.10.63 no contemplaba 1 de los 2 casos del WHOIS.

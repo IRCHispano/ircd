@@ -398,42 +398,17 @@ static struct db_reg *db_busca_db_reg(unsigned char tabla, char *clave)
  * Elimina la caché de las ips virtuales cuando se cambia el valor de la clave de cifrado
  *
  */
-static inline void elimina_cache_ips_virtuales(char *nickname)
+static inline void elimina_cache_ips_virtuales(void)
 {
   aClient *acptr;
 
-  if (nickname == NULL)
+  /* A limpiar la cache */
+  for (acptr = client; acptr; acptr = acptr->next)
   {
-    /* A limpiar la cache */
-    for (acptr = client; acptr; acptr = acptr->next)
-    {
-      if (TieneIpVirtualPersonalizada(acptr))
-        continue;
-
-      if (IsUser(acptr))
-      {
-        BorraIpVirtual(acptr);
-      }
-    }
-  }
-  else if ((acptr = FindUser(nickname)))  /* Usamos FindUser porque FindCLient puede encontrar conexiones que no son de usuario */
-  {
-    /*
-     * Soporte para el cambio instantáneo de un host virtual si se cambia el valor de la tabla
-     * 'v' correspondiente a un nick existente. Se utiliza make_virtualhost para notificar
-     * al usuario en cuestión del cambio. -RyDeN
-     *
-     */
-
-    assert(IsUser(acptr));
     if (TieneIpVirtualPersonalizada(acptr))
-      return;
+      continue;
 
-    if (MyUser(acptr))
-    {
-      make_virtualhost(acptr, 1);
-    }
-    else
+    if (IsUser(acptr))
     {
       BorraIpVirtual(acptr);
     }
@@ -551,7 +526,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               clave_de_cifrado_de_ips = NULL;
               clave_de_cifrado_binaria[0] = 0;
               clave_de_cifrado_binaria[1] = 0;
-              elimina_cache_ips_virtuales(NULL);
+              elimina_cache_ips_virtuales();
             }
             else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
             {
@@ -582,7 +557,16 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
 
         case BDD_IPVIRTUALDB:
           if (!reemplazar)
-            elimina_cache_ips_virtuales(reg->clave);
+          {
+            aClient *sptr;
+            if ((sptr = FindUser(clave)) && IsUser(sptr))
+            {
+              if (MyUser(sptr))
+                make_virtualhost(sptr, 1);
+              else
+                BorraIpVirtual(sptr);
+            } 
+          }
           break;
       }
       p_free(reg);
@@ -781,7 +765,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         clave_de_cifrado_binaria[0] = base64toint(clave); /* BINARIO */
         clave[6] = tmp;
         clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
-        elimina_cache_ips_virtuales(NULL);
+        elimina_cache_ips_virtuales();
       }
       else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
       {
@@ -823,7 +807,17 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       break;
 
     case BDD_IPVIRTUALDB:
-      elimina_cache_ips_virtuales(reg->clave);
+      {
+        aClient *sptr;
+        
+        if ((sptr = FindUser(clave)) && IsUser(sptr))
+        {
+          if (MyUser(sptr))
+            make_virtualhost(sptr, 1);
+          else
+            BorraIpVirtual(sptr);
+        }
+      }
       break;
   }
 }
