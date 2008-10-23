@@ -1,3 +1,8 @@
+* 2008/10/20 zoltan@irc-dev.net      (u2.10.H.10.77)                 
+------------------------------------------------------------------------
+  No hay cambios, se libero un tar.gz con version 77 con codigo de 76.
+  Se gasta la version para evitar equivocaciones.
+  
 * 2008/10/20 zoltan@irc-dev.net      (u2.10.H.10.76)                 FIX
 ------------------------------------------------------------------------
   Al hacer cleanup en el parche u2.10.H.10.52, habia algun cabo suelto
