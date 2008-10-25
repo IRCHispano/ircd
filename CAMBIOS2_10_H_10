@@ -1,3 +1,14 @@
+* 2008/10/08 dfm@unr.com             (u2.10.H.10.78)             FEATURE
+------------------------------------------------------------------------
+  El sistema de cifrado permitia nicks de hasta 15 caracteres. Se 
+  modifica el sistema para que soporte nicks de 16 o mas caracteres. Se 
+  ha mantenido compatibilidad para los nicks de hasta 15 para evitar que
+  se tenga que regenerar las claves cifradas de todos los nicks.
+  
+  Se ajusta el NICKLEN a 30, por defecto, con la BDD vacia, el nicklen 
+  real es de 9 salvo si se inserta un registro "nicklen" con un valor 
+  mayor en la tabla z. Mirar parche u2.10.H.10.71
+  
 * 2008/10/20 zoltan@irc-dev.net      (u2.10.H.10.77)                 
 ------------------------------------------------------------------------
   No hay cambios, se libero un tar.gz con version 77 con codigo de 76.

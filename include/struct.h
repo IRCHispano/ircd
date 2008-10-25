@@ -34,7 +34,7 @@
  * General defines
  */
 
-#define NICKLEN		15
+#define NICKLEN		30
 #define USERLEN		10
 #define HOSTLEN		63
 #define REALLEN		70

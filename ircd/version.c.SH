@@ -104,7 +104,7 @@ const char *infotext[] = {
     "",
     "Otros desarrolladores para IRC-Hispano:",
     "|savage|      Jordi Murgo        <savage@apostols.org>",
-    "FreeMind                         <freemind@unr.com>",
+    "FreeMind      Daniel Fernandez   <dfm@unr.com>",
     "zoltan        Toni Garcia        <zoltan@irc-dev.net>",
     "Amn3S1A      Miguel A. Fosas     <amn3s1a@irc-dev.net>",
     "NiKoLaS      Ruben Cardenal      <nikolas@irc-dev.net>",

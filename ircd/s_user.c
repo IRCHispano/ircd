@@ -854,8 +854,12 @@ static int user_hmodes[] = {
 static int verifica_clave_nick(char *nick, char *hash, char *clave)
 {
   unsigned int v[2], k[2], x[2];
-  int cont = (NICKLEN + 8) / 8;
-  char tmpnick[8 * ((NICKLEN + 8) / 8) + 1];
+  
+  int longitud_nick = strlen(nick);
+  /* Para nicks <16 uso cont 2 para el resto lo calculo */
+  int cont=(longitud_nick < 16) ? 2 : ((longitud_nick + 8) / 8);
+  
+  char tmpnick[8 * ((cont + 8) / 8) + 1];
   char tmppass[12 + 1];
   unsigned int *p = (unsigned int *)tmpnick;  /* int == 32bits */
   unsigned int numpass[2];
