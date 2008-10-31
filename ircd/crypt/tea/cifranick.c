@@ -35,7 +35,6 @@
 
 
 #define NUMNICKLOG 6
-#define NICKLEN 15
 #define NUMNICKBASE 64          /* (2 << NUMNICKLOG) */
 #define NUMNICKMASK 63          /* (NUMNICKBASE-1) */
 
@@ -141,29 +140,27 @@ void tea(unsigned int v[], unsigned int k[], unsigned int x[])
 
 int main(int argc, char *argv[])
 {
-
     unsigned int v[2], k[2], x[2];
-    int cont = (NICKLEN + 8) / 8;
-    char tmpnick[8 * ((NICKLEN + 8) / 8) + 1];
-    char tmppass[12 + 1];
-    unsigned int *p = (unsigned int *)tmpnick; /* int == 32 bits */
-
-    char nick[NICKLEN + 1];    /* Nick normalizado */
-    char clave[12 + 1];                /* Clave encriptada */
-    int i = 0;
-
 
     if (argc != 3)
     {
-        printf("Uso: cifranick nick password\n");
-        return 1;
+      printf("Uso: cifranick nick password\n");
+      return 1;
     }
+  
+    char *nick = argv[1];
+    int longitud_nick = strlen(nick);
+    /* Para nicks <16 uso cont 2 para el resto lo calculo */
+    int cont=(longitud_nick < 16) ? 2 : ((longitud_nick + 8) / 8);
 
-    strcpy(nick, argv[1]);
-    nick[NICKLEN] = '\0';
+    char tmpnick[8 * cont + 1];
+    char tmppass[12 + 1];
+    unsigned int *p = (unsigned int *)tmpnick; /* int == 32 bits */
 
+    char clave[12 + 1];                /* Clave encriptada */
+    int i = 0;
 
-     /* Normalizar nick */
+    /* Normalizar nick */
     while (nick[i] != 0)
     {
        nick[i] = toLower(nick[i]);
