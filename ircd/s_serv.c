@@ -711,9 +711,12 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
       acptr->flags |= FLAGS_TS8;
     add_client_to_list(acptr);
     hAddClient(acptr);
-    
-    if (*parv[7] == '+')
-      set_server_flags(acptr, parv[7] + 1);
+
+    if (Protocol(acptr) > 9)
+    {    
+      if (*parv[7] == '+')
+        set_server_flags(acptr, parv[7] + 1);
+    }
     
     /* Si recibimos un P09, ponemos +hs ya que siempre es un service y hub */
     if (Protocol(acptr) < 10)
