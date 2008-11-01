@@ -1,3 +1,12 @@
+* 2008/11/01 daijo@irc-dev.net       (u2.10.H.10.79)                 FIX
+------------------------------------------------------------------------
+  La busqueda de la funcion res_mkquery() se realiza sobre los simbolos
+  __res_mkquery y res_mkquery, ya que segun el sistema este puede variar
+  como sucede en Solaris 10.
+
+  Se ha modificado el configure.in y ejecutado autoconf. Probado con
+  Solaris 10 y Linux.
+
 * 2008/10/08 dfm@unr.com             (u2.10.H.10.78)             FEATURE
 ------------------------------------------------------------------------
   El sistema de cifrado permitia nicks de hasta 15 caracteres. Se 
