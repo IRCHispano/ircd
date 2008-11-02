@@ -9819,7 +9819,7 @@ fi
 
 
 
-ac_config_files="$ac_config_files config-sh Configure ../Makefile ../ircd/Makefile ../doc/Makefile Makefile"
+ac_config_files="$ac_config_files config-sh configuretool ../Makefile ../ircd/Makefile ../doc/Makefile Makefile"
 
 ac_config_commands="$ac_config_commands default"
 
@@ -10382,7 +10382,7 @@ do
   case $ac_config_target in
     "setup.h") CONFIG_HEADERS="$CONFIG_HEADERS setup.h" ;;
     "config-sh") CONFIG_FILES="$CONFIG_FILES config-sh" ;;
-    "Configure") CONFIG_FILES="$CONFIG_FILES Configure" ;;
+    "configuretool") CONFIG_FILES="$CONFIG_FILES configuretool" ;;
     "../Makefile") CONFIG_FILES="$CONFIG_FILES ../Makefile" ;;
     "../ircd/Makefile") CONFIG_FILES="$CONFIG_FILES ../ircd/Makefile" ;;
     "../doc/Makefile") CONFIG_FILES="$CONFIG_FILES ../doc/Makefile" ;;

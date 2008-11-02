@@ -36,7 +36,8 @@ clean:
 distclean: clean
 	${RM} -f .config setup.h stamp-h config.h .config.old \
 		config.cache config.log config.status Makefile config-sh \
-		Configure
+		configuretool
+	${RM} -rf autom4te.cache
 
 maintainer-clean: distclean
 	${RM} -f aclocal.m4 setup.h.in stamp-h.in configure
@@ -48,15 +49,15 @@ maintainer-clean: distclean
 	@echo Generating configure...
 	autoconf
 
-config: configure setup.h.in config.status Configure FORCE
-	@CONFIG_BATCH=n ${SHELL} ./Configure || exit 1
+config: configure setup.h.in config.status configuretool FORCE
+	@CONFIG_BATCH=n ${SHELL} ./configuretool || exit 1
 	@# Allow the use of non-GNU make with 'make config':
 	@cd ../ircd; ${MAKE} Makefile
 	@cd ../doc; ${MAKE} Makefile
 
-config.h: Configure config-sh
+config.h: configuretool config-sh
 	@echo Generating config.h...
-	@CONFIG_BATCH=y ${SHELL} ./Configure || exit 1
+	@CONFIG_BATCH=y ${SHELL} ./configuretool || exit 1
 	@cd ../ircd; ${MAKE} Makefile
 
 FORCE:
@@ -99,6 +100,6 @@ config-sh: config-sh.in config.status
 	@echo Generating config-sh...
 	@CONFIG_FILES=config-sh CONFIG_HEADERS= ./config.status
 
-Configure: Configure.in config.status
-	@echo Generating Configure...
-	@CONFIG_FILES=Configure CONFIG_HEADERS= ./config.status
+configuretool: configuretool.in config.status
+	@echo Generating configuretool...
+	@CONFIG_FILES=configuretool CONFIG_HEADERS= ./config.status

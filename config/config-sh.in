@@ -3,7 +3,7 @@
 # By Carlo Wood (carlo@runaway.xs4all.nl)
 #
 # For a description of the syntax of this configuration file,
-# see the config/Configure script.
+# see the config/configuretool script.
 #
 # TO CONFIGURE THE SERVER, TYPE: 'make config' in the top level directory !
 #

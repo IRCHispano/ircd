@@ -5,7 +5,7 @@ config.status
 setup.h
 stamp-h
 config-sh
-Configure
+configuretool
 config.h
 .config
 .tmpconfig.h

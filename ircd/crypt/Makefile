@@ -35,3 +35,6 @@ install:
 
 clean:
 	/bin/rm -f mkpasswd
+
+distclean: clean
+	/bin/rm -f .checksums

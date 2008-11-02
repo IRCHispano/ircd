@@ -126,7 +126,7 @@ else
   unet_cv_sys_set_h=no
 fi
 $RMPROG -fr conftest*])
-dnl Used in Configure.
+dnl Used in configuretool.
 AC_SUBST(unet_cv_sys_set_h)
 
 unet_NONBLOCKING
@@ -141,4 +141,4 @@ AC_SUBST(ac_cv_header_syslog_h)
 AC_SUBST(unet_cv_func_poll_syscall)
 
 dnl Finally really generate all output files:
-AC_OUTPUT(config-sh Configure ../Makefile ../ircd/Makefile ../doc/Makefile Makefile, [echo timestamp > stamp-h;],)
+AC_OUTPUT(config-sh configuretool ../Makefile ../ircd/Makefile ../doc/Makefile Makefile, [echo timestamp > stamp-h;],)
