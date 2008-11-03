@@ -98,11 +98,11 @@ void untea(unsigned int v[],unsigned int k[], unsigned int x[])
    /* sum = delta<<5, in general sum = delta * n */
 
    while (n-- > 0)
-      {
-      z -= (y << 4) + c ^ y + sum ^ (y >> 5) + d;
-      y -= (z << 4) + a ^ z + sum ^ (z >> 5) + b;
+   {
+	  z -= ((y << 4) + c) ^ ((y + sum) ^ ((y >> 5) + d));
+	  y -= ((z << 4) + a) ^ ((z + sum) ^ ((z >> 5) + b));
       sum -= delta;
-      }
+   }
 
    x[0]=y; x[1]=z;
 }
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
     k[1] = base64toint(clave + 6);
 
     untea(v, k, x);
- 
+
     printf("Resultado: %s\n", inetoa(x[1]));
 
     return 0;

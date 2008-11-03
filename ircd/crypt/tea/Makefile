@@ -24,20 +24,19 @@
 
 all: cifranick ipreal ipvirtual
 
-cifranick:
-	gcc -c cifranick.c
-	gcc cifranick.o -o cifranick
+cifranick: cifranick.c
+	gcc -Wall -O2 cifranick.c -o cifranick
 
-ipreal:
-	gcc -c ipreal.c
-	gcc ipreal.o -o ipreal
+ipreal: ipreal.c
+	gcc -Wall -O2 ipreal.c -o ipreal
 
-ipvirtual:
-	gcc -c ipvirtual.c
-	gcc ipvirtual.o -o ipvirtual
+ipvirtual: ipvirtual.c
+	gcc -Wall -O2 ipvirtual.c -o ipvirtual
 
 install:       
 	@echo 'Ya esta instalado, no hacia falta ;-).'
 
 clean:
-	/bin/rm -f cifranick ipreal ipvirtual *.o core *.c~
+	/bin/rm -f cifranick ipreal ipvirtual core *.c~
+
+distclean: clean

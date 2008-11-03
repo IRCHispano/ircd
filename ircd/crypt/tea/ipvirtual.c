@@ -102,8 +102,8 @@ void tea(unsigned int v[], unsigned int k[], unsigned int x[])
   while (n-- > 0)
   {
     sum += delta;
-    y += (z << 4) + a ^ z + sum ^ (z >> 5) + b;
-    z += (y << 4) + c ^ y + sum ^ (y >> 5) + d;
+    y += ((z << 4) + a) ^ ((z + sum) ^ ((z >> 5) + b));
+    z += ((y << 4) + c) ^ ((y + sum) ^ ((y >> 5) + d));
   }
 
   x[0] = y;
@@ -114,7 +114,7 @@ void tea(unsigned int v[], unsigned int k[], unsigned int x[])
 int main(int argc, char *argv[])
 {
     unsigned int v[2], k[2], x[2];
-    int ts;
+    int ts=0;
     char clave[12 + 1];
     char virtualhost[22];
     struct hostent *hp;
@@ -178,4 +178,5 @@ int main(int argc, char *argv[])
     }
   }
   printf("Resultado: %s\n", virtualhost);
+  return 0;
 }

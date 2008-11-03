@@ -88,7 +88,7 @@ const char *inttobase64(char *buf, unsigned int v, unsigned int count)
 }
 
 /*
- * La siguiente tabla es utilizada por la macro toLower, 
+ * La siguiente tabla es utilizada por la macro toLower,
  * esta tabla esta extraida del archivo common.c del ircd.
  *
  * --Daijo
@@ -129,8 +129,8 @@ void tea(unsigned int v[], unsigned int k[], unsigned int x[])
   while (n-- > 0)
   {
     sum += delta;
-    y += (z << 4) + a ^ z + sum ^ (z >> 5) + b;
-    z += (y << 4) + c ^ y + sum ^ (y >> 5) + d;
+    y += ((z << 4) + a) ^ ((z + sum) ^ ((z >> 5) + b));
+    z += ((y << 4) + c) ^ ((y + sum) ^ ((y >> 5) + d));
   }
 
   x[0] = y;
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
       printf("Uso: cifranick nick password\n");
       return 1;
     }
-  
+
     char *nick = argv[1];
     int longitud_nick = strlen(nick);
     /* Para nicks <16 uso cont 2 para el resto lo calculo */
@@ -163,9 +163,9 @@ int main(int argc, char *argv[])
     /* Normalizar nick */
     while (nick[i] != 0)
     {
-       nick[i] = toLower(nick[i]);
+       nick[i] = toLower((int) nick[i]);
        i++;
-    }  
+    }
 
     memset(tmpnick, 0, sizeof(tmpnick));
     strncpy(tmpnick, nick ,sizeof(tmpnick) - 1);
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
     strncat(tmppass, "AAAAAAAAAAAA", sizeof(tmppass) - strlen(tmppass) -1);
 
     x[0] = x[1] = 0;
-    
+
     k[1] = base64toint(tmppass + 6);
     tmppass[6] = '\0';
     k[0] = base64toint(tmppass);
