@@ -1,3 +1,11 @@
+* 2008/10/08 freemind@unr.com             (u2.10.H.10.83)            FIX
+------------------------------------------------------------------------
+  Arreglo de warnings y Makefile en crypt/tea.
+  
+  Arreglo para que compile en maquinas cuyo sistema de archivos no
+  distingue entre mayusculas y minusculas (como el HFS+ de Mac OS X sin
+  case sensitive)
+
 * 2008/11/07 daijo@irc-dev.net       (u2.10.H.10.82)             CLEANUP
 ------------------------------------------------------------------------
   El boot_timestamp introducido en el parche anterior permitia compilar
