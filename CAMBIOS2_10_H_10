@@ -1,3 +1,9 @@
+* 2008/11/07 daijo@irc-dev.net       (u2.10.H.10.81)                 FIX
+------------------------------------------------------------------------
+  Al utilizar la opcion de depuracion MEMTIMESTATS, se producia un error
+  de compilacion ya que boot_timestamp no estaba definido en la
+  estructura Server.
+
 * 2008/11/07 daijo@irc-dev.net       (u2.10.H.10.80)                 FIX
 ------------------------------------------------------------------------
   Sustituyo varios "return 0" por "exit(EXIT_SUCCESS)" en los archivos
