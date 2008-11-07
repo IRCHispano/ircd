@@ -194,6 +194,6 @@ int main(int argc, char *argv[])
 
     printf("Clave cifrada para %s es %s\n", nick, clave);
 
-    return 0;
+    exit(EXIT_SUCCESS);
 
 }

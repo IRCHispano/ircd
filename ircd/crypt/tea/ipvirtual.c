@@ -178,5 +178,5 @@ int main(int argc, char *argv[])
     }
   }
   printf("Resultado: %s\n", virtualhost);
-  return 0;
+  exit(EXIT_SUCCESS);
 }

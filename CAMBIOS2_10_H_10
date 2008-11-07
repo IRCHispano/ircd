@@ -1,3 +1,13 @@
+* 2008/11/07 daijo@irc-dev.net       (u2.10.H.10.80)                 FIX
+------------------------------------------------------------------------
+  Sustituyo varios "return 0" por "exit(EXIT_SUCCESS)" en los archivos
+  que generan las claves encriptadas. Este cambio respeta el standard C
+  a la hora de volver al sistema operativo y no asume que este espere un
+  valor de retorno 0 como bueno.
+
+  Ademas, la funcion exit() ejecuta las funciones registradas mediante
+  atexit (y on_exit), limpiando la aplicacion antes de salir.
+
 * 2008/11/01 daijo@irc-dev.net       (u2.10.H.10.79)                 FIX
 ------------------------------------------------------------------------
   La busqueda de la funcion res_mkquery() se realiza sobre los simbolos

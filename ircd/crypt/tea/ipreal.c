@@ -150,5 +150,5 @@ int main(int argc, char *argv[])
 
     printf("Resultado: %s\n", inetoa(x[1]));
 
-    return 0;
+    exit(EXIT_SUCCESS);
 }

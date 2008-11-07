@@ -46,6 +46,6 @@ int main(int argc, char *argv[])
   printf("%s\n", crypt(plaintext, salt));
   free(plaintext);
 
-  return 0;
+  exit(EXIT_SUCCESS);
 }
 
