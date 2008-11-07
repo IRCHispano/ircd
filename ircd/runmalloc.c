@@ -143,7 +143,7 @@ void report_memleak_stats(aClient *sptr, int parc, char *parv[])
 
 #if defined(MEMTIMESTATS)
   time_t till = now;
-  time_t from = me.serv->boot_timestamp;
+  time_t from = me.since;
   if (parc > 3)
   {
     location_st tmp_loc[LOCSIZE];
