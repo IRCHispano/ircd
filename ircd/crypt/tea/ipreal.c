@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <netdb.h>
+#include <stdlib.h>
 #ifdef _WIN32
 # include <winsock.h>
 #else
