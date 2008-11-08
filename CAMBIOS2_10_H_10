@@ -1,3 +1,8 @@
+* 2008/11/08 daijo@irc-dev.net            (u2.10.H.10.85)        FEATURE
+------------------------------------------------------------------------
+  Se añade una comprobacion basica para determinar que el tipo uintptr_t
+  exista, y en caso contrario se define como unsigned long.
+
 * 2008/11/08 daijo@irc-dev.net            (u2.10.H.10.84)            FIX
 ------------------------------------------------------------------------
   Arreglo un segfault en plataformas de 64-bits al llamar a la funcion

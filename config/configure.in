@@ -101,6 +101,27 @@ fi
 
 AC_C_SOCKLEN_T
 
+dnl Comprueba si el tipo uintptr_t esta definido
+AC_DEFUN(AC_C_UINTPTR_T,
+[AC_CACHE_CHECK(for uintptr_t, ac_cv_c_uintptr_t,
+[
+  AC_TRY_COMPILE([
+    #include <stdint.h>
+  ],[
+    uintptr_t foo;
+  ],[
+    ac_cv_c_uintptr_t=yes
+  ],[
+    ac_cv_c_uintptr_t=no
+  ])
+])
+if test $ac_cv_c_socklen_t = no; then
+  AC_DEFINE(uintptr_t, unsigned long, [define to unsigned long if uintptr_t not available])
+fi
+])
+
+AC_C_UINTPTR_T
+
 dnl Do we have a system call poll?
 unet_FUNC_POLL_SYSCALL
 
