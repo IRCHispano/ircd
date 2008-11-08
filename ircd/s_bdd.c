@@ -1355,7 +1355,7 @@ static int mmap_cache(void)
 void db_persistent_commit(void)
 {
   char path_buf[sizeof(DBPATH) + 1024];
-  unsigned int *p, *p_base, *p_limite;
+  uintptr_t *p, *p_base, *p_limite;
   unsigned char *p2;
   unsigned int len_used;
   unsigned int v[2], k[2], x[2];
@@ -1383,9 +1383,9 @@ void db_persistent_commit(void)
           i);
   }
 
-  p2 = (unsigned char *)p;
+  p_base = (uintptr_t *)mmap_cache_pos;
   p = p_base;
-  p_base = (unsigned int *)mmap_cache_pos;
+  p2 = (unsigned char *)p;
 
   p += 2;                       /* Nos saltamos el HASH, de momento */
   p += 1;                       /* Nos saltamos la version, de momento */

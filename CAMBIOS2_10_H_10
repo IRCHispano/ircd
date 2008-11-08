@@ -1,3 +1,17 @@
+* 2008/11/08 daijo@irc-dev.net            (u2.10.H.10.84)            FIX
+------------------------------------------------------------------------
+  Arreglo un segfault en plataformas de 64-bits al llamar a la funcion
+  db_persistent_commit(). Esta funcion utilizaba punteros a int sin
+  tener en cuenta el tamaño de destino, distinto segun el bitness de la
+  plataforma, por lo que se intentaban guardar valores de 64 bits en
+  variables de 32.
+
+  Al cambiar a uint_ptr ya no hay problema de compatibilidad, ya que su
+  valor lo define la libreria de C segun el bitness que se utilice en
+  ella.
+
+  Ademas se cambian las asignaciones de p, p_base y p2 a unas correctas.
+
 * 2008/11/03 freemind@unr.com             (u2.10.H.10.83)            FIX
 ------------------------------------------------------------------------
   Arreglo de warnings y Makefile en crypt/tea.
