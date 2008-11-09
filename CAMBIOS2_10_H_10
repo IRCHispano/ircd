@@ -1,3 +1,4 @@
+
 * 2008/11/08 daijo@irc-dev.net            (u2.10.H.10.85)        FEATURE
 ------------------------------------------------------------------------
   Se añade una comprobacion basica para determinar que el tipo uintptr_t
