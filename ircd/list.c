@@ -416,7 +416,7 @@ void free_conf(aConfItem *aconf)
 }
 
 aGline *make_gline(int is_ipmask, char *host, char *reason,
-    char *name, time_t expire)
+    char *name, time_t expire, time_t lastmod, time_t lifetime)
 {
   Reg4 aGline *agline;
 #if defined(BADCHAN)
@@ -430,6 +430,8 @@ aGline *make_gline(int is_ipmask, char *host, char *reason,
   DupString(agline->reason, reason);
   DupString(agline->name, name);
   agline->expire = expire;
+  agline->lastmod = lastmod;
+  agline->lifetime = lifetime;
   agline->gflags = GLINE_ACTIVE;  /* gline is active */
   if (is_ipmask)
     SetGlineIsIpMask(agline);

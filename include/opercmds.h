@@ -36,6 +36,8 @@ struct Gline {
   char *reason;
   char *name;
   time_t expire;
+  time_t lastmod;
+  time_t lifetime;
   unsigned int gflags;
 };
 
@@ -57,5 +59,6 @@ extern int m_rpong(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_close(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+extern int reenvia_gline(aClient *cptr, aGline *agline);
 
 #endif /* OPERCMDS_H */

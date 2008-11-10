@@ -1903,17 +1903,25 @@ int m_die(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return m_die_remoto(cptr, sptr, parc, parv);
 }
 
-static void add_gline(aClient *sptr, int ip_mask, char *host, char *comment,
-    char *user, time_t expire, int local)
+static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, char *comment,
+    char *user, time_t expire, time_t lastmod, time_t lifetime, int local)
 {
+  
   aClient *acptr;
   aGline *agline;
   int fd, gtype = 0;
-
+  
 #if defined(BADCHAN)
   if (*host == '#' || *host == '&' || *host == '+')
     gtype = 1;                  /* BAD CHANNEL */
 #endif
+  
+  if (!lifetime) /* si no me ponen tiempo de vida uso el tiempo de expiracion */
+    lifetime = expire;
+
+  if(!buscar_uline(cptr->confs, sptr->name) && lastmod == 0) /* Si no tengo uline y me pasan ultima mod 0 salgo */
+    return;
+  
   /* Inform ops */
   sendto_op_mask(SNO_GLINE,
       "%s adding %s%s for %s@%s, expiring at " TIME_T_FMT " (%s): %s",
@@ -1931,7 +1939,10 @@ static void add_gline(aClient *sptr, int ip_mask, char *host, char *comment,
     write_log(GPATH, "%c:%s:%s:%s\n", ip_mask ? 'k' : 'K', host, comment, user);
 #endif /* GPATH */
 
-  agline = make_gline(ip_mask, host, comment, user, expire);
+  if(lastmod==0)
+    lastmod = TStime();
+  
+  agline = make_gline(ip_mask, host, comment, user, expire, lastmod, lifetime);
   if (local)
     SetGlineIsLocal(agline);
 
@@ -2005,8 +2016,8 @@ static void add_gline(aClient *sptr, int ip_mask, char *host, char *comment,
  * parv[1] = Target: server numeric
  * parv[2] = [+|-]<G-line mask>
  * parv[3] = Expiration offset
- * parv[4] = G-line last modification (En nuevo IRCD, reserva)
- * parv[5] = G-line lifetime (En nuevo IRCD, reserva)
+ * parv[4] = G-line last modification
+ * parv[5] = G-line lifetime
  * parv[parc - 1] = Comment
  *
  * From client:
@@ -2023,7 +2034,7 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
   aGline *agline, *a2gline;
   char *user, *host;
   int active, ip_mask, gtype = 0;
-  time_t expire = 0;
+  time_t expire = 0, lastmod = 0, lifetime = 0;
 
   /* Remove expired G-lines */
   for (agline = gline, a2gline = NULL; agline; agline = agline->next)
@@ -2056,146 +2067,134 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 
 
-  if (IsServer(cptr))
-  {
-    if (buscar_uline(cptr->confs, sptr->name))
-    {
-      if (parc < 3 || (*parv[2] != '-' && (parc < 5 || *parv[parc - 1] == '\0')))
-      {
-        sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0],
-            "GLINE");
-        return 0;
-      }
+  if (IsServer(cptr)) /* Si la gline la manda un servidor */
+    ms_gline(cptr, sptr, agline, a2gline, parc, parv);
+  else
+    mo_gline(cptr, sptr, agline, a2gline, parc, parv);
 
-      if (*parv[2] == '-')      /* add mode or delete mode? */
-        active = 0;
-      else
-        active = 1;
+  return 0;
+}
 
-      if (*parv[2] == '+' || *parv[2] == '-')
-        parv[2]++;              /* step past mode indicator */
-
-      /* forward the message appropriately */
-      if (!strCasediff(parv[1], "*")) /* global! */
-      {
-        sendto_lowprot_butone(cptr, 9, active ? ":%s GLINE %s +%s %s :%s" :
-            ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[parc - 1]);
-        if (IsUser(sptr))
-          sendto_highprot_butone(cptr, 10, active ? "%s%s " TOK_GLINE " %s +%s %s :%s" :
-              "%s%s " TOK_GLINE " %s -%s", NumNick(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
-        else
-          sendto_highprot_butone(cptr, 10, active ? "%s " TOK_GLINE " %s +%s %s :%s" :
-              "%s " TOK_GLINE " %s -%s", NumServ(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
-      } else if ((
-#if 1
-          /*
-           * REMOVE THIS after all servers upgraded to 2.10.01 and
-           * Uworld uses a numeric too
-           */
-          (strlen(parv[1]) != 1 && !(acptr = FindClient(parv[1])))) ||
-          (strlen(parv[1]) == 1 &&
-#endif
-          !(acptr = FindNServer(parv[1]))))
-        return 0;               /* no such server/user exists; forget it */
-      else
-#if 1
 /*
- * REMOVE THIS after all servers upgraded to 2.10.01 and
- * Uworld uses a numeric too
+ * ms_gline
+ *
+ * parv[0] = Send prefix
+ *
+ * parv[1] = Target: server numeric
+ * parv[2] = [+|-]<G-line mask>
+ * parv[3] = Expiration offset
+ * parv[4] = G-line last modification
+ * parv[parc - 1] = Comment
+ *
  */
-      if (IsServer(acptr) || !MyConnect(acptr))
-#endif
-      {
-        if (Protocol(acptr->from) < 10)
-          sendto_one(acptr, active ? ":%s GLINE %s +%s %s :%s" : ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[parc - 1]);  /* single destination */ 
-        else 
-        {
-          if (IsUser(sptr))
-            sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s :%s" : "%s%s " TOK_GLINE " %s -%s", 
-                NumNick(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
-          else
-            sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s :%s" : ":%s " TOK_GLINE " %s -%s", 
-                NumServ(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
-        }
-        return 0;               /* only the intended  destination
-                                   should add this gline */
-      }
+int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
+{
+  char *user, *host;
+  int active, ip_mask, gtype = 0;
+  time_t expire = 0, lastmod = 0, lifetime = 0;
 
-      if (!(host = strchr(parv[2], '@')))
-      {                         /* convert user@host */
-        user = "*";             /* no @'s; assume username is '*' */
-        host = parv[2];
-      }
-      else
-      {
-        user = parv[2];
-        *(host++) = '\0';       /* break up string at the '@' */
-      }
-      ip_mask = check_if_ipmask(host);  /* Store this boolean */
+  if(parc>5)
+    lastmod = atoi(parv[4]);
+  
+  if(parc>6)
+    lifetime = atoi(parv[5]);
+
+  if (parc < 3 || (*parv[2] != '-' && (parc < 5 || *parv[parc - 1] == '\0')))
+  {
+    sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0],
+        "GLINE");
+    return 0;
+  }
+
+  if (*parv[2] == '-')      /* add mode or delete mode? */
+    active = 0;
+  else
+    active = 1;
+
+  if (*parv[2] == '+' || *parv[2] == '-')
+    parv[2]++;              /* step past mode indicator */
+
+  if(!propaga_gline(cptr, sptr, active, parc, parv))
+    return 0;
+ 
+  if (!(host = strchr(parv[2], '@')))
+  {                         /* convert user@host */
+    user = "*";             /* no @'s; assume username is '*' */
+    host = parv[2];
+  }
+  else
+  {
+    user = parv[2];
+    *(host++) = '\0';       /* break up string at the '@' */
+  }
+  ip_mask = check_if_ipmask(host);  /* Store this boolean */
 #if defined(BADCHAN)
-      if (*host == '#' || *host == '&' || *host == '+')
-        gtype = 1;              /* BAD CHANNEL GLINE */
+  if (*host == '#' || *host == '&' || *host == '+')
+    gtype = 1;              /* BAD CHANNEL GLINE */
 #endif
 
-      for (agline = (gtype) ? badchan : gline, a2gline = NULL; agline;
-          agline = agline->next)
-      {
-        if (!strCasediff(agline->name, user)
-            && !strCasediff(agline->host, host))
-          break;
-        a2gline = agline;
-      }
+  for (agline = (gtype) ? badchan : gline, a2gline = NULL; agline;
+      agline = agline->next)
+  {
+    if (!strCasediff(agline->name, user)
+        && !strCasediff(agline->host, host))
+      break;
+    a2gline = agline;
+  }
 
-      if (!active && agline)
-      {                         /* removing the gline */
-        /* notify opers */
-        sendto_op_mask(SNO_GLINE, "%s removing %s for %s@%s", parv[0],
-            gtype ? "BADCHAN" : "GLINE", agline->name, agline->host);
-
-#if defined(GPATH)
-        write_log(GPATH, "# " TIME_T_FMT " %s removing %s for %s@%s\n",
-            TStime(), parv[0], gtype ? "BADCHAN" : "GLINE", agline->name,
-            agline->host);
-#endif /* GPATH */
-
-        free_gline(agline, a2gline);  /* remove the gline */
-      }
-      else if (active)
-      {                         /* must be adding a gline */
-        expire = atoi(parv[3]) + TStime();  /* expire time? */
-        if (agline && agline->expire < expire)
-        {                       /* new expire time? */
-          /* yes, notify the opers */
-          sendto_op_mask(SNO_GLINE,
-              "%s resetting expiration time on %s for %s@%s to "
-              TIME_T_FMT " (%s)",
-              parv[0], gtype ? "BADCHAN" : "GLINE", agline->name, agline->host,
-              expire, date(expire));
+  if (!active && agline)
+  {                         /* removing the gline */
+    /* notify opers */
+    sendto_op_mask(SNO_GLINE, "%s removing %s for %s@%s", parv[0],
+        gtype ? "BADCHAN" : "GLINE", agline->name, agline->host);
 
 #if defined(GPATH)
-          write_log(GPATH, "# " TIME_T_FMT " %s resetting expiration time "
-              "on %s for %s@%s to " TIME_T_FMT "\n",
-              TStime(), parv[0], gtype ? "BADCHAN" : "GLINE",
-              agline->name, agline->host, expire);
+    write_log(GPATH, "# " TIME_T_FMT " %s removing %s for %s@%s\n",
+        TStime(), parv[0], gtype ? "BADCHAN" : "GLINE", agline->name,
+        agline->host);
 #endif /* GPATH */
 
-          agline->expire = expire;  /* reset the expire time */
-        }
-        else if (!agline)
-        {                       /* create gline */
-          for (agline = gtype ? badchan : gline; agline; agline = agline->next)
-            if (!mmatch(agline->name, user) &&
-                (ip_mask ? GlineIsIpMask(agline) : !GlineIsIpMask(agline)) &&
-                !mmatch(agline->host, host))
-              return 0;         /* found an existing G-line that matches */
-
-          /* add the line: */
-          add_gline(sptr, ip_mask, host, parv[parc - 1], user, expire, 0);
-        }
-      }
+    free_gline(agline, a2gline);  /* remove the gline */
+  }
+  else if (active)
+  {                         /* must be adding a gline */
+    expire = atoi(parv[3]) + TStime();  /* expire time? */
+    if (agline && agline->expire < expire) 
+    {                       /* modifico gline; new expire time? */    	  
+      modifica_gline(cptr, sptr, agline, gtype, expire, lastmod, lifetime, parv[0]);
+    }
+    else if (!agline)
+    {                       /* create gline */
+      for (agline = gtype ? badchan : gline; agline; agline = agline->next)
+          if (!mmatch(agline->name, user) &&
+              (ip_mask ? GlineIsIpMask(agline) : !GlineIsIpMask(agline)) &&
+              !mmatch(agline->host, host))
+            return 0;         /* found an existing G-line that matches */
+        /* add the line: */
+        add_gline(cptr, sptr, ip_mask, host, parv[parc - 1], user, expire, lastmod, lifetime, 0);
     }
   }
-  else if (parc < 2 || *parv[1] == '\0')
+
+  return 0;
+}
+
+/*
+ * mo_gline
+ *
+ * parv[0] = Send prefix
+ *
+ * parv[1] = [+|-]<G-line mask>
+ * parv[2] = Expiration offset
+ * parv[3] = Comment
+ *
+ */
+int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
+{
+  char *user, *host;
+  int active, ip_mask, gtype = 0;
+  time_t expire = 0, lastmod = 0, lifetime = 0;
+
+  if (parc < 2 && *parv[1] != '\0')
   {
     int longitud;
     char buf[MAXLEN * 2];
@@ -2317,7 +2316,7 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
               me.name, parv[0], "GLINE");
           return 0;
         }
-        add_gline(sptr, ip_mask, host, parv[3], user, expire, 1);
+        add_gline(cptr, sptr, ip_mask, host, parv[3], user, expire, lastmod, lifetime, 1);
       }
       else
 #endif
@@ -2429,5 +2428,162 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
   }
 
+  return 0;
+}
+
+ /*
+  * Funcion para propagar una gline a otros servidores
+  */
+int propaga_gline(aClient *cptr, aClient *sptr, int active, int parc, char **parv) {
+  aClient *acptr = NULL;
+  time_t expire = 0, lastmod = 0, lifetime = 0;
+  
+  if(!buscar_uline(cptr->confs, sptr->name) && lastmod == 0) {/* Si no tengo uline y me pasan ultima mod 0 salgo */
+    return 0;
+  }
+  
+  /* forward the message appropriately */
+  if (!strCasediff(parv[1], "*")) /* global! */
+  {
+    if(parc>6)
+      sendto_lowprot_butone(cptr, 9, active ? ":%s GLINE %s +%s %s %s %s :%s" :
+          ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[4], parv[5], parv[parc - 1]);
+    else if(parc>5)
+      sendto_lowprot_butone(cptr, 9, active ? ":%s GLINE %s +%s %s %s :%s" :
+          ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[4], parv[parc - 1]);
+    else
+      sendto_lowprot_butone(cptr, 9, active ? ":%s GLINE %s +%s %s :%s" :
+          ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[parc - 1]);
+      
+    if (IsUser(sptr)) {
+      if(parc>6)
+        sendto_highprot_butone(cptr, 10, active ? "%s%s " TOK_GLINE " %s +%s %s %s %s :%s" :
+            "%s%s " TOK_GLINE " %s -%s", NumNick(sptr), parv[1], parv[2], parv[3], parv[4], parv[5], parv[parc - 1]);
+      else if(parc>5)
+        sendto_highprot_butone(cptr, 10, active ? "%s%s " TOK_GLINE " %s +%s %s %s :%s" :
+            "%s%s " TOK_GLINE " %s -%s", NumNick(sptr), parv[1], parv[2], parv[3], parv[4], parv[parc - 1]);
+      else
+        sendto_highprot_butone(cptr, 10, active ? "%s%s " TOK_GLINE " %s +%s %s :%s" :
+            "%s%s " TOK_GLINE " %s -%s", NumNick(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);        
+    }
+    else
+    {
+      if(parc>6)
+        sendto_highprot_butone(cptr, 10, active ? "%s " TOK_GLINE " %s +%s %s %s %s :%s" :
+            "%s " TOK_GLINE " %s -%s", NumServ(sptr), parv[1], parv[2], parv[3], parv[4], parv[5], parv[parc - 1]);
+      else if(parc>5)
+        sendto_highprot_butone(cptr, 10, active ? "%s " TOK_GLINE " %s +%s %s %s :%s" :
+            "%s " TOK_GLINE " %s -%s", NumServ(sptr), parv[1], parv[2], parv[3], parv[4], parv[parc - 1]);
+      else
+        sendto_highprot_butone(cptr, 10, active ? "%s " TOK_GLINE " %s +%s %s :%s" :
+            "%s " TOK_GLINE " %s -%s", NumServ(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
+    }
+  } else if ((
+#if 1
+      /*
+       * REMOVE THIS after all servers upgraded to 2.10.01 and
+       * Uworld uses a numeric too
+       */
+      (strlen(parv[1]) != 1 && !(acptr = FindClient(parv[1])))) ||
+      (strlen(parv[1]) == 1 &&
+#endif
+      !(acptr = FindNServer(parv[1])))) {
+    return 0;               /* no such server/user exists; forget it */
+  }
+  else
+#if 1
+/*
+ * REMOVE THIS after all servers upgraded to 2.10.01 and
+ * Uworld uses a numeric too
+ */
+  if (IsServer(acptr) || !MyConnect(acptr))
+#endif
+  {
+    if (Protocol(acptr->from) < 10)
+    {
+      if(parc>6)
+        sendto_one(acptr, active ? ":%s GLINE %s +%s %s %s %s :%s" : ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[4], parv[5], parv[parc - 1]);  /* single destination */
+      else if(parc>5)
+        sendto_one(acptr, active ? ":%s GLINE %s +%s %s %s :%s" : ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[4], parv[parc - 1]);  /* single destination */
+      else
+        sendto_one(acptr, active ? ":%s GLINE %s +%s %s :%s" : ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[parc - 1]);  /* single destination */
+    }
+    else 
+    {
+      if (IsUser(sptr)) {
+        if(parc>6)
+          sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s %s %s :%s" : "%s%s " TOK_GLINE " %s -%s", 
+            NumNick(sptr), parv[1], parv[2], parv[3], parv[4], parv[5], parv[parc - 1]);
+        else if(parc>5)
+          sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s %s :%s" : "%s%s " TOK_GLINE " %s -%s", 
+            NumNick(sptr), parv[1], parv[2], parv[3], parv[4], parv[parc - 1]);
+        else
+          sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s :%s" : "%s%s " TOK_GLINE " %s -%s", 
+            NumNick(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);      
+      }
+      else
+      {
+        if(parc>6)
+          sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s %s %s :%s" : ":%s " TOK_GLINE " %s -%s", 
+              NumServ(sptr), parv[1], parv[2], parv[3], parv[4], parv[5], parv[parc - 1]);
+        else if(parc>5)
+          sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s :%s" : ":%s " TOK_GLINE " %s -%s", 
+              NumServ(sptr), parv[1], parv[2], parv[3], parv[4], parv[parc - 1]);
+        else
+          sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s :%s" : ":%s " TOK_GLINE " %s -%s", 
+              NumServ(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
+      }
+    }
+    return 0;               /* only the intended  destination
+                               should add this gline */
+  }
+  
+  return 1;
+}
+
+int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtype, time_t expire, time_t lastmod, time_t lifetime, char *who) {
+
+  if(!buscar_uline(cptr->confs, sptr->name))
+    if (agline->lastmod > lastmod) { /* si tenemos la version mas nueva */
+      if (IsBurstOrBurstAck(cptr))
+        return 0; /* si esta en medio de un burst no la reenvio */
+      return reenvia_gline(cptr, gline); /* reenvia la gline */
+    } else if (agline->lastmod == lastmod)
+      return 0; /* we have that version of the G-line... */
+
+  
+  /* yes, notify the opers */
+  sendto_op_mask(SNO_GLINE,
+    "%s resetting expiration time on %s for %s@%s to "
+    TIME_T_FMT " (%s)",
+    who, gtype ? "BADCHAN" : "GLINE", agline->name, agline->host,
+    expire, date(expire));
+
+#if defined(GPATH)
+  write_log(GPATH, "# " TIME_T_FMT " %s resetting expiration time "
+      "on %s for %s@%s to " TIME_T_FMT "\n",
+      TStime(), who, gtype ? "BADCHAN" : "GLINE",
+      agline->name, agline->host, expire);
+#endif /* GPATH */
+
+  if (!lifetime) /* si no me ponen tiempo de vida uso el tiempo de expiracion */
+    lifetime = expire;
+  
+  agline->expire = expire;  /* reset the expire time */
+  agline->lastmod = lastmod;
+  agline->lifetime = lifetime;
+}
+
+int reenvia_gline(aClient *cptr, aGline *agline)
+{
+  if (GlineIsLocal(agline) || !gline->lastmod)
+    return 0;
+
+  if (Protocol(cptr->from) < 10) /* A un servidor P9 no le reenvio la GLINE */
+    return 0;
+
+  sendto_one(cptr, "%s " TOK_GLINE " * +%s " TIME_T_FMT " " TIME_T_FMT " " TIME_T_FMT " :%s", 
+      NumServ(&me), agline->host, agline->expire, agline->lastmod, agline->lifetime, agline->reason);
+  
   return 0;
 }

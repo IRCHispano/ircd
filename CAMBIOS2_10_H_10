@@ -1,3 +1,22 @@
+* 2008/11/08 dfm@unr.com                   (u2.10.H.10.86)        FEATURE
+------------------------------------------------------------------------
+
+  Se propagan las GLINE en el burst y se protegen con TS, se usan las
+  siguientes condiciones:
+
+  Si Server que manda es un service:
+   - Acepto siempre la gline y pongo ultima modificacion a now
+  
+  Si Server que manda es no un service y no me manda TS:
+   - Rechazo la GLINE
+
+  Si Server que manda es no un service y si me manda TS:
+   
+   - Veo si la gline existe en mi
+   - Si la gline existe en mi y es mas nueva que la mia la acepto
+   - Si la gline existe en mi y la ts es antigua la rechazo
+   - Si estoy en un burst rechazo de forma silenciosa
+   - Si no estoy en un burst repropagando la gline para evitar dsync
 
 * 2008/11/08 daijo@irc-dev.net            (u2.10.H.10.85)        FEATURE
 ------------------------------------------------------------------------

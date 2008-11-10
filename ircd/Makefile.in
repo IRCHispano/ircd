@@ -457,7 +457,7 @@ s_serv.o: s_serv.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/m_config.h ../include/match.h ../include/crule.h \
   ../include/parse.h ../include/numnicks.h ../include/userload.h \
   ../include/s_user.h ../include/channel.h ../include/querycmds.h \
-  ../include/IPcheck.h ../include/slab_alloc.h
+  ../include/IPcheck.h ../include/slab_alloc.h ../include/opercmds.h
 s_user.o: s_user.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
