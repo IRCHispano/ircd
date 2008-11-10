@@ -1,3 +1,16 @@
+* 2008/11/10 dfm@unr.com                   (u2.10.H.10.87)           FIX
+------------------------------------------------------------------------
+
+  Corrijo varios detalles de funcionamiento que fallaban incluidos
+  segfaults.
+  
+  Pongo una nueva proteccion, el nodo que envia GLINES debe estar haciendo
+  un burst o burst ack, sino las rechazo.
+  
+  Cuando se envian GLINE durante un BURST estas no se propagan por la red
+  se quedan entre los nodos que linkan, esta hecho asi por seguridad para
+  evitar que un nodo inyecte al resto de la red una gline tipo *@*
+
 * 2008/11/08 dfm@unr.com                   (u2.10.H.10.86)        FEATURE
 ------------------------------------------------------------------------
 

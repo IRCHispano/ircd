@@ -891,7 +891,6 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
   Reg3 aClient *acptr;
   char *inpath, *host;
   int split, i;
-  aGline *agline, *a2gline;
 
   split = (strCasediff(cptr->name, PunteroACadena(cptr->sockhost))
       && strnCasecmp(PunteroACadena(cptr->info), "JUPE", 4));
@@ -1133,13 +1132,12 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
    * Propago todas las glines que tengo en la memoria con los timestamps
    *
    */
-  for (agline = gline, a2gline = NULL; agline; agline = agline->next)
   {
-    if (agline->expire <= TStime())
-      reenvia_gline(cptr, agline);
-    a2gline = agline;
+    Reg1 aGline *agline;
+    if(Protocol(cptr) >= 10)
+      for (agline = gline; agline; agline = agline->next)
+        reenvia_gline(cptr, agline);
   }
-  
   /*
    * Last, send the BURST.
    * (Or for 2.9 servers: pass all channels plus statuses)
