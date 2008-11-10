@@ -267,3 +267,6 @@
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef uid_t
+
+/* define to unsigned long if uintptr_t not available */
+#undef uintptr_t
