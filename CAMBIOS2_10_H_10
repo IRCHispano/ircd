@@ -1,3 +1,9 @@
+* 2008/11/11 dfm@unr.com                   (u2.10.H.10.89)           FIX
+------------------------------------------------------------------------
+
+  Correccion de fallo en reenvio de gline durante el BURST, se enviaba
+  un tiempo de expiracion equivocado.
+  
 * 2008/11/10 dfm@unr.com                   (u2.10.H.10.88)           FIX
 ------------------------------------------------------------------------
 
@@ -16,7 +22,7 @@
   se quedan entre los nodos que linkan, esta hecho asi por seguridad para
   evitar que un nodo inyecte al resto de la red una gline tipo *@*
 
-* 2008/11/08 dfm@unr.com                   (u2.10.H.10.86)        FEATURE
+* 2008/11/08 dfm@unr.com                   (u2.10.H.10.86)       FEATURE
 ------------------------------------------------------------------------
 
   Se propagan las GLINE en el burst y se protegen con TS, se usan las

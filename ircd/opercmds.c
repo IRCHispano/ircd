@@ -2590,7 +2590,7 @@ int reenvia_gline(aClient *cptr, aGline *agline)
     return 0;
 
   sendto_one(cptr, "%s " TOK_GLINE " %s +%s " TIME_T_FMT " " TIME_T_FMT " " TIME_T_FMT " :%s", 
-      NumServ(&me), NumServ(cptr), agline->host, agline->expire, agline->lastmod, agline->lifetime, agline->reason);
+      NumServ(&me), NumServ(cptr), agline->host, agline->expire - TStime(), agline->lastmod, agline->lifetime - TStime(), agline->reason);
   
   return 0;
 }
