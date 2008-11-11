@@ -539,6 +539,7 @@ int IPbusca_clones_cptr(aClient *cptr)
   {
     int i;
 
+#if !defined(NODNS)
     hp = cptr->hostp;
     if (hp)
     {
@@ -554,10 +555,13 @@ int IPbusca_clones_cptr(aClient *cptr)
     }
     else
     {
+#endif
       strcpy(host_buf, inetntoa(cptr->ip));
       if (IPbusca_clones(host_buf) != -1) /* HIT! */
         return 0;
+#if !defined(NODNS)
     }
+#endif
   }
   return -1;
 }
