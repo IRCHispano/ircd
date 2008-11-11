@@ -799,34 +799,34 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       break;
     case 'B':
     case 'b':
-#if defined(BDD_MMAP)
-      if (IsOper(sptr))
+      if (IsAnOper(sptr) || IsChannelService(sptr))
       {
+#if defined(BDD_MMAP)
         struct persistent_mallinfo m;
 
         m = persistent_mallinfo();
         sendto_one(sptr,
-            ":%s %d %s %c :Cache %s - Arena: %u - Usados: %u - Max: %u  de %u - KeepCost: %u",
-            me.name, RPL_STATSDEBUG, parv[0], stat,
-            db_persistent_hit()? "HIT" : "MISS", m.arena, m.uordblks, m.usmblks,
-            BDD_MMAP_SIZE * 1024u * 1024u, m.keepcost);
-      }
+          ":%s %d %s %c :Cache %s - Arena: %u - Usados: %u - Max: %u  de %u - KeepCost: %u",
+          me.name, RPL_STATSDEBUG, parv[0], stat,
+          db_persistent_hit()? "HIT" : "MISS", m.arena, m.uordblks, m.usmblks,
+          BDD_MMAP_SIZE * 1024u * 1024u, m.keepcost);
 #endif
-      for (i = ESNET_BDD; i <= ESNET_BDD_END; i++)
-      {
-        if (db_es_residente(i))
+        for (i = ESNET_BDD; i <= ESNET_BDD_END; i++)
         {
-          sendto_one(sptr, ":%s %d %s %c Tabla '%c' :S=%lu R=%lu",
+          if (db_es_residente(i))
+          {
+            sendto_one(sptr, ":%s %d %s %c Tabla '%c' :S=%lu R=%lu",
               me.name, RPL_STATSDEBUG, parv[0], stat,
               i, (unsigned long)db_num_serie(i), (unsigned long)db_cuantos(i));
-        }
-        else
-        {
-          if (db_num_serie(i))
+          }
+          else
           {
-            sendto_one(sptr, ":%s %d %s %c Tabla '%c' :S=%lu NoResidente",
+            if (db_num_serie(i))
+            {
+              sendto_one(sptr, ":%s %d %s %c Tabla '%c' :S=%lu NoResidente",
                 me.name, RPL_STATSDEBUG, parv[0], stat, i,
                 (unsigned long)db_num_serie(i));
+            }
           }
         }
       }
@@ -2166,7 +2166,7 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
   {                         /* must be adding a gline */
     expire = atoi(parv[3]) + TStime();  /* expire time? */
     if (agline) 
-    {                       /* modifico gline; new expire time? */    	  
+    {                       /* modifico gline; new expire time? */        
       modifica_gline(cptr, sptr, agline, gtype, expire, lastmod, lifetime, parv[0]);
     }
     else if (!agline)

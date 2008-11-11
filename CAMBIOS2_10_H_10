@@ -1,3 +1,8 @@
+* 2008/11/11 daijo@irc-dev.net             (u2.10.H.10.90)           FIX
+------------------------------------------------------------------------
+  Unicamente operadores (+O, +o) y channel services (+k) pueden utilizar
+  el parametro 'b' en el comando stats.
+
 * 2008/11/11 dfm@unr.com                   (u2.10.H.10.89)           FIX
 ------------------------------------------------------------------------
 
