@@ -1250,7 +1250,8 @@ int find_exception(aClient *cptr)
     if (!(tmp->status) & CONF_EXCEPTION)
       continue;
 
-    if ((tmp->host && (match(tmp->host, PunteroACadena(cptr->sockhost)) == 0))
+    if ((tmp->host && (match(tmp->host, PunteroACadena(cptr->sockhost)) == 0 ||
+        match(tmp->host, inetntoa_c(cptr)) == 0))
         && (tmp->name
         && (match(tmp->name, PunteroACadena(cptr->user->username)) == 0))
         && (BadPtr(tmp->passwd) || (!BadPtr(cptr->passwd)
@@ -1258,6 +1259,20 @@ int find_exception(aClient *cptr)
         || (tmp->port == cptr->acpt->port)))
       return 1;
   }
+  {
+    struct db_reg *reg;
+
+    for (reg = db_iterador_init(BDD_EXCEPTIONDB); reg;
+        reg = db_iterador_next())
+    {
+      if ((reg->clave && (match(reg->clave, PunteroACadena(cptr->sockhost)) == 0 ||
+          match(reg->clave, inetntoa_c(cptr)) == 0))
+          && (reg->valor
+          && (match(reg->valor, PunteroACadena(cptr->user->username)) == 0)))
+        return 1;
+    }
+  }  
+  
   return 0;
 }
 
@@ -1280,6 +1295,12 @@ int find_kill(aClient *cptr)
 
   reply[0] = '\0';
 
+  /*
+   * Si tiene una excepcion, saltar la comprobacion
+   */
+  if (find_exception(cptr))
+    return 0;
+  
   for (tmp = conf; tmp; tmp = tmp->next)
     /* Added a check against the user's IP address as well.
      * If the line is either CONF_KILL or CONF_IPKILL, check it; if and only
@@ -1293,16 +1314,6 @@ int find_kill(aClient *cptr)
         (!username || match(tmp->name, username) == 0) &&
         (!tmp->port || (tmp->port == cptr->acpt->port)))
     {
-      /*
-       * Si tiene una excepcion, saltar el k-line
-       */
-      if (find_exception(cptr))
-      {
-        reply[0] = '\0';
-        tmp = NULL;
-        break;
-      }
-
       /*
        * Can short-circuit evaluation - not taking chances
        * because check_time_interval destroys tmp->passwd

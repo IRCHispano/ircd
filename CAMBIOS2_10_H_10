@@ -1,3 +1,22 @@
+* 2008/11/12 dfm@unr.com                   (u2.10.H.10.92)       FEATURE
+------------------------------------------------------------------------
+  Nueva funcionalidad de lineas de excepcion (E-Lines).
+  
+  Estas lineas nos permiten configurar hosts que no se veran afectados
+  por G-Lines ni por K-Lines, se pueden configurar en el ircd.conf
+  o por la tabla 'e' de la BDD.
+  
+  Las del ircd.conf son compatibles con las de EFNet
+  
+  Se pueden ver las que estan activas usando STATS e
+  
+  En E mayuscula nos apareceran las del archivo ircd.conf
+  y e minuscula las de BDD
+  
+  De paso en este parche muevo la funcion reenvia_gline a s_serv.c ya que
+  solo es llamada desde ahi, y modifico el Makefile.in para eliminar la
+  dependencia de compilacion.
+
 * 2008/11/12 daijo@irc-dev.net             (u2.10.H.10.91)           FIX
 ------------------------------------------------------------------------
   Si el ircd se compila sin soporte de dns (NODNS), al buscar clones

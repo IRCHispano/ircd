@@ -1275,3 +1275,18 @@ int m_desynch(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
   return 0;
 }
+
+/*
+ * Reenvio de glines durante el burst
+ */
+
+int reenvia_gline(aClient *cptr, aGline *agline)
+{
+  if (Protocol(cptr) < 10 || GlineIsLocal(agline) || !agline->lastmod || agline->expire < TStime())
+    return 0;
+
+  sendto_one(cptr, "%s " TOK_GLINE " %s +%s " TIME_T_FMT " " TIME_T_FMT " " TIME_T_FMT " :%s", 
+      NumServ(&me), NumServ(cptr), agline->host, agline->expire - TStime(), agline->lastmod, agline->lifetime - TStime(), agline->reason);
+  
+  return 0;
+}

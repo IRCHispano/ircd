@@ -536,6 +536,16 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
         return 0;
       }
       report_configured_links(sptr, CONF_EXCEPTION);
+      {
+        struct db_reg *reg;
+
+        for (reg = db_iterador_init(BDD_EXCEPTIONDB); reg;
+            reg = db_iterador_next())
+        { /* Mando con una e minuscula los que estan en BDD */
+          sendto_one(sptr, rpl_str(RPL_STATSELINE), me.name, sptr->name, 'e',
+              reg->clave, reg->valor, 0, -1);
+        }
+      }      
       break;
 
 #if defined(ESNET_NEG)
@@ -1965,6 +1975,9 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
         continue;               /* these tests right out of
                                    find_kill for safety's sake */
 
+      if(find_exception(acptr)) /* Si hay una excepcion me lo salto */
+        continue;
+      
       if ((GlineIsIpMask(agline) ?
           match(agline->host, inetntoa_c(acptr)) :
           match(agline->host, PunteroACadena(acptr->sockhost))) == 0 &&
@@ -1975,7 +1988,7 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
         int longitud;
         char buf[MAXLEN * 2];
         char comtemp[MAXLEN * 2];
-
+        
         /* 
          * Comprobacion longitud de gline
          */
@@ -2550,14 +2563,9 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
 
 int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtype, time_t expire, time_t lastmod, time_t lifetime, char *who) {
 
-  if(!buscar_uline(cptr->confs, sptr->name))
-    if (agline->lastmod > lastmod) { /* si tenemos la version mas nueva */
-      if (IsBurstOrBurstAck(cptr))
-        return 0; /* si esta en medio de un burst no la reenvio */
-      return reenvia_gline(cptr, agline); /* reenvia la gline */
-    } else if (agline->lastmod == lastmod)
-      return 0; /* we have that version of the G-line... */
-
+  if(!buscar_uline(cptr->confs, sptr->name) && /* Si el que la envia no tiene uline Y*/
+      (agline->lastmod >= lastmod))            /* tenemos una version igual o mayor salimos */
+    return 0;
   
   /* yes, notify the opers */
   sendto_op_mask(SNO_GLINE,
@@ -2584,13 +2592,3 @@ int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtype, time
   agline->lifetime = lifetime;
 }
 
-int reenvia_gline(aClient *cptr, aGline *agline)
-{
-  if (Protocol(cptr) < 10 || GlineIsLocal(agline) || !agline->lastmod || agline->expire < TStime())
-    return 0;
-
-  sendto_one(cptr, "%s " TOK_GLINE " %s +%s " TIME_T_FMT " " TIME_T_FMT " " TIME_T_FMT " :%s", 
-      NumServ(&me), NumServ(cptr), agline->host, agline->expire - TStime(), agline->lastmod, agline->lifetime - TStime(), agline->reason);
-  
-  return 0;
-}

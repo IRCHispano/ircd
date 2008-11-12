@@ -21,7 +21,7 @@
 /*
 ** ATENCION: Lo que sigue debe incrementarse cuando se toque alguna estructura de la BDD
 */
-#define MMAP_CACHE_VERSION 3
+#define MMAP_CACHE_VERSION 4
 
 
 
@@ -422,7 +422,7 @@ static inline void elimina_cache_ips_virtuales(void)
  *                                      1999/06/23 savage@apostols.org
  */
 static void db_eliminar_registro(unsigned char tabla, char *clave,
-    int reemplazar)
+    int reemplazar, aClient *cptr)
 {
   char buf[100];
   int mode;
@@ -568,6 +568,37 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             } 
           }
           break;
+        case BDD_EXCEPTIONDB:
+          if(cptr==NULL)
+            break;
+
+          /* Al borrar una eline hay que comprobar si hay usuarios
+           * que puedan verse afectados por glines */
+
+          {            
+            aClient *acptr;
+            int found_g;
+            for (i = 0; i <= highest_fd; i++)
+            {
+              if ((acptr = loc_clients[i]) && !IsMe(acptr))
+              {
+                if ((found_g = find_kill(acptr)))
+                {
+                  sendto_op_mask(found_g == -2 ? SNO_GLINE : SNO_OPERKILL,
+                      found_g == -2 ? "G-line active for %s" : "K-line active for %s",
+                      get_client_name(acptr, FALSE));
+                  exit_client(cptr, acptr, &me, found_g == -2 ? "G-lined" : "K-lined");
+                }
+          #if defined(R_LINES) && defined(R_LINES_REHASH) && !defined(R_LINES_OFTEN)
+                if (find_restrict(acptr))
+                {
+                  sendto_ops("Restricting %s, closing lp", get_client_name(acptr, FALSE));
+                  exit_client(cptr, acptr, &me, "R-lined") == CPTR_KILLED);
+                }
+          #endif
+              }
+            }
+          }
       }
       p_free(reg);
       tabla_cuantos[tabla]--;
@@ -626,7 +657,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
   db_iterador_reg = NULL;
 
   /* lo borro primero, por si es un cambio */
-  db_eliminar_registro(tabla, clave, 1);
+  db_eliminar_registro(tabla, clave, 1, cptr);
 
 /*
 ** Guardamos los datos del registro justo al lado del registro, para
@@ -1652,7 +1683,7 @@ static void db_alta(char *registro, unsigned char que_bdd, aClient *cptr)
   if (tabla_residente_y_len[que_bdd])
   {
     if (p4 == NULL)             /* Borrado */
-      db_eliminar_registro(que_bdd, p3, 0);
+      db_eliminar_registro(que_bdd, p3, 0, cptr);
     else
       db_insertar_registro(que_bdd, p3, p4, cptr);
   }
@@ -2070,7 +2101,7 @@ static void initdb2(unsigned char que_bdd)
 */
 
   if (tabla_residente_y_len[que_bdd])
-    db_eliminar_registro(que_bdd, "*", 0);
+    db_eliminar_registro(que_bdd, "*", 0, NULL);
 }
 
 void initdb(void)
@@ -2104,7 +2135,8 @@ void initdb(void)
   tabla_residente_y_len[BDD_IPVIRTUALDB] = 4096;
   tabla_residente_y_len[BDD_IPVIRTUAL2DB] = 1024;
   tabla_residente_y_len[BDD_CONFIGDB] = 256;
-
+  tabla_residente_y_len[BDD_EXCEPTIONDB] = 512;
+  
   cache = mmap_cache();
 
   if (!cache)

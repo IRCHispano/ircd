@@ -30,6 +30,7 @@
 #define BDD_BOTSDB        'b'
 #define BDD_CHANDB        'c'
 #define BDD_CHAN2DB       'd'
+#define BDD_EXCEPTIONDB   'e'
 #define BDD_FEATURESDB    'f'
 #define BDD_JUPEDB        'j'
 #define BDD_OPERDB        'o'
@@ -39,6 +40,7 @@
 #define BDD_IPVIRTUAL2DB  'w'
 #define BDD_CONFIGDB      'z'
 #define BDD_CHANDB_OLD    'z'
+
 
 /*
 ** Registros de configuracion en la tabla 'z'
