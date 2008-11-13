@@ -44,7 +44,7 @@
 #define STARTTARGETS	10
 #define RESERVEDTARGETS 12
 #define MAXLEN         490
-#define QUITLEN        250      /* Hispano extension */
+#define QUITLEN        300      /* Hispano extension */
 #define AWAYLEN        160      /* Hispano extension */
 
 /*-----------------------------------------------------------------------------
