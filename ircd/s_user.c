@@ -76,6 +76,7 @@
 #include "class.h"
 #include "slab_alloc.h"
 #include "network.h"
+#include "aes256.h"
 
 
 RCSTAG_CC("$Id: s_user.c,v 1.2 1999/11/25 02:07:53 bleep Exp $");
@@ -177,6 +178,94 @@ aClient *next_client(aClient *next, char *ch)
     if ((next->name) && (!match(ch, next->name)))
       break;
   return next;
+}
+
+void genera_aleatorio(unsigned char *out, int count) {
+    int i;
+    for(i=0;i<count;i++)
+      *out++=(unsigned char) ircrandom();
+}
+
+
+/*
+ * Esta funcion nos permite rellenar un array de chars con un numero aleatorio
+ */
+void genera_cookie(char *out, int count) {
+    int i;
+    unsigned int tmp;
+    unsigned int letra = (ircrandom()%count);
+    for(i=0;i<count;i++) {
+      if(letra==i) // Me aseguro de que haya una letra
+        tmp=(ircrandom()%26)+10;
+      else
+        tmp=(ircrandom()%36);
+      
+      *out++ = (tmp<10) ? ((char )(tmp+48)) : ((char )(tmp+87)); 
+    }
+    *out++='\0';
+}
+
+void cifra_cookie(char *out, char *cookie)
+{
+    aes256_context ctx;
+    uint8_t k[32], x[24], v[16], s[8];
+    unsigned char key[45], res[45];
+    int key_len, msg_len;
+    unsigned int i;
+    
+    memset(v, 0, sizeof(v));
+    memset(s, 0, sizeof(s));
+    memset(x, 0, sizeof(x));
+    memset(res, 0, COOKIECRYPTLEN+1);
+    msg_len = strlen(cookie);
+    msg_len = (msg_len>16) ? 16 : msg_len;
+    
+    strncpy((char *) v, cookie, msg_len);
+    key[44]='\0';
+    res[44]='\0';
+    
+    genera_aleatorio(s, sizeof(s));
+    memcpy(k,clave_de_cifrado_de_cookies,24);
+    memcpy(k+24,s,8);
+
+    aes256_init(&ctx, k);
+    aes256_encrypt_ecb(&ctx, v);
+    aes256_done(&ctx);
+    memcpy(x,s,8);
+    memcpy(x+8,v,16);
+
+    buf_to_base64_r(out, x, sizeof(x));    
+}
+
+void descifra_cookie(char *out, char *cookie)
+{
+    aes256_context ctx;
+    uint8_t k[32], v[16], x[24];
+    char key[45], msg[33];
+    int key_len, msg_len;
+    unsigned int i;
+    
+    memset(k, 0, sizeof(k));
+    memset(v, 0, sizeof(v));
+    memset(x, 0, sizeof(x));
+    memset(msg, 'A', sizeof(msg));
+    msg_len = strlen(cookie);
+    msg_len = (msg_len>32) ? 32 : msg_len;
+    
+    strncpy(msg+(32-msg_len), cookie, (msg_len));
+    msg[32]='\0';
+        
+    base64_to_buf_r(x, (unsigned char *) msg);
+    memcpy(k,clave_de_cifrado_de_cookies,24);
+    memcpy(k+24,x,8);
+    memcpy(v,x+8,16);
+
+    aes256_init(&ctx, k);
+    aes256_decrypt_ecb(&ctx, v);
+    aes256_done(&ctx);
+    
+    strncpy(out, (char *)v, COOKIELEN);
+    out[COOKIELEN]='\0';
 }
 
 /*
@@ -902,7 +991,6 @@ static int verifica_clave_nick(char *nick, char *hash, char *clave)
   return 0;
 }
 
-#define COOKIE_VERIFIED ((unsigned int)-1)
 
 /*
  * add_target
@@ -1469,7 +1557,7 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
   user->server = &me;
   SlabStringAllocDup(&(sptr->info), realname, REALLEN);
 
-  if (sptr->name && sptr->cookie == COOKIE_VERIFIED)
+  if (sptr->name && IsCookieVerified(sptr))
     /* NICK and PONG already received, now we have USER... */
     return register_user(cptr, sptr, sptr->name, username);
   else
@@ -1862,10 +1950,19 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
   /* Check to see if this is a PONG :cookie reply from an
    * unregistered user.  If so, process it. -record       */
 
-  if ((!IsRegistered(sptr)) && (sptr->cookie != 0) &&
-      (sptr->cookie != COOKIE_VERIFIED) && (parc > 1))
+  if ((!IsRegistered(sptr)) && (sptr->cookie != NULL) &&
+      (!IsCookieVerified(sptr)) && (parc > 1))
   {
-    if (atol(parv[parc - 1]) == (long)sptr->cookie)
+    char tmp[COOKIELEN+COOKIECRYPTLEN+1];
+    if(IsCookieEncrypted(sptr))
+      descifra_cookie(tmp, parv[parc-1]);
+    else {
+      strncpy(tmp, parv[parc-1], COOKIELEN);
+      tmp[COOKIELEN]='\0';
+    }
+    
+        
+    if (!strncmp(tmp,sptr->cookie, COOKIELEN))
     {
 /*
 ** Si el usuario tiene pendiente de verificar la cookie es porque ya ha mandado su nick,
@@ -1873,14 +1970,20 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
 */
       assert(sptr->name);
 
-      sptr->cookie = COOKIE_VERIFIED;
+      SetCookieVerified(sptr);
       if (sptr->user && sptr->user->host) /* NICK and USER OK */
         return register_user(cptr, sptr, sptr->name,
             PunteroACadena(sptr->user->username));
     }
     else
-      sendto_one(sptr, ":%s %d %s :To connect, type /QUOTE PONG %u",
-          me.name, ERR_BADPING, PunteroACadena(sptr->name), sptr->cookie);
+    {
+      if(IsCookieEncrypted(sptr))
+        return exit_client(cptr, sptr, &me, "Invalid PONG message");
+      else
+        sendto_one(sptr, ":%s %d %s :To connect, type /QUOTE PONG %s",
+            me.name, ERR_BADPING, PunteroACadena(sptr->name), sptr->cookie);
+
+    }
 
     return 0;
   }
@@ -4018,8 +4121,8 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 ** No dejamos que un usuario cambie de nick varias veces ANTES
 ** de haber completado su entrada en la red.
 */
-  if ((!IsRegistered(sptr)) && (sptr->cookie != 0) &&
-      (sptr->cookie != COOKIE_VERIFIED))
+  if (!IsRegistered(sptr) && (sptr->cookie != NULL) &&
+      !IsCookieVerified(sptr))
   {
     return 0;
   }
@@ -4811,15 +4914,30 @@ nickkilldone:
      */
     if (!sptr->cookie)
     {
+      char tmp[COOKIECRYPTLEN+COOKIELEN+1];      
       do
       {
-        sptr->cookie = ircrandom() & 0x7fffffff;
+        sptr->cookie = SlabStringAlloc(COOKIELEN+1);
+        genera_cookie(sptr->cookie, COOKIELEN);
       }
-      while ((!sptr->cookie) || (sptr->cookie == COOKIE_VERIFIED));
-
-      sendto_one(cptr, "PING :%u", sptr->cookie);
+      while ((!sptr->cookie) || IsCookieVerified(sptr));
+      
+      if(find_port_cookie_encrypted(sptr) && cifrado_cookies) {
+        char *tmp2=sptr->cookie;
+        cifra_cookie(tmp, sptr->cookie);
+        SetCookieEncrypted(sptr);
+        
+        while(*tmp2) {
+          *tmp2 = toUpper(*tmp2);
+          tmp2++;
+        }
+        
+      } else
+        strncpy(tmp, sptr->cookie, COOKIELEN+1);
+      
+      sendto_one(cptr, "PING :%s", tmp);
     }
-    else if (sptr->user->host && sptr->cookie == COOKIE_VERIFIED)
+    else if (sptr->user->host && IsCookieVerified(sptr))
     {
       /*
        * USER and PONG already received, now we have NICK.
@@ -5449,15 +5567,31 @@ nickkilldone:
      */
     if (!sptr->cookie)
     {
+      char tmp[COOKIECRYPTLEN+COOKIELEN+1];      
       do
       {
-        sptr->cookie = ircrandom() & 0x7fffffff;
+        sptr->cookie = SlabStringAlloc(COOKIELEN+1);
+        genera_cookie(sptr->cookie, COOKIELEN);
       }
-      while ((!sptr->cookie) || (sptr->cookie == COOKIE_VERIFIED));
+      while ((!sptr->cookie) || IsCookieVerified(sptr));
+      
+      if(cifrado_cookies) {
+        char *tmp2=sptr->cookie;
+        SetCookieEncrypted(sptr);
+        cifra_cookie(tmp, sptr->cookie);
+        
+        while(*tmp2) {
+          *tmp2 = toUpper(*tmp2);
+          tmp2++;
+        }
+        
+      } else
+        strncpy(tmp, sptr->cookie, COOKIELEN+1);
 
-      sendto_one(cptr, "PING :%u", sptr->cookie);
+      
+      sendto_one(cptr, "PING :%s", tmp);
     }
-    else if (sptr->user->host && sptr->cookie == COOKIE_VERIFIED)
+    else if (sptr->user->host && IsCookieVerified(sptr))
     {
       /*
        * USER and PONG already received, now we have NICK.

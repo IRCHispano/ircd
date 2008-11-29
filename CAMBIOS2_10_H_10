@@ -1,3 +1,18 @@
+* 2008/11/29 dfm@unr.com                   (u2.10.H.10.94)       FEATURE
+------------------------------------------------------------------------
+  Implementacion de desafio-respuesta para la entrada de usuarios.
+  
+  Ahora es posible especificar que en algunos puertos en concreto el
+  usuario deba responder a un PING codificado para poder entrar.
+  
+  Si el puerto es con entrada de PING codificado se especificara en las
+  P:Lines y la clave de cifrado en el registro
+  'clave.de.cifrado.de.cookies' de la tabla z
+  
+  BUGS:
+  
+  Si hago rehash y cambio el tipo de puerto puede que se cierre
+
 * 2008/11/13 daijo@irc-dev.org             (u2.10.H.10.93)       FEATURE
 ------------------------------------------------------------------------
   Se ha incrementado la longitud del mensaje de salida (QUITLEN) a 300

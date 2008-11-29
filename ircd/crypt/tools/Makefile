@@ -20,23 +20,39 @@
 # Makefile para compilar el programa de encriptar las claves
 # de los nicks para la tabla 'n'.
 
+CC=gcc
+CFLAGS=-W -Wall
 
+all: misc.o aes256.o tea.o cifranick ipreal ipvirtual cifraping descifraping
 
-all: cifranick ipreal ipvirtual
+tea.o: tea.c tea.h
+	$(CC) $(CFLAGS) -c -o tea.o tea.c
 
-cifranick: cifranick.c
-	gcc -Wall -O2 cifranick.c -o cifranick
+aes256.o: aes256.c aes256.h
+	$(CC) $(CFLAGS) -c -o aes256.o aes256.c
 
-ipreal: ipreal.c
-	gcc -Wall -O2 ipreal.c -o ipreal
+misc.o: misc.c misc.h
+	$(CC) $(CFLAGS) -c -o misc.o misc.c
 
-ipvirtual: ipvirtual.c
-	gcc -Wall -O2 ipvirtual.c -o ipvirtual
+cifraping: cifraping.c aes256.o misc.o
+	$(CC) $(CFLAGS) -o cifraping cifraping.c aes256.o misc.o
+
+descifraping: descifraping.c aes256.o misc.o
+	$(CC) $(CFLAGS) -o descifraping descifraping.c aes256.o misc.o
+
+cifranick: cifranick.c tea.o misc.o
+	$(CC) $(CFLAGS) -o cifranick cifranick.c tea.o misc.o
+
+ipreal: ipreal.c tea.o misc.o
+	$(CC) $(CFLAGS) -o ipreal ipreal.c tea.o misc.o
+
+ipvirtual: ipvirtual.c tea.o misc.o
+	$(CC) $(CFLAGS) -o ipvirtual ipvirtual.c tea.o misc.o
 
 install:       
 	@echo 'Ya esta instalado, no hacia falta ;-).'
 
 clean:
-	/bin/rm -f cifranick ipreal ipvirtual core *.c~
+	/bin/rm -f cifranick ipreal ipvirtual core cifraping descifraping *.c~ *.o
 
 distclean: clean

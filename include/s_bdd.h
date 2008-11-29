@@ -53,8 +53,9 @@
 #define BDD_SERVER_NAME				"servidor.oculto"
 #define BDD_SERVER_INFO				"servidor.info.oculto"
 #define BDD_ACTIVAR_IDENT			"activar.ident"
-#define BDD_AUTOINVISIBLE     "auto.invisible"
+#define BDD_AUTOINVISIBLE    "auto.invisible"
 #define BDD_NICKLEN           "nicklen"
+#define BDD_CLAVE_DE_CIFRADO_DE_COOKIES "clave.de.cifrado.de.cookies"
 
 /* Para las features de los pseudoBOTS */
 #define BDD_CHANSERV      "ChanServ"
@@ -91,6 +92,8 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int numero_maximo_de_clones_por_defecto;
 extern char *clave_de_cifrado_de_ips;
 extern unsigned int clave_de_cifrado_binaria[2];
+extern unsigned char clave_de_cifrado_de_cookies[24];
+extern int cifrado_cookies;
 extern int ocultar_servidores;
 extern int activar_ident;
 extern int auto_invisible;

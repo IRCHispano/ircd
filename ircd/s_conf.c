@@ -1060,8 +1060,13 @@ int initconf(int opt)
         free_conf(aconf);
         aconf = bconf;
       }
-      else if (aconf->host && aconf->status == CONF_LISTEN_PORT)
+      else if (aconf->host && aconf->status == CONF_LISTEN_PORT) {
+        char *passwd = aconf->passwd;
+        if(passwd != NULL && !strcmp("X", passwd)) /* Si tiene el flag X es que es de cookie encriptada */
+          aconf->status |= CONF_COOKIE_ENC;
+        
         add_listener(aconf);
+      }
     }
     if (aconf->status & CONF_SERVER_MASK)
       if (ncount > MAXCONFLINKS || ccount > MAXCONFLINKS ||
@@ -1240,6 +1245,21 @@ void read_tlines()
     }
 }
 
+int find_port_cookie_encrypted(aClient *cptr) {
+  aConfItem *tmp;
+
+  for (tmp = conf; tmp; tmp = tmp->next)
+  {
+    if (!IsConfListenPort(tmp) || !IsConfCookieEnc(tmp))
+      continue;
+
+    if (tmp->port == cptr->acpt->port)
+      return 1;
+  }
+  
+  return 0;
+  
+}
 
 int find_exception(aClient *cptr)
 {

@@ -156,3 +156,4 @@ unsigned int ircrandom(void)
    */
   return (a ^ b ^ c ^ d);
 }
+

@@ -498,3 +498,100 @@ const char *CreateNNforProtocol9server(const struct Client *server)
     serv->nn_last = 0;
   return YXX;
 }
+
+void buf_to_base64_r(unsigned char *out, const unsigned char *buf, size_t buf_len)
+{
+        size_t i, j;
+        uint32_t limb;
+
+/*        out = (unsigned char*) malloc(((buf_len * 8 + 5) / 6) + 5); */
+
+        for (i = 0, j = 0, limb = 0; i + 2 < buf_len; i += 3, j += 4) {
+                limb =
+                        ((uint32_t) buf[i] << 16) |
+                        ((uint32_t) buf[i + 1] << 8) |
+                        ((uint32_t) buf[i + 2]);
+
+                out[j] = convert2y[(limb >> 18) & 63];
+                out[j + 1] = convert2y[(limb >> 12) & 63];
+                out[j + 2] = convert2y[(limb >> 6) & 63];
+                out[j + 3] = convert2y[(limb) & 63];
+        }
+  
+        switch (buf_len - i) {
+          case 0:
+                break;
+          case 1:
+                limb = ((uint32_t) buf[i]);
+                out[j++] = convert2y[(limb >> 2) & 63];
+                out[j++] = convert2y[(limb << 4) & 63];
+                out[j++] = '=';
+                out[j++] = '=';
+                break;
+          case 2:
+                limb = ((uint32_t) buf[i] << 8) | ((uint32_t) buf[i + 1]);
+                out[j++] = convert2y[(limb >> 10) & 63];
+                out[j++] = convert2y[(limb >> 4) & 63];
+                out[j++] = convert2y[(limb << 2) & 63];
+                out[j++] = '=';
+                break;
+          default:
+                // something wonkey happened...
+                break;
+        }
+
+        out[j] = '\0';
+}
+
+size_t base64_to_buf_r(unsigned char *buf, unsigned char *str)
+{
+        int i, j, len;
+        uint32_t limb;
+        size_t buf_len;
+
+        len = strlen((char *) str);
+        buf_len = (len * 6 + 7) / 8;
+        /*buf = (unsigned char*) malloc(buf_len);*/
+  
+        for (i = 0, j = 0, limb = 0; i + 3 < len; i += 4) {
+                if (str[i] == '=' || str[i + 1] == '=' || str[i + 2] == '=' || str[i + 3] == '=') {
+                        if (str[i] == '=' || str[i + 1] == '=') {
+                                break;
+                        }
+          
+                        if (str[i + 2] == '=') {
+                                limb =
+                                        ((uint32_t) convert2n[str[i]] << 6) |
+                                        ((uint32_t) convert2n[str[i + 1]]);
+                                buf[j] = (unsigned char) (limb >> 4) & 0xff;
+                                j++;
+                        }
+                        else {
+                                limb =
+                                        ((uint32_t) convert2n[str[i]] << 12) |
+                                        ((uint32_t) convert2n[str[i + 1]] << 6) |
+                                        ((uint32_t) convert2n[str[i + 2]]);
+                                buf[j] = (unsigned char) (limb >> 10) & 0xff;
+                                buf[j + 1] = (unsigned char) (limb >> 2) & 0xff;
+                                j += 2;
+                        }
+                }
+                else {
+                        limb =
+                                ((uint32_t) convert2n[str[i]] << 18) |
+                                ((uint32_t) convert2n[str[i + 1]] << 12) |
+                                ((uint32_t) convert2n[str[i + 2]] << 6) |
+                                ((uint32_t) convert2n[str[i + 3]]);
+          
+                        buf[j] = (unsigned char) (limb >> 16) & 0xff;
+                        buf[j + 1] = (unsigned char) (limb >> 8) & 0xff;
+                        buf[j + 2] = (unsigned char) (limb) & 0xff;
+                        j += 3;
+                }
+        }
+
+        buf_len = j;
+  
+        return buf_len;
+}
+

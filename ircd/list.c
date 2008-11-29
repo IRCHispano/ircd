@@ -145,6 +145,9 @@ void free_client(aClient *cptr)
   {
     if (cptr->sockhost)
       SlabStringFree(cptr->sockhost);
+    
+    if (cptr->cookie)
+      SlabStringFree(cptr->cookie);
   }
 
   RunFree(cptr);

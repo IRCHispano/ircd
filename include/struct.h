@@ -46,10 +46,16 @@
 #define MAXLEN         490
 #define QUITLEN        300      /* Hispano extension */
 #define AWAYLEN        160      /* Hispano extension */
+#define COOKIELEN      16       /* Hispano extension */
+#define COOKIECRYPTLEN 44       /* Hispano extension */
 
 /*-----------------------------------------------------------------------------
  * Macro's
  */
+
+#define COOKIE_PLAIN     0x02 /* Cookie enviada sin encriptar */
+#define COOKIE_ENCRYPTED 0x04 /* Cookie enviada encriptada */
+#define COOKIE_VERIFIED  0x08 /* Cookie verificada correctamente */
 
 #define CLIENT_LOCAL_SIZE sizeof(aClient)
 #define CLIENT_REMOTE_SIZE offsetof(aClient, count)
@@ -58,6 +64,14 @@
 #define MyUser(x)	(MyConnect(x) && IsUser(x))
 #define MyOper(x)	(MyConnect(x) && IsOper(x))
 #define Protocol(x)	((x)->serv->prot)
+
+#define IsCookiePlain(x)     ((x)->cookie_status & COOKIE_PLAIN)
+#define IsCookieEncrypted(x) ((x)->cookie_status & COOKIE_ENCRYPTED)
+#define IsCookieVerified(x)  ((x)->cookie_status & COOKIE_VERIFIED)
+
+#define SetCookiePlain(x)     ((x)->cookie_status |= COOKIE_PLAIN)
+#define SetCookieEncrypted(x) ((x)->cookie_status |= COOKIE_ENCRYPTED)
+#define SetCookieVerified(x)  ((x)->cookie_status |= COOKIE_VERIFIED)
 
 /*=============================================================================
  * Structures
@@ -116,7 +130,8 @@ struct Client {
   time_t nextnick;              /* Next time that a nick change is allowed */
   time_t nexttarget;            /* Next time that a target change is allowed */
   unsigned char targets[MAXTARGETS];  /* Hash values of current targets */
-  unsigned int cookie;          /* Random number the user must PONG */
+  char *cookie;                 /* Random number the user must PONG */
+  unsigned int cookie_status;   /* Estado de la cookie */
   struct DBuf sendQ;            /* Outgoing message queue--if socket full */
   struct DBuf recvQ;            /* Hold for data incoming yet to be parsed */
   unsigned int sendM;           /* Statistics: protocol messages send */

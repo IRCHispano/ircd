@@ -193,7 +193,7 @@ int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[])
  *       it--not reversed as in ircd.conf!
  */
 
-static unsigned int report_array[17][3] = {
+static unsigned int report_array[18][3] = {
   {CONF_CONNECT_SERVER, RPL_STATSCLINE, 'C'},
   {CONF_CLIENT, RPL_STATSILINE, 'I'},
   {CONF_KILL, RPL_STATSKLINE, 'K'},
@@ -207,6 +207,7 @@ static unsigned int report_array[17][3] = {
   {CONF_UWORLD, RPL_STATSULINE, 'U'},
   {CONF_TLINES, RPL_STATSTLINE, 'T'},
   {CONF_LISTEN_PORT, RPL_STATSPLINE, 'P'},
+  {CONF_LISTEN_PORT|CONF_COOKIE_ENC, RPL_STATSPLINE, 'P'},
   {CONF_EXCEPTION, RPL_STATSELINE, 'E'},
 #if defined(ESNET_NEG)
   {CONF_NEGOTIATION, RPL_STATSKLINE, 'F'},
@@ -717,10 +718,11 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
         report_configured_links(sptr, CONF_LISTEN_PORT);
         break;
       }
+
       if (!(MyConnect(sptr) || IsOper(sptr)))
         count = 3;
-      for (aconf = conf; aconf; aconf = aconf->next)
-        if (aconf->status == CONF_LISTEN_PORT)
+      for (aconf = conf; aconf; aconf = aconf->next) {
+        if (IsConfListenPort(aconf))
         {
           if (parc >= 4 && *parv[3] != '\0')
           {
@@ -733,6 +735,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
           if (--count == 0)
             break;
         }
+
+      }
       break;
     }
     case 'R':

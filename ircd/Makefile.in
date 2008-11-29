@@ -67,7 +67,7 @@ OBJS=IPcheck.o bsd.o channel.o class.o common.o crule.o dbuf.o fileio.o ircd.o \
      random.o res.o runmalloc.o s_auth.o s_bsd.o s_conf.o s_debug.o s_err.o \
      s_misc.o s_numeric.o s_ping.o s_serv.o s_user.o send.o sprintf_irc.o \
      support.o userload.o whocmds.o whowas.o hash.o s_bdd.o \
-     m_config.o m_watch.o persistent_malloc.o slab_alloc.o
+     m_config.o m_watch.o persistent_malloc.o slab_alloc.o aes256.o
 
 SRC=${OBJS:%.o=%.c}
 
@@ -470,7 +470,8 @@ s_user.o: s_user.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/channel.h ../include/random.h ../include/version.h \
   ../include/msg.h ../include/userload.h ../include/numnicks.h \
   ../include/sprintf_irc.h ../include/querycmds.h ../include/IPcheck.h \
-  ../include/class.h ../include/slab_alloc.h ../include/network.h
+  ../include/class.h ../include/slab_alloc.h ../include/network.h \
+  ../include/aes256.h
 send.o: send.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
@@ -543,3 +544,4 @@ m_watch.o: m_watch.c ../include/sys.h ../config/config.h \
   ../include/send.h ../include/support.h ../include/m_watch.h
 persistent_malloc.o: persistent_malloc.c ../include/persistent_malloc.h
 slab_alloc.o: slab_alloc.c ../include/runmalloc.h ../include/slab_alloc.h
+aes256.o: aes256.c ../include/aes256.h

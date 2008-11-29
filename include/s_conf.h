@@ -15,31 +15,33 @@
 
 #define CONF_ILLEGAL		0x80000000
 #define CONF_MATCH		0x40000000
-#define CONF_CLIENT		0x0002
-#define CONF_CONNECT_SERVER	0x0004
-#define CONF_LOCOP		0x0010
-#define CONF_OPERATOR		0x0020
-#define CONF_ME			0x0040
-#define CONF_KILL		0x0080
-#define CONF_ADMIN		0x0100
+#define CONF_CLIENT		0x00000002
+#define CONF_CONNECT_SERVER	0x00000004
+#define CONF_LOCOP		0x00000010
+#define CONF_OPERATOR		0x00000020
+#define CONF_ME			0x00000040
+#define CONF_KILL		0x00000080
+#define CONF_ADMIN		0x00000100
 #if defined(R_LINES)
-#define CONF_RESTRICT		0x0200
+#define CONF_RESTRICT		0x00000200
 #endif
-#define CONF_CLASS		0x0400
-#define CONF_LEAF		0x1000
-#define CONF_LISTEN_PORT	0x2000
-#define CONF_HUB		0x4000
-#define CONF_UWORLD		0x8000
+#define CONF_CLASS		0x00000400
+#define CONF_LEAF		0x00001000
+#define CONF_LISTEN_PORT	0x00002000
+#define CONF_HUB		0x00004000
+#define CONF_UWORLD		0x00008000
 #define CONF_CRULEALL		0x00200000
 #define CONF_CRULEAUTO		0x00400000
 #define CONF_TLINES		0x00800000
 #define CONF_IPKILL		0x00010000
-#define CONF_EXCEPTION         0x00020000
+#define CONF_EXCEPTION          0x00020000
 
 
 #if defined(ESNET_NEG)
 #define CONF_NEGOTIATION	0x01000000
 #endif
+
+#define CONF_COOKIE_ENC         0x02000000
 
 #define CONF_OPS		(CONF_OPERATOR | CONF_LOCOP)
 #define CONF_SERVER_MASK       (CONF_CONNECT_SERVER)
@@ -48,6 +50,11 @@
 #define CONF_KLINE		(CONF_KILL | CONF_IPKILL)
 
 #define IsIllegal(x)	((x)->status & CONF_ILLEGAL)
+
+#define IsConfCookieEnc(x)  ((x)->status & CONF_COOKIE_ENC)
+#define IsConfListenPort(x) ((x)->status & CONF_LISTEN_PORT)
+#define IsConfClient(x)     ((x)->status & CONF_CLIENT)
+
 
 /*=============================================================================
  * Structures
@@ -116,6 +123,7 @@ extern int initconf(int opt);
 extern void read_tlines(void);
 extern int find_kill(aClient *cptr);
 extern int find_restrict(aClient *cptr);
+extern int find_port_cookie_encrypted(aClient *cptr);
 extern int m_killcomment(aClient *sptr, char *parv, char *filename);
 extern aMotdItem *read_motd(char *motdfile);
 
