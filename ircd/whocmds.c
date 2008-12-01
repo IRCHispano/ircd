@@ -66,7 +66,7 @@
 #include "s_bdd.h"
 #include "network.h"
 
-RCSTAG_CC("$Id: whocmds.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 /*
  * m_who() 

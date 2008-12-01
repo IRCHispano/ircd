@@ -31,7 +31,7 @@
 #include "s_debug.h"
 #include "sprintf_irc.h"
 
-RCSTAG_CC("$Id: sprintf_irc.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 /* *INDENT-OFF* */
 

@@ -79,7 +79,7 @@
 #include "aes256.h"
 
 
-RCSTAG_CC("$Id: s_user.c,v 1.2 1999/11/25 02:07:53 bleep Exp $");
+RCSTAG_CC("$Id$");
 
 /* *INDENT-OFF* */
 

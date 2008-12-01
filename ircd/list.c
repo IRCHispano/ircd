@@ -44,7 +44,7 @@
 
 #include <assert.h>
 
-RCSTAG_CC("$Id: list.c,v 1.3 1999/11/28 05:44:17 danny Exp $");
+RCSTAG_CC("$Id$");
 
 #if defined(DEBUGMODE)
 static struct liststats {

@@ -38,7 +38,7 @@
 #include "numeric.h"
 #include "s_err.h"
 
-RCSTAG_CC("$Id: hash.c,v 1.2 1999/12/11 08:54:13 bleep Exp $");
+RCSTAG_CC("$Id$");
 
 /************************* Nemesi's hash alghoritm ***********************/
 

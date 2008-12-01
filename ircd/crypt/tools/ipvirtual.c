@@ -21,6 +21,8 @@
  * Programa para cifrar una IP virtual a partir de una IP real.
  *
  * -- zoltan
+ *
+ * $Id$
  */
 
 

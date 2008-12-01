@@ -58,7 +58,7 @@
 #include "opercmds.h"
 
 
-RCSTAG_CC("$Id: s_serv.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 static int exit_new_server(aClient *cptr, aClient *sptr,
     char *host, time_t timestamp, char *fmt, ...)

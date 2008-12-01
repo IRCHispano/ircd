@@ -39,7 +39,7 @@
 #include "support.h"
 #endif
 
-RCSTAG_CC("$Id: IPcheck.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 extern aClient me;
 extern time_t now;

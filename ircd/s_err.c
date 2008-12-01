@@ -25,7 +25,7 @@
 #include "sprintf_irc.h"
 #include "m_watch.h"
 
-RCSTAG_CC("$Id: s_err.c,v 1.3 1999/11/29 00:26:42 bleep Exp $");
+RCSTAG_CC("$Id$");
 
 typedef struct {
   int num_val;

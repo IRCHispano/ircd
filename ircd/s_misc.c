@@ -69,7 +69,7 @@
 
 #include <assert.h>
 
-RCSTAG_CC("$Id: s_misc.c,v 1.2 2000/01/01 00:00:33 bleep Exp $");
+RCSTAG_CC("$Id$");
 
 static void exit_one_client(aClient *, char *);
 

@@ -75,7 +75,7 @@
 #include "fileio.h"
 #include "slab_alloc.h"
 
-RCSTAG_CC("$Id: s_conf.c,v 1.2 1999/11/28 01:36:32 danny Exp $");
+RCSTAG_CC("$Id$");
 
 static int check_time_interval(char *, char *);
 static int lookup_confhost(aConfItem *);

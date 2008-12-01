@@ -81,7 +81,7 @@
 #include "network.h"
 #include "msg.h"
 
-RCSTAG_CC("$Id: ircd.c,v 1.2 1999/11/25 02:07:53 bleep Exp $");
+RCSTAG_CC("$Id$");
 
 extern void init_counters(void);
 

@@ -28,7 +28,7 @@
 #include "ircd.h"
 #include "bsd.h"
 
-RCSTAG_CC("$Id: bsd.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 #if defined(DEBUGMODE)
 int writecalls = 0;

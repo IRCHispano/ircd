@@ -40,7 +40,7 @@
 #include "s_serv.h"
 #include "querycmds.h"
 
-RCSTAG_CC("$Id: userload.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 struct current_load_st current_load;  /* The current load */
 

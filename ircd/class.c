@@ -29,7 +29,7 @@
 #include "numeric.h"
 #include "ircd.h"
 
-RCSTAG_CC("$Id: class.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 #define BAD_CONF_CLASS		((unsigned int)-1)
 #define BAD_PING		((unsigned int)-2)

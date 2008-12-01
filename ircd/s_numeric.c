@@ -36,7 +36,7 @@
 #include "s_numeric.h"
 #include "s_bdd.h"
 
-RCSTAG_CC("$Id: s_numeric.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 static char buffer[1024];
 

@@ -64,7 +64,7 @@
 #endif
 
 
-RCSTAG_CC("$Id: opercmds.c,v 1.3 1999/11/28 05:44:17 danny Exp $");
+RCSTAG_CC("$Id$");
 
 /*
  *  m_squit

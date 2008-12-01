@@ -40,7 +40,7 @@
 #include "sprintf_irc.h"
 #include "numnicks.h"
 
-RCSTAG_CC("$Id: send.c,v 1.3 2000/01/11 02:34:42 danny Exp $");
+RCSTAG_CC("$Id$");
 
 char sendbuf[2048];
 static int sentalong[MAXCONNECTIONS];

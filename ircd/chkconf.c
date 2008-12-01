@@ -43,7 +43,7 @@
 #include "fileio.h"
 #include "runmalloc.h"
 
-RCSTAG_CC("$Id: chkconf.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 /*
  * For the connect rule patch..  these really should be in a header,

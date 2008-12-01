@@ -35,7 +35,7 @@
 #include "s_bdd.h"
 #include "s_serv.h"
 
-RCSTAG_CC("$Id: map.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 static void dump_map(struct Client *cptr, struct Client *server, char *mask,
     int prompt_length)

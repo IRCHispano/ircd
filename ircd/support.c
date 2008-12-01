@@ -39,7 +39,7 @@
 #include "struct.h"
 #include "s_serv.h"
 
-RCSTAG_CC("$Id: support.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 #if !defined(HAVE_STRTOKEN)
 /*

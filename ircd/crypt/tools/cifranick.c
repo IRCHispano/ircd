@@ -22,6 +22,8 @@
  * para introducirlos en la tabla 'n' del ircd.
  *
  * -- zoltan
+ * 
+ * $Id$
  */
 
 

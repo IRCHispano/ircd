@@ -62,7 +62,7 @@
 #include "s_bdd.h"
 #include "network.h"
 
-RCSTAG_CC("$Id: whowas.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 static aWhowas whowas[NICKNAMEHISTORYLENGTH];
 static aWhowas *whowashash[WW_MAX];

@@ -62,7 +62,7 @@
 #include "slab_alloc.h"
 
 
-RCSTAG_CC("$Id: s_ping.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 #define UPINGBUFSIZE 2000       /* Lot bigger then 1024,
                                    bit smaller then 2048 */

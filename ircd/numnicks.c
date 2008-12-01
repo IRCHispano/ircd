@@ -35,7 +35,7 @@
 
 #include <assert.h>
 
-RCSTAG_CC("$Id: numnicks.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 /*
  * Numeric nicks are new as of version ircu2.10.00beta1.

@@ -25,7 +25,7 @@
 #include "match.h"
 #include "ircd.h"
 
-RCSTAG_CC("$Id: match.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 /*
  * mmatch()

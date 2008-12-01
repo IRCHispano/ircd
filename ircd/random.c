@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include "random.h"
 
-RCSTAG_CC("$Id: random.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 char localkey[9] = RANDOM_SEED;
 

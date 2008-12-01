@@ -36,7 +36,7 @@
 
 #include <assert.h>
 
-RCSTAG_CC("$Id: packet.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 void actualiza_contadores(aClient *cptr, int length)
 {

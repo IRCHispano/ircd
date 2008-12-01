@@ -33,7 +33,7 @@
 #include "msg.h"
 #include "s_debug.h"
 
-RCSTAG_CC("$Id: runmalloc.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 #define MALLOC_HASHTABLE_SIZE 16384
 #define MallocHash(x) \

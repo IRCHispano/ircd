@@ -64,7 +64,7 @@
 
 #endif
 
-RCSTAG_CC("$Id: crule.c,v 1.1.1.1 1999/11/16 05:13:14 codercom Exp $");
+RCSTAG_CC("$Id$");
 
 #if defined(CR_DEBUG) || defined(CR_CHKCONF)
 #undef RunMalloc
