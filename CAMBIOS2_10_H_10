@@ -1,3 +1,15 @@
+* 2008/12/01 dfm@unr.com                   (u2.10.H.10.95)       FEATURE
+------------------------------------------------------------------------
+  Implemento sistema de autosemilla de numeros aleatorios mediante
+  /dev/urandom
+  
+  Ahora ya no es necesario introducir mediante make config una semilla
+  de inicio de numeros aleatorios, se regenera sola cada 256 numeros.
+  
+  BUGS:
+  
+  Si hago rehash y cambio el tipo de puerto puede que se cierre
+
 * 2008/11/29 dfm@unr.com                   (u2.10.H.10.94)       FEATURE
 ------------------------------------------------------------------------
   Implementacion de desafio-respuesta para la entrada de usuarios.

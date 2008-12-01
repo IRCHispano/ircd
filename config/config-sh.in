@@ -225,7 +225,7 @@ comment 'Host specific defines'
   if [ -z "$DOMAINNAME" ]; then
     DOMAINNAME=none
   fi
-  string 'Please give a random seed of eight characters' RANDOM_SEED 12345678
+  ####string 'Please give a random seed of eight characters' RANDOM_SEED 12345678
 
   ####bool 'Does your host have a reliable clock' RELIABLE_CLOCK
 endmenu

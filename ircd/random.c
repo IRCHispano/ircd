@@ -23,7 +23,8 @@
 
 RCSTAG_CC("$Id$");
 
-char localkey[9] = RANDOM_SEED;
+char localkey[9];
+int autoseed_count = 0;
 
 /*
  * MD5 transform algorithm, taken from code written by Colin Plumb,
@@ -51,6 +52,34 @@ char localkey[9] = RANDOM_SEED;
 	( w += f(x, y, z) + data,  w = w<<s | w>>(32-s),  w += x )
 
 /*
+ * Funcion para generar semilla automaticamente
+ *
+ * -- FreeMind 2008/12/01
+ */
+void autoseed() {
+  char *tmp;
+  int i;
+
+  if(autoseed_count>0) {
+    autoseed_count--;
+    return;
+  }
+    
+  FILE* urandom = fopen("/dev/urandom", "r");
+  if (!urandom) {
+    s_die();
+    return;
+  }
+  
+  for(i=0,tmp=localkey;i<sizeof(localkey);i++)
+    fread(tmp++, 1, sizeof(tmp), urandom);
+   
+  fclose(urandom);
+
+  autoseed_count = SEED_LIFETIME;
+}
+
+/*
  * The core of the MD5 algorithm, this alters an existing MD5 hash to
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data and converts bytes into longwords for this routine.
@@ -72,6 +101,8 @@ unsigned int ircrandom(void)
   struct timeval tv;
 
   gettimeofday(&tv, NULL);
+  
+  autoseed();
 
   memcpy((void *)in, (void *)localkey, 8);
   memcpy((void *)(in + 8), (void *)&tv.tv_sec, 4);
