@@ -1,3 +1,19 @@
+* 2008/12/06 dfm@unr.com                   (u2.10.H.10.96)           FIX
+------------------------------------------------------------------------
+  Inicializo la semilla de /dev/urandom solo al principio para permitir
+  el funcionamiento con CHROOT
+  
+  Corrijo el problema de cambio de escuchar en puertos en rehash
+  
+  Cambio los permisos necesarios para /stats b, ahora son para IRCops y
+  helpers (opers)
+  
+  Cambio en fechas por otras mas cortas y comodas de leer (especialmente
+  en glines)
+  
+  A~ado respuesta de maxima conexion (numerico 250) a m_lusers para que la
+  respuesta sea igual a otros ircds
+
 * 2008/12/01 dfm@unr.com                   (u2.10.H.10.95)       FEATURE
 ------------------------------------------------------------------------
   Implemento sistema de autosemilla de numeros aleatorios mediante

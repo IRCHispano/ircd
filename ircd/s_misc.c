@@ -92,8 +92,8 @@ static char *months[] = {
 };
 
 static char *weekdays[] = {
-  "Domingo", "Lunes", "Martes", "Miercoles",
-  "Jueves", "Viernes", "Sabado"
+  "Dom", "Lun", "Mar", "Mie",
+  "Jue", "Vie", "Sab"
 };
 #endif
 
@@ -131,9 +131,9 @@ char *date(time_t clock)
   if (minswest < 0)
     minswest = -minswest;
 
-  sprintf(buf, "%s, %d de %s de %d -- %02d:%02d %c%02d:%02d",
-      weekdays[lt->tm_wday], lt->tm_mday, months[lt->tm_mon],
-      1900 + lt->tm_year, lt->tm_hour, lt->tm_min,
+  sprintf(buf, "%s, %d/%02d/%d %02d:%02d:%02d %c%02d%02d",
+      weekdays[lt->tm_wday], lt->tm_mday, lt->tm_mon+1,
+      1900 + lt->tm_year, lt->tm_hour, lt->tm_min, lt->tm_sec,
       plus, minswest / 60, minswest % 60);
 
   return buf;

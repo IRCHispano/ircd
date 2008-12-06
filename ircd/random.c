@@ -19,6 +19,9 @@
 #include "sys.h"
 #include <stdlib.h>
 #include <stdio.h>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 #include "random.h"
 
 RCSTAG_CC("$Id$");
@@ -56,27 +59,21 @@ int autoseed_count = 0;
  *
  * -- FreeMind 2008/12/01
  */
-void autoseed() {
+void autoseed(void) {
   char *tmp;
-  int i;
-
-  if(autoseed_count>0) {
-    autoseed_count--;
-    return;
-  }
+  int fd;
     
-  FILE* urandom = fopen("/dev/urandom", "r");
-  if (!urandom) {
-    s_die();
-    return;
+  if ((fd = open("/dev/urandom", O_RDONLY)) < 0) {
+    fprintf(stderr, "ERROR: Can't open /dev/urandom\n");
+    exit(-1);
+  }
+
+  if(read(fd, localkey, sizeof(localkey)!=sizeof(localkey))) {
+    fprintf(stderr, "ERROR: Read error from /dev/urandom\n");
+    exit(-1);    
   }
   
-  for(i=0,tmp=localkey;i<sizeof(localkey);i++)
-    fread(tmp++, 1, sizeof(tmp), urandom);
-   
-  fclose(urandom);
-
-  autoseed_count = SEED_LIFETIME;
+  close(fd);  
 }
 
 /*
@@ -101,8 +98,6 @@ unsigned int ircrandom(void)
   struct timeval tv;
 
   gettimeofday(&tv, NULL);
-  
-  autoseed();
 
   memcpy((void *)in, (void *)localkey, 8);
   memcpy((void *)(in + 8), (void *)&tv.tv_sec, 4);

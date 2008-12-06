@@ -80,6 +80,7 @@
 #include "slab_alloc.h"
 #include "network.h"
 #include "msg.h"
+#include "random.h"
 
 RCSTAG_CC("$Id$");
 
@@ -574,7 +575,8 @@ int main(int argc, char *argv[])
   uid = getuid();
   euid = geteuid();
   now = time(NULL);
-
+  autoseed();
+  
 #if defined(CHROOTDIR)
   if (chdir(DPATH))
   {

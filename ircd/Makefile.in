@@ -286,7 +286,7 @@ ircd.o: ircd.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/crule.h ../include/userload.h ../include/numeric.h \
   ../include/hash.h ../include/bsd.h ../include/version.h \
   ../include/numnicks.h ../include/IPcheck.h ../include/s_bdd.h \
-  ../include/slab_alloc.h
+  ../include/slab_alloc.h ../include/random.h
 list.o: list.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \

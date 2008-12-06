@@ -438,6 +438,39 @@ int unixport(aClient *cptr, char *path, unsigned short int port)
 #endif
 
 /*
+ * test_listen_port
+ * 
+ * Revisa si se esta escuchando en ese puerto para evitar
+ * intentar escuchar dos veces en el mismo puerto
+ * 
+ * Si ya estoy escuchando en el lo marco como configuracion
+ * legal para que no se cerrada por close_listeners
+ * 
+ * -- FreeMind 20081206
+ */
+int test_listen_port(aConfItem *aconf) {
+  aClient *acptr;
+  int i;
+  
+  for (i = highest_fd; i >= 0; i--)
+  {
+    if (!(acptr = loc_clients[i]))
+      continue;
+
+    if (!IsMe(acptr) || acptr == &me || !IsListening(acptr))
+      continue;
+
+    if (acptr->confs->value.aconf->port == aconf->port) {
+      acptr->confs->value.aconf->status &= ~CONF_ILLEGAL;
+      return 1;
+    }
+  }
+  
+  return 0;
+}
+
+
+/*
  * add_listener
  *
  * Create a new client which is essentially the stub like 'me' to be used
@@ -460,6 +493,11 @@ int add_listener(aConfItem *aconf)
   }
   else
 #endif
+  if(test_listen_port(aconf)) { // Si intento a~adir un puerto que ya escucha
+    free_client(cptr);
+    return 0;
+  }
+    
   if (inetport(cptr, aconf->host, aconf->port))
     cptr->fd = -2;
 

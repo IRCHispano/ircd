@@ -643,6 +643,36 @@ static aConfItem *find_conf_entry(aConfItem *aconf, unsigned int mask)
   return bconf;
 }
 
+/*
+ * find_conf_entry
+ *
+ * - looks for a match on all given fields except passwd.
+ */
+static aConfItem *find_conf_entry_but_passwd(aConfItem *aconf, unsigned int mask)
+{
+  Reg1 aConfItem *bconf;
+
+  for (bconf = conf, mask &= ~CONF_ILLEGAL; bconf; bconf = bconf->next)
+  {
+    if (!(bconf->status & mask) || (bconf->port != aconf->port))
+      continue;
+
+    if ((BadPtr(bconf->host) && !BadPtr(aconf->host)) ||
+        (BadPtr(aconf->host) && !BadPtr(bconf->host)))
+      continue;
+    if (!BadPtr(bconf->host) && strCasediff(bconf->host, aconf->host))
+      continue;
+
+    if ((BadPtr(bconf->name) && !BadPtr(aconf->name)) ||
+        (BadPtr(aconf->name) && !BadPtr(bconf->name)))
+      continue;
+    if (!BadPtr(bconf->name) && strCasediff(bconf->name, aconf->name))
+      continue;
+    break;
+  }
+  return bconf;
+}
+
 #if defined(ESNET_NEG)
 static void prepara_negociaciones(void)
 {
@@ -1060,11 +1090,13 @@ int initconf(int opt)
         free_conf(aconf);
         aconf = bconf;
       }
-      else if (aconf->host && aconf->status == CONF_LISTEN_PORT) {
+      else if (aconf->host && aconf->status==CONF_LISTEN_PORT) {
         char *passwd = aconf->passwd;
         if(passwd != NULL && !strcmp("X", passwd)) /* Si tiene el flag X es que es de cookie encriptada */
           aconf->status |= CONF_COOKIE_ENC;
-        
+        else
+          aconf->status &= ~CONF_COOKIE_ENC;
+
         add_listener(aconf);
       }
     }

@@ -284,7 +284,6 @@ int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
       nrof.local_clients, max_client_count, date(max_client_count_TS), since);
   sendto_one(sptr, rpl_str(RPL_GLOBALUSERS), me.name, parv[0], nrof.clients,
       max_global_count, date(max_global_count_TS), since);
-
   return 0;
 }
 
@@ -315,7 +314,8 @@ int m_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
         nrof.channels);
   sendto_one(sptr, rpl_str(RPL_LUSERME), me.name, parv[0], nrof.local_clients,
       nrof.local_servers);
-
+  sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],
+      max_connection_count, max_client_count);
   return 0;
 }
 
