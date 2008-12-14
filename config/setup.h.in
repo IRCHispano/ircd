@@ -62,6 +62,9 @@
 /* Define to 1 if you have the `resolv' library (-lresolv). */
 #undef HAVE_LIBRESOLV
 
+/* Define to 1 if you have the `rt' library (-lrt). */
+#undef HAVE_LIBRT
+
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
 
@@ -82,9 +85,6 @@
 
 /* Define to 1 if you have the <net/errno.h> header file. */
 #undef HAVE_NET_ERRNO_H
-
-/* Define to 1 if you have the <poll.h> header file. */
-#undef HAVE_POLL_H
 
 /* Define to 1 if system calls automatically restart after interruption by a
    signal. */

@@ -122,8 +122,8 @@ fi
 
 AC_C_UINTPTR_T
 
-dnl Do we have a system call poll?
-unet_FUNC_POLL_SYSCALL
+#dnl Do we have a system call poll?
+#unet_FUNC_POLL_SYSCALL
 
 dnl Do we have restarting syscalls ?
 AC_SYS_RESTARTABLE_SYSCALLS

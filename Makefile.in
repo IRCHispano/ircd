@@ -38,7 +38,7 @@ build:
 	if [ ! -f config/config.h ]; then \
 		echo "Run '${MAKE} config' to configure the server"; \
 	else \
-	for i in config zlib ircd; do \
+	for i in config zlib libevent ircd; do \
 		echo "Building $$i..."; \
 		cd $$i; \
 		if [ "$$i" = "zlib" ]; then \
@@ -58,7 +58,7 @@ root-clean:
 	done || true
 
 clean: root-clean
-	@for i in ircd config zlib; do \
+	@for i in ircd config zlib libevent; do \
 		echo "Cleaning $$i..."; \
 		cd $$i; ${MAKE} clean; cd ..;\
 	done
@@ -72,7 +72,7 @@ root-distclean: root-clean
 	${RM} -f Makefile
 
 distclean: root-distclean
-	@for i in doc ircd config zlib; do \
+	@for i in doc ircd config zlib libevent; do \
 		echo "Dist-cleaning $$i..."; \
 		cd $$i; ${MAKE} distclean; cd ..;\
 	done

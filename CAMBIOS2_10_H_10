@@ -1,3 +1,36 @@
+* 2008/12/14 dfm@unr.com                   (u2.10.H.10.97)       FEATURE
+------------------------------------------------------------------------
+  Utilizo la libreria libevent ( http://monkey.org/~provos/libevent/ )
+  para gestionar los eventos del ircd.
+  
+  Ahora el ircd puede usar como motor de eventos (ordenados de menor
+  a mayor rendimiento):
+  
+  select(), poll(), /dev/poll, epoll() y kevent()
+  
+  El uso de /dev/poll, epoll() y kevent() mejora impresionantemente el
+  rendimiento en los sistemas operativos que lo soportan.
+  
+  En toodos los OS:
+  select(), poll()
+  
+  En Solaris:
+  /dev/poll
+  
+  En Linux > 2.5.66:
+  epoll()
+  
+  En FreeBSD y MacOS:
+  kevent()
+    
+  BUGS:
+  Este parche no esta completo porque aun queda gestionar las se~ales
+  con es misma libreria.
+  
+  Este parche NO esta probado lo suficiente para uso en produccion.
+  
+  No se puede ver mediante STATS que motor de eventos estoy usando.  
+
 * 2008/12/06 dfm@unr.com                   (u2.10.H.10.96)           FIX
 ------------------------------------------------------------------------
   Inicializo la semilla de /dev/urandom solo al principio para permitir

@@ -29,6 +29,7 @@
 #include "dbuf.h"
 #endif
 
+#include "event.h"
 
 /*=============================================================================
  * General defines
@@ -114,6 +115,7 @@ struct Client {
   char *name;                   /* Unique name of the client, nick or host */
   char *username;               /* username here now for auth stuff */
   char *info;                   /* Free form additional client information */
+  
   /*
    *  The following fields are allocated only for local clients
    *  (directly connected to *this* server with a socket.
@@ -168,6 +170,16 @@ struct Client {
 
   unsigned int flags_local;     /* Local client flags */
   struct SLink *invited;        /* chain of invite pointer blocks */
+  
+  struct event *evread;         /* Evento que controla este cliente EV_READ */
+  struct event *evwrite;        /* Evento que controla este cliente EV_WRITE */
+  
+  struct event *evtimer;        /* Evento de temporizacion */
+  struct timeval *tm_timer;     /* Temporizador del evento */
+  
+  struct event *evauthread;         /* Evento que controla este auth EV_READ */
+  struct event *evauthwrite;        /* Evento que controla este auth EV_WRITE */
+  
 };
 
 struct Server {
