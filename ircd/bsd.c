@@ -35,38 +35,6 @@ int writecalls = 0;
 int writeb[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 #endif
 
-RETSIGTYPE dummy(HANDLER_ARG(int UNUSED(sig)))
-{
-#if !defined(HAVE_RELIABLE_SIGNALS)
-  signal(SIGALRM, dummy);
-  signal(SIGPIPE, dummy);
-#if !defined(HPUX)              /* Only 9k/800 series require this,
-                                   but don't know how to.. */
-#if defined(SIGWINCH)
-  signal(SIGWINCH, dummy);
-#endif
-#endif
-#else
-#if defined(POSIX_SIGNALS)
-  struct sigaction act;
-
-  act.sa_handler = dummy;
-  act.sa_flags = 0;
-  sigemptyset(&act.sa_mask);
-  sigaddset(&act.sa_mask, SIGALRM);
-  sigaddset(&act.sa_mask, SIGPIPE);
-#if defined(SIGWINCH)
-  sigaddset(&act.sa_mask, SIGWINCH);
-#endif
-  sigaction(SIGALRM, &act, (struct sigaction *)NULL);
-  sigaction(SIGPIPE, &act, (struct sigaction *)NULL);
-#if defined(SIGWINCH)
-  sigaction(SIGWINCH, &act, (struct sigaction *)NULL);
-#endif
-#endif
-#endif
-}
-
 /*
  * deliver_it
  *   Attempt to send a sequence of bytes to the connection.

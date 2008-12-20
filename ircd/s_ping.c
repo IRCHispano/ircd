@@ -150,7 +150,7 @@ int start_ping(aClient *cptr)
   cptr->tm_timer=(struct timeval*)RunMalloc(sizeof(struct timeval));
   evutil_timerclear(cptr->tm_timer);
   cptr->tm_timer->tv_usec=0;
-  cptr->tm_timer->tv_sec=now + UPINGTIMEOUT;
+  cptr->tm_timer->tv_sec=1;
   evtimer_add(cptr->evtimer, cptr->tm_timer);
   
   return 0;
@@ -230,7 +230,7 @@ void send_ping(aClient *cptr)
    cptr->tm_timer=(struct timeval*)RunMalloc(sizeof(struct timeval));
    evutil_timerclear(cptr->tm_timer);
    cptr->tm_timer->tv_usec=0;
-   cptr->tm_timer->tv_sec=now + UPINGTIMEOUT;
+   cptr->tm_timer->tv_sec=1;
    evtimer_add(cptr->evtimer, cptr->tm_timer);
   
   return;

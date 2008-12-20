@@ -1446,8 +1446,6 @@ aClient *add_connection(aClient *cptr, int fd, int type)
 
   acptr->evwrite=(struct event*)RunMalloc(sizeof(struct event));
   event_set(acptr->evwrite, acptr->fd, EV_WRITE, (void *)event_client_callback, (void *)acptr);
-  if(event_add(acptr->evwrite, NULL)==-1)
-    Debug((DEBUG_ERROR, "ERROR: event_add EV_WRITE (event_client_callback) fd = %d", acptr->fd));
   
   /*
    * Add this local client to the IPcheck registry.
@@ -1519,8 +1517,6 @@ static void add_unixconnection(aClient *cptr, int fd)
 
   acptr->evwrite=(struct event*)RunMalloc(sizeof(struct event));
   event_set(acptr->evwrite, acptr->fd, EV_WRITE, (void *)event_client_callback, (void *)acptr);
-  if(event_add(acptr->evwrite, NULL)==-1)
-    Debug((DEBUG_ERROR, "ERROR: event_add EV_WRITE (event_client_callback) fd = %d", acptr->fd));
   SetAccess(acptr);
   return;
 }
@@ -1801,9 +1797,6 @@ void event_client_callback(int fd, short event, aClient *cptr) {
   if(event==EV_READ)
     event_add(cptr->evread, NULL);
   
-  if(DBufLength(&cptr->sendQ)) // Si hay datos pendientes pongo el evento de nuevo
-    event_add(cptr->evwrite, NULL);
-  
   if (DoingDNS(cptr) || DoingAuth(cptr))
     return;
 #if defined(DEBUGMODE)
@@ -2052,13 +2045,15 @@ void close_listeners(void)
   }
 }
 
-int read_message(time_t delay)
-{
+int read_message(time_t timeout)
+{  
   struct timeval tm;
-  tm.tv_sec=delay;
-  tm.tv_usec=0;
-  event_loopexit(&tm);
-  event_dispatch();
+  if(timeout>0) {
+    tm.tv_sec=timeout;
+    tm.tv_usec=0;
+    event_loopexit(&tm);
+    event_loop(EVLOOP_ONCE);
+  }
   update_now();
   return 0;
 }
@@ -2187,12 +2182,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
 
   cptr->evwrite=(struct event*)RunMalloc(sizeof(struct event));
   event_set(cptr->evwrite, cptr->fd, EV_WRITE, (void *)event_client_callback, (void *)cptr);
-  if(event_add(cptr->evwrite, NULL)==-1)
-    Debug((DEBUG_ERROR, "ERROR: event_add EV_WRITE (event_client_callback) fd = %d", cptr->fd));
   
-  
-  signal(SIGALRM, dummy);
-  alarm(4);
   if (connect(cptr->fd, svp, len) < 0 && errno != EINPROGRESS)
   {
     int err = get_sockerr(cptr);

@@ -1,3 +1,12 @@
+* 2008/12/20 dfm@unr.com                   (u2.10.H.10.98)       FEATURE
+------------------------------------------------------------------------
+  Completo el parche anterior, ahora el ircd ya gestiona sen~ales con
+  libevent.
+  
+  Se puede ver mediante /STATS e el motor de eventos usado por el ircd.
+  
+  Queda /STATS E para ver las elines.
+
 * 2008/12/14 dfm@unr.com                   (u2.10.H.10.97)       FEATURE
 ------------------------------------------------------------------------
   Utilizo la libreria libevent ( http://monkey.org/~provos/libevent/ )
