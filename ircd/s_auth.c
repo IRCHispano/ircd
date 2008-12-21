@@ -107,10 +107,8 @@ void start_auth(aClient *cptr)
     write(cptr->fd, sendbuf, strlen(sendbuf));
   }
 
-  alarm(2);
   cptr->authfd = socket(AF_INET, SOCK_STREAM, 0);
   err = errno;
-  alarm(0);
 
   if (cptr->authfd < 0)
   {
@@ -146,7 +144,6 @@ void start_auth(aClient *cptr)
   sock.sin_port = htons(113);
   sock.sin_family = AF_INET;
 
-  alarm((unsigned)4);
   if (connect(cptr->authfd, (struct sockaddr *)&sock,
       sizeof(sock)) == -1 && errno != EINPROGRESS)
   {
@@ -154,7 +151,6 @@ void start_auth(aClient *cptr)
     /*
      * No error report from this...
      */
-    alarm((unsigned)0);
     close(cptr->authfd);
     cptr->authfd = -1;
     if (!DoingDNS(cptr))
@@ -167,13 +163,12 @@ void start_auth(aClient *cptr)
     }
     return;
   }
-  alarm((unsigned)0);
   SetAuth(cptr);
   SetWRAuth(cptr);
   set_non_blocking(cptr->authfd, cptr);
   
   cptr->evauthread = (struct event*)RunMalloc(sizeof(struct event));
-  event_set(cptr->evauthread, cptr->authfd, EV_READ, (void *)event_auth_callback, (void *)cptr);
+  event_set(cptr->evauthread, cptr->authfd, EV_READ|EV_PERSIST, (void *)event_auth_callback, (void *)cptr);
   if(event_add(cptr->evauthread, NULL)==-1)
     Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_auth_callback) fd = %d", cptr->authfd));
 

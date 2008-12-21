@@ -454,8 +454,29 @@ static int bad_command(void)
   return (-1);
 }
 
+static void sigalrm_handler(int sig)
+{
+  // NO OP
+}
+
 static void setup_signals(void)
 {
+  struct sigaction act;
+
+  act.sa_handler = SIG_IGN;
+  act.sa_flags = 0;
+  sigemptyset(&act.sa_mask);
+  sigaddset(&act.sa_mask, SIGPIPE);
+  sigaddset(&act.sa_mask, SIGALRM);
+#ifdef  SIGWINCH
+  sigaddset(&act.sa_mask, SIGWINCH);
+  sigaction(SIGWINCH, &act, 0);
+#endif
+  sigaction(SIGPIPE, &act, 0);
+
+  act.sa_handler = sigalrm_handler;
+  sigaction(SIGALRM, &act, 0);
+  
   signal_set(&ev_sighup,  SIGHUP,  (void *)s_rehash,  NULL);
   signal_set(&ev_sigterm, SIGTERM, (void *)s_die2,    NULL);
   signal_set(&ev_sigint,  SIGINT,  (void *)s_restart, NULL);

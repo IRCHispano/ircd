@@ -1,3 +1,16 @@
+* 2008/12/21 dfm@unr.com                   (u2.10.H.10.99)           FIX
+------------------------------------------------------------------------
+  Eliminacion de alarms para enmascarar se~ales, ahora no son necesarios.
+  
+  Correcciones diversas de manejo de eventos.
+  
+  Correccion de bug arrastrado de hace tiempo de propagacion de quits al
+  servidor que los origina, generaba trafico inutil entre nodos de la
+  red.
+  
+  Correccion de fallo en uping, ahora se inicia inmediatalmente no con
+  un segundo de retardo, el primer ping no necesita temporizacion.
+
 * 2008/12/20 dfm@unr.com                   (u2.10.H.10.98)       FEATURE
 ------------------------------------------------------------------------
   Completo el parche anterior, ahora el ircd ya gestiona sen~ales con

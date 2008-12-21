@@ -135,23 +135,7 @@ int start_ping(aClient *cptr)
   cptr->since = UPINGTIMEOUT;
   cptr->flags |= (FLAGS_PING);
 
-  // PONER AQUI EVENTO DE EV_TIMEOUT
-  if(cptr->evtimer) {
-    event_del(cptr->evtimer);
-    RunFree(cptr->tm_timer);
-    RunFree(cptr->evtimer);
-    cptr->evtimer=NULL;
-    cptr->tm_timer=NULL;
-  }
-  
-  cptr->evtimer=(struct event*)RunMalloc(sizeof(struct event));
-  evtimer_set(cptr->evtimer, (void *)event_ping_callback, (void *)cptr);
-  
-  cptr->tm_timer=(struct timeval*)RunMalloc(sizeof(struct timeval));
-  evutil_timerclear(cptr->tm_timer);
-  cptr->tm_timer->tv_usec=0;
-  cptr->tm_timer->tv_sec=1;
-  evtimer_add(cptr->evtimer, cptr->tm_timer);
+  event_add(cptr->evwrite, NULL);
   
   return 0;
 }
@@ -216,18 +200,15 @@ void send_ping(aClient *cptr)
     }
   }
 
-   if(cptr->evtimer) {
+   if(cptr->evtimer)
      event_del(cptr->evtimer);
-     RunFree(cptr->tm_timer);
-     RunFree(cptr->evtimer);
-     cptr->evtimer=NULL;
-     cptr->tm_timer=NULL;
-   }
-   
-   cptr->evtimer=(struct event*)RunMalloc(sizeof(struct event));
+   else
+     cptr->evtimer=(struct event*)RunMalloc(sizeof(struct event));
+
+   if(!cptr->tm_timer)
+     cptr->tm_timer=(struct timeval*)RunMalloc(sizeof(struct timeval));          
+
    evtimer_set(cptr->evtimer, (void *)event_ping_callback, (void *)cptr);
-   
-   cptr->tm_timer=(struct timeval*)RunMalloc(sizeof(struct timeval));
    evutil_timerclear(cptr->tm_timer);
    cptr->tm_timer->tv_usec=0;
    cptr->tm_timer->tv_sec=1;
@@ -457,11 +438,9 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (BadPtr(parv[2]) || (port = atoi(parv[2])) <= 0)
     port = atoi(UDP_PORT);
 
-  alarm(2);
   if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
   {
     int err = errno;
-    alarm(0);
     sendto_ops("m_uping: socket: %s", (err != EAGAIN) ?
         strerror(err) : "No more sockets");
     if (MyUser(sptr) || Protocol(cptr) < 10)
@@ -476,7 +455,6 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
     return 0;
   }
-  alarm(0);
 
   if (fcntl(fd, F_SETFL, FNDELAY) == -1)
   {
@@ -538,15 +516,16 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   memcpy(&cptr->ip, &aconf->ipnum, sizeof(struct in_addr));
   SlabStringAllocDup(&(cptr->name), aconf->name, 0);
   cptr->firsttime = 0;
+
   cptr->evread=(struct event*)RunMalloc(sizeof(struct event));
-  event_set(cptr->evread, cptr->fd, EV_READ, (void *)event_ping_callback, (void *)cptr);
+  event_set(cptr->evread, cptr->fd, EV_READ|EV_PERSIST, (void *)event_ping_callback, (void *)cptr);
   if(event_add(cptr->evread, NULL)==-1)
     Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_ping_callback) fd = %d", cptr->fd));
 
-//  cptr->evwrite=(struct event*)RunMalloc(sizeof(struct event));
-//  event_set(cptr->evwrite, cptr->fd, EV_WRITE, (void *)event_ping_callback, (void *)cptr);
-//  if(event_add(cptr->evwrite, NULL)==-1)
-//    Debug((DEBUG_ERROR, "ERROR: event_add EV_WRITE (event_ping_callback) fd = %d", cptr->fd));
+  cptr->evwrite=(struct event*)RunMalloc(sizeof(struct event));
+  event_set(cptr->evwrite, cptr->fd, EV_WRITE, (void *)event_ping_callback, (void *)cptr);
+  if(event_add(cptr->evwrite, NULL)==-1)
+    Debug((DEBUG_ERROR, "ERROR: event_add EV_WRITE (event_ping_callback) fd = %d", cptr->fd));
   
   switch (ping_server(cptr))
   {

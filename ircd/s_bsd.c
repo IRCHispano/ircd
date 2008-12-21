@@ -266,9 +266,7 @@ int inetport(aClient *cptr, char *name, unsigned short int port)
    */
   if (cptr->fd == -1)
   {
-    alarm(2);
     cptr->fd = socket(AF_INET, SOCK_STREAM, 0);
-    alarm(0);
     if (cptr->fd < 0 && errno == EAGAIN)
     {
       sendto_ops("opening stream socket %s: No more sockets", cptr->name);
@@ -348,7 +346,7 @@ int inetport(aClient *cptr, char *name, unsigned short int port)
   loc_clients[cptr->fd] = cptr;
 
   cptr->evread=(struct event*)RunMalloc(sizeof(struct event));
-  event_set(cptr->evread, cptr->fd, EV_READ, (void *)event_connection_callback, (void *)cptr);
+  event_set(cptr->evread, cptr->fd, EV_READ|EV_PERSIST, (void *)event_connection_callback, (void *)cptr);
   if(event_add(cptr->evread, NULL)==-1)
     Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_connection_callback) fd = %d", cptr->fd));
   
@@ -369,9 +367,7 @@ int unixport(aClient *cptr, char *path, unsigned short int port)
 {
   struct sockaddr_un un;
 
-  alarm(2);
   cptr->fd = socket(AF_UNIX, SOCK_STREAM, 0);
-  alarm(0);
   if (cptr->fd == -1 && errno == EAGAIN)
   {
     sendto_ops("error opening unix domain socket %s: No more sockets",
@@ -432,7 +428,7 @@ int unixport(aClient *cptr, char *path, unsigned short int port)
   loc_clients[cptr->fd] = cptr;
 
   cptr->evread=(struct event*)RunMalloc(sizeof(struct event));
-  event_set(cptr->evread, cptr->fd, EV_READ, (void *)event_connection_callback, (void *)cptr);
+  event_set(cptr->evread, cptr->fd, EV_READ|EV_PERSIST, (void *)event_connection_callback, (void *)cptr);
   if(event_add(cptr->evread, NULL)==-1)
     Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_connection_callback) fd = %d", cptr->fd));
   
@@ -531,7 +527,7 @@ init_dgram:
   event_init();
   resfd = init_resolver();
   if(resfd>=0) {
-    event_set(&evres, resfd, EV_READ, (void *)event_async_dns_callback, NULL);
+    event_set(&evres, resfd, EV_READ|EV_PERSIST, (void *)event_async_dns_callback, NULL);
     if(event_add(&evres, NULL)==-1)
       Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_async_dns_callback) fd = %d", resfd));
   }
@@ -1440,12 +1436,14 @@ aClient *add_connection(aClient *cptr, int fd, int type)
   set_sock_opts(acptr->fd, acptr);
 
   acptr->evread=(struct event*)RunMalloc(sizeof(struct event));
-  event_set(acptr->evread, acptr->fd, EV_READ, (void *)event_client_callback, (void *)acptr);
+  event_set(acptr->evread, acptr->fd, EV_READ|EV_PERSIST, (void *)event_client_callback, (void *)acptr);
   if(event_add(acptr->evread, NULL)==-1)
     Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_client_callback) fd = %d", acptr->fd));
 
   acptr->evwrite=(struct event*)RunMalloc(sizeof(struct event));
   event_set(acptr->evwrite, acptr->fd, EV_WRITE, (void *)event_client_callback, (void *)acptr);
+  if(event_add(acptr->evwrite, NULL)==-1)
+    Debug((DEBUG_ERROR, "ERROR: event_add EV_WRITE (event_client_callback) fd = %d", acptr->fd));
   
   /*
    * Add this local client to the IPcheck registry.
@@ -1510,13 +1508,17 @@ static void add_unixconnection(aClient *cptr, int fd)
   add_client_to_list(acptr);
   set_non_blocking(acptr->fd, acptr);
   set_sock_opts(acptr->fd, acptr);
+
   acptr->evread=(struct event*)RunMalloc(sizeof(struct event));
-  event_set(acptr->evread, acptr->fd, EV_READ, (void *)event_client_callback, (void *)acptr);
+  event_set(acptr->evread, acptr->fd, EV_READ|EV_PERSIST, (void *)event_client_callback, (void *)acptr);
   if(event_add(acptr->evread, NULL)==-1)
     Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_client_callback) fd = %d", acptr->fd));
 
   acptr->evwrite=(struct event*)RunMalloc(sizeof(struct event));
   event_set(acptr->evwrite, acptr->fd, EV_WRITE, (void *)event_client_callback, (void *)acptr);
+  if(event_add(acptr->evwrite, NULL)==-1)
+    Debug((DEBUG_ERROR, "ERROR: event_add EV_WRITE (event_client_callback) fd = %d", acptr->fd));
+
   SetAccess(acptr);
   return;
 }
@@ -1702,8 +1704,6 @@ void event_async_dns_callback(int fd, short event, void *arg)
 {
   update_now();
   
-  event_add(&evres, NULL);
-  
   if (resfd >= 0) // LEO DNS
     do_dns_async();
 }
@@ -1719,10 +1719,7 @@ void event_udp_callback(int fd, short event, void *arg)
 {
   update_now();
   
-  if(event == EV_READ)
-    event_add(&evudp, NULL);
-
-  if (udpfd >= 0 && (event == EV_READ)) // COMPRUEBO SI HAY UDP PARA LEER
+  if (udpfd >= 0) // COMPRUEBO SI HAY UDP PARA LEER
     polludp();
 }
 
@@ -1740,14 +1737,11 @@ void event_ping_callback(int fd, short event, aClient *cptr)
   if (!IsPing(cptr))
     return;
 
-  if(event==EV_READ)
-    event_add(cptr->evread, NULL);
-  
-  if (event == EV_READ)  // HAY DATOS PENDIENTES DE LEER
+  if (event & EV_READ)  // HAY DATOS PENDIENTES DE LEER
   {
     read_ping(cptr);          /* This can RunFree(cptr) ! */
   }
-  else if (event == EV_WRITE || event == EV_TIMEOUT) // ESCRIBO PING
+  else if ((event & EV_WRITE) || (event & EV_TIMEOUT)) // ESCRIBO PING
   {
     cptr->lasttime = now;
     send_ping(cptr);          /* This can RunFree(cptr) ! */
@@ -1768,12 +1762,9 @@ void event_auth_callback(int fd, short event, aClient *cptr)
   if (cptr->authfd < 0)
     return;
 
-  if(event==EV_READ)
-    event_add(cptr->evauthread, NULL);
-  
-  if (event == EV_WRITE)  // HAY DATOS PENDIENTES DE ESCRIBIR
+  if (event & EV_WRITE)  // HAY DATOS PENDIENTES DE ESCRIBIR
     send_authports(cptr);
-  else if (event == EV_READ)  // HAY DATOS PENDIENTES DE LEER
+  else if (event & EV_READ)  // HAY DATOS PENDIENTES DE LEER
     read_authports(cptr);
 }
 
@@ -1794,16 +1785,13 @@ void event_client_callback(int fd, short event, aClient *cptr) {
   if (IsMe(cptr))
     return;
 
-  if(event==EV_READ)
-    event_add(cptr->evread, NULL);
-  
   if (DoingDNS(cptr) || DoingAuth(cptr))
     return;
 #if defined(DEBUGMODE)
   if (IsLog(cptr))
     return;
 #endif
-  if (event == EV_WRITE) // EVENTO DE ESCRITURA
+  if (event & EV_WRITE) // EVENTO DE ESCRITURA
     {
       int write_err = 0;
       /*
@@ -1821,10 +1809,6 @@ void event_client_callback(int fd, short event, aClient *cptr) {
       if (IsDead(cptr) || write_err) // ERROR DE LECTURA/ESCRITURA
         {
           deadsocket:
-//          if (RFD_ISSET(i, &read_set, i))
-//            {
-//              RFD_CLR_OUT(i, &read_set, i);
-//            }
           exit_client(cptr, cptr, &me,
               IsDead(cptr) ? LastDeadComment(cptr) : strerror(get_sockerr(cptr)));
           return;
@@ -1832,11 +1816,11 @@ void event_client_callback(int fd, short event, aClient *cptr) {
       return;
     }
   length = 1;                 /* for fall through case */
-  if ((!NoNewLine(cptr) || event == EV_READ || event == EV_TIMEOUT) && !IsDead(cptr)) // DATOS PENDIENTES PARA LEER
-    length = read_packet(cptr, event == EV_READ ? 1 : 0);
+  if ((!NoNewLine(cptr) || event & EV_READ || event & EV_TIMEOUT) && !IsDead(cptr)) // DATOS PENDIENTES PARA LEER
+    length = read_packet(cptr, event & EV_READ ? 1 : 0);
   if ((length != CPTR_KILLED) && IsDead(cptr)) // ERROR LECTURA/ESCRITURA
     goto deadsocket;
-  if (!(event == EV_READ) && length > 0)
+  if (!(event & EV_READ) && length > 0)
     return;
   if (length > 0)
     return;
@@ -1876,13 +1860,10 @@ void event_connection_callback(int loc_fd, short event, aClient *cptr)
   
   update_now();
   
-  event_add(cptr->evread, NULL);
-
-  if (!IsListening(cptr)) // Si 
+  if (!IsListening(cptr)) {// Si 
+    event_del(cptr->evread);
     return;
-
-//  if(!(event & EV_READ))
-//    return;
+  }
 
   // ENTRA UNA NUEVA CONEXION
   {
@@ -2175,19 +2156,10 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
   set_non_blocking(cptr->fd, cptr);
   set_sock_opts(cptr->fd, cptr);
   
-  cptr->evread=(struct event*)RunMalloc(sizeof(struct event));
-  event_set(cptr->evread, cptr->fd, EV_READ, (void *)event_client_callback, (void *)cptr);
-  if(event_add(cptr->evread, NULL)==-1)
-    Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_client_callback) fd = %d", cptr->fd));
-
-  cptr->evwrite=(struct event*)RunMalloc(sizeof(struct event));
-  event_set(cptr->evwrite, cptr->fd, EV_WRITE, (void *)event_client_callback, (void *)cptr);
-  
   if (connect(cptr->fd, svp, len) < 0 && errno != EINPROGRESS)
   {
     int err = get_sockerr(cptr);
     errtmp = errno;             /* other system calls may eat errno */
-    alarm(0);
     report_error("Connect to host %s failed: %s", cptr);
     if (by && IsUser(by) && !MyUser(by))
     {
@@ -2208,7 +2180,6 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
       errno = ETIMEDOUT;
     return -1;
   }
-  alarm(0);
 
   /*
    * Attach config entries to client here rather than in
@@ -2274,7 +2245,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
   add_client_to_list(cptr);
   hAddClient(cptr);
   nextping = now;
-
+  
   return 0;
 }
 
@@ -2287,9 +2258,7 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
    * Might as well get sockhost from here, the connection is attempted
    * with it so if it fails its useless.
    */
-  alarm(2);
   cptr->fd = socket(AF_INET, SOCK_STREAM, 0);
-  alarm(0);
   if (cptr->fd == -1 && errno == EAGAIN)
   {
     sendto_ops("opening stream socket to server %s: No more sockets",
@@ -2364,6 +2333,17 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
   server.sin_port = htons(((aconf->port > 0) ? aconf->port : portnum));
 #endif
   *lenp = sizeof(server);
+
+  cptr->evread=(struct event*)RunMalloc(sizeof(struct event));
+  event_set(cptr->evread, cptr->fd, EV_READ|EV_PERSIST, (void *)event_client_callback, (void *)cptr);
+  if(event_add(cptr->evread, NULL)==-1)
+    Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_client_callback) fd = %d", cptr->fd));
+  
+  cptr->evwrite=(struct event*)RunMalloc(sizeof(struct event));
+  event_set(cptr->evwrite, cptr->fd, EV_WRITE, (void *)event_client_callback, (void *)cptr);
+  if(event_add(cptr->evwrite, NULL)==-1)
+    Debug((DEBUG_ERROR, "ERROR: event_add EV_WRITE (event_client_callback) fd = %d", cptr->fd));
+
   return (struct sockaddr *)&server;
 }
 
@@ -2378,9 +2358,7 @@ static struct sockaddr *connect_unix(aConfItem *aconf, aClient *cptr, int *lenp)
 {
   static struct sockaddr_un sock;
 
-  alarm(2);
   cptr->fd = socket(AF_UNIX, SOCK_STREAM, 0);
-  alarm(0);
   if (cptr->fd == -1 && errno == EAGAIN)
   {
     sendto_ops("Unix domain connect to host %s failed: No more sockets",
@@ -2406,6 +2384,17 @@ static struct sockaddr *connect_unix(aConfItem *aconf, aClient *cptr, int *lenp)
   *lenp = strlen(sock.sun_path) + 2;
 
   SetUnixSock(cptr);
+
+  cptr->evread=(struct event*)RunMalloc(sizeof(struct event));
+  event_set(cptr->evread, cptr->fd, EV_READ|EV_PERSIST, (void *)event_client_callback, (void *)cptr);
+  if(event_add(cptr->evread, NULL)==-1)
+    Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_client_callback) fd = %d", cptr->fd));
+  
+  cptr->evwrite=(struct event*)RunMalloc(sizeof(struct event));
+  event_set(cptr->evwrite, cptr->fd, EV_WRITE, (void *)event_client_callback, (void *)cptr);
+  if(event_add(cptr->evwrite, NULL)==-1)
+    Debug((DEBUG_ERROR, "ERROR: event_add EV_WRITE (event_client_callback) fd = %d", cptr->fd));
+
   return (struct sockaddr *)&sock;
 }
 
@@ -2484,7 +2473,7 @@ int setup_ping(void)
   on = 0;
   setsockopt(udpfd, SOL_SOCKET, SO_BROADCAST, (char *)&on, sizeof(on));
   if(udpfd>=0) {
-    event_set(&evudp, udpfd, EV_READ, (void *)event_udp_callback, NULL);
+    event_set(&evudp, udpfd, EV_READ|EV_PERSIST, (void *)event_udp_callback, NULL);
     if(event_add(&evudp, NULL)==-1)
       Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_udp_callback) fd = %d", udpfd));
   }
