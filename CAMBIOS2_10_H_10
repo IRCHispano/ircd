@@ -1,57 +1,12 @@
-* 2008/12/21 dfm@unr.com                   (u2.10.H.10.99)           FIX
+* 2008/12/22 dfm@unr.com                   (u2.10.H.10.100)          FIX
 ------------------------------------------------------------------------
-  Eliminacion de alarms para enmascarar se~ales, ahora no son necesarios.
+  Correccion de funcionamiento de nicklen dinamico, habia un problema que
+  hacia que se escapasen dos caracteres en los cambios de nick, el bug
+  habia sido introducido en el parche u2.10.H.10.71
   
-  Correcciones diversas de manejo de eventos.
-  
-  Correccion de bug arrastrado de hace tiempo de propagacion de quits al
-  servidor que los origina, generaba trafico inutil entre nodos de la
-  red.
-  
-  Correccion de fallo en uping, ahora se inicia inmediatalmente no con
-  un segundo de retardo, el primer ping no necesita temporizacion.
+  NOTA: Los parches del u2.10.H.10.96 al u2.10.H.10.99 estan en el branch
+  LIBEVENT
 
-* 2008/12/20 dfm@unr.com                   (u2.10.H.10.98)       FEATURE
-------------------------------------------------------------------------
-  Completo el parche anterior, ahora el ircd ya gestiona sen~ales con
-  libevent.
-  
-  Se puede ver mediante /STATS e el motor de eventos usado por el ircd.
-  
-  Queda /STATS E para ver las elines.
-
-* 2008/12/14 dfm@unr.com                   (u2.10.H.10.97)       FEATURE
-------------------------------------------------------------------------
-  Utilizo la libreria libevent ( http://monkey.org/~provos/libevent/ )
-  para gestionar los eventos del ircd.
-  
-  Ahora el ircd puede usar como motor de eventos (ordenados de menor
-  a mayor rendimiento):
-  
-  select(), poll(), /dev/poll, epoll() y kevent()
-  
-  El uso de /dev/poll, epoll() y kevent() mejora impresionantemente el
-  rendimiento en los sistemas operativos que lo soportan.
-  
-  En toodos los OS:
-  select(), poll()
-  
-  En Solaris:
-  /dev/poll
-  
-  En Linux > 2.5.66:
-  epoll()
-  
-  En FreeBSD y MacOS:
-  kevent()
-    
-  BUGS:
-  Este parche no esta completo porque aun queda gestionar las se~ales
-  con es misma libreria.
-  
-  Este parche NO esta probado lo suficiente para uso en produccion.
-  
-  No se puede ver mediante STATS que motor de eventos estoy usando.  
 
 * 2008/12/06 dfm@unr.com                   (u2.10.H.10.96)           FIX
 ------------------------------------------------------------------------

@@ -1192,7 +1192,9 @@ static int mmap_cache(void)
   assert(!done);
   done = 1;
 
+  alarm(3);
   handle = open(BDD_MMAP_PATH, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+  alarm(0);
 
   if (handle == -1)
     db_die("Error al intentar crear el fichero MMAP cache de la BDD (open)",
@@ -1253,7 +1255,9 @@ static int mmap_cache(void)
   if (!flag_problemas)
   {
     sprintf_irc(path_buf, "%s/hashes", DBPATH);
+    alarm(3);
     handle2 = open(path_buf, O_RDONLY);
+    alarm(0);
     if (handle < 0)
     {
       flag_problemas = 1;
@@ -1354,10 +1358,12 @@ static int mmap_cache(void)
     if ((i >= ESNET_BDD) && (i <= ESNET_BDD_END))
     {
       sprintf_irc(path_buf, "%s/tabla.%c", DBPATH, i);
+      alarm(3);
       handle = open(path_buf, O_RDONLY, S_IRUSR | S_IWUSR);
       assert(handle != -1);
       get_stat(handle, &st);
       close(handle);
+      alarm(0);
       memcpy(&tabla_stats[i], &st, sizeof(st));
       if (memcmp(&st, st2, sizeof(st)))
       {
@@ -1420,10 +1426,12 @@ void db_persistent_commit(void)
     if ((i < ESNET_BDD) || (i > ESNET_BDD_END))
       continue;
     sprintf_irc(path_buf, "%s/tabla.%c", DBPATH, i);
+    alarm(3);
     handle = open(path_buf, O_RDONLY, S_IRUSR | S_IWUSR);
     assert(handle != -1);
     get_stat(handle, &st);
     close(handle);
+    alarm(0);
     if (memcmp(&st, &tabla_stats[i], sizeof(st)))
       db_die_persistent(&st, &tabla_stats[i],
           "Se detecta una modificacion no autorizada de la BDD (MMAP_COMMIT)",
@@ -1445,7 +1453,9 @@ void db_persistent_commit(void)
   p2 = (unsigned char *)p;
 
   sprintf_irc(path_buf, "%s/hashes", DBPATH);
+  alarm(3);
   handle = open(path_buf, O_RDONLY);
+  alarm(0);
   if (handle < 0)
     return;
   i = read(handle, p2, 65535);
@@ -1520,6 +1530,7 @@ abrir_db(unsigned int registro, char *buf, unsigned char que_bdd,
 
   *buf = '\0';
   sprintf_irc(path, "%s/tabla.%c", DBPATH, que_bdd);
+  alarm(3);
   handle = open(path, O_RDONLY, S_IRUSR | S_IWUSR);
   get_stat(handle, &estado);
   mapeo->len = estado.size;
@@ -1532,6 +1543,7 @@ abrir_db(unsigned int registro, char *buf, unsigned char que_bdd,
   mapeo->posicion = mmap(NULL, mapeo->len,
       PROT_READ, MAP_SHARED | MAP_NORESERVE, handle, 0);
   close(handle);
+  alarm(0);
   mapeo->puntero_r = mapeo->puntero_w = mapeo->posicion;
 
   if (handle == -1)
@@ -1573,6 +1585,7 @@ static void almacena_hash(unsigned char que_bdd)
   sprintf_irc(path, "%s/hashes", DBPATH);
   inttobase64(hash, tabla_hash_hi[que_bdd], 6);
   inttobase64(hash + 6, tabla_hash_lo[que_bdd], 6);
+  alarm(3);
   db_file = open(path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
   if (db_file == -1)
     db_die("Error al intentar guardar hashes (open)", que_bdd);
@@ -1582,6 +1595,7 @@ static void almacena_hash(unsigned char que_bdd)
   if (write(db_file, path, strlen(path)) == -1)
     db_die("Error al intentar guardas hashes (write)", que_bdd);
   close(db_file);
+  alarm(0);
 }
 
 /*
@@ -1594,6 +1608,7 @@ static void lee_hash(unsigned char que_bdd, unsigned int *hi, unsigned int *lo)
   int db_file;
 
   sprintf_irc(path, "%s/hashes", DBPATH);
+  alarm(3);
   db_file = open(path, O_RDONLY);
 /*
 ** No metemos verificacion, porque ya verifica
@@ -1602,6 +1617,7 @@ static void lee_hash(unsigned char que_bdd, unsigned int *hi, unsigned int *lo)
   lseek(db_file, 15 * (que_bdd - ESNET_BDD) + 2, SEEK_SET);
   read(db_file, path, 12);
   close(db_file);
+  alarm(0);
   path[12] = '\0';
   c = path[6];
   path[6] = '\0';
@@ -1635,6 +1651,7 @@ static void db_alta(char *registro, unsigned char que_bdd, aClient *cptr)
 #endif
 
     sprintf_irc(path, "%s/tabla.%c", DBPATH, que_bdd);
+    alarm(3);
     db_file = open(path, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
     if (db_file == -1)
       db_die("Error al intentar an~adir nuevo registro (open)", que_bdd);
@@ -1671,6 +1688,7 @@ static void db_alta(char *registro, unsigned char que_bdd, aClient *cptr)
 #endif
 
     close(db_file);
+    alarm(0);
 
     almacena_hash(que_bdd);
   }
@@ -1722,6 +1740,7 @@ static void db_pack(char *registro, unsigned char que_bdd)
   tabla_serie[que_bdd] = atol(registro);
 
   sprintf_irc(path, "%s/tabla.%c", DBPATH, que_bdd);
+  alarm(3);
   db_file = open(path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
   get_stat(db_file, &estado);
   len = estado.size;
@@ -1736,6 +1755,7 @@ static void db_pack(char *registro, unsigned char que_bdd)
   map = mmap(NULL, len, PROT_READ | PROT_WRITE,
       MAP_SHARED | MAP_NORESERVE, db_file, 0);
   close(db_file);
+  alarm(0);
   if (db_file == -1)
     db_die("Error al intentar compactar (open)", que_bdd);
   if ((len != 0) && (map == MAP_FAILED))
@@ -1819,6 +1839,7 @@ fin:
 
   munmap(map, len);
 
+  alarm(3);
   if (truncate(path, escritura - map) == -1)
   {
     db_die("Error al intentar compactar (truncate)", que_bdd);
@@ -1835,6 +1856,7 @@ fin:
 #endif
 
   close(db_file);
+  alarm(0);
   actualiza_hash(registro, que_bdd);
   almacena_hash(que_bdd);
 }
@@ -2036,6 +2058,7 @@ static void initdb2(unsigned char que_bdd)
         "'%c' aparentemente corrupta. Borrando...", que_bdd);
     borrar_db(que_bdd);
     sprintf_irc(path, "%s/tabla.%c", DBPATH, que_bdd);
+    alarm(3);
     fd = open(path, O_TRUNC, S_IRUSR | S_IWUSR);
 
 #if defined(BDD_MMAP)
@@ -2046,6 +2069,7 @@ static void initdb2(unsigned char que_bdd)
     if (fd == -1)
       db_die("Error al intentar truncar (open)", que_bdd);
     close(fd);
+    alarm(0);
 /*
 ** Solucion temporal
 ** Corta conexiones con los HUBs
@@ -2469,6 +2493,7 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
         if (!match(parv[1], me.name))
         {
           sprintf_irc(path, "%s/tabla.%c", DBPATH, que_bdd);
+          alarm(3);
           db_file = open(path, O_TRUNC, S_IRUSR | S_IWUSR);
           if (db_file == -1)
           {
@@ -2481,6 +2506,7 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
           }
           close(db_file);
+          alarm(0);
           borrar_db(que_bdd);
           almacena_hash(que_bdd);
           sprintf_irc(db_buf, "borrada (%s)", sptr->name);

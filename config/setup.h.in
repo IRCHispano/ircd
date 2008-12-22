@@ -83,6 +83,13 @@
 /* Define to 1 if you have the <net/errno.h> header file. */
 #undef HAVE_NET_ERRNO_H
 
+/* Define to 1 if you have the <poll.h> header file. */
+#undef HAVE_POLL_H
+
+/* Define to 1 if system calls automatically restart after interruption by a
+   signal. */
+#undef HAVE_RESTARTABLE_SYSCALLS
+
 /* Define to 1 if you have the `res_init' function. */
 #undef HAVE_RES_INIT
 

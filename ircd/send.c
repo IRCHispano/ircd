@@ -140,10 +140,8 @@ void flush_sendq_except(const struct DBuf *one)
 void send_queued(aClient *to)
 {
 #if !defined(pyr)
-  if (to->flags & FLAGS_BLOCKED) {
-    event_add(to->evwrite, NULL);
+  if (to->flags & FLAGS_BLOCKED)
     return;                     /* Don't bother */
-  }
 #endif
   /*
    * Once socket is marked dead, we cannot start writing to it,
@@ -185,11 +183,9 @@ void send_queued(aClient *to)
     {
       to->flags |= FLAGS_BLOCKED; /* Wait till select() says
                                      we can write again */
-      event_add(to->evwrite, NULL);
       break;
     }
   }
-
 
   return;
 }
@@ -334,8 +330,6 @@ void sendbufto_one(aClient *to)
    */
   if (DBufLength(&to->sendQ) / 1024 > to->lastsq)
     send_queued(to);
-  else
-    event_add(to->evwrite, NULL);
 }
 
 static void vsendto_prefix_one(aClient *to, aClient *from,

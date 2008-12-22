@@ -205,16 +205,16 @@ EOF
   bool 'Use inlining for a few crucial functions' FORCEINLINE y
 endmenu
 
-#if [ "$ac_cv_header_poll_h" = "yes" ]; then
-#  if [ "$unet_cv_func_poll_syscall" = "yes" ]; then
-#    define_bool USE_POLL y
-#  else
-#    mainmenu_option next_comment
-#    comment 'Operating System specific defines.'
-#      bool 'You have poll(), but do you want to use it' USE_POLL n
-#    endmenu
-#  fi
-#fi
+if [ "$ac_cv_header_poll_h" = "yes" ]; then
+  if [ "$unet_cv_func_poll_syscall" = "yes" ]; then
+    define_bool USE_POLL y
+  else
+    mainmenu_option next_comment
+    comment 'Operating System specific defines.'
+      bool 'You have poll(), but do you want to use it' USE_POLL n
+    endmenu
+  fi
+fi
 
 mainmenu_option next_comment
 comment 'Host specific defines'

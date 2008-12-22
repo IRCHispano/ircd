@@ -529,6 +529,7 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       break;
     }
     case 'E':
+    case 'e':
       /* Solo ircops y opers tienen acceso */
       if (!IsAnOper(sptr) && !IsHelpOp(sptr))
       {
@@ -542,14 +543,12 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
         for (reg = db_iterador_init(BDD_EXCEPTIONDB); reg;
             reg = db_iterador_next())
         { /* Mando con una e minuscula los que estan en BDD */
-          sendto_one(sptr, rpl_str(RPL_STATSELINE), me.name, sptr->name, 'E',
+          sendto_one(sptr, rpl_str(RPL_STATSELINE), me.name, sptr->name, 'e',
               reg->clave, reg->valor, 0, -1);
         }
       }      
       break;
-    case 'e':
-      sendto_one(sptr, rpl_str(RPL_STATSENGINE), me.name, sptr->name, event_get_method());
-      break;
+
 #if defined(ESNET_NEG)
     case 'f':
     case 'F':

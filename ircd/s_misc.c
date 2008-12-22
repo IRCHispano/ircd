@@ -518,7 +518,7 @@ int exit_client(aClient *cptr,  /* Connection being handled by
    * except the source:
    */
   for (dlp = me.serv->down; dlp; dlp = dlp->next)
-    if (dlp->value.cptr != cptr->from && dlp->value.cptr != bcptr)
+    if (dlp->value.cptr != sptr->from && dlp->value.cptr != bcptr)
     {
       if (Protocol(dlp->value.cptr) < 10)
       {

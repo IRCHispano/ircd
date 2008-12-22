@@ -4014,7 +4014,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
     char c;
 
     strncpy(nick, parv[2], nicklen + 1);
-    nick[sizeof(nick) - 1] = 0;
+    nick[nicklen] = '\0';
  
     if (!do_nick_name(nick))
      return 0;
@@ -4152,7 +4152,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 
   strncpy(nick, parv[1], nicklen + 1);
-  nick[sizeof(nick) - 1] = 0;
+  nick[nicklen] = '\0';
 
   /*
    * If do_nick_name() returns a null name OR if the server sent a nick

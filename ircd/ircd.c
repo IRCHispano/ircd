@@ -109,13 +109,7 @@ time_t nextdnscheck = 0;        /* next time to poll dns to force timeouts */
 time_t nextexpire = 1;          /* next expire run on the dns cache */
 
 time_t now;                     /* Updated every time we leave select(),
-
                                    and used everywhere else */
-
-struct event ev_sighup;
-struct event ev_sigterm;
-struct event ev_sigint;
-
 
 RETSIGTYPE s_die(HANDLER_ARG(int UNUSED(sig)))
 {
@@ -454,13 +448,9 @@ static int bad_command(void)
   return (-1);
 }
 
-static void sigalrm_handler(int sig)
-{
-  // NO OP
-}
-
 static void setup_signals(void)
 {
+#if defined(POSIX_SIGNALS)
   struct sigaction act;
 
   act.sa_handler = SIG_IGN;
@@ -468,22 +458,50 @@ static void setup_signals(void)
   sigemptyset(&act.sa_mask);
   sigaddset(&act.sa_mask, SIGPIPE);
   sigaddset(&act.sa_mask, SIGALRM);
-#ifdef  SIGWINCH
+#if defined(SIGWINCH)
   sigaddset(&act.sa_mask, SIGWINCH);
-  sigaction(SIGWINCH, &act, 0);
+  sigaction(SIGWINCH, &act, NULL);
 #endif
-  sigaction(SIGPIPE, &act, 0);
+  sigaction(SIGPIPE, &act, NULL);
+  act.sa_handler = dummy;
+  sigaction(SIGALRM, &act, NULL);
+  act.sa_handler = s_rehash;
+  sigemptyset(&act.sa_mask);
+  sigaddset(&act.sa_mask, SIGHUP);
+  sigaction(SIGHUP, &act, NULL);
+  act.sa_handler = s_restart;
+  sigaddset(&act.sa_mask, SIGINT);
+  sigaction(SIGINT, &act, NULL);
+  act.sa_handler = s_die2;
+  sigaddset(&act.sa_mask, SIGTERM);
+  sigaction(SIGTERM, &act, NULL);
 
-  act.sa_handler = sigalrm_handler;
-  sigaction(SIGALRM, &act, 0);
-  
-  signal_set(&ev_sighup,  SIGHUP,  (void *)s_rehash,  NULL);
-  signal_set(&ev_sigterm, SIGTERM, (void *)s_die2,    NULL);
-  signal_set(&ev_sigint,  SIGINT,  (void *)s_restart, NULL);
+#else
+#if !defined(HAVE_RELIABLE_SIGNALS)
+  signal(SIGPIPE, dummy);
+#if defined(SIGWINCH)
+  signal(SIGWINCH, dummy);
+#endif
+#else
+#if defined(SIGWINCH)
+  signal(SIGWINCH, SIG_IGN);
+#endif
+  signal(SIGPIPE, SIG_IGN);
+#endif
+  signal(SIGALRM, dummy);
+  signal(SIGHUP, s_rehash);
+  signal(SIGTERM, s_die2);
+  signal(SIGINT, s_restart);
+#endif
 
-  signal_add(&ev_sighup,  NULL);
-  signal_add(&ev_sigterm, NULL);
-  signal_add(&ev_sigint,  NULL);
+#if defined(HAVE_RESTARTABLE_SYSCALLS)
+  /*
+   * At least on Apollo sr10.1 it seems continuing system calls
+   * after signal is the default. The following 'siginterrupt'
+   * should change that default to interrupting calls.
+   */
+  siginterrupt(SIGALRM, 1);
+#endif
 }
 
 /*
@@ -581,6 +599,7 @@ int main(int argc, char *argv[])
   memset(&vserv, 0, sizeof(vserv));
 #endif
 
+  setup_signals();
   initload();
 
 #if defined(HAVE_SETRLIMIT) && defined(RLIMIT_CORE)
@@ -810,7 +829,6 @@ int main(int argc, char *argv[])
     portnum = PORTNUM;
   me.port = portnum;
   init_sys();
-  setup_signals();
   me.flags = FLAGS_LISTEN;
   if ((bootopt & BOOT_INETD))
   {

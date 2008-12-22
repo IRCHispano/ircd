@@ -3,8 +3,8 @@
 mv ../ircd/Makefile ../ircd/Makefile.tmp
 sed -e "s:^CC=.*:CC=$CC:" \
     -e "s:^CFLAGS=.*:CFLAGS=$CFLAGS:" \
-    -e "s:^CPPFLAGS=.*:CPPFLAGS=$CPPFLAGS -I../zlib -I../libevent:" \
-    -e "s:^LDFLAGS=.*:LDFLAGS=$LDFLAGS -L../zlib -L../libevent/.libs -levent -lz:" \
+    -e "s:^CPPFLAGS=.*:CPPFLAGS=$CPPFLAGS -I../zlib:" \
+    -e "s:^LDFLAGS=.*:LDFLAGS=$LDFLAGS -L../zlib -lz:" \
     -e "s:^IRCDLIBS=.*:IRCDLIBS=$IRCDLIBS:" \
     -e "s:^IRCDMODE=.*:IRCDMODE=$IRCDMODE:" \
     -e "s:^IRCDOWN=.*:IRCDOWN=$IRCDOWN:" \
@@ -13,7 +13,7 @@ sed -e "s:^CC=.*:CC=$CC:" \
     -e "s:^IRC_GID=.*:IRC_GID=$IRC_GID:" \
     -e "s:^BINDIR=.*:BINDIR=$BINDIR:" \
     -e "s:^SYMLINK=.*:SYMLINK=$SYMLINK:" \
-    -e "s:^INCLUDEFLAGS=.*:INCLUDEFLAGS=$INCLUDEFLAGS -I../zlib -I../libevent:" \
+    -e "s:^INCLUDEFLAGS=.*:INCLUDEFLAGS=$INCLUDEFLAGS -I../zlib:" \
     -e "s:^DPATH=.*:DPATH=$DPATH:" \
     -e "s:^MPATH=.*:MPATH=$MPATH:" \
     -e "s:^RPATH=.*:RPATH=$RPATH:" \

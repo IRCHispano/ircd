@@ -107,8 +107,10 @@ void start_auth(aClient *cptr)
     write(cptr->fd, sendbuf, strlen(sendbuf));
   }
 
+  alarm(2);
   cptr->authfd = socket(AF_INET, SOCK_STREAM, 0);
   err = errno;
+  alarm(0);
 
   if (cptr->authfd < 0)
   {
@@ -129,7 +131,9 @@ void start_auth(aClient *cptr)
     cptr->authfd = -1;
     return;
   }
-  
+
+  set_non_blocking(cptr->authfd, cptr);
+
 #if defined(VIRTUAL_HOST)
   if (bind(cptr->authfd, (struct sockaddr *)&vserv, sizeof(vserv)) == -1)
   {
@@ -144,6 +148,7 @@ void start_auth(aClient *cptr)
   sock.sin_port = htons(113);
   sock.sin_family = AF_INET;
 
+  alarm((unsigned)4);
   if (connect(cptr->authfd, (struct sockaddr *)&sock,
       sizeof(sock)) == -1 && errno != EINPROGRESS)
   {
@@ -151,6 +156,7 @@ void start_auth(aClient *cptr)
     /*
      * No error report from this...
      */
+    alarm((unsigned)0);
     close(cptr->authfd);
     cptr->authfd = -1;
     if (!DoingDNS(cptr))
@@ -163,21 +169,9 @@ void start_auth(aClient *cptr)
     }
     return;
   }
+  alarm((unsigned)0);
   SetAuth(cptr);
   SetWRAuth(cptr);
-  set_non_blocking(cptr->authfd, cptr);
-  
-  cptr->evauthread = (struct event*)RunMalloc(sizeof(struct event));
-  event_set(cptr->evauthread, cptr->authfd, EV_READ|EV_PERSIST, (void *)event_auth_callback, (void *)cptr);
-  if(event_add(cptr->evauthread, NULL)==-1)
-    Debug((DEBUG_ERROR, "ERROR: event_add EV_READ (event_auth_callback) fd = %d", cptr->authfd));
-
-  cptr->evauthwrite = (struct event*)RunMalloc(sizeof(struct event));
-  event_set(cptr->evauthwrite, cptr->authfd, EV_WRITE, (void *)event_auth_callback, (void *)cptr);
-  if(event_add(cptr->evauthwrite, NULL)==-1)
-    Debug((DEBUG_ERROR, "ERROR: event_add EV_WRITE (event_auth_callback) fd = %d", cptr->authfd));
-
-  
   if (cptr->authfd > highest_fd)
     highest_fd = cptr->authfd;
   return;
@@ -227,8 +221,7 @@ void send_authports(aClient *cptr)
     cptr->authfd = -1;
 
     ClearAuth(cptr);
-    event_del(cptr->evauthread);
-    
+
     if (IsUserPort(cptr))
     {
       sprintf_irc(sendbuf, IDENT_FAIL, me.name);
@@ -239,8 +232,6 @@ void send_authports(aClient *cptr)
       SetAccess(cptr);
   }
   ClearWRAuth(cptr);
-  
-  event_del(cptr->evauthwrite);
   return;
 }
 

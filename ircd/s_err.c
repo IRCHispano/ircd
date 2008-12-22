@@ -624,7 +624,7 @@ static Numeric numeric_replies[] = {
 /* 236 */
     {0, (char *)NULL},
 /* 237 */
-    { RPL_STATSENGINE, "%s :Event loop engine"},
+    {0, (char *)NULL},
 /* 238 */
     {0, (char *)NULL},
 /* 239 */

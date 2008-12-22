@@ -3,7 +3,6 @@
 
 #include <netdb.h>
 #include "s_conf.h"
-#include "../libevent/event.h"
 
 /*=============================================================================
  * Macro's
@@ -207,14 +206,6 @@ extern aClient *add_connection(aClient *cptr, int fd, int type);
 extern int read_message(time_t delay);
 extern void get_my_name(aClient *cptr);
 extern int setup_ping(void);
-extern void event_async_dns_callback(int fd, short event, void *arg);
-extern void event_udp_callback(int fd, short event, void *arg);
-extern void event_ping_callback(int fd, short event, aClient *cptr);
-extern void event_auth_callback(int fd, short event, aClient *cptr);
-extern void event_client_callback(int fd, short event, aClient *cptr);
-extern void event_connection_callback(int fd, short event, aClient *cptr);
-
-
 
 extern int highest_fd, resfd;
 extern unsigned int readcalls;

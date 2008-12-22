@@ -233,7 +233,9 @@ int init_resolver(void)
   _res.options |= RES_DEBUG;
 #endif
 
+  alarm(2);
   fd = socket(AF_INET, SOCK_DGRAM, 0);
+  alarm(0);
   if (fd < 0)
   {
     if (errno == EMFILE || errno == ENOBUFS)
@@ -242,11 +244,14 @@ int init_resolver(void)
        * Only try this one more time, if we can't create the resolver
        * socket at initialization time, it's pointless to continue.
        */
+      alarm(2);
       if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
       {
+        alarm(0);
         Debug((DEBUG_ERROR, "init_resolver: socket: No more sockets"));
         return -1;
       }
+      alarm(0);
     }
     else
     {
@@ -853,7 +858,9 @@ struct hostent *get_res(char *lp)
   int a, max;
   socklen_t rc, len = sizeof(sin);
 
+  alarm(4);
   rc = recvfrom(resfd, buf, sizeof(buf), 0, (struct sockaddr *)&sin, &len);
+  alarm(0);
 
   if (rc <= sizeof(HEADER))
     return NULL;
