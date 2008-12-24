@@ -1,3 +1,12 @@
+* 2008/12/24 dfm@unr.com                   (u2.10.H.10.101)          FIX
+------------------------------------------------------------------------
+  Correccion del buffer overflow al pasar la clave de cifrado de cookies
+  de base64 a binario, el tama~o de la clave estaba puesto de forma
+  incorrecta como 24 cuando deberia ser 32, esto provocaba que se
+  machacara las variables de numero de clones maximo y de cifrado de ips.
+  
+  Este bug fue introducido en el parche u2.10.H.10.94
+  
 * 2008/12/22 dfm@unr.com                   (u2.10.H.10.100)          FIX
 ------------------------------------------------------------------------
   Correccion de funcionamiento de nicklen dinamico, habia un problema que

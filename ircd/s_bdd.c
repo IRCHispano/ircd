@@ -75,7 +75,7 @@
 int numero_maximo_de_clones_por_defecto;
 char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
-unsigned char clave_de_cifrado_de_cookies[24];
+unsigned char clave_de_cifrado_de_cookies[32];
 int cifrado_cookies = 0;
 int ocultar_servidores = 0;
 int activar_modos = 0;
