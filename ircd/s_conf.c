@@ -1177,7 +1177,8 @@ int initconf(int opt)
     free_conf(aconf);
   fbclose(file);
   check_class();
-  nextping = nextconnect = now;
+  //nextping = nextconnect = now;
+  init_timers();
 
 #if defined(ESNET_NEG)
   prepara_negociaciones();

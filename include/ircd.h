@@ -24,6 +24,8 @@
 #define BOOT_TTY	16
 #define BOOT_AUTODIE	32
 
+#define AR_TTL          600           /* TTL in seconds for dns cache entries */
+
 /*=============================================================================
  * Proto types
  */
@@ -33,6 +35,9 @@ extern RETSIGTYPE s_restart(HANDLER_ARG(int sig));
 
 extern void restart(char *mesg);
 extern void server_reboot(void);
+extern void update_nextdnscheck(int timeout);
+extern void update_nextconnect(int timeout);
+extern void update_nextexpire(int timeout);
 
 extern aClient me;
 extern aClient his;
@@ -49,5 +54,8 @@ extern char *configfile;
 extern int debuglevel;
 extern char *debugmode;
 extern int nicklen;
+
+extern struct timeval tm_nextdnscheck;
+extern struct timeval tm_nextexpire;
 
 #endif /* IRCD_H */

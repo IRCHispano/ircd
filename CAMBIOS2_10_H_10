@@ -1,3 +1,67 @@
+* 2009/01/19 dfm@unr.com         (u2.10.H.10.102)                  MERGE
+------------------------------------------------------------------------
+  Fusiono hasta u2.10.H.10.libevent.11
+
+  Paso puntero sptr para notificar cual es el nodo de origen de la
+  modificacion de la BDD, pongo el cambio en hexadecimal.
+
+  Correccion de bug en m_quit que hacia que pusiese User Quit: cada vez
+  que un quit pasaba por un nodo.
+  
+  Elimino mensajes de aviso en server notice de SVSJOIN y SVSQUIT en su
+  lugar pongo mensajes de aviso de cuando se insertan o eliminan
+  registros en BDD.
+  
+  Correccion de bug en m_quit que hacia que mandase el quit al que lo
+  enviaba, pongo parte del m_quit del ircu2.10 de undernet.
+  
+  Corrijo el bug introducido en otro parte en exit_client al intentar
+  corregir el m_quit erroneamente.
+  
+  No eliminaba temporizador de checkping cuando un cliente salia.
+  
+  Pongo el chequeo de indent con evento de escritura persistente.
+
+  Actualizo el evento de escritura cuando completo un microburst.
+
+  Correccion de consumo CPU 100% cuando un usuario estaba en el proceso
+  de conexion y no tiene la DNS resuelta.
+  
+  Correccion de quedarse colgado el socket cuando el usuario envia datos
+  antes del chequeo DNS/Ident.
+  
+  Correccion de bug de no cambiar el fd a los eventos cuando el fd de
+  la conexion cambia.
+
+  Correcciones en eventos de escritura.
+
+  Correcciones diversas y retoques.
+
+  Correccion de errores en los temporizadores de los pings.
+
+  Todas las posibles acciones del ircd se pasan a eventos usando
+  callbacks.
+  
+  Se elimina el read_message el s_bsd.c, ahora todo se meneja con
+  eventos exceptio el rehash y restart cuando vienen de se~ales.
+  
+  Correccion del buffer overflow al pasar la clave de cifrado de cookies
+  de base64 a binario, el tama~o de la clave estaba puesto de forma
+  incorrecta como 24 cuando deberia ser 32, esto provocaba que se
+  machacara las variables de numero de clones maximo y de cifrado de ips.
+  
+  Este bug fue introducido en el parche u2.10.H.10.94
+  
+  Nuevas macros con asserts para eventos.
+  
+  Ahora leo mensajes encolados de entrada que se produjeron mediante la
+  resolucion de DNS y chequeo de ident
+  
+  Correccion de configure para que detecte librt de clock_gettime
+
+  Correcciones variadas en eventos, ahora pongo un evento cuando una
+  conexion muere para gestionar el cierre.
+
 * 2008/12/24 dfm@unr.com                   (u2.10.H.10.101)          FIX
 ------------------------------------------------------------------------
   Correccion del buffer overflow al pasar la clave de cifrado de cookies
@@ -16,6 +80,60 @@
   NOTA: Los parches del u2.10.H.10.96 al u2.10.H.10.99 estan en el branch
   LIBEVENT
 
+* 2008/12/21 dfm@unr.com                   (u2.10.H.10.99)           FIX
+------------------------------------------------------------------------
+  Eliminacion de alarms para enmascarar se~ales, ahora no son necesarios.
+  
+  Correcciones diversas de manejo de eventos.
+  
+  Correccion de bug arrastrado de hace tiempo de propagacion de quits al
+  servidor que los origina, generaba trafico inutil entre nodos de la
+  red.
+  
+  Correccion de fallo en uping, ahora se inicia inmediatalmente no con
+  un segundo de retardo, el primer ping no necesita temporizacion.
+
+* 2008/12/20 dfm@unr.com                   (u2.10.H.10.98)       FEATURE
+------------------------------------------------------------------------
+  Completo el parche anterior, ahora el ircd ya gestiona sen~ales con
+  libevent.
+  
+  Se puede ver mediante /STATS e el motor de eventos usado por el ircd.
+  
+  Queda /STATS E para ver las elines.
+
+* 2008/12/14 dfm@unr.com                   (u2.10.H.10.97)       FEATURE
+------------------------------------------------------------------------
+  Utilizo la libreria libevent ( http://monkey.org/~provos/libevent/ )
+  para gestionar los eventos del ircd.
+  
+  Ahora el ircd puede usar como motor de eventos (ordenados de menor
+  a mayor rendimiento):
+  
+  select(), poll(), /dev/poll, epoll() y kevent()
+  
+  El uso de /dev/poll, epoll() y kevent() mejora impresionantemente el
+  rendimiento en los sistemas operativos que lo soportan.
+  
+  En toodos los OS:
+  select(), poll()
+  
+  En Solaris:
+  /dev/poll
+  
+  En Linux > 2.5.66:
+  epoll()
+  
+  En FreeBSD y MacOS:
+  kevent()
+    
+  BUGS:
+  Este parche no esta completo porque aun queda gestionar las se~ales
+  con es misma libreria.
+  
+  Este parche NO esta probado lo suficiente para uso en produccion.
+  
+  No se puede ver mediante STATS que motor de eventos estoy usando.  
 
 * 2008/12/06 dfm@unr.com                   (u2.10.H.10.96)           FIX
 ------------------------------------------------------------------------

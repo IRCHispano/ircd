@@ -21,6 +21,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <assert.h>
 #include "sys.h"
 #include <stdlib.h>
 #include "h.h"
@@ -946,7 +947,9 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
     SetBurst(cptr);
   else
     cptr->flags |= FLAGS_TS8;
-  nextping = now;
+    
+  UpdateCheckPing(cptr, get_client_ping(cptr));
+  //nextping = now;
   if (cptr->serv->user && cptr->serv->by &&
       (acptr = findNUser(cptr->serv->by)) && acptr->user == cptr->serv->user)
   {

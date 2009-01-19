@@ -39,6 +39,7 @@
 #include "slab_alloc.h"
 #include "sprintf_irc.h"
 #include "numnicks.h"
+#include <assert.h>
 
 RCSTAG_CC("$Id$");
 
@@ -72,6 +73,7 @@ int sdbflag;
 static void dead_link(aClient *to, char *notice)
 {
   to->flags |= FLAGS_DEADSOCKET;
+  
   /*
    * If because of BUFFERPOOL problem then clean dbuf's now so that
    * notices don't hurt operators below.
@@ -140,8 +142,10 @@ void flush_sendq_except(const struct DBuf *one)
 void send_queued(aClient *to)
 {
 #if !defined(pyr)
-  if (to->flags & FLAGS_BLOCKED)
+  if (to->flags & FLAGS_BLOCKED) {
+    UpdateWrite(to);
     return;                     /* Don't bother */
+  }
 #endif
   /*
    * Once socket is marked dead, we cannot start writing to it,
@@ -187,6 +191,8 @@ void send_queued(aClient *to)
     }
   }
 
+  
+  UpdateWrite(to);
   return;
 }
 
@@ -239,9 +245,10 @@ void sendbufto_one(aClient *to)
 
   if (to->from)
     to = to->from;
-  if (IsDead(to))
+  if (IsDead(to)) {
     return;                     /* This socket has already
                                    been marked as dead */
+  }
   if (to->fd < 0)
   {
     /* This is normal when 'to' was being closed (via exit_client
@@ -330,6 +337,8 @@ void sendbufto_one(aClient *to)
    */
   if (DBufLength(&to->sendQ) / 1024 > to->lastsq)
     send_queued(to);
+  else
+    UpdateWrite(to);
 }
 
 static void vsendto_prefix_one(aClient *to, aClient *from,

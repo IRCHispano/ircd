@@ -107,10 +107,8 @@ void start_auth(aClient *cptr)
     write(cptr->fd, sendbuf, strlen(sendbuf));
   }
 
-  alarm(2);
   cptr->authfd = socket(AF_INET, SOCK_STREAM, 0);
   err = errno;
-  alarm(0);
 
   if (cptr->authfd < 0)
   {
@@ -131,9 +129,7 @@ void start_auth(aClient *cptr)
     cptr->authfd = -1;
     return;
   }
-
-  set_non_blocking(cptr->authfd, cptr);
-
+  
 #if defined(VIRTUAL_HOST)
   if (bind(cptr->authfd, (struct sockaddr *)&vserv, sizeof(vserv)) == -1)
   {
@@ -148,7 +144,6 @@ void start_auth(aClient *cptr)
   sock.sin_port = htons(113);
   sock.sin_family = AF_INET;
 
-  alarm((unsigned)4);
   if (connect(cptr->authfd, (struct sockaddr *)&sock,
       sizeof(sock)) == -1 && errno != EINPROGRESS)
   {
@@ -156,7 +151,6 @@ void start_auth(aClient *cptr)
     /*
      * No error report from this...
      */
-    alarm((unsigned)0);
     close(cptr->authfd);
     cptr->authfd = -1;
     if (!DoingDNS(cptr))
@@ -169,9 +163,12 @@ void start_auth(aClient *cptr)
     }
     return;
   }
-  alarm((unsigned)0);
   SetAuth(cptr);
   SetWRAuth(cptr);
+  set_non_blocking(cptr->authfd, cptr);
+  
+  CreateRWAuthEvent(cptr);
+  
   if (cptr->authfd > highest_fd)
     highest_fd = cptr->authfd;
   return;
@@ -221,7 +218,8 @@ void send_authports(aClient *cptr)
     cptr->authfd = -1;
 
     ClearAuth(cptr);
-
+    DelRAuthEvent(cptr);
+    
     if (IsUserPort(cptr))
     {
       sprintf_irc(sendbuf, IDENT_FAIL, me.name);
@@ -232,6 +230,8 @@ void send_authports(aClient *cptr)
       SetAccess(cptr);
   }
   ClearWRAuth(cptr);
+  DelWAuthEvent(cptr);
+  
   return;
 }
 
@@ -304,6 +304,7 @@ void read_authports(aClient *cptr)
   cptr->count = 0;
   cptr->authfd = -1;
   ClearAuth(cptr);
+  DelRWAuthEvent(cptr);
   if (!DoingDNS(cptr))
     SetAccess(cptr);
   if (len > 0)

@@ -74,13 +74,10 @@ FBFILE *fbopen(const char *filename, const char *mode)
    * stop NFS hangs...most systems should be able to open a file in
    * 3 seconds. -avalon (curtesy of wumpus)
    */
-  alarm(3);
   if ((fd = open(filename, openmode, pmode)) == -1)
   {
-    alarm(0);
     return fb;
   }
-  alarm(0);
 
   if (NULL == (fb = fdbopen(fd, NULL)))
     close(fd);

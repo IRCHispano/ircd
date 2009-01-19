@@ -8,6 +8,7 @@
 extern int h_errno;
 #endif
 #endif
+#include "../libevent/event.h"
 #include "list.h"
 
 /*=============================================================================
@@ -23,15 +24,15 @@ extern int h_errno;
  */
 
 extern int init_resolver(void);
-extern time_t timeout_query_list(void);
 extern void del_queries(char *cp);
 extern void add_local_domain(char *hname, int size);
 extern struct hostent *gethost_byname(char *name, Link *lp);
 extern struct hostent *gethost_byaddr(struct in_addr *addr, Link *lp);
 extern struct hostent *get_res(char *lp);
-extern time_t expire_cache(void);
 extern void flush_cache(void);
 extern int m_dns(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern size_t cres_mem(aClient *sptr);
+extern void event_expire_cache_callback(int fd, short event, struct event *ev);
+extern void event_timeout_query_list_callback(int fd, short event, struct event *ev);
 
 #endif /* RES_H */

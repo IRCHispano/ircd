@@ -3,6 +3,7 @@
 
 #include <netdb.h>
 #include "s_conf.h"
+#include "../libevent/event.h"
 
 /*=============================================================================
  * Macro's
@@ -101,7 +102,10 @@
 #define DoingDNS(x)		(assert(MyConnect(x)),((x)->flags_local & FLAGS_DOINGDNS))
 #define SetAuth(x)              (assert(MyConnect(x)),((x)->flags_local |= FLAGS_AUTH))
 #define SetWRAuth(x)            (assert(MyConnect(x)),((x)->flags_local |= FLAGS_WRAUTH))
-#define SetAccess(x)		((x)->flags |= FLAGS_CHKACCESS)
+#define SetAccess(x)		do { \
+                                  (x)->flags |= FLAGS_CHKACCESS; \
+                                  UpdateTimer(x,0); \
+                                } while (0)
 #define DoingAuth(x)		(assert(MyConnect(x)),((x)->flags_local & FLAGS_AUTH))
 #define DoingWRAuth(x)		(assert(MyConnect(x)),((x)->flags_local & FLAGS_WRAUTH))
 #define NoNewLine(x)		((x)->flags & FLAGS_NONL)
@@ -203,9 +207,16 @@ extern void close_connection(aClient *cptr);
 extern int get_sockerr(aClient *cptr);
 extern void set_non_blocking(int fd, aClient *cptr);
 extern aClient *add_connection(aClient *cptr, int fd, int type);
-extern int read_message(time_t delay);
 extern void get_my_name(aClient *cptr);
 extern int setup_ping(void);
+extern void event_async_dns_callback(int fd, short event, void *arg);
+extern void event_udp_callback(int fd, short event, void *arg);
+extern void event_ping_callback(int fd, short event, aClient *cptr);
+extern void event_auth_callback(int fd, short event, aClient *cptr);
+extern void event_client_read_callback(int fd, short event, aClient *cptr);
+extern void event_client_write_callback(int fd, short event, aClient *cptr);
+extern void event_connection_callback(int fd, short event, aClient *cptr);
+extern void event_checkping_callback(int fd, short event, aClient *cptr);
 
 extern int highest_fd, resfd;
 extern unsigned int readcalls;

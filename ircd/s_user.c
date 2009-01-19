@@ -732,7 +732,9 @@ static int register_user(aClient *cptr, aClient *sptr,
 #else
     m_motd(sptr, sptr, 1, parv);
 #endif
-    nextping = now;
+    
+    UpdateCheckPing(sptr, get_client_ping(sptr));
+    //nextping = now;
     if (sptr->snomask & SNO_NOISY)
       set_snomask(sptr, sptr->snomask & SNO_NOISY, SNO_ADD);
 #if defined(ALLOW_SNO_CONNEXIT)
@@ -1571,35 +1573,43 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
 /*
  * m_quit
  *
+ * cptr = Quien manda el mensaje de quit
+ * sptr = Quien recibe el QUIT
+ * 
  * parv[0] = sender prefix
  * parv[parc-1] = comment
  */
 int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  char comment2[QUITLEN + 20];
-  char *comment = (parc > 1 && parv[parc - 1]) ? parv[parc - 1] : "\0";
+  char *comment = (parc > 1 && !BadPtr(parv[parc - 1])) ? parv[parc - 1] : NULL;
+  
+  assert(0 != cptr);
+  assert(0 != sptr);
 
-  if (MyUser(sptr))
+  if(IsServer(sptr)) /* Un quit no puede tener de objeivo un servidor */
+    return 0;
+  
+  if (MyConnect(sptr)) /* Si es una conexion local */
   {
     if (sptr->user)
     {
       Link *lp;
       for (lp = sptr->user->channel; lp; lp = lp->next)
         if ((can_send(sptr, lp->value.chptr) != 0) || (lp->value.chptr->mode.mode & MODE_NOQUITPARTS))
-          return exit_client(cptr, sptr, &me, "Signed off");
-
-      if (comment[0])
-      {                         /* Tenemos algun mensaje... */
-        strcpy(comment2, "User Quit: ");
-        strncat(comment2, comment, (size_t)QUITLEN);
-        comment2[QUITLEN] = '\0'; /* Cerramos por si las moscas */
-        comment = comment2;
-      }
+          return exit_client(cptr, sptr, sptr, "Signed off");
     }
+    if (comment)
+    {
+      if(strlen(comment)>QUITLEN)
+        comment[QUITLEN]='\0';
+      return exit_client_msg(cptr, sptr, &me, "Quit: %s", comment);
+    }
+    else
+      return exit_client(cptr, sptr, &me, "Quit");
   }
-  if (strlen(comment) > (size_t)QUITLEN)
-    comment[QUITLEN] = '\0';
-  return IsServer(sptr) ? 0 : exit_client(cptr, sptr, &me, comment);
+
+  /* Si es un quit externo lo reenviamos tal cual */
+  return exit_client(cptr, sptr, sptr, comment ? comment : "\0");
 }
 
 /*
@@ -4014,7 +4024,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
     char c;
 
     strncpy(nick, parv[2], nicklen + 1);
-    nick[nicklen] = '\0';
+    nick[nicklen] = 0;
  
     if (!do_nick_name(nick))
      return 0;
@@ -4152,7 +4162,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 
   strncpy(nick, parv[1], nicklen + 1);
-  nick[nicklen] = '\0';
+  nick[nicklen] = 0;
 
   /*
    * If do_nick_name() returns a null name OR if the server sent a nick

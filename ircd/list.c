@@ -148,6 +148,35 @@ void free_client(aClient *cptr)
     
     if (cptr->cookie)
       SlabStringFree(cptr->cookie);
+    
+    DelClientEvent(cptr);
+    DelRWAuthEvent(cptr);
+    
+    if(cptr->evread)
+      RunFree(cptr->evread);
+
+    if(cptr->evwrite)
+      RunFree(cptr->evwrite);
+    
+    if(cptr->evauthread)
+      RunFree(cptr->evauthread);
+
+    if(cptr->evauthwrite)
+      RunFree(cptr->evauthwrite);
+
+    if(cptr->evtimer)
+    {
+      RunFree(cptr->evtimer);
+      assert(cptr->tm_timer);
+      RunFree(cptr->tm_timer);
+    }
+
+    if(cptr->evcheckping)
+    {
+      RunFree(cptr->evcheckping);
+      assert(cptr->tm_checkping);
+      RunFree(cptr->tm_checkping);
+    }
   }
 
   RunFree(cptr);

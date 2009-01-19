@@ -103,13 +103,21 @@ int restartFlag = 0;
 static char *dpath = DPATH;
 int nicklen = 9; /* Nicklen Original */
 
-time_t nextconnect = 1;         /* time for next try_connections call */
-time_t nextping = 1;            /* same as above for check_pings() */
-time_t nextdnscheck = 0;        /* next time to poll dns to force timeouts */
-time_t nextexpire = 1;          /* next expire run on the dns cache */
+struct event   ev_nextconnect;
+struct event   ev_nextdnscheck;
+struct event   ev_nextexpire;
+struct timeval tm_nextconnect;
+struct timeval tm_nextdnscheck;
+struct timeval tm_nextexpire;
 
 time_t now;                     /* Updated every time we leave select(),
+
                                    and used everywhere else */
+
+struct event ev_sighup;
+struct event ev_sigterm;
+struct event ev_sigint;
+
 
 RETSIGTYPE s_die(HANDLER_ARG(int UNUSED(sig)))
 {
@@ -135,19 +143,8 @@ RETSIGTYPE s_die2(HANDLER_ARG(int UNUSED(sig)))
 
 static RETSIGTYPE s_rehash(HANDLER_ARG(int UNUSED(sig)))
 {
-#if defined(POSIX_SIGNALS)
-  struct sigaction act;
-#endif
   dorehash = 1;
-#if defined(POSIX_SIGNALS)
-  act.sa_handler = s_rehash;
-  act.sa_flags = 0;
-  sigemptyset(&act.sa_mask);
-  sigaddset(&act.sa_mask, SIGHUP);
-  sigaction(SIGHUP, &act, NULL);
-#else
-  signal(SIGHUP, s_rehash);     /* sysV -argv */
-#endif
+  event_loopbreak();
 }
 
 #if defined(USE_SYSLOG)
@@ -165,6 +162,7 @@ void restart(char *UNUSED(mesg))
 RETSIGTYPE s_restart(HANDLER_ARG(int UNUSED(sig)))
 {
   restartFlag = 1;
+  event_loopbreak();
 }
 
 void server_reboot(void)
@@ -217,7 +215,7 @@ void server_reboot(void)
  * function should be made latest. (No harm done if this
  * is called earlier or later...)
  */
-static time_t try_connections(void)
+void event_try_connections_callback(int fd, short event, struct event *ev)
 {
   Reg1 aConfItem *aconf;
   Reg2 aClient *cptr;
@@ -227,6 +225,12 @@ static time_t try_connections(void)
   aConfClass *cltmp;
   aConfItem *cconf, *con_conf = NULL;
   unsigned int con_class = 0;
+  
+  Debug((DEBUG_DEBUG, "event_try_connections_callback event: %d", (int)event));
+
+  assert(event & EV_TIMEOUT);
+  
+  update_now();
 
   connecting = FALSE;
   Debug((DEBUG_NOTICE, "Connection check at   : %s", myctime(now)));
@@ -293,140 +297,8 @@ static time_t try_connections(void)
       sendto_ops("Connection to %s activated.", con_conf->name);
   }
   Debug((DEBUG_NOTICE, "Next connection check : %s", myctime(next)));
-  return (next);
-}
-
-static time_t check_pings(void)
-{
-  Reg1 aClient *cptr;
-  int ping = 0, i, rflag = 0;
-  time_t oldest = 0, timeout;
-
-  for (i = 0; i <= highest_fd; i++)
-  {
-    if (!(cptr = loc_clients[i]) || IsMe(cptr) || IsLog(cptr) || IsPing(cptr))
-      continue;
-
-    /*
-     * Note: No need to notify opers here.
-     * It's already done when "FLAGS_DEADSOCKET" is set.
-     */
-    if (IsDead(cptr))
-    {
-      exit_client(cptr, cptr, &me, LastDeadComment(cptr));
-      continue;
-    }
-
-#if defined(R_LINES) && defined(R_LINES_OFTEN)
-    rflag = IsUser(cptr) ? find_restrict(cptr) : 0;
-#endif
-    ping = IsRegistered(cptr) ? get_client_ping(cptr) : CONNECTTIMEOUT;
-    Debug((DEBUG_DEBUG, "c(%s)=%d p %d r %d a %d",
-        PunteroACadena(cptr->name), cptr->status, ping, rflag, (int)(now - cptr->lasttime)));
-    /*
-     * Ok, so goto's are ugly and can be avoided here but this code
-     * is already indented enough so I think its justified. -avalon
-     */
-    if (!rflag && IsRegistered(cptr) && (ping >= now - cptr->lasttime))
-      goto ping_timeout;
-    /*
-     * If the server hasnt talked to us in 2*ping seconds
-     * and it has a ping time, then close its connection.
-     * If the client is a user and a KILL line was found
-     * to be active, close this connection too.
-     */
-    if (rflag ||
-        ((now - cptr->lasttime) >= (2 * ping) &&
-        (cptr->flags & FLAGS_PINGSENT)) ||
-        (!IsRegistered(cptr) && !IsHandshake(cptr) &&
-        (now - cptr->firsttime) >= ping))
-    {
-      if (!IsRegistered(cptr) && (DoingDNS(cptr) || DoingAuth(cptr)))
-      {
-        Debug((DEBUG_NOTICE, "%s/%s timeout %s", DoingDNS(cptr) ? "DNS" : "",
-            DoingAuth(cptr) ? "AUTH" : "", get_client_name(cptr, FALSE)));
-        if (cptr->authfd >= 0)
-        {
-          close(cptr->authfd);
-          cptr->authfd = -1;
-          cptr->count = 0;
-          *cptr->buffer = '\0';
-        }
-        del_queries((char *)cptr);
-        ClearAuth(cptr);
-        ClearDNS(cptr);
-        SetAccess(cptr);
-        cptr->firsttime = now;
-        cptr->lasttime = now;
-        continue;
-      }
-      if (IsServer(cptr) || IsConnecting(cptr) || IsHandshake(cptr))
-      {
-        sendto_ops("No response from %s, closing link", PunteroACadena(cptr->name));
-        exit_client(cptr, cptr, &me, "Ping timeout");
-        continue;
-      }
-      /*
-       * This is used for KILL lines with time restrictions
-       * on them - send a message to the user being killed first.
-       */
-#if defined(R_LINES) && defined(R_LINES_OFTEN)
-      else if (IsUser(cptr) && rflag)
-      {
-        sendto_ops("Restricting %s, closing link.",
-            get_client_name(cptr, FALSE));
-        exit_client(cptr, cptr, &me, "R-lined");
-      }
-#endif
-      else
-      {
-        if (!IsRegistered(cptr) && cptr->name && cptr->user->username)
-        {
-          sendto_one(cptr,
-              ":%s %d %s :Your client may not be compatible with this server.",
-              me.name, ERR_BADPING, cptr->name);
-          sendto_one(cptr,
-              ":%s %d %s :Compatible clients are available at "
-              "ftp://ftp.irc.org/irc/clients",
-              me.name, ERR_BADPING, cptr->name);
-        }
-        exit_client_msg(cptr, cptr, &me, "Ping timeout");
-      }
-      continue;
-    }
-    else if (IsRegistered(cptr) && (cptr->flags & FLAGS_PINGSENT) == 0)
-    {
-      /*
-       * If we havent PINGed the connection and we havent
-       * heard from it in a while, PING it to make sure
-       * it is still alive.
-       */
-      cptr->flags |= FLAGS_PINGSENT;
-      /* not nice but does the job */
-      cptr->lasttime = now - ping;
-      if (IsUser(cptr))
-        sendto_one(cptr, "PING :%s", me.name);
-      else {
-        if (Protocol(cptr) < 10)
-          sendto_one(cptr, ":%s PING :%s", me.name, me.name);
-        else
-          sendto_one(cptr, "%s " TOK_PING " :%s", NumServ(&me), me.name);
-      }
-    }
-  ping_timeout:
-    timeout = cptr->lasttime + ping;
-    while (timeout <= now)
-      timeout += ping;
-    if (timeout < oldest || !oldest)
-      oldest = timeout;
-  }
-  if (!oldest || oldest < now)
-    oldest = now + PINGFREQUENCY;
-  Debug((DEBUG_NOTICE,
-      "Next check_ping() call at: %s, %d " TIME_T_FMT " " TIME_T_FMT,
-      myctime(oldest), ping, oldest, now));
-
-  return (oldest);
+  
+  update_nextconnect((next > now) ? (next - now) : (AR_TTL));
 }
 
 /*
@@ -448,9 +320,13 @@ static int bad_command(void)
   return (-1);
 }
 
+static void sigalrm_handler(int sig)
+{
+  // NO OP
+}
+
 static void setup_signals(void)
 {
-#if defined(POSIX_SIGNALS)
   struct sigaction act;
 
   act.sa_handler = SIG_IGN;
@@ -458,50 +334,22 @@ static void setup_signals(void)
   sigemptyset(&act.sa_mask);
   sigaddset(&act.sa_mask, SIGPIPE);
   sigaddset(&act.sa_mask, SIGALRM);
-#if defined(SIGWINCH)
+#ifdef  SIGWINCH
   sigaddset(&act.sa_mask, SIGWINCH);
-  sigaction(SIGWINCH, &act, NULL);
+  sigaction(SIGWINCH, &act, 0);
 #endif
-  sigaction(SIGPIPE, &act, NULL);
-  act.sa_handler = dummy;
-  sigaction(SIGALRM, &act, NULL);
-  act.sa_handler = s_rehash;
-  sigemptyset(&act.sa_mask);
-  sigaddset(&act.sa_mask, SIGHUP);
-  sigaction(SIGHUP, &act, NULL);
-  act.sa_handler = s_restart;
-  sigaddset(&act.sa_mask, SIGINT);
-  sigaction(SIGINT, &act, NULL);
-  act.sa_handler = s_die2;
-  sigaddset(&act.sa_mask, SIGTERM);
-  sigaction(SIGTERM, &act, NULL);
+  sigaction(SIGPIPE, &act, 0);
 
-#else
-#if !defined(HAVE_RELIABLE_SIGNALS)
-  signal(SIGPIPE, dummy);
-#if defined(SIGWINCH)
-  signal(SIGWINCH, dummy);
-#endif
-#else
-#if defined(SIGWINCH)
-  signal(SIGWINCH, SIG_IGN);
-#endif
-  signal(SIGPIPE, SIG_IGN);
-#endif
-  signal(SIGALRM, dummy);
-  signal(SIGHUP, s_rehash);
-  signal(SIGTERM, s_die2);
-  signal(SIGINT, s_restart);
-#endif
+  act.sa_handler = sigalrm_handler;
+  sigaction(SIGALRM, &act, 0);
+  
+  signal_set(&ev_sighup,  SIGHUP,  (void *)s_rehash,  NULL);
+  signal_set(&ev_sigterm, SIGTERM, (void *)s_die2,    NULL);
+  signal_set(&ev_sigint,  SIGINT,  (void *)s_restart, NULL);
 
-#if defined(HAVE_RESTARTABLE_SYSCALLS)
-  /*
-   * At least on Apollo sr10.1 it seems continuing system calls
-   * after signal is the default. The following 'siginterrupt'
-   * should change that default to interrupting calls.
-   */
-  siginterrupt(SIGALRM, 1);
-#endif
+  assert(signal_add(&ev_sighup,  NULL)!=-1);
+  assert(signal_add(&ev_sigterm, NULL)!=-1);
+  assert(signal_add(&ev_sigint,  NULL)!=-1);
 }
 
 /*
@@ -562,12 +410,54 @@ static void open_debugfile(void)
   return;
 }
 
+void update_nextdnscheck(int timeout) {
+  assert(timeout<now);
+  event_del(&ev_nextdnscheck);
+  evutil_timerclear(&tm_nextdnscheck);
+  tm_nextdnscheck.tv_usec=0;
+  tm_nextdnscheck.tv_sec=timeout;
+  Debug((DEBUG_DEBUG, "update_nextdnscheck timeout: %d", timeout));
+  assert(evtimer_add(&ev_nextdnscheck, &tm_nextdnscheck)!=-1);
+}
+
+void update_nextconnect(int timeout) {
+  assert(timeout<now);
+  event_del(&ev_nextconnect);
+  evutil_timerclear(&tm_nextconnect);
+  tm_nextconnect.tv_usec=0;
+  tm_nextconnect.tv_sec=timeout;
+  Debug((DEBUG_DEBUG, "update_nextconnect timeout: %d", timeout));
+  assert(evtimer_add(&ev_nextconnect, &tm_nextconnect)!=-1);  
+}
+
+void update_nextexpire(int timeout) {
+  assert(timeout<now);
+  event_del(&ev_nextexpire);
+  evutil_timerclear(&tm_nextexpire);
+  tm_nextexpire.tv_usec=0;
+  tm_nextexpire.tv_sec=timeout;
+  Debug((DEBUG_DEBUG, "update_nextexpire timeout: %d", timeout));
+  assert(evtimer_add(&ev_nextexpire, &tm_nextexpire)!=-1);
+}
+
+void init_timers(void)
+{
+  event_del(&ev_nextconnect);
+  event_del(&ev_nextdnscheck);
+  event_del(&ev_nextexpire);
+  evtimer_set(&ev_nextconnect,  (void *)event_try_connections_callback, (void *)&ev_nextconnect);
+  evtimer_set(&ev_nextdnscheck, (void *)event_timeout_query_list_callback, (void *)&ev_nextdnscheck);
+  evtimer_set(&ev_nextexpire,   (void *)event_expire_cache_callback, (void *)&ev_nextexpire);
+  update_nextdnscheck(0);
+  update_nextconnect(0);
+  update_nextexpire(0);
+}
+
 int main(int argc, char *argv[])
 {
   unsigned short int portarg = 0;
   uid_t uid;
   uid_t euid;
-  time_t delay = 0;
 #if defined(HAVE_SETRLIMIT) && defined(RLIMIT_CORE)
   struct rlimit corelim;
 #endif
@@ -599,7 +489,6 @@ int main(int argc, char *argv[])
   memset(&vserv, 0, sizeof(vserv));
 #endif
 
-  setup_signals();
   initload();
 
 #if defined(HAVE_SETRLIMIT) && defined(RLIMIT_CORE)
@@ -829,6 +718,7 @@ int main(int argc, char *argv[])
     portnum = PORTNUM;
   me.port = portnum;
   init_sys();
+  setup_signals();
   me.flags = FLAGS_LISTEN;
   if ((bootopt & BOOT_INETD))
   {
@@ -897,6 +787,8 @@ int main(int argc, char *argv[])
   write_pidfile();
 
   init_counters();
+  
+  init_timers();
 
   Debug((DEBUG_NOTICE, "Server ready..."));
 #if defined(USE_SYSLOG)
@@ -906,60 +798,12 @@ int main(int argc, char *argv[])
 
   for (;;)
   {
-    /*
-     * We only want to connect if a connection is due,
-     * not every time through.   Note, if there are no
-     * active C lines, this call to Tryconnections is
-     * made once only; it will return 0. - avalon
-     */
-    if (nextconnect && now >= nextconnect)
-      nextconnect = try_connections();
-    /*
-     * DNS checks. One to timeout queries, one for cache expiries.
-     */
-    if (now >= nextdnscheck)
-      nextdnscheck = timeout_query_list();
-    if (now >= nextexpire)
-      nextexpire = expire_cache();
-    /*
-     * Take the smaller of the two 'timed' event times as
-     * the time of next event (stops us being late :) - avalon
-     * WARNING - nextconnect can return 0!
-     */
-    if (nextconnect)
-      delay = MIN(nextping, nextconnect);
-    else
-      delay = nextping;
-    delay = MIN(nextdnscheck, delay);
-    delay = MIN(nextexpire, delay);
-    delay -= now;
-    /*
-     * Adjust delay to something reasonable [ad hoc values]
-     * (one might think something more clever here... --msa)
-     * We don't really need to check that often and as long
-     * as we don't delay too long, everything should be ok.
-     * waiting too long can cause things to timeout...
-     * i.e. PINGS -> a disconnection :(
-     * - avalon
-     */
-    if (delay < 1)
-      delay = 1;
-    else
-      delay = MIN(delay, TIMESEC);
-    read_message(delay);
+    event_dispatch();
+    update_now();
+    
+    assert(dorehash || restartFlag);
 
     Debug((DEBUG_DEBUG, "Got message(s)"));
-
-    /*
-     * ...perhaps should not do these loops every time,
-     * but only if there is some chance of something
-     * happening (but, note that conf->hold times may
-     * be changed elsewhere--so precomputed next event
-     * time might be too far away... (similarly with
-     * ping times) --msa
-     */
-    if (now >= nextping)
-      nextping = check_pings();
 
     if (dorehash)
     {

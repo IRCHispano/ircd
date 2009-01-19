@@ -4109,9 +4109,10 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!acptr)
     return 0;
     
+  /*
   sendto_op_mask(SNO_SERVICE,
         "El nodo '%s' solicita una entrada de canal '%s' para el nick '%s'", sptr->name, parv[2], acptr->name);
-    
+    */
   if (!MyUser(acptr))
     return 0;
       
@@ -5529,10 +5530,10 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
     acptr = FindClient(parv[1]);
   if (!acptr)
     return 0;
-    
+    /*
   sendto_op_mask(SNO_SERVICE,
       "El nodo '%s' solicita una salida de canal '%s' para el nick '%s'", sptr->name, parv[2], acptr->name);
-            
+    */      
   if (!MyUser(acptr))
     return 0;
 

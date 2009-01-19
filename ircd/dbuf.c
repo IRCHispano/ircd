@@ -160,6 +160,7 @@ void completa_microburst(void)
           && (p->cptr->negociacion & ZLIB_ESNET_OUT) && (p->dyn != NULL))
       {
         dbuf_put(p->cptr, p->dyn, NULL, 0);
+        UpdateWrite(p->cptr);
       }
       p2 = p->next;
       if (++ciclos_mburst >= 937)

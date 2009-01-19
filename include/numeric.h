@@ -366,7 +366,7 @@
 #define RPL_SERVLIST        234 /* Unused */
 #define RPL_SERVLISTEND             235 /* Unused */
 /*      RPL_STATSVERBOSE     236          Undernet extension */
-/*      RPL_STATSENGINE      237          Undernet extension */
+#define RPL_STATSENGINE     237
 /*      RPL_STATSFLINE       238          Undernet extension */
 /*      RPL_STATSIAUTH       239          IRCnet extension */
 /*      RPL_STATSVLINE       240          IRCnet extension */

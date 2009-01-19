@@ -40,6 +40,7 @@
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <assert.h>
 #include "h.h"
 #include "s_debug.h"
 #include "struct.h"
@@ -135,6 +136,8 @@ int start_ping(aClient *cptr)
   cptr->since = UPINGTIMEOUT;
   cptr->flags |= (FLAGS_PING);
 
+  UpdateTimer(cptr, 0);
+  
   return 0;
 }
 
@@ -187,14 +190,19 @@ void send_ping(aClient *cptr)
     }
     Debug((DEBUG_SEND, "send_ping: sendto failed on %d (%d)", cptr->fd, err));
     end_ping(cptr);
+    return;
   }
   else if (--(cptr->sendB) <= 0)
   {
     ClearPing(cptr);
-    if (cptr->receiveB <= 0)
+    if (cptr->receiveB <= 0) {
       end_ping(cptr);
+      return;
+    }
   }
 
+  UpdateTimer(cptr, 1);
+  
   return;
 }
 
@@ -288,7 +296,8 @@ int ping_server(aClient *cptr)
 
     lin.flags = ASYNC_PING;
     lin.value.cptr = cptr;
-    nextdnscheck = 1;
+    update_nextdnscheck(0);
+    //nextdnscheck = 1;
     s = strchr(PunteroACadena(cptr->sockhost), '@');
     s++;                        /* should never be NULL;
                                    cptr->sockhost is actually a conf->host */
@@ -419,11 +428,9 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (BadPtr(parv[2]) || (port = atoi(parv[2])) <= 0)
     port = atoi(UDP_PORT);
 
-  alarm(2);
   if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
   {
     int err = errno;
-    alarm(0);
     sendto_ops("m_uping: socket: %s", (err != EAGAIN) ?
         strerror(err) : "No more sockets");
     if (MyUser(sptr) || Protocol(cptr) < 10)
@@ -438,7 +445,6 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
     return 0;
   }
-  alarm(0);
 
   if (fcntl(fd, F_SETFL, FNDELAY) == -1)
   {
@@ -501,6 +507,10 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   SlabStringAllocDup(&(cptr->name), aconf->name, 0);
   cptr->firsttime = 0;
 
+  CreateREvent(cptr, event_ping_callback);
+  CreateTimerEvent(cptr, event_ping_callback);
+
+  
   switch (ping_server(cptr))
   {
     case 0:
@@ -590,12 +600,12 @@ void cancel_ping(aClient *sptr, aClient *acptr)
   Debug((DEBUG_DEBUG, "Cancelling uping for %p (%s)", sptr, sptr->name));
   for (i = highest_fd; i >= 0; i--)
     if ((cptr = loc_clients[i]) && IsPing(cptr) && cptr->acpt == sptr)
-    {
-      cptr->acpt = acptr;
-      del_queries((char *)cptr);
-      end_ping(cptr);
-      break;
-    }
+      {
+        cptr->acpt = acptr;
+        del_queries((char *)cptr);
+        end_ping(cptr);   
+        break;
+      }
 
   ClearAskedPing(sptr);
 }

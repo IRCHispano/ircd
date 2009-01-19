@@ -244,7 +244,7 @@ bsd.o: bsd.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
   ../zlib/zlib.h ../zlib/zconf.h ../include/s_bsd.h ../include/s_conf.h \
-  ../include/list.h ../include/ircd.h ../include/bsd.h
+  ../include/list.h ../include/ircd.h ../include/bsd.h ../libevent/event.h
 channel.o: channel.c ../include/sys.h ../config/config.h \
   ../config/setup.h ../include/runmalloc.h ../include/h.h \
   ../include/s_debug.h ../include/struct.h ../include/whowas.h \
@@ -255,13 +255,13 @@ channel.o: channel.c ../include/sys.h ../config/config.h \
   ../include/hash.h ../include/s_serv.h ../include/s_misc.h \
   ../include/s_user.h ../include/s_conf.h ../include/s_bsd.h \
   ../include/msg.h ../include/support.h ../include/numnicks.h \
-  ../include/sprintf_irc.h ../include/querycmds.h
+  ../include/sprintf_irc.h ../include/querycmds.h ../libevent/event.h
 class.o: class.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
   ../zlib/zlib.h ../zlib/zconf.h ../include/class.h ../include/s_conf.h \
   ../include/list.h ../include/s_serv.h ../include/send.h \
-  ../include/s_err.h ../include/numeric.h ../include/ircd.h
+  ../include/s_err.h ../include/numeric.h ../include/ircd.h ../libevent/event.h
 common.o: common.c ../include/common.h ../include/sys.h \
   ../config/config.h ../config/setup.h ../include/runmalloc.h
 crule.o: crule.c ../include/sys.h ../config/config.h ../config/setup.h \
@@ -269,12 +269,12 @@ crule.o: crule.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
   ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h ../include/ircd.h \
   ../include/match.h ../include/s_bsd.h ../include/s_conf.h \
-  ../include/list.h ../include/common.h ../include/crule.h
+  ../include/list.h ../include/common.h ../include/crule.h ../libevent/event.h
 dbuf.o: dbuf.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/common.h ../include/struct.h ../include/whowas.h \
   ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h \
-  ../include/list.h ../include/send.h
+  ../include/list.h ../include/send.h ../libevent/event.h
 fileio.o: fileio.c ../include/fileio.h ../include/runmalloc.h
 ircd.o: ircd.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
@@ -286,7 +286,7 @@ ircd.o: ircd.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/crule.h ../include/userload.h ../include/numeric.h \
   ../include/hash.h ../include/bsd.h ../include/version.h \
   ../include/numnicks.h ../include/IPcheck.h ../include/s_bdd.h \
-  ../include/slab_alloc.h ../include/random.h
+  ../include/slab_alloc.h ../include/random.h ../libevent/event.h
 list.o: list.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
@@ -296,7 +296,7 @@ list.o: list.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/support.h ../include/s_misc.h ../include/s_bsd.h \
   ../include/res.h ../include/common.h ../include/s_user.h \
   ../include/opercmds.h ../include/m_watch.h ../include/hash.h \
-  ../include/slab_alloc.h
+  ../include/slab_alloc.h ../libevent/event.h
 map.o: map.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
@@ -304,19 +304,19 @@ map.o: map.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/match.h ../include/list.h ../include/s_err.h \
   ../include/ircd.h ../include/s_bsd.h ../include/s_conf.h \
   ../include/s_misc.h ../include/querycmds.h ../include/map.h \
-  ../include/numnicks.h
+  ../include/numnicks.h ../libevent/event.h
 match.o: match.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
   ../zlib/zlib.h ../zlib/zconf.h ../include/common.h ../include/match.h \
-  ../include/ircd.h
+  ../include/ircd.h ../libevent/event.h
 numnicks.o: numnicks.c ../include/numnicks.h ../include/sys.h \
   ../config/config.h ../config/setup.h ../include/runmalloc.h \
   ../include/h.h ../include/s_debug.h ../include/s_serv.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
   ../zlib/zlib.h ../zlib/zconf.h ../include/common.h ../include/ircd.h \
   ../include/s_misc.h ../include/match.h ../include/s_bsd.h \
-  ../include/s_conf.h ../include/list.h ../include/s_bdd.h
+  ../include/s_conf.h ../include/list.h ../include/s_bdd.h ../libevent/event.h
 opercmds.o: opercmds.c ../include/sys.h ../config/config.h \
   ../config/setup.h ../include/runmalloc.h ../include/h.h \
   ../include/s_debug.h ../include/opercmds.h ../include/struct.h \
@@ -328,7 +328,8 @@ opercmds.o: opercmds.c ../include/sys.h ../config/config.h \
   ../include/common.h ../include/msg.h ../include/sprintf_irc.h \
   ../include/userload.h ../include/parse.h ../include/numnicks.h \
   ../include/crule.h ../include/version.h ../include/support.h \
-  ../include/s_serv.h ../include/hash.h ../include/persistent_malloc.h
+  ../include/s_serv.h ../include/hash.h ../include/persistent_malloc.h \
+  ../libevent/event.h
 packet.o: packet.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
@@ -392,7 +393,7 @@ s_bsd.o: s_bsd.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/parse.h ../include/common.h ../include/bsd.h \
   ../include/numnicks.h ../include/s_user.h ../include/sprintf_irc.h \
   ../include/querycmds.h ../include/IPcheck.h ../include/msg.h \
-  ../include/slab_alloc.h
+  ../include/slab_alloc.h ../libevent/event.h 
 s_conf.o: s_conf.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
@@ -404,7 +405,7 @@ s_conf.o: s_conf.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/crule.h ../include/res.h ../include/s_bdd.h \
   ../include/support.h ../include/parse.h ../include/numnicks.h \
   ../include/sprintf_irc.h ../include/IPcheck.h ../include/hash.h \
-  ../include/fileio.h ../include/slab_alloc.h
+  ../include/fileio.h ../include/slab_alloc.h ../libevent/event.h
 s_debug.o: s_debug.c ../include/sys.h ../config/config.h \
   ../config/setup.h ../include/runmalloc.h ../include/h.h \
   ../include/s_debug.h ../include/struct.h ../include/whowas.h \
@@ -412,7 +413,7 @@ s_debug.o: s_debug.c ../include/sys.h ../config/config.h \
   ../include/hash.h ../include/s_serv.h ../include/send.h \
   ../include/s_conf.h ../include/list.h ../include/class.h \
   ../include/ircd.h ../include/s_bsd.h ../include/bsd.h ../include/res.h \
-  ../include/channel.h ../include/numnicks.h
+  ../include/channel.h ../include/numnicks.h ../libevent/event.h
 s_err.o: s_err.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/numeric.h ../include/s_err.h ../include/sprintf_irc.h \
@@ -428,7 +429,7 @@ s_misc.o: s_misc.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/support.h ../include/userload.h ../include/parse.h \
   ../include/s_user.h ../include/numnicks.h ../include/sprintf_irc.h \
   ../include/querycmds.h ../include/IPcheck.h ../include/m_watch.h \
-  ../include/slab_alloc.h
+  ../include/slab_alloc.h ../libevent/event.h
 s_numeric.o: s_numeric.c ../include/sys.h ../config/config.h \
   ../config/setup.h ../include/runmalloc.h ../include/h.h \
   ../include/s_debug.h ../include/struct.h ../include/whowas.h \
@@ -436,7 +437,8 @@ s_numeric.o: s_numeric.c ../include/sys.h ../config/config.h \
   ../include/s_bsd.h ../include/s_conf.h ../include/list.h \
   ../include/send.h ../include/support.h ../include/parse.h \
   ../include/numeric.h ../include/channel.h ../include/ircd.h \
-  ../include/hash.h ../include/numnicks.h ../include/s_numeric.h
+  ../include/hash.h ../include/numnicks.h ../include/s_numeric.h \
+  ../libevent/event.h
 s_ping.o: s_ping.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
@@ -445,7 +447,7 @@ s_ping.o: s_ping.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/s_bsd.h ../include/s_serv.h ../include/ircd.h \
   ../include/s_ping.h ../include/support.h ../include/numeric.h \
   ../include/s_user.h ../include/s_err.h ../include/common.h \
-  ../include/numnicks.h ../include/slab_alloc.h
+  ../include/numnicks.h ../include/slab_alloc.h ../libevent/event.h
 s_serv.o: s_serv.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
@@ -457,7 +459,7 @@ s_serv.o: s_serv.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/m_config.h ../include/match.h ../include/crule.h \
   ../include/parse.h ../include/numnicks.h ../include/userload.h \
   ../include/s_user.h ../include/channel.h ../include/querycmds.h \
-  ../include/IPcheck.h ../include/slab_alloc.h
+  ../include/IPcheck.h ../include/slab_alloc.h ../libevent/event.h
 s_user.o: s_user.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
@@ -471,7 +473,7 @@ s_user.o: s_user.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/msg.h ../include/userload.h ../include/numnicks.h \
   ../include/sprintf_irc.h ../include/querycmds.h ../include/IPcheck.h \
   ../include/class.h ../include/slab_alloc.h ../include/network.h \
-  ../include/aes256.h
+  ../include/aes256.h ../libevent/event.h
 send.o: send.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
@@ -480,7 +482,7 @@ send.o: send.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/s_misc.h ../include/common.h ../include/match.h \
   ../include/ircd.h ../include/channel.h ../include/bsd.h \
   ../include/class.h ../include/s_user.h ../include/slab_alloc.h \
-  ../include/sprintf_irc.h
+  ../include/sprintf_irc.h ../libevent/event.h
 sprintf_irc.o: sprintf_irc.c ../include/sys.h ../config/config.h \
   ../config/setup.h ../include/runmalloc.h ../include/h.h \
   ../include/s_debug.h ../include/sprintf_irc.h
@@ -495,7 +497,8 @@ userload.o: userload.c ../include/sys.h ../config/config.h \
   ../include/s_debug.h ../include/struct.h ../include/whowas.h \
   ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/send.h \
   ../include/s_misc.h ../include/userload.h ../include/ircd.h \
-  ../include/numnicks.h ../include/s_serv.h ../include/querycmds.h
+  ../include/numnicks.h ../include/s_serv.h ../include/querycmds.h \
+  ../libevent/event.h
 whocmds.o: whocmds.c ../include/sys.h ../config/config.h \
   ../config/setup.h ../include/runmalloc.h ../include/h.h \
   ../include/s_debug.h ../include/struct.h ../include/whowas.h \
@@ -507,14 +510,14 @@ whocmds.o: whocmds.c ../include/sys.h ../config/config.h \
   ../include/s_user.h ../include/support.h ../include/channel.h \
   ../include/random.h ../include/version.h ../include/msg.h \
   ../include/userload.h ../include/numnicks.h ../include/sprintf_irc.h \
-  ../include/querycmds.h ../include/IPcheck.h
+  ../include/querycmds.h ../include/IPcheck.h ../libevent/event.h
 whowas.o: whowas.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/common.h ../include/h.h \
   ../include/s_debug.h ../include/struct.h ../include/whowas.h \
   ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/numeric.h \
   ../include/send.h ../include/s_misc.h ../include/s_err.h \
   ../include/ircd.h ../include/list.h ../include/s_user.h \
-  ../include/support.h
+  ../include/support.h ../libevent/event.h
 s_bdd.o: s_bdd.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/persistent_malloc.h ../include/h.h \
   ../include/s_debug.h ../include/struct.h ../include/whowas.h \
@@ -526,14 +529,14 @@ s_bdd.o: s_bdd.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/crule.h ../include/parse.h ../include/numnicks.h \
   ../include/userload.h ../include/s_user.h ../include/channel.h \
   ../include/querycmds.h ../include/IPcheck.h ../include/slab_alloc.h \
-  ../include/s_bdd.h ../include/msg.h ../include/support.h
+  ../include/s_bdd.h ../include/msg.h ../include/support.h ../libevent/event.h
 m_config.o: m_config.c ../include/sys.h ../config/config.h \
   ../config/setup.h ../include/runmalloc.h ../include/h.h \
   ../include/s_debug.h ../include/common.h ../include/ircd.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
   ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h ../include/msg.h \
   ../include/s_conf.h ../include/list.h ../include/m_config.h \
-  ../include/send.h
+  ../include/send.h ../libevent/event.h
 m_watch.o: m_watch.c ../include/sys.h ../config/config.h \
   ../config/setup.h ../include/runmalloc.h ../include/h.h \
   ../include/s_debug.h ../include/hash.h ../include/s_serv.h \

@@ -167,4 +167,99 @@ extern int strnChattr(const char *s, const size_t n);
 extern int strCasecmp(const char *a, const char *b);
 extern int strnCasecmp(const char *a, const char *b, const size_t n);
 
+/*=============================================================================
+ * Macros de eventos
+ */
+  
+#define DelEvent(x,y)          do { \
+                                 assert(MyConnect(x)); \
+                                 if((x)->y) \
+                                   event_del((x)->y); \
+                               } while (0)
+#define DelReadEvent(x)        DelEvent(x, evread)
+#define DelWriteEvent(x)       DelEvent(x, evwrite)
+#define DelTimerEvent(x)       DelEvent(x, evtimer)
+#define DelCheckPingEvent(x)   DelEvent(x, evcheckping)
+#define DelRWEvent(x)          do { \
+                                 DelReadEvent(x); \
+                                 DelWriteEvent(x); \
+                               } while (0)
+#define DelClientEvent(x)      do { \
+                                 DelReadEvent(x); \
+                                 DelWriteEvent(x); \
+                                 DelTimerEvent(x); \
+                                 DelCheckPingEvent(x); \
+                               } while (0)
+#define DelRAuthEvent(x)       DelEvent(x, evauthread)
+#define DelWAuthEvent(x)       DelEvent(x, evauthwrite)
+#define DelRWAuthEvent(x)      do { \
+                                 DelRAuthEvent(x); \
+                                 DelWAuthEvent(x); \
+                               } while (0)
+#define UpdateRead(x)          do { \
+                                 assert(MyConnect(x)); \
+                                 assert(event_add((x)->evread, NULL)!=-1); \
+                               } while (0)
+#define UpdateWrite(x)         do { \
+                                 assert(MyConnect(x)); \
+                                 if(DBufLength(&(x)->sendQ)) \
+                                   assert(event_add((x)->evwrite, NULL)!=-1); \
+                                 else \
+                                   event_del((x)->evwrite); \
+                               } while (0)
+#define UpdateGTimer(x,y,z,w)  do { \
+                                  assert(MyConnect(x)); \
+                                  assert(!IsListening(x)); \
+                                  assert((x)->z); \
+                                  assert((x)->w); \
+                                  evutil_timerclear((x)->w); \
+                                  (x)->w->tv_usec=0; \
+                                  (x)->w->tv_sec=(y); \
+                                  Debug((DEBUG_DEBUG, "timer on %s time %d", (x)->name, (x)->w->tv_sec)); \
+                                  assert(evtimer_add((x)->z, (x)->w)!=-1); \
+                               } while (0)
+#define UpdateTimer(x,y)       UpdateGTimer(x,y,evtimer,tm_timer)
+#define UpdateCheckPing(x,y)   UpdateGTimer(x,y,evcheckping,tm_checkping)
+#define CreateGTimerEvent(x,y,z,w) \
+                               do { \
+                                  assert(MyConnect(x)); \
+                                  if((x)->z) \
+                                    event_del((x)->z); \
+                                  else \
+                                    (x)->z=(struct event*)RunMalloc(sizeof(struct event)); \
+                                  if(!(x)->w) \
+                                    (x)->w=(struct timeval*)RunMalloc(sizeof(struct timeval)); \
+                                  evtimer_set((x)->z, (void *)(y), (void *)(x)); \
+                                } while (0)
+#define CreateTimerEvent(x,y)   CreateGTimerEvent(x,y,evtimer,tm_timer)
+#define CreateCheckPingEvent(x) CreateGTimerEvent(x,event_checkping_callback,evcheckping,tm_checkping)
+#define CreateEvent(x,y,z,w,v)  do { \
+                                  assert(MyConnect(x) || (x) == &me); \
+                                  if((x)->z) \
+                                    event_del((x)->z); \
+                                  else \
+                                    (x)->z=(struct event*)RunMalloc(sizeof(struct event)); \
+                                  event_set((x)->z, (x)->v, (w), (void *)y, (void *)x); \
+                                  assert(event_add((x)->z, NULL)!=-1); \
+                                } while (0)
+#define CreateREvent(x,y)       CreateEvent(x,y,evread,(EV_READ|EV_PERSIST),fd)
+#define CreateWEvent(x,y)       CreateEvent(x,y,evwrite,(EV_WRITE|EV_PERSIST),fd)
+#define CreateRWEvent(x,y)      do { \
+                                  CreateREvent(x,y); \
+                                  CreateWEvent(x,y); \
+                                  CreateTimerEvent(x,y); \
+                                } while (0)
+#define CreateClientEvent(x)    do { \
+                                  CreateREvent(x,event_client_read_callback); \
+                                  CreateWEvent(x,event_client_write_callback); \
+                                  CreateTimerEvent(x,event_client_read_callback); \
+                                  CreateCheckPingEvent(x); \
+                                  UpdateCheckPing(x, CONNECTTIMEOUT); \
+                                } while (0) 
+#define CreateRAuthEvent(x)     CreateEvent(x,event_auth_callback,evauthread,(EV_READ|EV_PERSIST),authfd)
+#define CreateWAuthEvent(x)     CreateEvent(x,event_auth_callback,evauthwrite,(EV_WRITE|EV_PERSIST),authfd)
+#define CreateRWAuthEvent(x)    do { \
+                                  CreateRAuthEvent(x); \
+                                  CreateWAuthEvent(x); \
+                                } while (0)
 #endif /* COMMON_H */

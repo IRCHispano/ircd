@@ -413,6 +413,8 @@ AC_DEFUN(AC_LIBRARY_NET, [
    )
   AC_CHECK_FUNC(socket, , AC_CHECK_LIB(socket, socket, ,
     AC_CHECK_LIB(socket, socket, LIBS="-lsocket -lnsl $LIBS", , -lnsl)))
+  AC_CHECK_FUNC(clock_gettime, , AC_CHECK_LIB(rt, clock_gettime, ,
+    AC_CHECK_LIB(rt, clock_gettime, LIBS="-lrt $LIBS", , -lrt)))
   ])
 
 
