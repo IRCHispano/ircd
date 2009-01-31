@@ -100,7 +100,7 @@ static struct IPregistry_vector IPregistry_hashtable[HASHTABSIZE];
 #define NOW ((unsigned short)(now & BITMASK))
 #define CONNECTED_SINCE(x) ((unsigned short)((now & BITMASK) - (x)->last_connect))
 
-#define IPCHECK_CLONE_LIMIT 2
+#define IPCHECK_CLONE_LIMIT 4
 #define IPCHECK_CLONE_PERIOD 20
 #define IPCHECK_CLONE_DELAY 600
 
@@ -381,7 +381,7 @@ int IPcheck_remote_connect(aClient *cptr, const char *UNUSED(hostname),
   {
 #if defined(GODMODE)
     sendto_one(cptr,
-        "%s " TOK_NOTICE " %s%s :I saw your face before my friend (connected: %u; connect_attempts %u; free_targets %u)",
+        "%s NOTICE %s%s :I saw your face before my friend (connected: %u; connect_attempts %u; free_targets %u)",
         NumServ(&me), NumNick(cptr), entry->connected, entry->connect_attempts,
         FREE_TARGETS(entry));
 #endif
@@ -539,29 +539,9 @@ int IPbusca_clones_cptr(aClient *cptr)
   {
     int i;
 
-#if !defined(NODNS)
-    hp = cptr->hostp;
-    if (hp)
-    {
-      for (i = 0, hname = hp->h_name; hname; hname = hp->h_aliases[i++])
-      {
-        strncpy(host_buf, hname, HOSTLEN);
-        host_buf[HOSTLEN] = '\0';
-        if (IPbusca_clones(host_buf) != -1)
-        {                       /* HIT! */
-          return 0;
-        };
-      }
-    }
-    else
-    {
-#endif
-      strcpy(host_buf, inetntoa(cptr->ip));
-      if (IPbusca_clones(host_buf) != -1) /* HIT! */
-        return 0;
-#if !defined(NODNS)
-    }
-#endif
+    strcpy(host_buf, inetntoa(cptr->ip));
+    if (IPbusca_clones(host_buf) != -1) /* HIT! */
+      return 0;
   }
   return -1;
 }

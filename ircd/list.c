@@ -465,8 +465,10 @@ aGline *make_gline(int is_ipmask, char *host, char *reason,
   agline->lastmod = lastmod;
   agline->lifetime = lifetime;
   agline->gflags = GLINE_ACTIVE;  /* gline is active */
-  if (is_ipmask)
+  if (is_ipmask) {
+	agline->ip.s_addr = inet_addr(host);
     SetGlineIsIpMask(agline);
+  }
 
 #if defined(BADCHAN)
   if (gtype)
@@ -497,7 +499,7 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
     /* Does gline match? */
     /* Added a check against the user's IP address as well -Kev */
     if ((GlineIsIpMask(agline) ?
-        match(agline->host, inetntoa_c(cptr)) :
+    	agline->ip.s_addr == client_addr(cptr).s_addr :
 #ifdef HISPANO_WEBCHAT
         match(agline->host, PunteroACadena(cptr->user->host))) == 0 &&
 #else

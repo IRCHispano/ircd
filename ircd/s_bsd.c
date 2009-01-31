@@ -346,7 +346,7 @@ int inetport(aClient *cptr, char *name, unsigned short int port)
   loc_clients[cptr->fd] = cptr;
 
   CreateREvent(cptr, event_connection_callback);
-  
+
   return 0;
 }
 
@@ -422,7 +422,7 @@ int unixport(aClient *cptr, char *path, unsigned short int port)
   loc_clients[cptr->fd] = cptr;
 
   CreateREvent(cptr, event_connection_callback);
-  
+
   return 0;
 }
 
@@ -985,14 +985,14 @@ static int completed_connection(aClient *cptr)
 #endif
 
   sendto_one(cptr,
-      "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s +%s :%s", 
+      "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s +%s :%s",
       my_name_for_link(me.name, aconf), me.serv->timestamp, newts,
       MAJOR_PROTOCOL, NumServCap(&me),
 #if defined(HUB)
       "h",
 #else
       "",
-#endif  
+#endif
       PunteroACadena(me.info));
   tx_num_serie_dbs(cptr);
 
@@ -1144,7 +1144,7 @@ void close_connection(aClient *cptr)
         return;
       if (dup2(j, i) == -1)
         return;
-      
+
       loc_clients[i] = loc_clients[j];
       loc_clients[i]->fd = i;
       DelRWEvent(loc_clients[i]);
@@ -1348,7 +1348,7 @@ aClient *add_connection(aClient *cptr, int fd, int type)
     if (getpeername(fd, (struct sockaddr *)&addr, &len) == -1)
     {
       report_error("Failed in connecting to %s: %s", cptr);
-    add_con_refuse:
+      add_con_refuse:
       ircstp->is_ref++;
       acptr->fd = -2;
       free_client(acptr);
@@ -1358,6 +1358,8 @@ aClient *add_connection(aClient *cptr, int fd, int type)
     /* Don't want to add "Failed in connecting to" here.. */
     if (aconf && IsIllegal(aconf))
       goto add_con_refuse;
+
+ 
     /*
      * Copy ascii address to 'sockhost' just in case. Then we
      * have something valid to put into error messages...
@@ -1386,45 +1388,6 @@ aClient *add_connection(aClient *cptr, int fd, int type)
     if (len)
       goto add_con_refuse;
 
-    lin.flags = ASYNC_CLIENT;
-    lin.value.cptr = acptr;
-#if defined(NODNS)
-    if (!strcmp("127.0.0.1", inetntoa(addr.sin_addr)))
-    {
-      static struct hostent lhe = { "localhost", NULL, 0, 0, NULL };
-      acptr->hostp = &lhe;
-      if (!DoingAuth(acptr))
-        SetAccess(acptr);
-    }
-    else
-    {
-#endif
-      Debug((DEBUG_DNS, "lookup %s", inetntoa(addr.sin_addr)));
-      acptr->hostp = gethost_byaddr(&acptr->ip, &lin);
-      if (!acptr->hostp)
-      {
-        SetDNS(acptr);
-#ifndef HISPANO_WEBCHAT
-        if (IsUserPort(acptr))
-        {
-          sprintf_irc(sendbuf, IP_LOOKUP_START, me.name);
-          write(fd, sendbuf, strlen(sendbuf));
-        }
-#endif
-      }
-#ifndef HISPANO_WEBCHAT
-      else if (IsUserPort(acptr))
-      {
-        sprintf_irc(sendbuf, IP_LOOKUP_CACHE, me.name);
-        write(fd, sendbuf, strlen(sendbuf));
-      }
-#endif
-      update_nextdnscheck(0);
-      //nextdnscheck = 1;
-#if defined(NODNS)
-    }
-#endif
-  }
 
   if (aconf)
     aconf->clients++;
@@ -1437,7 +1400,6 @@ aClient *add_connection(aClient *cptr, int fd, int type)
   add_client_to_list(acptr);
   set_non_blocking(acptr->fd, acptr);
   set_sock_opts(acptr->fd, acptr);
-
   CreateClientEvent(acptr);
   
   /*
@@ -1456,6 +1418,50 @@ aClient *add_connection(aClient *cptr, int fd, int type)
         "Your host is trying to (re)connect too fast -- throttled");
     return NULL;
   }
+#endif
+  
+  
+  lin.flags = ASYNC_CLIENT;
+  lin.value.cptr = acptr;
+#if defined(NODNS)
+  if (!strcmp("127.0.0.1", inetntoa(addr.sin_addr)))
+  {
+    static struct hostent lhe = { "localhost", NULL, 0, 0, NULL };
+    acptr->hostp = &lhe;
+  }
+  else
+  {
+#endif
+    Debug((DEBUG_DNS, "lookup %s", inetntoa(addr.sin_addr)));
+    acptr->hostp = gethost_byaddr(&acptr->ip, &lin);
+    if (!acptr->hostp)
+    {
+      SetDNS(acptr);
+#ifndef HISPANO_WEBCHAT
+      if (IsUserPort(acptr))
+      {
+        sprintf_irc(sendbuf, IP_LOOKUP_START, me.name);
+        write(fd, sendbuf, strlen(sendbuf));
+      }
+#endif
+    }
+#ifndef HISPANO_WEBCHAT
+    else if (IsUserPort(acptr))
+    {
+      sprintf_irc(sendbuf, IP_LOOKUP_CACHE, me.name);
+      write(fd, sendbuf, strlen(sendbuf));
+    }
+#endif
+    update_nextdnscheck(0);
+    //nextdnscheck = 1;
+#if defined(NODNS)
+  }
+#endif
+}
+
+#if defined(NODNS)
+  if (!DoingAuth(acptr))
+    SetAccess(acptr);
 #endif
 
   start_auth(acptr);
@@ -1525,7 +1531,7 @@ static int read_packet(aClient *cptr, int socket_ready)
   int length = 0;
   int done;
   int ping = IsRegistered(cptr) ? get_client_ping(cptr) : CONNECTTIMEOUT;
-  
+
   if (socket_ready && !(IsUser(cptr) && DBufLength(&cptr->recvQ) > 6090))
   {
     errno = 0;
@@ -1567,7 +1573,7 @@ static int read_packet(aClient *cptr, int socket_ready)
 
     if (DoingDNS(cptr) || DoingAuth(cptr))
       return 1;
-    
+
 #if !defined(NOFLOODCONTROL)
     if (IsUser(cptr) && DBufLength(&cptr->recvQ) > CLIENT_FLOOD
 #if defined(CS_NO_FLOOD_ESNET)
@@ -1595,7 +1601,7 @@ static int read_packet(aClient *cptr, int socket_ready)
       {
         /*
          * XXX - this blindly deletes data if no cr/lf is received at
-         * the end of a lot of messages and the data stored in the 
+         * the end of a lot of messages and the data stored in the
          * dbuf is greater than sizeof(readbuf)
          */
         dolen = dbuf_get(&cptr->recvQ, readbuf, sizeof(readbuf));
@@ -1629,28 +1635,28 @@ static int read_packet(aClient *cptr, int socket_ready)
         return CPTR_KILLED;
     }
   }
-    
+
   if(DBufLength(&cptr->recvQ) && !NoNewLine(cptr)) // Si hay datos pendientes
     UpdateTimer(cptr, 2); // Programo una relectura
-  
+
   return 1;
 }
 
 /*
  * test_listen_port
- * 
+ *
  * Revisa si se esta escuchando en ese puerto para evitar
  * intentar escuchar dos veces en el mismo puerto
- * 
+ *
  * Si ya estoy escuchando en el lo marco como configuracion
  * legal para que no se cerrada por close_listeners
- * 
+ *
  * -- FreeMind 20081206
  */
 int test_listen_port(aConfItem *aconf) {
   aClient *acptr;
   int i;
-  
+
   for (i = highest_fd; i >= 0; i--)
   {
     if (!(acptr = loc_clients[i]))
@@ -1664,53 +1670,53 @@ int test_listen_port(aConfItem *aconf) {
       return 1;
     }
   }
-  
+
   return 0;
 }
 
 /*
  * event_async_dns_callback
- * 
+ *
  * Gestion de evento para resolver dns
- * 
+ *
  * -- FreeMind 20081214
  */
 void event_async_dns_callback(int fd, short event, void *arg)
 {
   Debug((DEBUG_DEBUG, "event_async_dns_callback event: %d", (int)event));
-  
+
   assert(event & EV_READ);
-  
+
   update_now();
-  
+
   if (resfd >= 0) // LEO DNS
     do_dns_async();
 }
 
 /*
  * event_udp_callback
- * 
+ *
  * Gestion de evento para paquetes udp
- * 
+ *
  * -- FreeMind 20081214
  */
 void event_udp_callback(int fd, short event, void *arg)
 {
   Debug((DEBUG_DEBUG, "event_udp_callback event: %d", (int)event));
-  
+
   assert(event & EV_READ);
-  
+
   update_now();
-  
+
   if (udpfd >= 0) // COMPRUEBO SI HAY UDP PARA LEER
     polludp();
 }
 
 /*
  * event_ping_callback
- * 
+ *
  * Gestion de evento para pings udp
- * 
+ *
  * -- FreeMind 20081214
  */
 void event_ping_callback(int fd, short event, aClient *cptr)
@@ -1719,9 +1725,9 @@ void event_ping_callback(int fd, short event, aClient *cptr)
 
   assert(IsPing(cptr));
   assert((event & EV_READ) || (event & EV_TIMEOUT));
-  
+
   update_now();
-  
+
   if (!IsPing(cptr))
     return;
 
@@ -1737,19 +1743,19 @@ void event_ping_callback(int fd, short event, aClient *cptr)
 
 /*
  * event_auth_callback
- * 
+ *
  * Gestion de evento para chequeo ident
- * 
+ *
  * -- FreeMind 20081214
  */
 void event_auth_callback(int fd, short event, aClient *cptr)
 {
   Debug((DEBUG_DEBUG, "event_auth_callback event: %d", (int)event));
-  
+
   assert((event & EV_READ) || (event & EV_WRITE));
-  
+
   update_now();
-  
+
   if (cptr->authfd < 0)
     return;
 
@@ -1766,37 +1772,37 @@ void deadsocket(aClient *cptr) {
 
 /*
  * event_client_read_callback
- * 
+ *
  * Gestion de evento para lectura de mensajes de clientes (servidores incluidos)
- * 
+ *
  * -- FreeMind 20081214
  */
 void event_client_read_callback(int fd, short event, aClient *cptr) {
   int length=1;
-  
+
   Debug((DEBUG_DEBUG, "event_client_read_callback event: %d", (int)event));
-  
+
   assert((event & EV_READ) || (event & EV_TIMEOUT));
   assert(cptr->fd<0 || (cptr->fd == cptr->evread->ev_fd));
-  
+
 #if defined(DEBUGMODE)
   assert(!IsLog(cptr));
 #endif
-  
+
   update_now();
 
   if(IsDead(cptr)) {
     deadsocket(cptr);
     return;
   }
-  
+
   if (!IsDead(cptr))
     length = read_packet(cptr, event & EV_READ ? 1 : 0);
   if ((length != CPTR_KILLED) && IsDead(cptr)) { // ERROR LECTURA/ESCRITURA
     deadsocket(cptr);
     return ;
   }
-  
+
   if (length > 0) // Si hay datos pendientes salgo
     return;
 
@@ -1824,9 +1830,9 @@ void event_client_read_callback(int fd, short event, aClient *cptr) {
 
 /*
  * event_client_write_callback
- * 
+ *
  * Gestion de evento para escritura de mensajes de clientes (servidores incluidos)
- * 
+ *
  * -- FreeMind 20081226
  */
 
@@ -1843,7 +1849,7 @@ void event_client_write_callback(int fd, short event, aClient *cptr) {
 #endif
 
   update_now();
-  
+
   if(IsDead(cptr)) {
     deadsocket(cptr);
     return;
@@ -1871,20 +1877,20 @@ void event_client_write_callback(int fd, short event, aClient *cptr) {
 
 /*
  * event_connection_callback
- * 
+ *
  * Gestion de evento para nuevas conexiones
- * 
+ *
  * -- FreeMind 20081214
  */
 void event_connection_callback(int loc_fd, short event, aClient *cptr)
 {
   int fd;
-  
+
   Debug((DEBUG_DEBUG, "event_connection_callback event: %d", (int)event));
-  
+
   update_now();
-  
-  assert(IsListening(cptr)); 
+
+  assert(IsListening(cptr));
 
   // ENTRA UNA NUEVA CONEXION
   {
@@ -1963,9 +1969,9 @@ void event_connection_callback(int loc_fd, short event, aClient *cptr)
 }
 /*
  * event_checkping_callback
- * 
+ *
  * Gestion de checkeo de pings
- * 
+ *
  * -- FreeMind 20081224
  */
 void event_checkping_callback(int fd, short event, aClient *cptr)
@@ -2114,7 +2120,7 @@ int add_listener(aConfItem *aconf)
     free_client(cptr);
     return 0;
   }
-    
+
   if (inetport(cptr, aconf->host, aconf->port))
     cptr->fd = -2;
 
@@ -2289,7 +2295,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
 
   set_non_blocking(cptr->fd, cptr);
   set_sock_opts(cptr->fd, cptr);
-  
+
   if (connect(cptr->fd, svp, len) < 0 && errno != EINPROGRESS)
   {
     int err = get_sockerr(cptr);
@@ -2379,7 +2385,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
   add_client_to_list(cptr);
   hAddClient(cptr);
   //nextping = now;
-  
+
   return 0;
 }
 
@@ -2467,7 +2473,7 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
   server.sin_port = htons(((aconf->port > 0) ? aconf->port : portnum));
 #endif
   *lenp = sizeof(server);
-  
+
   CreateClientEvent(cptr);
 
   return (struct sockaddr *)&server;

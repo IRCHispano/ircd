@@ -192,15 +192,21 @@ void genera_aleatorio(unsigned char *out, int count) {
  */
 void genera_cookie(char *out, int count) {
     int i;
-    unsigned int tmp;
-    unsigned int letra = (ircrandom()%count);
+    unsigned int tmp=0;
+    int letra=ircrandom()%count;
+    int mod=0;
+    char res;
     for(i=0;i<count;i++) {
-      if(letra==i) // Me aseguro de que haya una letra
-        tmp=(ircrandom()%26)+10;
+      mod=i%4;
+      if(mod == 0)
+    	  tmp=ircrandom();
+
+      if(letra==i) // Me aseguro de que haya una letra min
+        res=((tmp<<(mod*8)) %26)+36;
       else
-        tmp=(ircrandom()%36);
-      
-      *out++ = (tmp<10) ? ((char )(tmp+48)) : ((char )(tmp+87)); 
+        res=(tmp<<(mod*8)) %62;
+
+      *out++ = (res<10) ? (res+48) : (res<36) ? (res+55) : (res+61);
     }
     *out++='\0';
 }
@@ -212,18 +218,18 @@ void cifra_cookie(char *out, char *cookie)
     unsigned char key[45], res[45];
     int key_len, msg_len;
     unsigned int i;
-    
+
     memset(v, 0, sizeof(v));
     memset(s, 0, sizeof(s));
     memset(x, 0, sizeof(x));
     memset(res, 0, COOKIECRYPTLEN+1);
     msg_len = strlen(cookie);
     msg_len = (msg_len>16) ? 16 : msg_len;
-    
+
     strncpy((char *) v, cookie, msg_len);
     key[44]='\0';
     res[44]='\0';
-    
+
     genera_aleatorio(s, sizeof(s));
     memcpy(k,clave_de_cifrado_de_cookies,24);
     memcpy(k+24,s,8);
@@ -234,7 +240,7 @@ void cifra_cookie(char *out, char *cookie)
     memcpy(x,s,8);
     memcpy(x+8,v,16);
 
-    buf_to_base64_r(out, x, sizeof(x));    
+    buf_to_base64_r(out, x, sizeof(x));
 }
 
 void descifra_cookie(char *out, char *cookie)
@@ -244,17 +250,17 @@ void descifra_cookie(char *out, char *cookie)
     char key[45], msg[33];
     int key_len, msg_len;
     unsigned int i;
-    
+
     memset(k, 0, sizeof(k));
     memset(v, 0, sizeof(v));
     memset(x, 0, sizeof(x));
     memset(msg, 'A', sizeof(msg));
     msg_len = strlen(cookie);
     msg_len = (msg_len>32) ? 32 : msg_len;
-    
+
     strncpy(msg+(32-msg_len), cookie, (msg_len));
     msg[32]='\0';
-        
+
     base64_to_buf_r(x, (unsigned char *) msg);
     memcpy(k,clave_de_cifrado_de_cookies,24);
     memcpy(k+24,x,8);
@@ -263,7 +269,7 @@ void descifra_cookie(char *out, char *cookie)
     aes256_init(&ctx, k);
     aes256_decrypt_ecb(&ctx, v);
     aes256_done(&ctx);
-    
+
     strncpy(out, (char *)v, COOKIELEN);
     out[COOKIELEN]='\0';
 }
@@ -732,7 +738,7 @@ static int register_user(aClient *cptr, aClient *sptr,
 #else
     m_motd(sptr, sptr, 1, parv);
 #endif
-    
+
     UpdateCheckPing(sptr, get_client_ping(sptr));
     //nextping = now;
     if (sptr->snomask & SNO_NOISY)
@@ -945,11 +951,11 @@ static int user_hmodes[] = {
 static int verifica_clave_nick(char *nick, char *hash, char *clave)
 {
   unsigned int v[2], k[2], x[2];
-  
+
   int longitud_nick = strlen(nick);
   /* Para nicks <16 uso cont 2 para el resto lo calculo */
   int cont=(longitud_nick < 16) ? 2 : ((longitud_nick + 8) / 8);
-  
+
   char tmpnick[8 * cont + 1];
   char tmppass[12 + 1];
   unsigned int *p = (unsigned int *)tmpnick;  /* int == 32bits */
@@ -1144,7 +1150,7 @@ static int m_message(aClient *cptr, aClient *sptr,
                 me.name, parv[0], chptr->chname);
             continue;
           }
-          
+
           sendto_channel_butone(cptr, sptr, chptr,
               ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
         }
@@ -1165,7 +1171,7 @@ static int m_message(aClient *cptr, aClient *sptr,
       else if ((acptr = findNUser(nick)) && !IsUser(acptr))
         acptr = NULL;
       if (acptr)
-      {         
+      {
         if (MyUser(sptr) && check_target_limit(sptr, acptr, acptr->name, 0))
           continue;
         if (MyUser(sptr) && IsMsgOnlyReg(acptr) && !IsNickRegistered(sptr)
@@ -1575,20 +1581,20 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
  *
  * cptr = Quien manda el mensaje de quit
  * sptr = Quien recibe el QUIT
- * 
+ *
  * parv[0] = sender prefix
  * parv[parc-1] = comment
  */
 int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   char *comment = (parc > 1 && !BadPtr(parv[parc - 1])) ? parv[parc - 1] : NULL;
-  
+
   assert(0 != cptr);
   assert(0 != sptr);
 
   if(IsServer(sptr)) /* Un quit no puede tener de objeivo un servidor */
     return 0;
-  
+
   if (MyConnect(sptr)) /* Si es una conexion local */
   {
     if (sptr->user)
@@ -1970,8 +1976,8 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
       strncpy(tmp, parv[parc-1], COOKIELEN);
       tmp[COOKIELEN]='\0';
     }
-    
-        
+
+
     if (!strncmp(tmp,sptr->cookie, COOKIELEN))
     {
 /*
@@ -2232,7 +2238,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
     set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
     send_umode_out(cptr, sptr, old, oldh, IsRegistered(sptr));
     /*
-     * Pone una clase o se pilla de una linea O: 
+     * Pone una clase o se pilla de una linea O:
      */
     if ((!BadPtr(class)) || aconf->confClass)
     {
@@ -2272,7 +2278,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else
     {
       /*
-       * FATAL ERROR!!!! 
+       * FATAL ERROR!!!!
        * Nunca deberia ocurrir, por si las moscas lo cortamos.
        */
       return 0;
@@ -2328,7 +2334,7 @@ int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_one(cptr, err_str(ERR_ALREADYREGISTRED), me.name, parv[0]);
     return 0;
   }
-  /* 
+  /*
    * Como no podemos usar MyUser ya que todavia no
    * esta registrado, solo parseamos a los que
    * entran por el puerto de clientes.
@@ -2338,12 +2344,12 @@ int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     char *clave_bdd;
     /*
-     * Sintaxis posibles: 
+     * Sintaxis posibles:
      *   PASS :clave_servidor[:clave_bdd]
      *   PASS :clave_bdd
      *
      * CASOS:
-     * a) PASS clave_a:clave_b 
+     * a) PASS clave_a:clave_b
      *    - Se copia clave_a a cptr->passwd
      *    - Se copia clave_b a cptr->passbdd
      *
@@ -2724,7 +2730,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 #if defined(BDD_VIP) && defined(BDD_VIP2)
 /*
-** Antes no tenia +r, y ahora si. 
+** Antes no tenia +r, y ahora si.
 ** Puede ser que tengamos una virtual propia
 */
     if (!(sethmodes & HMODE_NICKREGISTERED))
@@ -2864,23 +2870,23 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   Reg3 char **p, *m;
   int what, setflags;
   int sethmodes;
-  snomask_t tmpmask = 0;  
-                
-  what = MODE_ADD;  
-  
+  snomask_t tmpmask = 0;
+
+  what = MODE_ADD;
+
   acptr = findNUser(parv[1]);
   if (!acptr)
     acptr = FindUser(parv[1]);
   if (!acptr)
     return 0;
-    
+
 
   /* find flags already set for user */
   setflags = 0;
   for (s = user_modes; (flag = *s); s += 2)
     if (acptr->flags & flag)
       setflags |= flag;
-      
+
   sethmodes = 0;
   for (s = user_hmodes; (flag = *s); s += 2)
     if (acptr->hmodes & flag)
@@ -2907,7 +2913,7 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
         case '\r':
         case '\t':
           break;
-        default:                                                                                                                     
+        default:
           for (s = user_modes; (flag = *s); s += 2)
             if (*m == (char)(*(s + 1)))
             {
@@ -2923,7 +2929,7 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
               else
                 acptr->flags &= ~flag;
               break;
-            }        
+            }
             if (flag == 0)
               for (s = user_hmodes; (flag = *s); s += 2)
                 if (*m == (char)(*(s + 1)))
@@ -2933,16 +2939,16 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
                   else
                     acptr->hmodes &= ~flag;
                   break;
-                }            
+                }
             break;
       }
-      
-      
+
+
   /*
    * Compare new flags with old flags and send string which
    * will cause servers to update correctly.
    */
-           
+
   if ((setflags & FLAGS_OPER) && !IsOper(acptr))
     --nrof.opers;
   if (!(setflags & FLAGS_OPER) && IsOper(acptr))
@@ -2960,13 +2966,13 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     if (tmpmask != acptr->snomask)
       set_snomask(acptr, tmpmask, SNO_SET);
-  }      
-  
+  }
+
 #if 1 /* ALTERNATIVA SVSMODE A TODOS */
 
   if (MyUser(acptr))
     send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, SEND_HMODES);
-    
+
   sendto_lowprot_butone(cptr, 9, ":%s SVSMODE %s %s", acptr->name, acptr->name, parv[2]);
   sendto_highprot_butone(cptr, 10, "%s " TOK_SVSMODE " %s %s", NumServ(sptr), parv[1], parv[2]);
 
@@ -2974,10 +2980,10 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   send_umode_out(cptr, acptr, setflags, sethmodes, IsRegistered(acptr));
 
-#endif  
+#endif
 }
 
-      
+
 /*
  * Build umode string for BURST command
  * --Run
@@ -3103,7 +3109,7 @@ void send_umode(aClient *cptr, aClient *sptr, int old, int sendmask, int oldh,
   *m = '\0';
   if (*umode_buf && cptr) {
     if (MyUser(cptr) || Protocol(cptr) < 10)
-      sendto_one(cptr, ":%s MODE %s :%s", sptr->name, sptr->name, umode_buf); 
+      sendto_one(cptr, ":%s MODE %s :%s", sptr->name, sptr->name, umode_buf);
     else
       sendto_one(cptr, "%s%s " TOK_MODE " %s :%s", NumNick(sptr), sptr->name, umode_buf);
   }
@@ -3727,7 +3733,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 
 #if defined(BDD_VIP)
   BorraIpVirtual(sptr);
-#endif 
+#endif
 
 /* 23-Oct-2003: mount@irc-dev.net
  *
@@ -3797,7 +3803,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       else
       {
         BorraIpVirtual(sptr);
-      }                                                      
+      }
 #endif
 
       if (db_buscar_registro(BDD_OPERDB, sptr->name) && !IsNickSuspended(sptr))
@@ -3824,7 +3830,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
  * Comando GHOST
  * Añadido por zoltan el 5 de Agosto 2001
  * Elimina una conexion fantasma o "ghost" de un nick registrado
- * 
+ *
  * Sintaxis:
  * GHOST nick password
  *
@@ -3972,7 +3978,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 #endif
- 
+
   if (parc < 3) {
     /* Un solo parametro, sin nick nuevo */
 #ifdef HISPANO_WEBCHAT
@@ -4012,8 +4018,8 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   sendto_op_mask(SNO_SERVICE,
         "El nodo '%s' solicita un cambio de nick para '%s'", sptr->name, acptr->name);
-    
-  if (!MyUser(acptr)) 
+
+  if (!MyUser(acptr))
     return 0;
 
   if (parc < 3)
@@ -4025,7 +4031,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     strncpy(nick, parv[2], nicklen + 1);
     nick[nicklen] = 0;
- 
+
     if (!do_nick_name(nick))
      return 0;
 
@@ -4039,7 +4045,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
      char c = reg->valor[strlen(reg->valor) - 1];
 
      if (c == '*')
-     {      
+     {
        sendto_serv_butone(cptr,
            ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' ha intentado poner un "
            "nick forbid '%s' para el nick '%s'", me.name, cptr->name, sptr->name, parv[2], parv[1]);
@@ -4205,8 +4211,8 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if ((!IsServer(cptr)) && !nick_aleatorio)
   {
     struct db_reg *regj;
-     
-    /* Al usar match, hay que iterar */               
+
+    /* Al usar match, hay que iterar */
     for (regj = db_iterador_init(BDD_JUPEDB); regj; regj = db_iterador_next())
     {
       if (!match(regj->clave, nick))
@@ -4214,7 +4220,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
         sendto_one(cptr, ":%s %d %s %s :Nickname is juped - El nick no está permitido: %s",
             me.name, ERR_NICKNAMEINUSE, BadPtr(parv[0]) ? "*" : parv[0], nick, regj->valor);
         return 0;
-      }                             
+      }
     }
   }
 
@@ -4537,7 +4543,7 @@ nickkilldone:
     int nick_forbid = 0;
     char c;
 
-    /* 
+    /*
      * Si el ultimo caracter de la clave (reg->valor) contiene:
      *  '+'  El nick esta suspendido.
      *  '*'  El nick esta prohibido (forbid).
@@ -4783,7 +4789,7 @@ nickkilldone:
         /* Send error message */
         sendto_one(cptr, err_str(ERR_NICKTOOFAST),
             me.name, parv[0], parv[1], cptr->nextnick - now);
-        /* 
+        /*
          * La siguiente linea, informaba solamente al cliente
          * del cambio de nick, aun cuando este no se permite
          * por ocurrir demasiado rapido. El cliente veia
@@ -4924,27 +4930,27 @@ nickkilldone:
      */
     if (!sptr->cookie)
     {
-      char tmp[COOKIECRYPTLEN+COOKIELEN+1];      
+      char tmp[COOKIECRYPTLEN+COOKIELEN+1];
       do
       {
         sptr->cookie = SlabStringAlloc(COOKIELEN+1);
         genera_cookie(sptr->cookie, COOKIELEN);
       }
       while ((!sptr->cookie) || IsCookieVerified(sptr));
-      
+
       if(find_port_cookie_encrypted(sptr) && cifrado_cookies) {
         char *tmp2=sptr->cookie;
         cifra_cookie(tmp, sptr->cookie);
         SetCookieEncrypted(sptr);
-        
+
         while(*tmp2) {
           *tmp2 = toUpper(*tmp2);
           tmp2++;
         }
-        
+
       } else
         strncpy(tmp, sptr->cookie, COOKIELEN+1);
-      
+
       sendto_one(cptr, "PING :%s", tmp);
     }
     else if (sptr->user->host && IsCookieVerified(sptr))
@@ -4985,7 +4991,7 @@ nickkilldone:
 
    if (auto_invisible)
      SetInvisible(sptr);
-     
+
     send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));
   }
 
@@ -5577,28 +5583,28 @@ nickkilldone:
      */
     if (!sptr->cookie)
     {
-      char tmp[COOKIECRYPTLEN+COOKIELEN+1];      
+      char tmp[COOKIECRYPTLEN+COOKIELEN+1];
       do
       {
         sptr->cookie = SlabStringAlloc(COOKIELEN+1);
         genera_cookie(sptr->cookie, COOKIELEN);
       }
       while ((!sptr->cookie) || IsCookieVerified(sptr));
-      
+
       if(cifrado_cookies) {
         char *tmp2=sptr->cookie;
         SetCookieEncrypted(sptr);
         cifra_cookie(tmp, sptr->cookie);
-        
+
         while(*tmp2) {
           *tmp2 = toUpper(*tmp2);
           tmp2++;
         }
-        
+
       } else
         strncpy(tmp, sptr->cookie, COOKIELEN+1);
 
-      
+
       sendto_one(cptr, "PING :%s", tmp);
     }
     else if (sptr->user->host && IsCookieVerified(sptr))

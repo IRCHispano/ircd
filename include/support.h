@@ -16,5 +16,5 @@ extern char *inetntoa(struct in_addr in);
 extern char *inetntoa_c(aClient *cptr);
 extern int check_if_ipmask(const char *mask);
 extern void write_log(const char *filename, const char *pattern, ...);
-
+extern struct in_addr client_addr(aClient *cptr);
 #endif /* SUPPORT_H */

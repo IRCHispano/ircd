@@ -1,3 +1,28 @@
+* 2009/01/27 dfm@unr.com         (u2.10.H.10.103)            FEATURE/FIX
+------------------------------------------------------------------------
+  Cambio la forma de generar la cookie de entrada en la red, ahora hay
+  mayusculas, minusculas y numeros, me aseguro que al menos haya una
+  letra minuscula para que evitar que la respuesta de cifrado sea igual
+  que el desafio, ademas se llama menos veces a ircrandom, ya que cada
+  llamada se aprovecha 4 veces (consumiendo menos cpu).
+
+  Correccion de bug en envio de modos de canal en BURST, si el BURST
+  superaba la linea y a la vez estaba mandando usuarios con op o voz
+  cuando empezaba la siguiente linea no indicaba los modos de canal
+  causando dsyncs al linkar en canales grandes (canales de alrededor
+  de mas de 100 usuarios).
+  
+  Impido los STATS remotos a usuarios que no sean helpers (+h) o
+  ircops (+o) y el STATS e.
+  
+  Corrijo fallo de compilacion con GODMODE en s_bsd e IPcheck.
+  
+  Si un usuario intenta reconectar muy rapido y esta "throttleado" no
+  intento hacer en el chequeo de DNS.
+  
+  Cambio en valores de sensibilidad de throttleo, ahora son 4 conexiones
+  cada 20 segundos en vez de 2 cada 20
+  
 * 2009/01/19 dfm@unr.com         (u2.10.H.10.102)                  MERGE
 ------------------------------------------------------------------------
   Fusiono hasta u2.10.H.10.libevent.11

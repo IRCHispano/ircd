@@ -33,6 +33,11 @@
 #if defined(USE_SYSLOG)
 #include <syslog.h>
 #endif
+#ifdef _WIN32
+# include <winsock.h>
+#else
+# include <netinet/in.h>
+#endif
 #include "h.h"
 #include "s_debug.h"
 #include "opercmds.h"
@@ -292,7 +297,7 @@ static void report_configured_links(aClient *sptr, int mask)
  *              allowed for IRC Operators.
  * Or for stats M:
  *    parv[3] = time param
- *    parv[4] = time param 
+ *    parv[4] = time param
  *    (see report_memleak_stats() in runmalloc.c for details)
  *
  * This function is getting really ugly. -Ghostwolf
@@ -315,10 +320,17 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
 #endif
 
+  /* Solo ircops y opers tienen acceso a hacer stats remotos */
+  if (parc > 2 && !IsAnOper(sptr) && !IsHelpOp(sptr))
+  {
+    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+    return 0;
+  }
+
 /* m_stats is so obnoxiously full of special cases that the different
  * hunt_server() possiblites were becoming very messy. It now uses a
- * switch() so as to be easier to read and update as params change. 
- * -Ghostwolf 
+ * switch() so as to be easier to read and update as params change.
+ * -Ghostwolf
  */
   switch (stat)
   {
@@ -545,9 +557,15 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_one(sptr, rpl_str(RPL_STATSELINE), me.name, sptr->name, 'E',
               reg->clave, reg->valor, 0, -1);
         }
-      }      
+      }
       break;
     case 'e':
+      /* Solo ircops y opers tienen acceso */
+      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
       sendto_one(sptr, rpl_str(RPL_STATSENGINE), me.name, sptr->name, event_get_method());
       break;
 #if defined(ESNET_NEG)
@@ -859,13 +877,13 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       }
       {
         struct db_reg *reg;
-             
+
         for (reg = db_iterador_init(BDD_JUPEDB); reg;
              reg = db_iterador_next())
         {
           sendto_one(sptr, rpl_str(RPL_STATSJLINE), me.name, sptr->name, reg->clave, reg->valor);
         }
-      }                                                  
+      }
       break;
     default:
       stat = '*';
@@ -1179,7 +1197,7 @@ int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
         t);
     sendto_highprot_butone(NULL, 10,
         "%s " TOK_WALLOPS " :Bad SETTIME from %s: " TIME_T_FMT, NumServ(&me), sptr->name,
-        t);    
+        t);
   }
   if (IsUser(sptr))
   {
@@ -1390,26 +1408,26 @@ static int m_rehash_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (parc < 2)
   {
-    sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], 
+    sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0],
         "REHASH");
     return 0;
   }
-          
+
   target = parv[1];
-            
+
   /* is it a message we should pay attention to? */
   if (target[0] != '*' || target[1] != '\0')
   {
     if (hunt_server(1, cptr, sptr, MSG_REHASH, TOK_REHASH, parc > 2 ?
-           "%s %s" : "%s", 1, parc, parv) != HUNTED_ISME)  
+           "%s %s" : "%s", 1, parc, parv) != HUNTED_ISME)
       return 0;
   } else if (parc > 2) /* must forward the message with flags */
-     sendto_highprot_butone(cptr, 10, "%s " TOK_REHASH " * %s", 
+     sendto_highprot_butone(cptr, 10, "%s " TOK_REHASH " * %s",
          NumServ(sptr), parv[2]);
   else /* just have to forward the message */
-     sendto_highprot_butone(cptr, 10, "%s " TOK_REHASH " *", 
+     sendto_highprot_butone(cptr, 10, "%s " TOK_REHASH " *",
          NumServ(sptr));
-      
+
   /* OK, the message has been forwarded, but before we can act... */
   /*
   if (!feature_bool(FEAT_NETWORK_REHASH))
@@ -1419,8 +1437,8 @@ static int m_rehash_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (parc > 2) { /* special processing */
     if (*parv[2] == 'q')
       flag = 2;
-  }  
-                                     
+  }
+
   sendto_ops("%s is rehashing Server config file", sptr->name);
 #if defined(USE_SYSLOG)
   syslog(LOG_INFO, "REHASH From %s\n", get_client_name(sptr, FALSE));
@@ -1439,7 +1457,7 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
   else
     return m_rehash_remoto(cptr, sptr, parc, parv);
-}             
+}
 
 #if defined(OPER_RESTART) || defined(LOCOP_RESTART)
 /*
@@ -1473,17 +1491,17 @@ static int m_restart_remoto(aClient *cptr, aClient *sptr, int parc,
     char *parv[])
 {
   const char *target, *when, *reason;
-  
+
   if (parc < 4)
   {
     sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "RESTART");
     return 0;
   }
-        
+
   target = parv[1];
   when = parv[2];
   reason = parv[parc - 1];
-              
+
   /* is it a message we should pay attention to? */
   if (target[0] != '*' || target[1] != '\0')
   {
@@ -1491,31 +1509,31 @@ static int m_restart_remoto(aClient *cptr, aClient *sptr, int parc,
             HUNTED_ISME)
       return 0;
   } else /* must forward the message */
-    sendto_highprot_butone(cptr, 10, "%s " TOK_RESTART " * %s :%s", 
-        NumServ(sptr), when, reason);  
-                                      
+    sendto_highprot_butone(cptr, 10, "%s " TOK_RESTART " * %s :%s",
+        NumServ(sptr), when, reason);
+
   /* OK, the message has been forwarded, but before we can act... */
-/*  
+/*
   if (!feature_bool(FEAT_NETWORK_RESTART))
     return 0;
-*/    
+*/
 
 #if defined(USE_SYSLOG)
   syslog(LOG_WARNING, "Server RESTART by %s: %s\n", get_client_name(sptr, FALSE), reason);
 #endif
   server_reboot();
-  return 0;                                                            
+  return 0;
 
 }
 
 int m_restart(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   if (MyUser(sptr))
-#if defined(OPER_RESTART) || defined(LOCOP_RESTART)  
+#if defined(OPER_RESTART) || defined(LOCOP_RESTART)
     return m_restart_local(cptr, sptr, parc, parv);
 #else
     return 0;
-#endif    
+#endif
   else
     return m_restart_remoto(cptr, sptr, parc, parv);
 }
@@ -1856,33 +1874,33 @@ static int m_die_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
   Reg1 aClient *acptr;
   Reg2 int i;
   const char *target, *when, *reason;
-  
+
   if (parc < 4)
   {
     sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "DIE");
     return 0;
-  }  
-        
+  }
+
   target = parv[1];
   when = parv[2];
   reason = parv[parc - 1];
-              
+
   /* is it a message we should pay attention to? */
   if (target[0] != '*' || target[1] != '\0')
   {
     if (hunt_server(1, cptr, sptr, MSG_DIE, TOK_DIE, "%s %s :%s", 1, parc, parv) !=
-                HUNTED_ISME)  
+                HUNTED_ISME)
       return 0;
   } else /* must forward the message */
-      sendto_highprot_butone(cptr, 10, "%s " TOK_DIE " * %s :%s", 
+      sendto_highprot_butone(cptr, 10, "%s " TOK_DIE " * %s :%s",
           NumServ(sptr), when, reason);
-                                      
+
   /* OK, the message has been forwarded, but before we can act... */
   /*
   if (!feature_bool(FEAT_NETWORK_DIE))
     return 0;
     */
-  
+
   for (i = 0; i <= highest_fd; i++)
   {
     if (!(acptr = loc_clients[i]))
@@ -1894,29 +1912,29 @@ static int m_die_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(acptr, ":%s ERROR :Terminated by %s: %s",
           me.name, get_client_name(sptr, FALSE), reason);
   }
-                                                        
+
   flush_connections(me.fd);
-                                             
+
 #if defined(BDD_MMAP)
   db_persistent_commit();
 #endif
-                                                            
+
 #if defined(__cplusplus)
   s_die(0);
 #else
   s_die();
 #endif
-  return 0;        
+  return 0;
 }
 
 int m_die(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   if (MyUser(sptr))
-#if defined(OPER_DIE) || defined(LOCOP_DIE)  
+#if defined(OPER_DIE) || defined(LOCOP_DIE)
     return m_die_local(cptr, sptr, parc, parv);
 #else
     return 0;
-#endif        
+#endif
   else
     return m_die_remoto(cptr, sptr, parc, parv);
 }
@@ -1924,27 +1942,28 @@ int m_die(aClient *cptr, aClient *sptr, int parc, char *parv[])
 static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, char *comment,
     char *user, time_t expire, time_t lastmod, time_t lifetime, int local)
 {
-  
+
   aClient *acptr;
   aGline *agline;
   int fd, gtype = 0;
-  
+
 #if defined(BADCHAN)
   if (*host == '#' || *host == '&' || *host == '+')
     gtype = 1;                  /* BAD CHANNEL */
 #endif
-  
+
   if (!lifetime) /* si no me ponen tiempo de vida uso el tiempo de expiracion */
     lifetime = expire;
 
   if(!buscar_uline(cptr->confs, sptr->name) && !lastmod) /* Si no tengo uline y me pasan ultima mod 0 salgo */
     return;
-  
+
   /* Inform ops */
-  sendto_op_mask(SNO_GLINE,
-      "%s adding %s%s for %s@%s, expiring at " TIME_T_FMT " (%s): %s",
-      sptr->name, local ? "local " : "", gtype ? "BADCHAN" : "GLINE",
-      user, host, expire, date(expire), comment);
+  if(!IsBurstOrBurstAck(sptr))
+    sendto_op_mask(SNO_GLINE,
+        "%s adding %s%s for %s@%s, expiring at " TIME_T_FMT " (%s): %s",
+        sptr->name, local ? "local " : "", gtype ? "BADCHAN" : "GLINE",
+        user, host, expire, date(expire), comment);
 
 #if defined(GPATH)
   write_log(GPATH,
@@ -1959,10 +1978,10 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
 
   if(!lastmod)
     lastmod = TStime();
-  
+
   if (!lifetime) /* si no me ponen tiempo de vida uso el tiempo de expiracion */
     lifetime = expire;
-  
+
   agline = make_gline(ip_mask, host, comment, user, expire, lastmod, lifetime);
   if (local)
     SetGlineIsLocal(agline);
@@ -1985,9 +2004,9 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
 
       if(find_exception(acptr)) /* Si hay una excepcion me lo salto */
         continue;
-      
+
       if ((GlineIsIpMask(agline) ?
-          match(agline->host, inetntoa_c(acptr)) :
+          agline->ip.s_addr == client_addr(cptr).s_addr :
           match(agline->host, PunteroACadena(acptr->sockhost))) == 0 &&
           (!acptr->user->username ||
           match(agline->name, acptr->user->username) == 0))
@@ -1996,8 +2015,8 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
         int longitud;
         char buf[MAXLEN * 2];
         char comtemp[MAXLEN * 2];
-        
-        /* 
+
+        /*
          * Comprobacion longitud de gline
          */
         strcpy(comtemp, comment);
@@ -2119,10 +2138,10 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
 
   if(parc>5)
     lastmod = atoi(parv[4]);
-  
+
   if(parc>6)
     lifetime = atoi(parv[5]);
-  
+
   if (parc < 3 || (*parv[2] != '-' && (parc < 5 || *parv[parc - 1] == '\0')))
   {
     sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0],
@@ -2140,7 +2159,7 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
 
   if(!propaga_gline(cptr, sptr, active, expire, lastmod, lifetime, parc, parv))
     return 0;
- 
+
   if (!(host = strchr(parv[2], '@')))
   {                         /* convert user@host */
     user = "*";             /* no @'s; assume username is '*' */
@@ -2168,9 +2187,9 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
 
   if (!active && agline)
   {                         /* removing the gline */
-    if(!buscar_uline(cptr->confs, sptr->name)) 
+    if(!buscar_uline(cptr->confs, sptr->name))
       return 0;
-    
+
     /* notify opers */
     sendto_op_mask(SNO_GLINE, "%s removing %s for %s@%s", parv[0],
         gtype ? "BADCHAN" : "GLINE", agline->name, agline->host);
@@ -2186,8 +2205,8 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
   else if (active)
   {                         /* must be adding a gline */
     expire = atoi(parv[3]) + TStime();  /* expire time? */
-    if (agline) 
-    {                       /* modifico gline; new expire time? */        
+    if (agline)
+    {                       /* modifico gline; new expire time? */
       modifica_gline(cptr, sptr, agline, gtype, expire, lastmod, lifetime, parv[0]);
     }
     else if (!agline)
@@ -2463,13 +2482,13 @@ int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
   */
 int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_t lastmod, time_t lifetime, int parc, char **parv) {
   aClient *acptr = NULL;
-  
+
   if(!buscar_uline(cptr->confs, sptr->name)) /* Si no tengo uline y me pasan ultima mod 0 y no estoy en burst salgo */
     if(!lastmod || !IsBurstOrBurstAck(sptr))
       return 0;
     else
       return 1;
-  
+
   /* forward the message appropriately */
   if (!strCasediff(parv[1], "*")) /* global! */
   {
@@ -2482,7 +2501,7 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
     else
       sendto_lowprot_butone(cptr, 9, active ? ":%s GLINE %s +%s %s :%s" :
           ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[parc - 1]);
-      
+
     if (IsUser(sptr)) {
       if(parc>6)
         sendto_highprot_butone(cptr, 10, active ? "%s%s " TOK_GLINE " %s +%s %s %s %s :%s" :
@@ -2492,7 +2511,7 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
             "%s%s " TOK_GLINE " %s -%s", NumNick(sptr), parv[1], parv[2], parv[3], parv[4], parv[parc - 1]);
       else
         sendto_highprot_butone(cptr, 10, active ? "%s%s " TOK_GLINE " %s +%s %s :%s" :
-            "%s%s " TOK_GLINE " %s -%s", NumNick(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);        
+            "%s%s " TOK_GLINE " %s -%s", NumNick(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
     }
     else
     {
@@ -2536,36 +2555,36 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
       else
         sendto_one(acptr, active ? ":%s GLINE %s +%s %s :%s" : ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[parc - 1]);  /* single destination */
     }
-    else 
+    else
     {
       if (IsUser(sptr)) {
         if(parc>6)
-          sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s %s %s :%s" : "%s%s " TOK_GLINE " %s -%s", 
+          sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s %s %s :%s" : "%s%s " TOK_GLINE " %s -%s",
             NumNick(sptr), parv[1], parv[2], parv[3], parv[4], parv[5], parv[parc - 1]);
         else if(parc>5)
-          sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s %s :%s" : "%s%s " TOK_GLINE " %s -%s", 
+          sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s %s :%s" : "%s%s " TOK_GLINE " %s -%s",
             NumNick(sptr), parv[1], parv[2], parv[3], parv[4], parv[parc - 1]);
         else
-          sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s :%s" : "%s%s " TOK_GLINE " %s -%s", 
-            NumNick(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);      
+          sendto_one(acptr, active ? "%s%s " TOK_GLINE " %s +%s %s :%s" : "%s%s " TOK_GLINE " %s -%s",
+            NumNick(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
       }
       else
       {
         if(parc>6)
-          sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s %s %s :%s" : ":%s " TOK_GLINE " %s -%s", 
+          sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s %s %s :%s" : ":%s " TOK_GLINE " %s -%s",
               NumServ(sptr), parv[1], parv[2], parv[3], parv[4], parv[5], parv[parc - 1]);
         else if(parc>5)
-          sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s :%s" : ":%s " TOK_GLINE " %s -%s", 
+          sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s :%s" : ":%s " TOK_GLINE " %s -%s",
               NumServ(sptr), parv[1], parv[2], parv[3], parv[4], parv[parc - 1]);
         else
-          sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s :%s" : ":%s " TOK_GLINE " %s -%s", 
+          sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s :%s" : ":%s " TOK_GLINE " %s -%s",
               NumServ(sptr), parv[1], parv[2], parv[3], parv[parc - 1]);
       }
     }
     return 0;               /* only the intended  destination
                                should add this gline */
   }
-  
+
   return 1;
 }
 
@@ -2574,7 +2593,7 @@ int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtype, time
   if(!buscar_uline(cptr->confs, sptr->name) && /* Si el que la envia no tiene uline Y*/
       (agline->lastmod >= lastmod))            /* tenemos una version igual o mayor salimos */
     return 0;
-  
+
   /* yes, notify the opers */
   sendto_op_mask(SNO_GLINE,
     "%s resetting expiration time on %s for %s@%s to "
@@ -2594,7 +2613,7 @@ int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtype, time
 
   if (!lastmod) /* si no me ponen tiempo de vida uso el tiempo de expiracion */
     lastmod = TStime();
-  
+
   agline->expire = expire;  /* reset the expire time */
   agline->lastmod = lastmod;
   agline->lifetime = lifetime;

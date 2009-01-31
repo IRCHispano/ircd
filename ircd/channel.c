@@ -779,6 +779,9 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
           {
             full = 1;           /* Make sure we continue after
                                    sending it so far */
+    	    /* Ensure the new BURST line contains the current
+    	     * ":mode", except when there is no mode yet. */
+    	    new_mode = (flag_cnt > 0) ? 1 : 0;
             break;              /* Do not add this member to this message */
           }
           sendbuf[sblen++] = first ? ' ' : ',';
@@ -922,13 +925,13 @@ int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[1] - nick/channel
  * parv[2] - modes
  */
-    
+
 int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  
+
   if (!IsServer(cptr) || !IsServer(sptr) || parc < 3)
       return 0;
-      
+
   if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
   {
     sendto_serv_butone(cptr,
@@ -939,14 +942,14 @@ int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
         "HACK(2): El nodo '%s' dice que '%s' solicita "
         "cambio de modos  '%s' para el nick '%s'", cptr->name, sptr->name, parv[2], parv[1]);
     return 0;
-  }  
-  
+  }
+
   if (!IsChannelName(parv[1]))
     return m_svsumode(cptr, sptr, parc, parv);
-  
+
   /* NO hay soporte de SVSMODE para canales */
   return 0;
-  
+
 }
 
 /*
@@ -3204,9 +3207,9 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
   /* Bounce here */
   if (!hacknotice && *bmodebuf && chptr->creationtime)
   {
-    /* 
+    /*
      * Para curar el posible desync quitamos el op
-     * al usuario -- 21/11/03 N3TKaT 
+     * al usuario -- 21/11/03 N3TKaT
      */
     if (IsUser(sptr))
     {
@@ -3446,7 +3449,7 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
 #endif /* (BDD_OPER_HACK || BDD_CHAN_HACK) */
 
 #if defined(OPER_WALK_THROUGH_LMODES)
-  /* An oper can force a join on a local channel using "OVERRIDE" as the key. 
+  /* An oper can force a join on a local channel using "OVERRIDE" as the key.
      a HACK(4) notice will be sent if he would not have been supposed
      to join normally. */
   if (IsOperOnLocalChannel(sptr, chptr->chname) && !BadPtr(key) &&
@@ -3601,7 +3604,7 @@ void del_invite(aClient *cptr, aChannel *chptr)
 }
 
 /*
- * Nos dice si tiene una invitacion o no 
+ * Nos dice si tiene una invitacion o no
  * el usuario "cptr" en el canal "chptr"
  *
  * 03-09-2003 zoltan@irc-dev.net
@@ -4084,7 +4087,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   Reg4 char *name;
   int i = 0, zombie = 0, sendcreate = 0;
   unsigned int flags = 0;
-  
+
   if (!IsServer(cptr) || !IsServer(sptr) || parc < 3)
     return 0;
 
@@ -4092,39 +4095,39 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     sendto_serv_butone(cptr,
         ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
-        "entrada de canal '%s' para el nick '%s'", me.name, cptr->name, 
+        "entrada de canal '%s' para el nick '%s'", me.name, cptr->name,
         sptr->name, parv[2], parv[1]);
     sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
         "HACK(4): El nodo '%s' dice que '%s' solicita "
         "entrada de canal '%s' para el nick '%s'", cptr->name, sptr->name, parv[2], parv[1]);
     return 0;
   }
-  
+
   sendto_lowprot_butone(cptr, 9, ":%s SVSJOIN %s :%s", sptr->name, parv[1], parv[2]);
   sendto_highprot_butone(cptr, 10, "%s " TOK_SVSJOIN " %s :%s", NumServ(sptr), parv[1], parv[2]);
-  
+
   acptr= findNUser(parv[1]);
   if (!acptr)
     acptr = FindClient(parv[1]);
   if (!acptr)
     return 0;
-    
+
   /*
   sendto_op_mask(SNO_SERVICE,
         "El nodo '%s' solicita una entrada de canal '%s' para el nick '%s'", sptr->name, parv[2], acptr->name);
     */
   if (!MyUser(acptr))
     return 0;
-      
+
   name = parv[2];
-  
+
   clean_channelname(name);
   if (IsLocalChannel(name))
     return 0;
-  
+
   if (!IsChannelName(name))
     return 0;
-  
+
   if (ChannelExists(name))
   {
     flags = CHFL_DEOPPED;
@@ -4144,7 +4147,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendcreate = 1;
     }
   }
-                                    
+
   chptr = get_channel(acptr, name, CREATE);
 
   if (chptr && (lp = find_user_link(chptr->members, acptr)))
@@ -4159,7 +4162,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else
      return 0;
   }
- 
+
   if (!chptr->creationtime) /* A remote JOIN created this channel ? */
     chptr->creationtime = MAGIC_REMOTE_JOIN_TS;
   if (!zombie)
@@ -4169,12 +4172,12 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
    * Complete user entry to the new channel (if any)
    */
   add_user_to_channel(chptr, acptr, flags);
-                       
+
   /*
    * Notify all other users on the new channel
    */
   sendto_channel_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
-                                                    
+
   del_invite(acptr, chptr);
   if (chptr->topic)
   {
@@ -4182,21 +4185,21 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_one(acptr, rpl_str(RPL_TOPICWHOTIME), me.name, acptr->name, name,
         chptr->topic_nick, chptr->topic_time);
   }
-  
+
   parv[0] = acptr->name;
   parv[1] = name;
   m_names(cptr, acptr, 2, parv);
-                                                                                                                      
-                                                                                      
+
+
   /* Propagate joins to P09 servers */
   sendto_lowprot_butone(NULL, 9,  ":%s JOIN %s", acptr->name, name);
-              
+
   if (!sendcreate)              /* Propgate joins to P10 servers */
     sendto_highprot_butone(NULL, 10, "%s%s " TOK_JOIN " %s",  NumNick(acptr), name);
   else                         /* and now creation events */
     sendto_highprot_butone(NULL, 10, "%s%s " TOK_CREATE " %s " TIME_T_FMT,
         NumNick(acptr), name, TStime());
-                          
+
   /* shouldn't ever set TS for remote JOIN's */
   if (!sendcreate)
   {                           /* check for channels that need TS's */
@@ -4205,18 +4208,18 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {                       /* send a TS? */
       sendto_lowprot_butone(NULL, 9, ":%s MODE %s + " TIME_T_FMT, me.name, chptr->chname, chptr->creationtime); /* ok, send TS */
       sendto_highprot_butone(NULL, 10, "%s " TOK_MODE " %s + " TIME_T_FMT, NumServ(&me), chptr->chname, chptr->creationtime); /* ok, send TS */
-      chptr->mode.mode &= ~MODE_SENDTS; 
+      chptr->mode.mode &= ~MODE_SENDTS;
       /* reset flag */
     }
-  }                                         
+  }
 
   if (sendcreate)
   {                           /* ok, send along modes for creation events to P09 */
     chptr = get_channel(acptr, name, !CREATE);
-    sendto_lowprot_butone(NULL, 9, ":%s MODE %s +o %s " TIME_T_FMT, me.name, 
+    sendto_lowprot_butone(NULL, 9, ":%s MODE %s +o %s " TIME_T_FMT, me.name,
         chptr->chname, acptr->name, chptr->creationtime);
   }
-  
+
 }
 
 /*
@@ -4835,7 +4838,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
               if (!tmp)
                 modebuf[mblen2++] = 'c';
               break;
-            }            
+            }
             case 'N':
             {
               int tmp;
@@ -5241,7 +5244,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       cancel_mode(sptr, chptr, 'u', NULL, &count);
     if ((prev_mode & MODE_DELJOINS))
       cancel_mode(sptr, chptr, 'D', NULL, &count);
-      
+
     prev_mode &= ~(MODE_REGCHAN); /* Mantenemos estos modos aunque el canal que llega sea mas antiguo */
     current_mode->mode &= ~prev_mode;
 
@@ -5509,11 +5512,11 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
         sptr->name, parv[2], parv[1]);
     sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
         "HACK(4): El nodo '%s' dice que '%s' solicita "
-        "salida de canal '%s' para el nick '%s'", cptr->name, sptr->name, 
+        "salida de canal '%s' para el nick '%s'", cptr->name, sptr->name,
         parv[2], parv[1]);
     return 0;
-  }      
-  
+  }
+
   if (parc < 4)
   {
     sendto_lowprot_butone(cptr, 9, ":%s SVSPART %s %s", sptr->name, parv[1], parv[2]);
@@ -5524,7 +5527,7 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_lowprot_butone(cptr, 9, ":%s SVSPART %s %s :%s", sptr->name, parv[1], parv[2], parv[3]);
     sendto_highprot_butone(cptr, 10, "%s " TOK_SVSPART " %s %s :%s", NumServ(sptr), parv[1], parv[2], parv[3]);
   }
-  
+
   acptr = findNUser(parv[1]);
   if (!acptr)
     acptr = FindClient(parv[1]);
@@ -5533,13 +5536,13 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /*
   sendto_op_mask(SNO_SERVICE,
       "El nodo '%s' solicita una salida de canal '%s' para el nick '%s'", sptr->name, parv[2], acptr->name);
-    */      
+    */
   if (!MyUser(acptr))
     return 0;
 
   acptr->flags &= ~FLAGS_TS8;
   name = parv[2];
-  
+
   chptr = get_channel(acptr, name, !CREATE);
   if (!chptr)
     return 0;
@@ -5565,7 +5568,7 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_one(acptr, PartFmt1, acptr->name, chptr->chname);
 
   remove_user_from_channel(acptr, chptr);
-  
+
   /* Send out the parts to all servers... -Kev */
   if (comment)
   {
@@ -5576,7 +5579,7 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     sendto_lowprot_butone(NULL, 9, PartFmt1, acptr->name, name);
     sendto_highprot_butone(NULL, 10, PartFmt1Serv, NumNick(acptr), name);
-  }    
+  }
 }
 
 /*
@@ -5667,9 +5670,9 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
         !IsServicesBot(sptr) &&
         ((lp2 && (lp2->flags & CHFL_DEOPPED)) || (!lp2 && IsUser(sptr))))
     {
-      /* 
+      /*
        * Para curar el posible desync quitamos el op
-       * al usuario -- 21/11/03 N3TKaT 
+       * al usuario -- 21/11/03 N3TKaT
        */
       if (IsUser(sptr))
       {
@@ -5839,7 +5842,7 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char *topic = NULL, *name, *p = NULL;
   int b = 0;
   time_t ts = 0;
-  
+
   if (parc < 2)
   {
     sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "TOPIC");
@@ -5868,17 +5871,17 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     if (IsLocalChannel(name) && !MyUser(sptr))
       continue;
-      
+
     /* If existing channel is older or has newer topic, ignore */
     if (IsServer(sptr))
     {
       if (parc > 3 && (ts = atoi(parv[2])) && chptr->creationtime < ts)
          continue;
-              
+
       if (parc > 4 && (ts = atoi(parv[3])) && chptr->topic_time > ts)
          continue;
     }
-                              
+
 
     if (!topic)                 /* only asking  for topic  */
     {
@@ -5898,7 +5901,7 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
         || IsServicesBot(sptr) || IsServer(sptr)) && topic)
     {
       aClient *from;
-      
+
       /* setting a topic */
       {
         int len, len2;
@@ -5907,7 +5910,7 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
           from = &his;
         else
           from = sptr;
-          
+
         len = strlen(topic);
         if (len > TOPICLEN)
         {
@@ -5955,10 +5958,10 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       sendto_one(sptr, err_str(b ? ERR_CANNOTSENDTOCHAN : ERR_CHANOPRIVSNEEDED),
           me.name, parv[0], chptr->chname);
-      /* 
+      /*
        * Para curar el posible desync quitamos el op
        * al usuario y mandamos el topic local
-       * -- 21/11/03 N3TKaT 
+       * -- 21/11/03 N3TKaT
        */
       if (!MyUser(sptr) && !b && IsUser(sptr))
       {
@@ -5968,7 +5971,7 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
         else
           sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT,
               NumServ(&me), chptr->chname, NumNick(sptr), chptr->creationtime);
-	
+
         if (chptr->topic)
         {
           if (Protocol(cptr) < 10)
@@ -6117,7 +6120,7 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   /*
    * Para curar el posible desync quitamos el op
-   * al usuario -- 21/11/03 N3TKaT 
+   * al usuario -- 21/11/03 N3TKaT
    */
   if (!MyConnect(sptr) && !is_chan_op(sptr, chptr) && !IsServicesBot(sptr) && IsUser(sptr))
   {
@@ -6262,7 +6265,7 @@ show_usage(aClient *sptr)
     sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
         "Example: LIST <3,>1,C<10,T>0,#a*  ; 2 users, younger than 10 min., "
         "topic set., starts with #a");
- 
+
   return LPARAM_ERROR; /* return error condition */
 }
 
