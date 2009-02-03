@@ -1,3 +1,12 @@
+* 2009/02/03 zoltan@irc-dev.net  (u2.10.H.10.104)            FEATURE/FIX
+------------------------------------------------------------------------
+  Modifico el comando NICK de P09 para agregar un parametro extra, la IP
+  en formato base64, para que los Services pueda conocer la IP numerica
+  de cada usuario.
+
+  Se incluye un fix detectado de que los burst de topic mandaban en P10
+  a nodos P09.
+
 * 2009/01/27 dfm@unr.com         (u2.10.H.10.103)            FEATURE/FIX
 ------------------------------------------------------------------------
   Cambio la forma de generar la cookie de entrada en la red, ahora hay

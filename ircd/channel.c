@@ -843,8 +843,13 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
   }
   /* Burst de TOPIC */
   if (chptr->topic)
-    sendto_one(cptr, "%s " TOK_TOPIC " %s " TIME_T_FMT " " TIME_T_FMT " :%s",
-                     NumServ(&me), chptr->chname, chptr->creationtime, chptr->topic_time, chptr->topic);
+  {
+    if (Protocol(cptr) < 10)
+      sendto_one(cptr, ":%s TOPIC %s :%s", me.name, chptr->chname, chptr->topic);
+    else 
+      sendto_one(cptr, "%s " TOK_TOPIC " %s " TIME_T_FMT " " TIME_T_FMT " :%s",
+                       NumServ(&me), chptr->chname, chptr->creationtime, chptr->topic_time, chptr->topic);
+  }
 }
 
 /*
