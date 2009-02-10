@@ -2006,7 +2006,7 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
         continue;
 
       if ((GlineIsIpMask(agline) ?
-          agline->ip.s_addr == client_addr(cptr).s_addr :
+          agline->ip.s_addr != client_addr(acptr).s_addr :
           match(agline->host, PunteroACadena(acptr->sockhost))) == 0 &&
           (!acptr->user->username ||
           match(agline->name, acptr->user->username) == 0))

@@ -4108,9 +4108,6 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-  sendto_lowprot_butone(cptr, 9, ":%s SVSJOIN %s :%s", sptr->name, parv[1], parv[2]);
-  sendto_highprot_butone(cptr, 10, "%s " TOK_SVSJOIN " %s :%s", NumServ(sptr), parv[1], parv[2]);
-
   acptr= findNUser(parv[1]);
   if (!acptr)
     acptr = FindClient(parv[1]);
@@ -4121,8 +4118,21 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   sendto_op_mask(SNO_SERVICE,
         "El nodo '%s' solicita una entrada de canal '%s' para el nick '%s'", sptr->name, parv[2], acptr->name);
     */
-  if (!MyUser(acptr))
+  
+  if(!MyUser(acptr))
+  {
+	if(acptr->from == sptr->from)
+      return 0;
+	
+    if(Protocol(acptr->from)<10)
+	  sendto_one(acptr, ":%s SVSJOIN %s :%s",
+	    sptr->name, parv[1], parv[2]);
+    else
+      sendto_one(acptr, "%s " TOK_SVSJOIN " %s%s :%s",
+        NumServ(sptr), NumNick(acptr), parv[2]);
+    
     return 0;
+  }
 
   name = parv[2];
 
@@ -5522,28 +5532,40 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-  if (parc < 4)
-  {
-    sendto_lowprot_butone(cptr, 9, ":%s SVSPART %s %s", sptr->name, parv[1], parv[2]);
-    sendto_highprot_butone(cptr, 10, "%s " TOK_SVSPART " %s %s", NumServ(sptr), parv[1], parv[2]);
-  }
-  else
-  {
-    sendto_lowprot_butone(cptr, 9, ":%s SVSPART %s %s :%s", sptr->name, parv[1], parv[2], parv[3]);
-    sendto_highprot_butone(cptr, 10, "%s " TOK_SVSPART " %s %s :%s", NumServ(sptr), parv[1], parv[2], parv[3]);
-  }
-
   acptr = findNUser(parv[1]);
   if (!acptr)
     acptr = FindClient(parv[1]);
   if (!acptr)
     return 0;
+  
     /*
   sendto_op_mask(SNO_SERVICE,
       "El nodo '%s' solicita una salida de canal '%s' para el nick '%s'", sptr->name, parv[2], acptr->name);
     */
-  if (!MyUser(acptr))
+  
+  if(!MyUser(acptr))
+  {
+	if(acptr->from == sptr->from)
+	  return 0;
+	  
+	if (parc < 4) {
+      if(Protocol(acptr->from)<10)
+	    sendto_one(acptr, ":%s SVSPART %s :%s",
+	      sptr->name, parv[1], parv[2]);
+      else
+        sendto_one(acptr, "%s " TOK_SVSPART " %s%s :%s",
+          NumServ(sptr), NumNick(acptr), parv[2]);
+    } else {
+      if(Protocol(acptr->from)<10)
+  	    sendto_one(acptr, ":%s SVSPART %s %s :%s",
+  	      sptr->name, parv[1], parv[2], parv[3]);
+      else
+        sendto_one(acptr, "%s " TOK_SVSPART " %s%s %s :%s",
+          NumServ(sptr), NumNick(acptr), parv[2], parv[3]);	
+    }
     return 0;
+  }
+
 
   acptr->flags &= ~FLAGS_TS8;
   name = parv[2];

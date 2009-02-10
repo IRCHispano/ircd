@@ -499,7 +499,7 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
     /* Does gline match? */
     /* Added a check against the user's IP address as well -Kev */
     if ((GlineIsIpMask(agline) ?
-    	agline->ip.s_addr == client_addr(cptr).s_addr :
+    	agline->ip.s_addr != client_addr(cptr).s_addr :
 #ifdef HISPANO_WEBCHAT
         match(agline->host, PunteroACadena(cptr->user->host))) == 0 &&
 #else

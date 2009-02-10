@@ -1,3 +1,12 @@
+* 2009/02/11 dfm@unr.com         (u2.10.H.10.105)                    FIX
+------------------------------------------------------------------------
+  Corrijo propagacion de SVSJOIN, SVSPART y RENAME
+  
+  SVSJOIN, SVSPART y RENAME no se propagan a nodos donde no este el
+  usuario objetivo.
+  
+  Correccion de GLINES a IPs numericas.
+
 * 2009/02/03 zoltan@irc-dev.net  (u2.10.H.10.104)            FEATURE/FIX
 ------------------------------------------------------------------------
   Modifico el comando NICK de P09 para agregar un parametro extra, la IP

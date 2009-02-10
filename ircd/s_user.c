@@ -3985,37 +3985,6 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 #endif
 
-  if (parc < 3) {
-    /* Un solo parametro, sin nick nuevo */
-#ifdef HISPANO_WEBCHAT
-    if (IsUser(sptr)) {
-      sendto_lowprot_butone(cptr, 9, ":%s RENAME :%s", me.name, parv[1]);
-      sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " :%s", NumServ(&me), parv[1]);
-    } else {
-      sendto_lowprot_butone(cptr, 9, ":%s RENAME :%s", parv[0], parv[1]);
-      sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " :%s", NumServ(sptr), parv[1]);
-    }
-#else
-    sendto_lowprot_butone(cptr, 9, ":%s RENAME :%s", parv[0], parv[1]);
-    sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " :%s", NumServ(sptr), parv[1]);
-#endif
-  } else {
-    /* Dos parametros, con nick nuevo */
-#ifdef HISPANO_WEBCHAT
-    if (IsUser(sptr)) {
-      sendto_lowprot_butone(cptr, 9, ":%s RENAME %s :%s", me.name, parv[1], parv[2]);
-      sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " %s :%s", NumServ(&me), parv[1], parv[2]);
-    } else {
-      sendto_lowprot_butone(cptr, 9, ":%s RENAME %s :%s", parv[0], parv[1], parv[2]);
-      sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " %s :%s", NumServ(sptr), parv[1], parv[2]);
-    }
-#else
-    sendto_lowprot_butone(cptr, 9, ":%s RENAME %s :%s", parv[0], parv[1], parv[2]);
-    sendto_highprot_butone(cptr, 10, "%s " TOK_RENAME " %s :%s", NumServ(sptr), parv[1], parv[2]);
-#endif
-
-  }
-
   acptr = findNUser(parv[1]);
   if (!acptr)
     acptr = FindUser(parv[1]);
@@ -4025,8 +3994,35 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
   sendto_op_mask(SNO_SERVICE,
         "El nodo '%s' solicita un cambio de nick para '%s'", sptr->name, acptr->name);
 
-  if (!MyUser(acptr))
+  if(!MyUser(acptr))
+  {
+	if(acptr->from == sptr->from)
+	  return 0;
+	
+	if (parc == 3) {
+      if(Protocol(acptr->from)<10)
+	    sendto_one(acptr, ":%s RENAME %s :%s", 		
+	      (IsUser(sptr) ? me.name : sptr->name), parv[1], parv[2]);
+      else
+        sendto_one(acptr, "%s " TOK_RENAME " %s%s :%s",
+          (IsUser(sptr) ? NumServ(&me) : NumServ(sptr)), NumNick(acptr), parv[2]);
+    } else if (parc == 4) {
+      if(Protocol(acptr->from)<10)
+  	    sendto_one(acptr, ":%s RENAME %s %s :%s",
+  	      (IsUser(sptr) ? me.name : sptr->name), parv[1], parv[2], parv[3]);
+      else
+        sendto_one(acptr, "%s " TOK_RENAME " %s%s %s :%s",
+          (IsUser(sptr) ? NumServ(&me) : NumServ(sptr)), NumNick(acptr), parv[2], parv[3]);	
+    } else {
+        if(Protocol(acptr->from)<10)
+    	    sendto_one(acptr, ":%s RENAME %s",
+    	      (IsUser(sptr) ? me.name : sptr->name), parv[1]);
+        else
+          sendto_one(acptr, "%s " TOK_RENAME " %s%s",
+            (IsUser(sptr) ? NumServ(&me) : NumServ(sptr)), NumNick(acptr));	    	
+    }
     return 0;
+  }
 
   if (parc < 3)
     rename_user(acptr, NULL);
