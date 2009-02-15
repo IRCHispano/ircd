@@ -306,7 +306,11 @@ int hunt_server(int MustBeOper, aClient *cptr, aClient *sptr, char *command,
     return (HUNTED_ISME);
 
   /* Make sure it's a server */
-  if (MyUser(sptr) || Protocol(cptr) < 10)
+  if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+      || Protocol(cptr) < 10
+#endif
+  )  
   {
     /* Make sure it's a server */
     if (!strchr(parv[server], '*'))
@@ -340,9 +344,10 @@ int hunt_server(int MustBeOper, aClient *cptr, aClient *sptr, char *command,
     strcpy(y, acptr->yxx);
     parv[server] = y;
   }
+#if !defined(NO_PROTOCOL9)
   else
     parv[server] = acptr->name;
-
+#endif
   sendto_one_hunt(acptr, sptr, command, token, pattern, parv[1], parv[2], parv[3], parv[4],
       parv[5], parv[6], parv[7], parv[8]);
 
@@ -768,11 +773,13 @@ static int register_user(aClient *cptr, aClient *sptr,
     acptr = user->server;
     if (acptr->from != sptr->from)
     {
+#if !defined(NO_PROTOCOL9)
       if (Protocol(cptr) < 10)
         sendto_one(cptr, ":%s KILL %s :%s (%s != %s[%s])",
             me.name, sptr->name, me.name, user->server->name, acptr->from->name,
             PunteroACadena(acptr->from->sockhost));
       else
+#endif
         sendto_one(cptr, "%s " TOK_KILL " %s%s :%s (%s != %s[%s])",
             NumServ(&me), NumNick(sptr), me.name, user->server->name,
             acptr->from->name, PunteroACadena(acptr->from->sockhost));
@@ -1798,8 +1805,10 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
    */
   if (!MyConnect(acptr) || !MyConnect(sptr) || !IsAnOper(sptr))
   {
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9, ":%s KILL %s :%s!%s",
         parv[0], acptr->name, inpath, path);
+#endif
     sendto_highprot_butone(cptr, 10, ":%s " TOK_KILL " %s%s :%s!%s",
         parv[0], NumNick(acptr), inpath, path);
 #if !defined(NO_PROTOCOL9)
@@ -1879,7 +1888,9 @@ int m_away(aClient *cptr, aClient *sptr, int parc, char *parv[])
       RunFree(away);
       sptr->user->away = NULL;
     }
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9, ":%s AWAY", parv[0]);
+#endif
     sendto_highprot_butone(cptr, 10, "%s%s " TOK_AWAY, NumNick(sptr));
     if (MyConnect(sptr))
       sendto_one(sptr, rpl_str(RPL_UNAWAY), me.name, parv[0]);
@@ -1890,7 +1901,9 @@ int m_away(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (strlen(awy2) > (size_t)AWAYLEN)
     awy2[AWAYLEN] = '\0';
+#if !defined(NO_PROTOCOL9)
   sendto_lowprot_butone(cptr, 9, ":%s AWAY :%s ", parv[0], awy2);
+#endif
   sendto_highprot_butone(cptr, 10, "%s%s " TOK_AWAY " :%s ", NumNick(sptr), awy2);
 
   if (away)
@@ -2109,8 +2122,10 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     ++nrof.opers;
     sptr->flags |= FLAGS_OPER;
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9,
         ":%s MODE %s :+o", parv[0], parv[0]);
+#endif
     sendto_highprot_butone(cptr, 10,
         "%s%s " TOK_MODE " %s :+o", NumNick(sptr), parv[0]);
     if (IsMe(cptr))
@@ -2978,8 +2993,9 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (MyUser(acptr))
     send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, SEND_HMODES);
-
+#if !defined(NO_PROTOCOL9)
   sendto_lowprot_butone(cptr, 9, ":%s SVSMODE %s %s", acptr->name, acptr->name, parv[2]);
+#endif
   sendto_highprot_butone(cptr, 10, "%s " TOK_SVSMODE " %s %s", NumServ(sptr), parv[1], parv[2]);
 
 #else /* ALTERNATIVA SVSMODE AL NODO MAS PROXIMO Y MODE AL RESTO */
@@ -3412,7 +3428,9 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
         sendto_prefix_one(sptr, sptr, "%s%s " TOK_SILENCE " %c%s", NumNick(sptr), c, cp);
       if (c == '-')
       {
+#if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(NULL, 9, ":%s SILENCE * -%s", sptr->name, cp);
+#endif
         sendto_highprot_butone(NULL, 10, "%s%s " TOK_SILENCE " * -%s", NumNick(sptr), cp);
       }
     }
@@ -3435,7 +3453,9 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       if (!del_silence(sptr, parv[2] + 1))
       {
+#if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9, ":%s SILENCE * %s", parv[0], parv[2]);
+#endif
         sendto_highprot_butone(cptr, 10, "%s%s " TOK_SILENCE " * %s", NumNick(sptr), parv[2]);
       }
     }
@@ -3716,10 +3736,10 @@ void rename_user(aClient *sptr, char *nick_nuevo)
   //sendto_one(sptr, ":%s NICK :%s", sptr->name, nick_nuevo);
 
   add_history(sptr, 1);
-
+#if !defined(NO_PROTOCOL9)
   sendto_lowprot_butone(NULL, 9,
       ":%s NICK %s " TIME_T_FMT, sptr->name, nick_nuevo, sptr->lastnick);
-
+#endif
   sendto_highprot_butone(NULL, 10,
       "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick_nuevo, sptr->lastnick);
 
@@ -3932,10 +3952,11 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
   /* Matamos al usuario con un kill */
   sendto_op_mask(SNO_SERVKILL, "%s ha recibido KILL por comando GHOST de %s.",
       acptr->name, cptr->name);
-
+#if !defined(NO_PROTOCOL9)
   sendto_lowprot_butone(cptr, 9,  /* Kill our old drom outgoing servers */
       ":%s KILL %s :Comando GHOST utilizado por %s",
       me.name, acptr->name, cptr->name);
+#endif
   sendto_highprot_butone(cptr, 10,  /* Kill our old drom outgoing servers */
       "%s " TOK_KILL " %s%s :Comando GHOST utilizado por %s",
       NumServ(&me), NumNick(acptr), cptr->name);
@@ -3996,31 +4017,16 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if(!MyUser(acptr))
   {
-	if(acptr->from == sptr->from)
-	  return 0;
-	
-	if (parc == 3) {
-      if(Protocol(acptr->from)<10)
-	    sendto_one(acptr, ":%s RENAME %s :%s", 		
-	      (IsUser(sptr) ? me.name : sptr->name), parv[1], parv[2]);
-      else
-        sendto_one(acptr, "%s " TOK_RENAME " %s%s :%s",
-          (IsUser(sptr) ? NumServ(&me) : NumServ(sptr)), NumNick(acptr), parv[2]);
-    } else if (parc == 4) {
-      if(Protocol(acptr->from)<10)
-  	    sendto_one(acptr, ":%s RENAME %s %s :%s",
-  	      (IsUser(sptr) ? me.name : sptr->name), parv[1], parv[2], parv[3]);
-      else
-        sendto_one(acptr, "%s " TOK_RENAME " %s%s %s :%s",
-          (IsUser(sptr) ? NumServ(&me) : NumServ(sptr)), NumNick(acptr), parv[2], parv[3]);	
-    } else {
-        if(Protocol(acptr->from)<10)
-    	    sendto_one(acptr, ":%s RENAME %s",
-    	      (IsUser(sptr) ? me.name : sptr->name), parv[1]);
-        else
-          sendto_one(acptr, "%s " TOK_RENAME " %s%s",
-            (IsUser(sptr) ? NumServ(&me) : NumServ(sptr)), NumNick(acptr));	    	
-    }
+    if(acptr->from == sptr->from)
+      return 0;
+
+    if (parc == 3)
+      sendto_one_hunt(acptr->from, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, ":%s", parv[2]);
+    else if(parc == 4)
+      sendto_one_hunt(acptr->from, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, "%s :%s", parv[2], parv[3]);
+    else
+      sendto_one_hunt(acptr->from, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, "");
+
     return 0;
   }
 
@@ -4195,10 +4201,12 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
             parv[1], nick, cptr->name);
       if (!IsServer(sptr))      /* bad nick _change_ */
       {
+#if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9, ":%s KILL %s :%s (%s <- %s!%s@%s)",
             me.name, parv[0], me.name, cptr->name, parv[0],
             sptr->user ? PunteroACadena(sptr->username) : "",
             sptr->user ? sptr->user->server->name : cptr->name);
+#endif
         sendto_highprot_butone(cptr, 10, "%s " TOK_KILL " %s :%s (%s <- %s!%s@%s)",
             NumServ(&me), parv[0], me.name, cptr->name,
             parv[0], sptr->user ? PunteroACadena(sptr->username) : "",
@@ -4376,9 +4384,11 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_op_mask(SNO_SERVKILL,
           "%s ha recibido KILL por %s, liberando sesion fantasma.", acptr->name,
           nickwho);
+#if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(cptr, 9,  /* Kill our old drom outgoing servers */
           ":%s KILL %s :Sesion fantasma liberada por %s",
           me.name, acptr->name, nickwho);
+#endif
       sendto_highprot_butone(cptr, 10,  /* Kill our old drom outgoing servers */
           "%s " TOK_KILL " %s%s :Sesion fantasma liberada por %s",
           NumServ(&me), NumNick(acptr), nickwho);
@@ -4479,9 +4489,11 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (!IsServer(sptr))
       {
         ircstp->is_kill++;
+#if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9,  /* Kill old from outgoing servers */
             ":%s KILL %s :%s (%s <- %s (Nick collision))",
             me.name, sptr->name, me.name, acptr->from->name, cptr->name);
+#endif
         sendto_highprot_butone(cptr, 10,  /* Kill old from outgoing servers */
             "%s " TOK_KILL " %s%s :%s (%s <- %s (Nick collision))",
             NumServ(&me), NumNick(sptr), me.name, acptr->from->name,
@@ -4501,9 +4513,11 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   acptr->flags |= FLAGS_KILLED;
   if (differ)
   {
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9,  /* Kill our old from outgoing servers */
         ":%s KILL %s :%s (%s <- %s (older nick overruled))",
         me.name, acptr->name, me.name, acptr->from->name, cptr->name);
+#endif
     sendto_highprot_butone(cptr, 10,  /* Kill our old from outgoing servers */
         "%s " TOK_KILL " %s%s :%s (%s <- %s (older nick overruled))",
         NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);
@@ -4514,9 +4528,11 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
   else
   {
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9,  /* Kill our old from outgoing servers */
         ":%s KILL %s :%s (%s <- %s (nick collision from same user@host))",
         me.name, acptr->name, me.name, acptr->from->name, cptr->name);
+#endif
     sendto_highprot_butone(cptr, 10,  /* Kill our old from outgoing servers */
         "%s " TOK_KILL " %s%s :%s (%s <- %s (nick collision from same user@host))",
         NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);
@@ -5188,10 +5204,12 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     if (!IsServer(sptr))        /* bad nick _change_ */
     {
+#if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(cptr, 9, ":%s KILL %s :%s (%s <- %s!%s@%s)",
           me.name, parv[0], me.name, cptr->name, parv[0],
           sptr->user ? PunteroACadena(sptr->username) : "",
           sptr->user ? sptr->user->server->name : cptr->name);
+#endif
       sendto_highprot_butone(cptr, 10, "%s " TOK_KILL " %s :%s (%s <- %s!%s@%s)",
           NumServ(&me), parv[0], me.name, cptr->name,
           parv[0], sptr->user ? PunteroACadena(sptr->username) : "",
@@ -5348,9 +5366,11 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (!IsServer(sptr))
       {
         ircstp->is_kill++;
+#if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9,  /* Kill old from outgoing servers */
             ":%s KILL %s :%s (%s <- %s (Nick collision))",
             me.name, sptr->name, me.name, acptr->from->name, cptr->name);
+#endif
         sendto_highprot_butone(cptr, 10,  /* Kill old from outgoing servers */
             "%s " TOK_KILL " %s%s :%s (%s <- %s (Nick collision))",
             NumServ(&me), NumNick(sptr), me.name, acptr->from->name,
@@ -5367,9 +5387,11 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
   acptr->flags |= FLAGS_KILLED;
   if (differ)
   {
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9,  /* Kill our old from outgoing servers */
         ":%s KILL %s :%s (%s <- %s (older nick overruled))",
         me.name, acptr->name, me.name, acptr->from->name, cptr->name);
+#endif
     sendto_highprot_butone(cptr, 10,  /* Kill our old from outgoing servers */
         "%s " TOK_KILL " %s%s :%s (%s <- %s (older nick overruled))",
         NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);
@@ -5380,9 +5402,11 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
   else
   {
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9,  /* Kill our old from outgoing servers */
         ":%s KILL %s :%s (%s <- %s (nick collision from same user@host))",
         me.name, acptr->name, me.name, acptr->from->name, cptr->name);
+#endif
     sendto_highprot_butone(cptr, 10,  /* Kill our old from outgoing servers */
         "%s " TOK_KILL " %s%s :%s (%s <- %s (nick collision from same user@host))",
         NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);

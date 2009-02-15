@@ -445,9 +445,11 @@ int exit_client(aClient *cptr,  /* Connection being handled by
     {
       if (IsServer(bcptr) || IsHandshake(bcptr))
       {
+#if !defined(NO_PROTOCOL9)
         if (Protocol(bcptr) < 10)
           sendto_one(bcptr, ":%s SQUIT %s 0 :%s", sptr->name, me.name, comment);
         else
+#endif
           sendto_one(bcptr, "%s " TOK_SQUIT " %s 0 :%s", NumServ(sptr), me.name, comment);
 
       }
@@ -463,7 +465,11 @@ int exit_client(aClient *cptr,  /* Connection being handled by
             (acptr = findNUser(bcptr->serv->by)) &&
             acptr->user == bcptr->serv->user)
         {
-          if (MyUser(acptr) || Protocol(acptr->from) < 10)
+          if (MyUser(acptr) 
+#if !defined(NO_PROTOCOL9)
+              || Protocol(acptr->from) < 10
+#endif
+          )
             sendto_one(acptr,
                 ":%s NOTICE %s :Link with %s cancelled: %s",
                 me.name, acptr->name, bcptr->name, comment);
@@ -520,6 +526,7 @@ int exit_client(aClient *cptr,  /* Connection being handled by
   for (dlp = me.serv->down; dlp; dlp = dlp->next)
     if (dlp->value.cptr != sptr->from && dlp->value.cptr != bcptr)
     {
+#if !defined(NO_PROTOCOL9)
       if (Protocol(dlp->value.cptr) < 10)
       {
         if (IsServer(bcptr))
@@ -527,7 +534,10 @@ int exit_client(aClient *cptr,  /* Connection being handled by
               sptr->name, bcptr->name, bcptr->serv->timestamp, comment);
         else if (IsUser(bcptr) && (bcptr->flags & FLAGS_KILLED) == 0)
           sendto_one(dlp->value.cptr, ":%s QUIT :%s", bcptr->name, comment);
-      } else {
+      }
+      else
+#endif
+      {
         if (IsServer(bcptr))
           sendto_one(dlp->value.cptr, "%s " TOK_SQUIT " %s " TIME_T_FMT " :%s",
               NumServ(sptr), bcptr->name, bcptr->serv->timestamp, comment);

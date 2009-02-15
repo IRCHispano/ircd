@@ -212,20 +212,24 @@ void sendto_one_hunt(aClient *to, aClient *from, char *cmd, char *token, const c
   char nbuf[512];
   va_list vl;
 
+#if !defined(NO_PROTOCOL9)
   if (Protocol(to->from) > 9)
   {
+#endif
     if (IsUser(from))
       sprintf_irc(nbuf, "%s%s %s ", NumNick(from), token);
     else
       sprintf_irc(nbuf, "%s %s ", NumServ(from), token);
+#if !defined(NO_PROTOCOL9)
   } else 
     sprintf_irc(nbuf, ":%s %s ", from->name, cmd);
+#endif
 
   va_start(vl, pattern);
   vsprintf_irc(nbuf + strlen(nbuf), pattern, vl);
   va_end(vl);
   
-  sprintf_irc(sendbuf, nbuf);
+  strncpy(sendbuf, nbuf, sizeof(nbuf));
   sendbufto_one(to);
 }
 

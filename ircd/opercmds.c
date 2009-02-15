@@ -946,7 +946,11 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if ((acptr = FindServer(parv[1])))
   {
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(sptr, ":%s NOTICE %s :Connect: Server %s %s %s.",
           me.name, parv[0], parv[1], "already exists from", acptr->from->name);
     else
@@ -969,7 +973,11 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (!aconf)
   {
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr)
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(sptr,
           ":%s NOTICE %s :Connect: Host %s not listed in ircd.conf",
           me.name, parv[0], parv[1]);
@@ -989,7 +997,11 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     if ((port = atoi(parv[2])) == 0)
     {
-      if (MyUser(sptr) || Protocol(cptr) < 10)
+      if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+          || Protocol(cptr) < 10
+#endif
+      )
         sendto_one(sptr,
             ":%s NOTICE %s :Connect: Invalid port number", me.name, parv[0]);
       else
@@ -1000,7 +1012,11 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
   else if (port == 0 && (port = PORTNUM) == 0)
   {
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(sptr, ":%s NOTICE %s :Connect: missing port number",
           me.name, parv[0]);
     else
@@ -1020,7 +1036,11 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
         (match(cconf->host, aconf->name) == 0))
       if (crule_eval(cconf->passwd))
       {
-        if (MyUser(sptr) || Protocol(cptr) < 10)
+        if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+            || Protocol(cptr) < 10
+#endif
+        )
           sendto_one(sptr, ":%s NOTICE %s :Connect: Disallowed by rule: %s",
               me.name, parv[0], cconf->name);
         else
@@ -1046,7 +1066,11 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
   switch (retval = connect_server(aconf, sptr, NULL))
   {
     case 0:
-      if (MyUser(sptr) || Protocol(cptr) < 10)
+      if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+          || Protocol(cptr) < 10
+#endif
+      )
         sendto_one(sptr,
             ":%s NOTICE %s :*** Connecting to %s.",
             me.name, parv[0], aconf->name);
@@ -1059,7 +1083,11 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
       /* Comments already sent */
       break;
     case -2:
-      if (MyUser(sptr) || Protocol(cptr) < 10)
+      if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+          || Protocol(cptr) < 10
+#endif
+      )
         sendto_one(sptr, ":%s NOTICE %s :*** Host %s is unknown.",
             me.name, parv[0], aconf->name);
       else
@@ -1067,7 +1095,12 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
             NumServ(&me), NumNick(sptr), aconf->name);
       break;
     default:
-      if (MyUser(sptr) || Protocol(cptr) < 10)
+      if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+          || Protocol(cptr) < 10
+#endif
+      )
+
         sendto_one(sptr,
             ":%s NOTICE %s :*** Connection to %s failed: %s",
             me.name, parv[0], aconf->name, strerror(retval));
@@ -1174,9 +1207,11 @@ int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
     for (lp = me.serv->down; lp; lp = lp->next)
       if (cptr != lp->value.cptr && DBufLength(&lp->value.cptr->sendQ) < 8000)
       {
+#if !defined(NO_PROTOCOL9)
         if (Protocol(lp->value.cptr) < 10)
           sendto_one(lp->value.cptr, ":%s SETTIME %s", parv[0], parv[1]);
         else
+#endif
           sendto_one(lp->value.cptr, "%s " TOK_SETTIME " %s", NumServ(sptr), parv[1]);
       }
   }
@@ -1192,16 +1227,23 @@ int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(RELIABLE_CLOCK)
   if ((dt > 600) || (dt < -600))
   {
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(NULL, 9,
         ":%s WALLOPS :Bad SETTIME from %s: " TIME_T_FMT, me.name, sptr->name,
         t);
+#endif
     sendto_highprot_butone(NULL, 10,
         "%s " TOK_WALLOPS " :Bad SETTIME from %s: " TIME_T_FMT, NumServ(&me), sptr->name,
         t);
   }
   if (IsUser(sptr))
   {
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(sptr, ":%s NOTICE %s :clock is not set %ld seconds %s : "
           "RELIABLE_CLOCK is defined", me.name, parv[0],
           (dt < 0) ? -dt : dt, (dt <= 0) ? "forwards" : "backwards");
@@ -1216,7 +1258,11 @@ int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
   TSoffset -= dt;
   if (IsUser(sptr))
   {
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr)
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(sptr, ":%s NOTICE %s :clock is set %ld seconds %s", me.name,
           parv[0], (dt < 0) ? -dt : dt, (dt <= 0) ? "forwards" : "backwards");
     else
@@ -1304,10 +1350,12 @@ int m_rping(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(sptr, err_str(ERR_NOSUCHSERVER), me.name, parv[0], parv[1]);
       return 0;
     }
+#if !defined(NO_PROTOCOL9)
     if (Protocol(acptr->from) < 10)
       sendto_one(acptr, ":%s RPING %s %s %s :%s",
           me.name, acptr->name, sptr->name, militime(NULL, NULL), parv[3]);
     else
+#endif
       sendto_one(acptr, "%s " TOK_RPING " %s %s %s :%s",
           NumServ(&me), NumServ(acptr), sptr->name, militime(NULL, NULL), parv[3]);
   }
@@ -1598,7 +1646,11 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     /* Got "TRACE <tname> :<target>" */
     parc = 3;
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr)
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       acptr = find_match_server(parv[2]);
     else
       acptr = FindNServer(parv[2]);
@@ -2492,6 +2544,7 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
   /* forward the message appropriately */
   if (!strCasediff(parv[1], "*")) /* global! */
   {
+#if !defined(NO_PROTOCOL9)
     if(parc>6)
       sendto_lowprot_butone(cptr, 9, active ? ":%s GLINE %s +%s %s %s %s :%s" :
           ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[4], parv[5], parv[parc - 1]);
@@ -2501,7 +2554,7 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
     else
       sendto_lowprot_butone(cptr, 9, active ? ":%s GLINE %s +%s %s :%s" :
           ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[parc - 1]);
-
+#endif
     if (IsUser(sptr)) {
       if(parc>6)
         sendto_highprot_butone(cptr, 10, active ? "%s%s " TOK_GLINE " %s +%s %s %s %s :%s" :
@@ -2546,6 +2599,7 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
   if (IsServer(acptr) || !MyConnect(acptr))
 #endif
   {
+#if !defined(NO_PROTOCOL9)
     if (Protocol(acptr->from) < 10)
     {
       if(parc>6)
@@ -2556,6 +2610,7 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
         sendto_one(acptr, active ? ":%s GLINE %s +%s %s :%s" : ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[parc - 1]);  /* single destination */
     }
     else
+#endif
     {
       if (IsUser(sptr)) {
         if(parc>6)

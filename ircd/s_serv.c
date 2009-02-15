@@ -210,10 +210,12 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 /*
 ** Mandamos el aviso a toda la red
 */
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9,
         ":%s WALLOPS :Link with %s dropped, excessive TS difference"
         " (mine TS=%ld, theirs TS=%ld, difference=%ld)",
         me.name, host, recv_time, timestamp, desfase);
+#endif
     sendto_highprot_butone(cptr, 10,
         "%s " TOK_WALLOPS " :Link with %s dropped, excessive TS difference"
         " (mine TS=%ld, theirs TS=%ld, difference=%ld)",
@@ -429,9 +431,11 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
      */
     if (strCasediff(acptr->name, host))
     {
+#if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(cptr, 9,
           ":%s WALLOPS :SERVER Numeric Collision: %s != %s",
           me.name, acptr->name, host);
+#endif
       sendto_highprot_butone(cptr, 10, 
           "%s WALLOPS :SERVER Numeric Collision: %s != %s",
           NumServ(&me), acptr->name, host);
@@ -472,10 +476,12 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       if (!IsServer(sptr))
         return exit_client(cptr, sptr, &me, PunteroACadena(acptr->info));
+#if !defined(NO_PROTOCOL9)
       if (Protocol(cptr) < 10)
         sendto_one(cptr, ":%s WALLOPS :Received :%s SERVER %s from %s !?!",
             me.name, parv[0], parv[1], cptr->name);
       else
+#endif
         sendto_one(cptr, "%s " TOK_WALLOPS " :Received :%s SERVER %s from %s !?!",
             NumServ(&me), parv[0], parv[1], cptr->name);
       return exit_new_server(cptr, sptr, host, timestamp, "%s",
@@ -756,23 +762,31 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
             NumServ(sptr), PunteroACadena(acptr->name), hop + 1, parv[4], parv[5],
             NumServCap(acptr), IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", 
             IsIPv6(acptr) ? "6" : "", PunteroACadena(acptr->info));
+#if !defined(NO_PROTOCOL9)
       else
         sendto_one(bcptr, ":%s SERVER %s %d 0 %s %s %s%s 0 :%s",
             parv[0], PunteroACadena(acptr->name), hop + 1, parv[4], parv[5],
             NumServCap(acptr), PunteroACadena(acptr->info));
+#endif
     }
     return 0;
   }
 
   if (IsUnknown(cptr) || IsHandshake(cptr))
   {
-    if (prot == 9)
-    {
+#if defined(NO_PROTOCOL9)
+   if (prot == 9)
+     return exit_client(cptr, cptr, &me,
+         "To link a P09 server disable NO_PROTOCOL9");
+#endif
+#if !defined(NO_PROTOCOL9)
+   if (prot == 9)
+   {
       char buffer[1024];
 
       strcpy(buffer, "p09:");
       strcat(buffer, parv[1]);
-
+      
       if (!db_buscar_registro(BDD_CONFIGDB, buffer))
       {
 /*
@@ -796,6 +810,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
             "To link a P09 server you need an entry in the Distributed DataBase");
       }
     }
+#endif
 
     make_server(cptr);
     cptr->serv->timestamp = timestamp;
@@ -804,6 +819,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     cptr->serv->esnet_db = 0;   /* De momento exigimos un BURST de la base de datos */
     SetServerYXX(cptr, cptr, parv[6]);
     
+#if !defined(NO_PROTOCOL9)
     /* Si recibimos un P09, ponemos +hs ya que siempre es un service y hub */
     if (Protocol(cptr) < 10)
     {
@@ -811,6 +827,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
       SetService(cptr);
     }
     else 
+#endif
     {
       if (*parv[7] == '+')
         set_server_flags(cptr, parv[7] + 1);
@@ -869,10 +886,12 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_ops("Connected to a net with a timestamp-clock"
         " difference of " STIME_T_FMT " seconds! Used SETTIME to correct"
         " this.", timestamp - recv_time);
+#if !defined(NO_PROTOCOL9)
     if (Protocol(cptr) < 10)
       sendto_one(cptr, ":%s SETTIME " TIME_T_FMT " :%s",
           me.name, TStime(), me.name);
     else
+#endif
       sendto_one(cptr, "%s " TOK_SETTIME " " TIME_T_FMT " :%s",
           NumServ(&me), TStime(), me.name);
   }
@@ -897,7 +916,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
       && strnCasecmp(PunteroACadena(cptr->info), "JUPE", 4));
   inpath = cptr->name;
   host = cptr->name;
-
+  
   if (IsUnknown(cptr))
   {
 #if defined(ESNET_NEG)
@@ -945,15 +964,21 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
   Count_unknownbecomesserver(nrof);
   if (Protocol(cptr) > 9)
     SetBurst(cptr);
+#if !defined(NO_PROTOCOL9)
   else
     cptr->flags |= FLAGS_TS8;
-    
+#endif  
+  
   UpdateCheckPing(cptr, get_client_ping(cptr));
   //nextping = now;
   if (cptr->serv->user && cptr->serv->by &&
       (acptr = findNUser(cptr->serv->by)) && acptr->user == cptr->serv->user)
   {
-    if (MyUser(acptr) || Protocol(acptr->from) < 10)
+    if (MyUser(acptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(acptr->from) < 10
+#endif
+    )
       sendto_one(acptr, ":%s NOTICE %s :Link with %s established.",
           me.name, acptr->name, inpath);
     else
@@ -995,12 +1020,14 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr), NumServCap(cptr),
             IsHub(cptr) ? "h" : "", IsService(cptr) ? "s" : "", IsIPv6(cptr) ? "6" : "",
             PunteroACadena(cptr->info));
+#if !defined(NO_PROTOCOL9)
       else
         sendto_one(acptr,
             ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s 0 :%s", me.name,
             cptr->name, cptr->serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr), NumServCap(cptr),
             PunteroACadena(cptr->info));
+#endif
     }
     else
     {
@@ -1010,11 +1037,13 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr),
             NumServCap(cptr), IsHub(cptr) ? "h" : "", IsService(cptr) ? "s" : "", 
             IsIPv6(cptr) ? "6" : "", PunteroACadena(cptr->info));
+#if !defined(NO_PROTOCOL9)
       else
         sendto_one(acptr, ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
             me.name, cptr->name, cptr->serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr),
             NumServCap(cptr), PunteroACadena(cptr->info));
+#endif
     }
   }
 
@@ -1076,6 +1105,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
               protocol_str, Protocol(acptr), NumServCap(acptr),
               IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", IsIPv6(acptr) ? "6" : "",
               PunteroACadena(acptr->info));
+#if !defined(NO_PROTOCOL9)
         else
           sendto_one(cptr,
               ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
@@ -1083,6 +1113,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
               acptr->hopcount + 1, acptr->serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
               PunteroACadena(acptr->info));
+#endif
       }
     }
   }
@@ -1095,7 +1126,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
     if (IsUser(acptr))
     {
       char xxx_buf[8];
-
+#if !defined(NO_PROTOCOL9)
       if (Protocol(cptr) < 10)
       {
         /*
@@ -1119,6 +1150,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
         send_user_joins(cptr, acptr);
       }
       else
+#endif
       {
         char *s = umode_str(acptr, NULL);
         sendto_one(cptr, *s ?
@@ -1144,7 +1176,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
    */
   {
     Reg1 aGline *agline;
-    if(Protocol(cptr) >= 10)
+    if(Protocol(cptr) > 9)
       for (agline = gline; agline; agline = agline->next)
         reenvia_gline(cptr, agline);
   }
@@ -1162,7 +1194,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
   completa_microburst();
 #endif
 
-  if (Protocol(cptr) >= 10)
+  if (Protocol(cptr) > 9)
     sendto_one(cptr, "%s " TOK_END_OF_BURST, NumServ(&me));
   return 0;
 }

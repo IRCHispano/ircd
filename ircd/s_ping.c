@@ -117,7 +117,11 @@ int start_ping(aClient *cptr)
 #endif
   remote_addr.sin_family = AF_INET;
 
-  if (MyUser(cptr->acpt) || Protocol(cptr->acpt->from) < 10)
+  if (MyUser(cptr->acpt) 
+#if !defined(NO_PROTOCOL9)
+      || Protocol(cptr->acpt->from) < 10
+#endif
+  )
   {
     sendto_one(cptr->acpt,
         ":%s NOTICE %s :Sending %d ping%s to %s",
@@ -387,7 +391,11 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (BadPtr(parv[4]) || atoi(parv[4]) <= 0)
   {
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(sptr, ":%s NOTICE %s :UPING: Invalid number of packets: %s",
           me.name, parv[0], parv[4]);
     else
@@ -409,7 +417,11 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
         break;
   if (!aconf)
   {
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(sptr, ":%s NOTICE %s :UPING: Host %s not listed in ircd.conf",
           me.name, parv[0], parv[1]);
     else
@@ -433,7 +445,11 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
     int err = errno;
     sendto_ops("m_uping: socket: %s", (err != EAGAIN) ?
         strerror(err) : "No more sockets");
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(sptr, ":%s NOTICE %s :UPING: Unable to create udp ping socket",
           me.name, parv[0]);
     else
@@ -449,7 +465,11 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (fcntl(fd, F_SETFL, FNDELAY) == -1)
   {
     sendto_ops("m_uping: fcntl FNDELAY: %s", strerror(errno));
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(sptr, ":%s NOTICE %s :UPING: Can't set fd non-blocking",
           me.name, parv[0]);
     else
@@ -470,7 +490,11 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     int err = errno;
     sendto_ops("m_uping: setsockopt SO_SNDBUF|SO_RCVBUF: %s", strerror(err));
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(sptr, ":%s NOTICE %s :UPING: error in setsockopt: %s",
           me.name, parv[0], strerror(err));
     else
@@ -483,7 +507,11 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (fd >= MAXCONNECTIONS)
   {
     sendto_ops("Can't allocate fd for uping (all connections in use)");
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(sptr, ":%s NOTICE %s :UPING: All connections in use",
           me.name, parv[0]);
     else
@@ -529,7 +557,10 @@ void end_ping(aClient *cptr)
   if (cptr->acpt)
   {
     if (MyUser(cptr->acpt)
-        || (IsServer(cptr->acpt->from) && Protocol(cptr->acpt->from) < 10))
+#if !defined(NO_PROTOCOL9)
+        || (IsServer(cptr->acpt->from) && Protocol(cptr->acpt->from) < 10)
+#endif
+    )
     {
       if (cptr->firsttime)      /* Started at all ? */
       {

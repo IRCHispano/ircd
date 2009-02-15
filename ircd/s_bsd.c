@@ -2085,9 +2085,11 @@ void event_checkping_callback(int fd, short event, aClient *cptr)
       if (IsUser(cptr))
         sendto_one(cptr, "PING :%s", me.name);
       else {
+#if !defined(NO_PROTOCOL9)
         if (Protocol(cptr) < 10)
           sendto_one(cptr, ":%s PING :%s", me.name, me.name);
         else
+#endif
           sendto_one(cptr, "%s " TOK_PING " :%s", NumServ(&me), me.name);
       }
     }
@@ -2214,7 +2216,11 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
     {
       if (by && IsUser(by))
       {
-        if (MyUser(by) || Protocol(by->from) < 10)
+        if (MyUser(by) 
+#if !defined(NO_PROTOCOL9)
+            || Protocol(by->from) < 10
+#endif
+        )
           sendto_one(by, ":%s NOTICE %s :Connection to %s already in progress",
               me.name, by->name, c2ptr->name);
         else

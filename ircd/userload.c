@@ -246,7 +246,11 @@ void calc_load(aClient *sptr)
     times[i][2] /= 86400;
   }
 
-  if (MyUser(sptr) || Protocol(sptr->from) < 10)
+  if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+      || Protocol(sptr->from) < 10
+#endif
+  )
   {
     sendto_one(sptr, ":%s NOTICE %s :%s", me.name, sptr->name, header);
     for (i = 0; i < 3; ++i)

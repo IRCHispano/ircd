@@ -39,6 +39,7 @@ struct Gline {
   time_t lastmod;
   time_t lifetime;
   struct in_addr ip;
+  unsigned char bits;
   unsigned int gflags;
 };
 

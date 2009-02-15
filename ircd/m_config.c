@@ -93,9 +93,11 @@ void config_resolve_speculative(aClient *cptr)
 #if defined(ZLIB_ESNET)
     if (!strchr(p, 'z') && (cptr->negociacion & ZLIB_ESNET_OUT_SPECULATIVE))
     {
+#if !defined(NO_PROTOCOL9)
       if (Protocol(cptr) < 10)
         sendto_one(cptr, ":%s " MSG_CONFIG " ACK :zlib", me.name);
       else
+#endif
         sendto_one(cptr, "%s " TOK_CONFIG " ACK :zlib", NumServ(&me));
       cptr->negociacion &= ~ZLIB_ESNET_OUT_SPECULATIVE;
       cptr->negociacion |= ZLIB_ESNET_OUT;
@@ -162,9 +164,11 @@ int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
       case ZLIB:
         if (!strchr(p, 'z'))
         {                       /* Permitimos compresion */
+#if !defined(NO_PROTOCOL9)
           if (Protocol(sptr) < 10)
             sendto_one(sptr, ":%s " MSG_CONFIG " ACK :zlib", me.name);
           else
+#endif
             sendto_one(sptr, "%s " TOK_CONFIG " ACK :zlib", NumServ(&me));
           cptr->negociacion |= ZLIB_ESNET_OUT;
         }

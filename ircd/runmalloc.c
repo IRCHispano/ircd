@@ -167,7 +167,11 @@ void report_memleak_stats(aClient *sptr, int parc, char *parv[])
         }
     }
     loc = tmp_loc;
-    if (MyUser(sptr) || Protocol(sptr->from) < 10)
+    if (MyUser(sptr)
+#if !defined(NO_PROTOCOL9)
+        || Protocol(sptr->from) < 10
+#endif
+    )
       sendto_one(sptr, ":%s NOTICE %s :Memory allocated between " TIME_T_FMT
           " (server start + %s s) and " TIME_T_FMT " (now - %s s):",
           me.name, parv[0], from, parc > 4 ? parv[4] : "0", till,

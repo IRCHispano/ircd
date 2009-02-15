@@ -150,6 +150,33 @@ static aClient *find_chasing(aClient *sptr, char *user, int *chasing)
 }
 
 /*
+ * fix_string
+ * 
+ * Elimina caracteres no legibles de control a una cadena
+ * 
+ */
+void fix_string(char *arg) {
+  char *src;
+  char *dst;
+  
+  if(!arg)
+    return;
+  
+  for(src=arg, dst=arg;*src;src++)
+  {
+    if(*src<32 || *src>126)
+      continue;
+    
+    if(src!=dst)
+      *dst=*src;
+    
+    dst++;
+  }
+  *dst='\0';
+  
+}
+
+/*
  * Create a string of form "foo!bar@fubar" given foo, bar and fubar
  * as the parameters.  If NULL, they become "*".
  */
@@ -157,6 +184,7 @@ static char *make_nick_user_host(char *nick, char *name, char *host)
 {
   static char namebuf[NICKLEN + USERLEN + HOSTLEN + 3];
   sprintf_irc(namebuf, "%s!%s@%s", nick, name, host);
+  fix_string(namebuf);
   return namebuf;
 }
 
@@ -168,6 +196,7 @@ static char *make_nick_user_ip(char *nick, char *name, struct in_addr ip)
 {
   static char ipbuf[NICKLEN + USERLEN + 16 + 3];
   sprintf_irc(ipbuf, "%s!%s@%s", nick, name, inetntoa(ip));
+  fix_string(ipbuf);
   return ipbuf;
 }
 
@@ -208,6 +237,9 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid,
   }
   if (MyUser(cptr))
     collapse(banid);
+  
+  fix_string(banid);
+  
   for (banp = &chptr->banlist; *banp;)
   {
     len += strlen((*banp)->value.ban.banstr);
@@ -700,6 +732,7 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
   *modebuf = *parabuf = '\0';
   channel_modes(cptr, modebuf, parabuf, chptr);
 
+#if !defined(NO_PROTOCOL9)
   if (Protocol(cptr) < 10)
   {
     sent = send_mode_list(cptr, chptr->chname, chptr->creationtime,
@@ -730,6 +763,7 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
           parabuf, chptr->creationtime);
   }
   else
+#endif
   {
     static unsigned int current_flags[4] =
         { 0, CHFL_CHANOP | CHFL_VOICE, CHFL_VOICE, CHFL_CHANOP };
@@ -844,9 +878,11 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
   /* Burst de TOPIC */
   if (chptr->topic)
   {
+#if !defined(NO_PROTOCOL9)
     if (Protocol(cptr) < 10)
       sendto_one(cptr, ":%s TOPIC %s :%s", me.name, chptr->chname, chptr->topic);
     else 
+#endif
       sendto_one(cptr, "%s " TOK_TOPIC " %s " TIME_T_FMT " " TIME_T_FMT " :%s",
                        NumServ(&me), chptr->chname, chptr->creationtime, chptr->topic_time, chptr->topic);
   }
@@ -915,11 +951,15 @@ int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
           botname, chptr->chname, modebuf, parabuf);
     if (IsLocalChannel(chptr->chname))
       return 0;
-
+#if defined(NO_PROTOCOL9)
+    sendto_serv_butone(cptr, ":%s " TOK_BMODE " %s %s %s %s",
+        parv[0], parv[1], chptr->chname, modebuf, parabuf);
+#else
     sendto_lowprot_butone(cptr, 9, ":%s BMODE %s %s %s %s",
         parv[0], parv[1], chptr->chname, modebuf, parabuf);
-    sendto_highprot_butone(cptr, 10, "%s BMODE %s %s %s %s",
+    sendto_highprot_butone(cptr, 10, "%s " TOK_BMODE " %s %s %s %s",
         parv[0], parv[1], chptr->chname, modebuf, nparabuf);
+#endif
   }
   return 0;
 }
@@ -1049,18 +1089,26 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
         strcpy(modebuf, "+");
       if (badop != 2)
       {
+#if defined(NO_PROTOCOL9)
+        sendto_serv_butone(cptr, "%s " TOK_MODE " %s %s %s " TIME_T_FMT,
+            NumServ(sptr), chptr->chname, modebuf, nparabuf,
+            (badop == 4) ? (time_t) 0 : chptr->creationtime);
+#else
         sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s %s " TIME_T_FMT,
             parv[0], chptr->chname, modebuf, parabuf,
             (badop == 4) ? (time_t) 0 : chptr->creationtime);
         sendto_highprot_butone(cptr, 10, "%s " TOK_MODE " %s %s %s " TIME_T_FMT,
             NumServ(sptr), chptr->chname, modebuf, nparabuf,
             (badop == 4) ? (time_t) 0 : chptr->creationtime);
+#endif
       }
     }
     else
     {
+#if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(cptr, 9, ":%s MODE %s %s %s",
           parv[0], chptr->chname, modebuf, parabuf);
+#endif
       if (IsServer(sptr))
         sendto_highprot_butone(cptr, 10, "%s " TOK_MODE " %s %s %s",
             NumServ(sptr), chptr->chname, modebuf, nparabuf);
@@ -2420,12 +2468,14 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
          * someone on the otherside, that he is nick collided
          * (killed) but his +o still ops the other person.
          */
+#if !defined(NO_PROTOCOL9)
         if (Protocol(cptr) < 10)
         {
           if (!(who = find_chasing(sptr, parv[0], NULL)))
             break;
         }
         else
+#endif
         {
           if (!(who = findNUser(parv[0])))
             break;
@@ -3218,20 +3268,24 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
      */
     if (IsUser(sptr))
     {
+#if !defined(NO_PROTOCOL9)
       if (Protocol(cptr) < 10)
         sendto_one(cptr, ":%s MODE %s -o %s " TIME_T_FMT,
             me.name, chptr->chname, sptr->name,
             *badop == 2 ? (time_t) 0 : chptr->creationtime);
       else
+#endif
         sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT,
             NumServ(&me), chptr->chname, NumNick(sptr),
             *badop == 2 ? (time_t) 0 : chptr->creationtime);
     }
+#if !defined(NO_PROTOCOL9)
     if (Protocol(cptr) < 10)
       sendto_one(cptr, ":%s MODE %s %s %s " TIME_T_FMT,
           me.name, chptr->chname, bmodebuf, bparambuf,
           *badop == 2 ? (time_t) 0 : chptr->creationtime);
     else
+#endif
       sendto_one(cptr, "%s " TOK_MODE " %s %s %s " TIME_T_FMT,
           NumServ(&me), chptr->chname, bmodebuf, nbparambuf,
           *badop == 2 ? (time_t) 0 : chptr->creationtime);
@@ -4029,7 +4083,9 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         chptr = get_channel(sptr, name, !CREATE);
         if (chptr && chptr->mode.mode & MODE_SENDTS)
         {                       /* send a TS? */
+#if !defined(NO_PROTOCOL9)
           sendto_lowprot_butone(cptr, 9, ":%s MODE %s + " TIME_T_FMT, me.name, chptr->chname, chptr->creationtime); /* ok, send TS */
+#endif
           sendto_highprot_butone(cptr, 10, "%s " TOK_MODE " %s + " TIME_T_FMT, NumServ(&me), chptr->chname, chptr->creationtime); /* ok, send TS */
           chptr->mode.mode &= ~MODE_SENDTS; /* reset flag */
         }
@@ -4050,8 +4106,10 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
             botname = me.name;
 
           /* queridos remotos, ahora os comereis un modo OP */
+#if !defined(NO_PROTOCOL9)
           sendto_lowprot_butone(cptr, 9, ":%s BMODE %s %s +o %s",
               me.name, BDD_CHANSERV, chptr->chname, sptr->name);
+#endif
           sendto_highprot_butone(cptr, 10, "%s BMODE %s %s +o %s%s",
               NumServ(&me), BDD_CHANSERV, chptr->chname, NumNick(sptr));
 
@@ -4068,8 +4126,10 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
       for (name = strtoken(&p, mbuf, ","); name; name = strtoken(&p, NULL, ","))
       {
         chptr = get_channel(sptr, name, !CREATE);
+#if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9, ":%s MODE %s +o %s " TIME_T_FMT,
             me.name, chptr->chname, parv[0], chptr->creationtime);
+#endif
       }
     }
   }
@@ -4121,15 +4181,10 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   
   if(!MyUser(acptr))
   {
-	if(acptr->from == sptr->from)
+    if(acptr->from == sptr->from)
       return 0;
-	
-    if(Protocol(acptr->from)<10)
-	  sendto_one(acptr, ":%s SVSJOIN %s :%s",
-	    sptr->name, parv[1], parv[2]);
-    else
-      sendto_one(acptr, "%s " TOK_SVSJOIN " %s%s :%s",
-        NumServ(sptr), NumNick(acptr), parv[2]);
+
+    sendto_one_hunt(acptr->from, sptr, "SVSJOIN", TOK_SVSJOIN, ":%s", parv[2]);
     
     return 0;
   }
@@ -4207,8 +4262,9 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 
   /* Propagate joins to P09 servers */
+#if !defined(NO_PROTOCOL9)
   sendto_lowprot_butone(NULL, 9,  ":%s JOIN %s", acptr->name, name);
-
+#endif
   if (!sendcreate)              /* Propgate joins to P10 servers */
     sendto_highprot_butone(NULL, 10, "%s%s " TOK_JOIN " %s",  NumNick(acptr), name);
   else                         /* and now creation events */
@@ -4221,7 +4277,9 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     chptr = get_channel(acptr, name, !CREATE);
     if (chptr && chptr->mode.mode & MODE_SENDTS)
     {                       /* send a TS? */
+#if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(NULL, 9, ":%s MODE %s + " TIME_T_FMT, me.name, chptr->chname, chptr->creationtime); /* ok, send TS */
+#endif
       sendto_highprot_butone(NULL, 10, "%s " TOK_MODE " %s + " TIME_T_FMT, NumServ(&me), chptr->chname, chptr->creationtime); /* ok, send TS */
       chptr->mode.mode &= ~MODE_SENDTS;
       /* reset flag */
@@ -4231,8 +4289,10 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (sendcreate)
   {                           /* ok, send along modes for creation events to P09 */
     chptr = get_channel(acptr, name, !CREATE);
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(NULL, 9, ":%s MODE %s +o %s " TIME_T_FMT, me.name,
         chptr->chname, acptr->name, chptr->creationtime);
+#endif
   }
 
 }
@@ -4324,9 +4384,11 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
            TS_LAG_TIME lag, or an admin is hacking */
         badop = 2;
         /* This causes a HACK notice on all upstream servers: */
+#if !defined(NO_PROTOCOL9)
         if (Protocol(cptr) < 10)
           sendto_one(cptr, ":%s MODE %s -o %s 0", me.name, name, sptr->name);
         else
+#endif
           sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s 0",
               NumServ(&me), name, NumNick(sptr));
         /* This causes a WALLOPS on all downstream servers and a notice to our
@@ -4341,10 +4403,12 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
            channel, probably a net.ride */
         badop = 1;
         /* Send a deop upstream: */
+#if !defined(NO_PROTOCOL9)
         if (Protocol(cptr) < 10)
           sendto_one(cptr, ":%s MODE %s -o %s " TIME_T_FMT, me.name,
               name, sptr->name, chptr->creationtime);
         else
+#endif
           sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT, NumServ(&me),
               name, NumNick(sptr), chptr->creationtime);
       }
@@ -4361,8 +4425,10 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if (badop)
     {                           /* handle badop: convert CREATE into JOIN */
+#if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(cptr, 9, ":%s JOIN %s " TIME_T_FMT,
           sptr->name, name, chptr->creationtime);
+#endif
       sendto_highprot_butone(cptr, 10, "%s%s " TOK_JOIN " %s " TIME_T_FMT,
           NumNick(sptr), name, chptr->creationtime);
     }
@@ -4395,11 +4461,13 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     /* And JOIN + MODE to 2.9 servers; following
        is not needed after all are 2.10 */
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9, ":%s JOIN %s", parv[0], cbuf);
     p = NULL;
     for (name = strtoken(&p, cbuf, ","); name; name = strtoken(&p, NULL, ","))
       sendto_lowprot_butone(cptr, 9, ":%s MODE %s +o %s " TIME_T_FMT,
           sptr->user->server->name, name, parv[0], chanTS);
+#endif
 #endif
   }
 
@@ -5487,13 +5555,17 @@ int m_part(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     if (comment)
     {
+#if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(cptr, 9, PartFmt2, parv[0], pbuf, comment);
+#endif
       sendto_highprot_butone(cptr, 10, PartFmt2Serv, NumNick(sptr), pbuf,
           comment);
     }
     else
     {
+#if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(cptr, 9, PartFmt1, parv[0], pbuf);
+#endif
       sendto_highprot_butone(cptr, 10, PartFmt1Serv, NumNick(sptr), pbuf);
     }
   }
@@ -5545,24 +5617,14 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
   
   if(!MyUser(acptr))
   {
-	if(acptr->from == sptr->from)
-	  return 0;
-	  
-	if (parc < 4) {
-      if(Protocol(acptr->from)<10)
-	    sendto_one(acptr, ":%s SVSPART %s :%s",
-	      sptr->name, parv[1], parv[2]);
-      else
-        sendto_one(acptr, "%s " TOK_SVSPART " %s%s :%s",
-          NumServ(sptr), NumNick(acptr), parv[2]);
-    } else {
-      if(Protocol(acptr->from)<10)
-  	    sendto_one(acptr, ":%s SVSPART %s %s :%s",
-  	      sptr->name, parv[1], parv[2], parv[3]);
-      else
-        sendto_one(acptr, "%s " TOK_SVSPART " %s%s %s :%s",
-          NumServ(sptr), NumNick(acptr), parv[2], parv[3]);	
-    }
+    if(acptr->from == sptr->from)
+      return 0;
+
+    if (parc < 4)
+      sendto_one_hunt(acptr->from, sptr, "SVSPART", TOK_SVSPART, ":%s", parv[2]);
+    else
+      sendto_one_hunt(acptr->from, sptr, "SVSPART", TOK_SVSPART, "%s :%s", parv[2], parv[3]);
+    
     return 0;
   }
 
@@ -5599,12 +5661,16 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
   /* Send out the parts to all servers... -Kev */
   if (comment)
   {
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(NULL, 9, PartFmt2, acptr->name, name, comment);
+#endif
     sendto_highprot_butone(NULL, 10, PartFmt2Serv, NumNick(acptr), name, comment);
   }
   else
   {
+#if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(NULL, 9, PartFmt1, acptr->name, name);
+#endif
     sendto_highprot_butone(NULL, 10, PartFmt1Serv, NumNick(acptr), name);
   }
 }
@@ -5663,7 +5729,11 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 
   lp2 = find_user_link(chptr->members, sptr);
-  if (MyUser(sptr) || Protocol(cptr) < 10)
+  if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+      || Protocol(cptr) < 10
+#endif
+)
   {
     if (!(who = find_chasing(sptr, parv[2], NULL)))
       return 0;                 /* No such user left! */
@@ -5703,10 +5773,12 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
        */
       if (IsUser(sptr))
       {
+#if !defined(NO_PROTOCOL9)
         if (Protocol(cptr) < 10)
           sendto_one(cptr, ":%s MODE %s -o %s " TIME_T_FMT,
               me.name, chptr->chname, sptr->name, chptr->creationtime);
         else
+#endif          
           sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT,
               NumServ(&me), chptr->chname, NumNick(sptr), chptr->creationtime);
       }
@@ -5720,19 +5792,23 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(cptr, ":%s JOIN %s", who->name, parv[1]);
       if (lp->flags & CHFL_CHANOP)
       {
+#if !defined(NO_PROTOCOL9)
         if (Protocol(cptr) < 10)
           sendto_one(cptr, ":%s MODE %s +o %s " TIME_T_FMT,
               me.name, parv[1], who->name, chptr->creationtime);
         else
+#endif
           sendto_one(cptr, "%s " TOK_MODE " %s +o %s%s " TIME_T_FMT,
               NumServ(&me), parv[1], NumNick(who), chptr->creationtime);
       }
       if (lp->flags & CHFL_VOICE)
       {
+#if !defined(NO_PROTOCOL9)
         if (Protocol(cptr) < 10)
           sendto_one(cptr, ":%s MODE %s +v %s " TIME_T_FMT,
               me.name, chptr->chname, who->name, chptr->creationtime);
         else
+#endif
           sendto_one(cptr, "%s " TOK_MODE " %s +v %s%s " TIME_T_FMT,
               NumServ(&me), parv[1], NumNick(who), chptr->creationtime);
       }
@@ -5744,8 +5820,10 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
             ":%s KICK %s %s :%s", parv[0], chptr->chname, who->name, comment);
       if (!IsLocalChannel(parv[1]))
       {
+#if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9, ":%s KICK %s %s :%s",
             parv[0], chptr->chname, who->name, comment);
+#endif
         if (IsUser(sptr))
         {
           sendto_highprot_butone(cptr, 10, "%s%s " TOK_KICK " %s %s%s :%s",
@@ -5811,14 +5889,12 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
         {
           if (IsServer(cptr))
           {                     /* Case b) ? */
+#if !defined(NO_PROTOCOL9)
             if (Protocol(cptr) < 10)
-            {
               sendto_one(cptr, PartFmt1, who->name, parv[1]);
-            }
             else
-            {
+#endif
               sendto_one(cptr, PartFmt1Serv, NumNick(who), parv[1]);
-            }
           }
           remove_user_from_channel(who, chptr);
           return 0;
@@ -5886,8 +5962,9 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
         (!(IsServicesBot(sptr) || IsServer(sptr)) && ((topic || SecretChannel(chptr))
         && !IsMember(sptr, chptr))))
     {
-      sendto_one(sptr, err_str(chptr ? ERR_NOTONCHANNEL : ERR_NOSUCHCHANNEL),
-          me.name, parv[0], chptr ? chptr->chname : name);
+      if(!IsServer(sptr))
+        sendto_one(sptr, err_str(chptr ? ERR_NOTONCHANNEL : ERR_NOSUCHCHANNEL),
+            me.name, parv[0], chptr ? chptr->chname : name);
       continue;
     }
     if (IsModelessChannel(name))
@@ -5928,7 +6005,12 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
         || IsServicesBot(sptr) || IsServer(sptr)) && topic)
     {
       aClient *from;
-
+      /* Note if this is just a refresh of an old topic, and don't
+       * send it to all the clients to save bandwidth.  We still send
+       * it to other servers as they may have split and lost the topic.
+       */
+      int newtopic=!chptr->topic || strncmp(chptr->topic,topic,TOPICLEN);
+      
       /* setting a topic */
       {
         int len, len2;
@@ -5966,11 +6048,14 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
         chptr->topic_nick = chptr->topic + len + 1; /* Ponemos el nick justo a continuacion */
         strcpy(chptr->topic_nick, from->name);
       }
+      
       chptr->topic_time = ts ? ts : now;
       if (!IsLocalChannel(name))
       {
+#if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9, ":%s TOPIC %s :%s",
             parv[0], chptr->chname, chptr->topic);
+#endif
         if (IsUser(sptr))
           sendto_highprot_butone(cptr, 10, "%s%s " TOK_TOPIC " %s %lu %lu :%s",
               NumNick(sptr), chptr->chname, chptr->creationtime, chptr->topic_time, chptr->topic);
@@ -5978,8 +6063,9 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_highprot_butone(cptr, 10, "%s " TOK_TOPIC " %s %lu %lu :%s",
               NumServ(sptr), chptr->chname, chptr->creationtime, chptr->topic_time, chptr->topic);
       }
-      sendto_channel_butserv(chptr, from, ":%s TOPIC %s :%s",
-          from->name, chptr->chname, chptr->topic);
+      if(newtopic)
+        sendto_channel_butserv(chptr, from, ":%s TOPIC %s :%s",
+              from->name, chptr->chname, chptr->topic);
     }
     else
     {
@@ -5992,27 +6078,33 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
        */
       if (!MyUser(sptr) && !b && IsUser(sptr))
       {
+#if !defined(NO_PROTOCOL9)
         if (Protocol(cptr) < 10)
           sendto_one(cptr, ":%s MODE %s -o %s " TIME_T_FMT,
               me.name, chptr->chname, sptr->name, chptr->creationtime);
         else
+#endif
           sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT,
               NumServ(&me), chptr->chname, NumNick(sptr), chptr->creationtime);
 
         if (chptr->topic)
         {
+#if !defined(NO_PROTOCOL9)
           if (Protocol(cptr) < 10)
             sendto_one(cptr, ":%s TOPIC %s :%s",
                 me.name, chptr->chname, chptr->topic);
           else
+#endif
             sendto_one(cptr, "%s " TOK_TOPIC " %s :%s",
                 NumServ(&me), chptr->chname, chptr->topic);
         }
         else
         {
+#if !defined(NO_PROTOCOL9)
           if (Protocol(cptr) < 10)
             sendto_one(cptr, ":%s TOPIC %s :", me.name, chptr->chname);
           else
+#endif
             sendto_one(cptr, "%s " TOK_TOPIC " %s :", NumServ(&me), chptr->chname);
         }
       }
@@ -6151,10 +6243,12 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
    */
   if (!MyConnect(sptr) && !is_chan_op(sptr, chptr) && !IsServicesBot(sptr) && IsUser(sptr))
   {
+#if !defined(NO_PROTOCOL9)
     if (Protocol(cptr) < 10)
       sendto_one(cptr, ":%s MODE %s -o %s " TIME_T_FMT,
           me.name, chptr->chname, sptr->name, chptr->creationtime);
     else
+#endif
       sendto_one(cptr, "%s " TOK_MODE " %s -o %s%s " TIME_T_FMT,
           NumServ(&me), chptr->chname, NumNick(sptr), chptr->creationtime);
 
@@ -6824,6 +6918,7 @@ static void send_hack_notice(aClient *cptr, aClient *sptr, int parc,
   chptr = FindChannel(parv[1]);
   *params = '\0';
 
+#if !defined(NO_PROTOCOL9)
   if (Protocol(cptr) < 10)      /* We don't get numeric nicks from P09  */
   {                             /* servers, so this can be sent "As Is" */
     if (mtype == 1)
@@ -6856,6 +6951,7 @@ static void send_hack_notice(aClient *cptr, aClient *sptr, int parc,
     }
   }
   else
+#endif
   {
     /* P10 servers require numeric nick conversion before sending. */
     switch (mtype)

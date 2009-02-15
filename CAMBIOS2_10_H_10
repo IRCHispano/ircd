@@ -1,3 +1,16 @@
+* 2009/02/15 dfm@unr.com         (u2.10.H.10.106)            FEATURE/FIX
+------------------------------------------------------------------------
+  Corrijo fallo en send de manejo de buffer en sendto_one_hunt() y de
+  Debug en s_bdd.
+  
+  Hago que los topic no se reenvien durante los netjoins si el topic no
+  ha cambiado.
+  
+  Pongo todo el codigo relacionado con P09 entre defines de
+  #if defined(NO_PROTOCOL9).
+  
+  Elimino caracteres no legibles en bans.
+
 * 2009/02/11 dfm@unr.com         (u2.10.H.10.105)                    FIX
 ------------------------------------------------------------------------
   Corrijo propagacion de SVSJOIN, SVSPART y RENAME

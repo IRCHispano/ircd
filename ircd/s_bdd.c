@@ -1012,7 +1012,7 @@ static void db_die(char *msg, unsigned char que_bdd)
   closelog();
 #endif
 
-  Debug((DEBUG_ERROR, buf));
+  Debug((DEBUG_ERROR, "%s", buf));
 
 #if defined(__cplusplus)
   s_die(0);
@@ -2704,7 +2704,9 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (*servidor == '*')
     {
       /* WOOW, BROADCAST */
+#if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(cptr, 9, ":%s DBQ * %c %s", parv[0], tabla, clave);
+#endif
       sendto_highprot_butone(cptr, 10, "%s%s " TOK_DBQ " * %c %s", NumNick(sptr), tabla, clave);
     }
     else
@@ -2718,10 +2720,12 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
       }
 
       if (!IsMe(acptr))         /* no es para mi, a rutar */
-      { 
+      {
+#if !defined(NO_PROTOCOL9)
         if (Protocol(acptr->from) < 10)
           sendto_one(acptr, ":%s DBQ %s %c %s", parv[0], servidor, tabla, clave);
         else
+#endif
           sendto_one(acptr, "%s " TOK_DBQ " %s %c %s", NumServ(acptr), servidor, tabla, clave);
         return 0;               /* ok, rutado, fin del trabajo */
       }
@@ -2748,7 +2752,11 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (!tabla_residente_y_len[tabla])
   {
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(cptr,
           ":%s NOTICE %s :DBQ ERROR Tabla='%c' Clave='%s' TABLA_NO_RESIDENTE",
           me.name, parv[0], tabla, cn);
@@ -2785,7 +2793,11 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (nivel_helper < 0)
   {
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(cptr,
           ":%s NOTICE %s :DBQ ERROR No tienes permiso para acceder a Tabla='%c' Clave='%s'",
           me.name, parv[0], tabla, cn);
@@ -2799,7 +2811,11 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
   reg = db_buscar_registro(tabla, clave);
   if (!reg)
   {
-    if (MyUser(sptr) || Protocol(cptr) < 10)
+    if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr) < 10
+#endif
+    )
       sendto_one(cptr,
           ":%s NOTICE %s :DBQ ERROR Tabla='%c' Clave='%s' REGISTRO_NO_ENCONTRADO",
           me.name, parv[0], tabla, cn);
@@ -2811,7 +2827,11 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 
 
-  if (MyUser(sptr) || Protocol(cptr) < 10)
+  if (MyUser(sptr) 
+#if !defined(NO_PROTOCOL9)
+      || Protocol(cptr) < 10
+#endif
+  )
     sendto_one(cptr,
         ":%s NOTICE %s :DBQ OK Tabla='%c' Clave='%s' Valor='%s'",
         me.name, parv[0], tabla, reg->clave, reg->valor);

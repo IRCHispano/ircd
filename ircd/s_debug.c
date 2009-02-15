@@ -401,7 +401,11 @@ void send_usage(aClient *cptr, char *nick)
 
   if (getrusage(RUSAGE_SELF, &rus) == -1)
   {
-    if (MyUser(cptr) || Protocol(cptr->from) < 10)
+    if (MyUser(cptr) 
+#if !defined(NO_PROTOCOL9)
+        || Protocol(cptr->from) < 10
+#endif
+    )
       sendto_one(cptr, ":%s NOTICE %s :Getruseage error: %s.",
           me.name, nick, strerror(errno));
     else
