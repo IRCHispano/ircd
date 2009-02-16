@@ -86,7 +86,7 @@ static void dead_link(aClient *to, char *notice)
 
   if (!IsUser(to) && !IsUnknown(to) && !(to->flags & FLAGS_CLOSING))
     sendto_ops("%s for %s", LastDeadComment(to), to->name);
-  Debug((DEBUG_ERROR, LastDeadComment(to)));
+  Debug((DEBUG_ERROR, "%s", LastDeadComment(to)));
 }
 
 /*

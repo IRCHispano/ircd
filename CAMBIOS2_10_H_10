@@ -1,3 +1,7 @@
+* 2009/02/16 dfm@unr.com         (u2.10.H.10.107)                    FIX
+------------------------------------------------------------------------
+  Correccion de una cadena de formato en dead_link y en propaga_gline
+
 * 2009/02/15 dfm@unr.com         (u2.10.H.10.106)            FEATURE/FIX
 ------------------------------------------------------------------------
   Corrijo fallo en send de manejo de buffer en sendto_one_hunt() y de

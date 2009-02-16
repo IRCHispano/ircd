@@ -2629,7 +2629,7 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
           sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s %s %s :%s" : ":%s " TOK_GLINE " %s -%s",
               NumServ(sptr), parv[1], parv[2], parv[3], parv[4], parv[5], parv[parc - 1]);
         else if(parc>5)
-          sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s :%s" : ":%s " TOK_GLINE " %s -%s",
+          sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s %s :%s" : ":%s " TOK_GLINE " %s -%s",
               NumServ(sptr), parv[1], parv[2], parv[3], parv[4], parv[parc - 1]);
         else
           sendto_one(acptr, active ? "%s " TOK_GLINE " %s +%s %s :%s" : ":%s " TOK_GLINE " %s -%s",
