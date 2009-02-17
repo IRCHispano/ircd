@@ -167,10 +167,7 @@ void fix_string(char *arg) {
     if(*src<32 || *src>126)
       continue;
     
-    if(src!=dst)
-      *dst=*src;
-    
-    dst++;
+    *dst++=*src;
   }
   *dst='\0';
   
@@ -3853,7 +3850,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
 */
         if (MyUser(sptr))
         {
-          unsigned char *p;
+          char *p;
 
           for (p = name; *p; p++)
           {
@@ -4181,11 +4178,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   
   if(!MyUser(acptr))
   {
-    if(acptr->from == sptr->from)
-      return 0;
-
-    sendto_one_hunt(acptr->from, sptr, "SVSJOIN", TOK_SVSJOIN, ":%s", parv[2]);
-    
+    sendcmdto_one(acptr, sptr, "SVSJOIN", TOK_SVSJOIN, ":%s", parv[2]);    
     return 0;
   }
 
@@ -5617,13 +5610,10 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
   
   if(!MyUser(acptr))
   {
-    if(acptr->from == sptr->from)
-      return 0;
-
     if (parc < 4)
-      sendto_one_hunt(acptr->from, sptr, "SVSPART", TOK_SVSPART, ":%s", parv[2]);
+      sendcmdto_one(acptr, sptr, "SVSPART", TOK_SVSPART, ":%s", parv[2]);
     else
-      sendto_one_hunt(acptr->from, sptr, "SVSPART", TOK_SVSPART, "%s :%s", parv[2], parv[3]);
+      sendcmdto_one(acptr, sptr, "SVSPART", TOK_SVSPART, "%s :%s", parv[2], parv[3]);
     
     return 0;
   }

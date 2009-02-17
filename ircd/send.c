@@ -209,7 +209,6 @@ void sendto_one(aClient *to, char *pattern, ...)
 
 void sendto_one_hunt(aClient *to, aClient *from, char *cmd, char *token, const char *pattern, ...)
 {
-  char nbuf[512];
   va_list vl;
 
 #if !defined(NO_PROTOCOL9)
@@ -217,19 +216,61 @@ void sendto_one_hunt(aClient *to, aClient *from, char *cmd, char *token, const c
   {
 #endif
     if (IsUser(from))
-      sprintf_irc(nbuf, "%s%s %s ", NumNick(from), token);
+      sprintf_irc(sendbuf, "%s%s %s ", NumNick(from), token);
     else
-      sprintf_irc(nbuf, "%s %s ", NumServ(from), token);
+      sprintf_irc(sendbuf, "%s %s ", NumServ(from), token);
 #if !defined(NO_PROTOCOL9)
   } else 
-    sprintf_irc(nbuf, ":%s %s ", from->name, cmd);
+    sprintf_irc(sendbuf, ":%s %s ", from->name, cmd);
 #endif
 
   va_start(vl, pattern);
-  vsprintf_irc(nbuf + strlen(nbuf), pattern, vl);
+  vsprintf_irc(sendbuf + strlen(sendbuf), pattern, vl);
   va_end(vl);
   
-  strncpy(sendbuf, nbuf, sizeof(nbuf));
+  sendbufto_one(to);
+}
+
+/*
+ * Envio un comando a otro servidor o usuario
+ */
+void sendcmdto_one(aClient *to, aClient *from, char *cmd, char *token, const char *pattern, ...)
+{
+  va_list vl;
+  
+  /* Evito que el mensaje vuelva al origen */
+  if(from->from==to->from)
+    return;
+  
+#if !defined(NO_PROTOCOL9)
+  if (Protocol(to->from) > 9)
+  {
+#endif
+    if (IsUser(from)) {
+      if(IsUser(to))
+        sprintf_irc(sendbuf, "%s%s %s %s%s ", NumNick(from), token, NumNick(to));
+      else
+        sprintf_irc(sendbuf, "%s%s %s %s ", NumNick(from), token, NumServ(to));
+    } else {
+      if(IsUser(to))
+        sprintf_irc(sendbuf, "%s %s %s%s ", NumServ(from), token, NumNick(to));
+      else
+        sprintf_irc(sendbuf, "%s %s %s ", NumServ(from), token, NumServ(to));
+    }
+#if !defined(NO_PROTOCOL9)
+  } else 
+    sprintf_irc(sendbuf, ":%s %s %s ", from->name, cmd, to->name);
+#endif
+
+  if(!pattern || !*pattern)
+    sendbuf[strlen(sendbuf)-1]='\0';
+  else
+  {
+    va_start(vl, pattern);
+    vsprintf_irc(sendbuf + strlen(sendbuf), pattern, vl);
+    va_end(vl);
+  }
+  
   sendbufto_one(to);
 }
 

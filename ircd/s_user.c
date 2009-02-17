@@ -1095,6 +1095,55 @@ int check_target_limit(aClient *sptr, void *target, const char *name,
   return 0;
 }
 
+#if defined(NO_IRCHISPANO)
+/*
+ * Elimino colores mIRC de un mensaje, adaptado de strip_color2 de xchat
+ * 
+ * -- FreeMind 2009/02/16 
+ */
+void strip_color (const char *src, int len, char *dst)
+{
+  int rcol = 0, bgcol = 0;
+  char *start = dst;
+
+  if (len == -1) len = strlen (src);
+  while (len-- > 0)
+    {
+      if (rcol > 0 && (isdigit ((unsigned char)*src) ||
+          (*src == ',' && isdigit ((unsigned char)src[1]) && !bgcol)))
+        {
+          if (src[1] != ',') rcol--;
+          if (*src == ',')
+            {
+              rcol = 2;
+              bgcol = 1;
+            }
+        } else
+          {
+            rcol = bgcol = 0;
+            switch (*src)
+            {
+            case '\003':
+              rcol = 2;
+            case '\010':
+            case '\007':
+            case '\017':
+            case '\026':
+            case '\002':
+            case '\037':
+            case '\035':
+              break;
+            default:
+              pass_char:
+              *dst++ = *src;
+            }
+          }
+      src++;
+    }
+  *dst = 0;
+}
+#endif
+
 /*
  * m_message (used in m_private() and m_notice())
  *
@@ -1163,7 +1212,11 @@ static int m_message(aClient *cptr, aClient *sptr,
                 me.name, parv[0], chptr->chname);
             continue;
           }
-
+#if defined(NO_IRCHISPANO)
+          // Si tiene modo +c elimino colores
+          if (MyUser(sptr) && (chptr->mode.mode & MODE_NOCOLOUR))
+            strip_color(parv[parc-1], strlen(parv[parc-1]), parv[parc-1]);
+#endif
           sendto_channel_butone(cptr, sptr, chptr,
               ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
         }
@@ -4017,15 +4070,12 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if(!MyUser(acptr))
   {
-    if(acptr->from == sptr->from)
-      return 0;
-
     if (parc == 3)
-      sendto_one_hunt(acptr->from, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, ":%s", parv[2]);
+      sendcmdto_one(acptr, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, ":%s", parv[2]);
     else if(parc == 4)
-      sendto_one_hunt(acptr->from, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, "%s :%s", parv[2], parv[3]);
+      sendcmdto_one(acptr, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, "%s :%s", parv[2], parv[3]);
     else
-      sendto_one_hunt(acptr->from, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, "");
+      sendcmdto_one(acptr, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, "");
 
     return 0;
   }

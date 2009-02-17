@@ -61,6 +61,7 @@ extern void sendto_op_mask(snomask_t mask, const char *pattern,
     ...) __attribute__ ((format(printf, 2, 3)));
 extern void sendbufto_op_mask(snomask_t mask);
 extern void sendbufto_serv_butone(aClient *one);
+extern void sendcmdto_one(aClient *to, aClient *from, char *cmd, char *token, const char *pattern, ...);
 
 extern char sendbuf[2048];
 

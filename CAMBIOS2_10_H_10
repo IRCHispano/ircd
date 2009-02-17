@@ -1,3 +1,14 @@
+* 2009/02/17 dfm@unr.com         (u2.10.H.10.108)            FEATURE/FIX
+------------------------------------------------------------------------
+  Correccion de SVSJOIN, SVSPART y RENAME, habia un problema en el
+  reenvio del mensaje.
+
+  Implementacion del modo +c para eliminar colores hacia un canal.
+  
+  NOTA: Este parche no se compilara por defecto debido a que su uso esta
+  prohibido en IRC-Hispano, ha de definir NO_IRCHISPANO para poder
+  usarlo.
+
 * 2009/02/16 dfm@unr.com         (u2.10.H.10.107)                    FIX
 ------------------------------------------------------------------------
   Correccion de una cadena de formato en dead_link y en propaga_gline
