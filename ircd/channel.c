@@ -3850,7 +3850,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
 */
         if (MyUser(sptr))
         {
-          char *p;
+          unsigned char *p;
 
           for (p = name; *p; p++)
           {

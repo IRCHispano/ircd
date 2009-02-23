@@ -1,3 +1,7 @@
+* 2009/02/23 dfm@unr.com         (u2.10.H.10.109)                    FIX
+------------------------------------------------------------------------
+  Correccion de comprobacion de nombres de canal.
+
 * 2009/02/17 dfm@unr.com         (u2.10.H.10.108)            FEATURE/FIX
 ------------------------------------------------------------------------
   Correccion de SVSJOIN, SVSPART y RENAME, habia un problema en el
