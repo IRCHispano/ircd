@@ -156,15 +156,15 @@ static aClient *find_chasing(aClient *sptr, char *user, int *chasing)
  * 
  */
 void fix_string(char *arg) {
-  char *src;
-  char *dst;
+  unsigned char *src;
+  unsigned char *dst;
   
   if(!arg)
     return;
   
-  for(src=arg, dst=arg;*src;src++)
+  for(src=(unsigned char*)arg, dst=(unsigned char*)arg;*src;src++)
   {
-    if(*src<32 || *src>126)
+    if(*src<32)
       continue;
     
     *dst++=*src;
