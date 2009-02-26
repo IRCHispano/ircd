@@ -822,16 +822,10 @@ static int register_user(aClient *cptr, aClient *sptr,
 #else /* Remove the following when all servers are 2.10 */
 
   /* First send message to all 2.9 servers */
-  sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s :%s",
+  sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
       user->server->name, nick, sptr->hopcount + 1, sptr->lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host),
-      user->server->name, 
-#ifdef HISPANO_WEBCHAT
-      inttobase64(ip_base64, MyUser(sptr) ? ntohl(sptr->ip_real.s_addr)  : ntohl(sptr->ip.s_addr), 6),
-#else
-      inttobase64(ip_base64, ntohl(sptr->ip.s_addr), 6),
-#endif
-      PunteroACadena(sptr->info));
+      user->server->name, PunteroACadena(sptr->info));
   for (lp = me.serv->down; lp; lp = lp->next)
   {
     if (lp->value.cptr == cptr)

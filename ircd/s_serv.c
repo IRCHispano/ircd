@@ -1125,7 +1125,6 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
       continue;
     if (IsUser(acptr))
     {
-      char xxx_buf[8];
 #if !defined(NO_PROTOCOL9)
       if (Protocol(cptr) < 10)
       {
@@ -1134,17 +1133,11 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
          * been received. -avalon
          * Or only NICK in new format. --Run
          */
-        sendto_one(cptr, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s :%s",
+        sendto_one(cptr, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
             acptr->user->server->name,
             acptr->name, acptr->hopcount + 1, acptr->lastnick,
             PunteroACadena(acptr->user->username),
             PunteroACadena(acptr->user->host), acptr->user->server->name,
-            inttobase64(xxx_buf,
-#ifdef HISPANO_WEBCHAT
-            MyUser(acptr) ? ntohl(acptr->ip_real.s_addr) : ntohl(acptr->ip.s_addr), 6),
-#else
-            ntohl(acptr->ip.s_addr), 6),
-#endif
             PunteroACadena(acptr->info));
         send_umode(cptr, acptr, 0, SEND_UMODES, 0, SEND_HMODES);
         send_user_joins(cptr, acptr);
@@ -1152,6 +1145,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
       else
 #endif
       {
+        char xxx_buf[8];
         char *s = umode_str(acptr, NULL);
         sendto_one(cptr, *s ?
             "%s " TOK_NICK " %s %d " TIME_T_FMT " %s %s +%s %s %s%s :%s" :

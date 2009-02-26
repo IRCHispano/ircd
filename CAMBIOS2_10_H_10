@@ -1,3 +1,10 @@
+* 2009/02/26 zoltan@irc-dev.net  (u2.10.H.10.111)                CLEANUP
+------------------------------------------------------------------------
+  En el u2.10.H.10.104 se habia introducido un parche para los 
+  deep.space, pero va a dar problemas para otros P09.
+  Revierto el parche y a partir de ahora, los parches que se hagan para
+  deep.space para la transición al P10 no se harán commit.
+
 * 2009/02/23 dfm@unr.com         (u2.10.H.10.110)                    FIX
 ------------------------------------------------------------------------
   Correccion de comprobacion de bans.
