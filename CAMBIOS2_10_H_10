@@ -1,3 +1,30 @@
+* 2009/03/24 dfm@unr.com         (u2.10.H.10.112)            FEATURE/FIX
+------------------------------------------------------------------------
+  Ahora la eliminacion de caracteres de control de bans solo es en
+  local.
+  
+  La comprobacion de si eres oper/ircop para stats remotos es en local.
+  
+  Solo se pueden hacer VERSION locales si no eres oper/ircop.
+  
+  Corrijo comando LIST, para que actualice el evento de escritura en
+  mitad de un listado de canales.
+  
+  Si ahora se intenta actualizar un evento de escritura cuando no existe
+  se ignora, esto soluciona el fallo de flush_sendq_except en sockets
+  que son de listening
+  
+  Nueva feature GLINE_BURST_TIME en propagacion de glines, evita saturar
+  los burst cuando hay muchas en memoria ahora se propagan siguiendo el
+  siguiente criterio:
+  
+  1) Si el servidor que linka tiene menos tiempo de vida que GLINE_BURST_TIME
+     le envio TODAS mis glines
+  2) En caso contrario solo envio las glines que tengan de tiempo sea menor
+     que GLINE_BURST_TIME
+  
+  GLINE_BURST_TIME esta definido en s_serv.h y actualmente es 120
+
 * 2009/02/26 zoltan@irc-dev.net  (u2.10.H.10.111)                CLEANUP
 ------------------------------------------------------------------------
   En el u2.10.H.10.104 se habia introducido un parche para los 

@@ -17,6 +17,7 @@
                                    */
 #endif
 
+#define GLINE_BURST_TIME           120 /* Tiempo de modificacion para reenvio de GLINEs en burst */
 
 #define STAT_PING		0
 #define STAT_LOG		1           /* logfile for -x */
@@ -89,7 +90,7 @@
  */
 
 extern int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf);
+extern int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t start_timestamp);
 extern int m_error(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_end_of_burst(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_end_of_burst_ack(aClient *cptr, aClient *sptr,

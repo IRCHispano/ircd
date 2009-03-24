@@ -876,7 +876,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
     }
 
-    ret = m_server_estab(cptr, aconf, bconf);
+    ret = m_server_estab(cptr, aconf, bconf, start_timestamp);
   }
   else
     ret = 0;
@@ -906,7 +906,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * May only be called after a SERVER was received from cptr,
  * and thus make_server was called, and serv->prot set. --Run
  */
-int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
+int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t start_timestamp)
 {
   Reg3 aClient *acptr;
   char *inpath, *host;
@@ -1164,16 +1164,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
     }
   }
   
-  /*
-   * Propago todas las glines que tengo en la memoria con los timestamps
-   *
-   */
-  {
-    Reg1 aGline *agline;
-    if(Protocol(cptr) > 9)
-      for (agline = gline; agline; agline = agline->next)
-        reenvia_gline(cptr, agline);
-  }
+
   /*
    * Last, send the BURST.
    * (Or for 2.9 servers: pass all channels plus statuses)
@@ -1184,6 +1175,23 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf)
       send_channel_modes(cptr, chptr);
   }
 
+  /*
+   * Propago todas las glines
+   * 
+   * 1) Si el servidor que linka tiene menos tiempo de vida que GLINE_BURST le envio TODAS mis glines
+   * 2) En caso contrario solo envio las glines que tengan de tiempo de modificacion menos que GLINE_BURST
+   *
+   */
+  {
+    Reg1 aGline *agline;
+    if(Protocol(cptr) > 9)
+      for (agline = gline; agline; agline = agline->next)
+      {
+        if((TStime() - agline->lastmod) < GLINE_BURST_TIME || (TStime() - start_timestamp) < GLINE_BURST_TIME)
+          reenvia_gline(cptr, agline);
+      }
+  }
+  
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
   completa_microburst();
 #endif

@@ -181,7 +181,6 @@ static char *make_nick_user_host(char *nick, char *name, char *host)
 {
   static char namebuf[NICKLEN + USERLEN + HOSTLEN + 3];
   sprintf_irc(namebuf, "%s!%s@%s", nick, name, host);
-  fix_string(namebuf);
   return namebuf;
 }
 
@@ -193,7 +192,6 @@ static char *make_nick_user_ip(char *nick, char *name, struct in_addr ip)
 {
   static char ipbuf[NICKLEN + USERLEN + 16 + 3];
   sprintf_irc(ipbuf, "%s!%s@%s", nick, name, inetntoa(ip));
-  fix_string(ipbuf);
   return ipbuf;
 }
 
@@ -233,9 +231,10 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid,
       MyCoreDump;               /* Memory leak */
   }
   if (MyUser(cptr))
+  {
+    fix_string(banid); /* Elimino caracteres control */
     collapse(banid);
-  
-  fix_string(banid);
+  }
   
   for (banp = &chptr->banlist; *banp;)
   {
@@ -6560,6 +6559,7 @@ int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
     RunFree(sptr->listing);
     sptr->listing = NULL;
     sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, sptr->name);
+    UpdateWrite(sptr);
     if (parc < 2 || !strcmp("STOP", parv[1]))
       return 0;                 /* Let LIST or LIST STOP abort a listing. */
   }

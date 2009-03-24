@@ -202,10 +202,13 @@ extern int strnCasecmp(const char *a, const char *b, const size_t n);
                                } while (0)
 #define UpdateWrite(x)         do { \
                                  assert(MyConnect(x)); \
-                                 if(DBufLength(&(x)->sendQ)) \
-                                   assert(event_add((x)->evwrite, NULL)!=-1); \
-                                 else \
-                                   event_del((x)->evwrite); \
+                                 if((x)->evwrite) \
+                                 { \
+                                   if(DBufLength(&(x)->sendQ) || (x)->listing) \
+                                     assert(event_add((x)->evwrite, NULL)!=-1); \
+                                   else \
+                                     event_del((x)->evwrite); \
+                                 } \
                                } while (0)
 #define UpdateGTimer(x,y,z,w)  do { \
                                   assert(MyConnect(x)); \

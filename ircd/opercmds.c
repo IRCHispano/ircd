@@ -321,7 +321,7 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 
   /* Solo ircops y opers tienen acceso a hacer stats remotos */
-  if (parc > 2 && !IsAnOper(sptr) && !IsHelpOp(sptr))
+  if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;

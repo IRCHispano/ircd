@@ -127,6 +127,12 @@ int m_version(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (MyConnect(sptr) && parc > 1)
   {
+    if (IsUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
+    {
+      sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+      return 0;
+    }
+    
     if (!(acptr = find_match_server(parv[1])))
     {
       sendto_one(sptr, err_str(ERR_NOSUCHSERVER), me.name, parv[0], parv[1]);
