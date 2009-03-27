@@ -1184,11 +1184,18 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
    */
   {
     Reg1 aGline *agline;
-    if(Protocol(cptr) > 9)
+    if(Protocol(cptr) > 9 && !IsService(cptr))
       for (agline = gline; agline; agline = agline->next)
-      {
-        if((TStime() - agline->lastmod) < GLINE_BURST_TIME || (TStime() - start_timestamp) < GLINE_BURST_TIME)
-          reenvia_gline(cptr, agline);
+      {        
+        if(!GlineIsLocal(agline) && agline->lastmod &&
+            agline->expire >= TStime() && 
+            ((TStime() - agline->lastmod) < GLINE_BURST_TIME || 
+                (TStime() - start_timestamp) < GLINE_BURST_TIME))
+          sendto_one(cptr, "%s " TOK_GLINE " %s +%s " TIME_T_FMT 
+              " " TIME_T_FMT " " TIME_T_FMT " :%s", 
+              NumServ(&me), NumServ(cptr), agline->host,
+              agline->expire - TStime(), agline->lastmod,
+              agline->lifetime - TStime(), agline->reason);
       }
   }
   

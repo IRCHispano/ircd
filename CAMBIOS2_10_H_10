@@ -1,3 +1,8 @@
+* 2009/03/26 dfm@unr.com         (u2.10.H.10.113)                FEATURE
+------------------------------------------------------------------------
+  El reenvio de glines no se efectuara a nodos que sean service.
+  Se pone el tiempo de GLINE_BURST_TIME a 300 segundos.
+
 * 2009/03/24 dfm@unr.com         (u2.10.H.10.112)            FEATURE/FIX
 ------------------------------------------------------------------------
   Ahora la eliminacion de caracteres de control de bans solo es en

@@ -17,7 +17,10 @@
                                    */
 #endif
 
-#define GLINE_BURST_TIME           120 /* Tiempo de modificacion para reenvio de GLINEs en burst */
+#define GLINE_BURST_TIME       300 /* Tiempo de modificacion para
+                                      reenvio de GLINEs en burst
+                                      300 segundos como el tiempo de
+                                      reconexion por defecto */
 
 #define STAT_PING		0
 #define STAT_LOG		1           /* logfile for -x */
