@@ -1,3 +1,18 @@
+* 2009/03/30 dfm@unr.com         (u2.10.H.10.114)            FEATURE/FIX
+------------------------------------------------------------------------
+  Implementacion de GLINEs por realname, las GLINEs que empiezan por $R
+  se comprobaran contra el realname del usuario.
+  
+  Ejemplo: La gline prueba@$R*pepe* se comprobara contra:
+  
+  Realname: Soy pepe
+  Host....: prueba@10.0.0.1
+    
+  Corrijo m_nick_remoto para que no intente notificar a un usuario local
+  de un cambio de nick remoto, esto provocaba fallos.
+  
+  Corrijo warning en channel.c
+  
 * 2009/03/26 dfm@unr.com         (u2.10.H.10.113)                FEATURE
 ------------------------------------------------------------------------
   El reenvio de glines no se efectuara a nodos que sean service.

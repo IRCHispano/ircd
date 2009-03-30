@@ -469,6 +469,9 @@ aGline *make_gline(int is_ipmask, char *host, char *reason,
 	agline->ip.s_addr = inet_addr(host);
     SetGlineIsIpMask(agline);
   }
+  
+  if(*host == '$' && *(host+1)=='R')
+    SetGlineRealName(agline);
 
 #if defined(BADCHAN)
   if (gtype)
@@ -498,12 +501,13 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
 
     /* Does gline match? */
     /* Added a check against the user's IP address as well -Kev */
-    if ((GlineIsIpMask(agline) ?
-    	agline->ip.s_addr != client_addr(cptr).s_addr :
+    
+    if ((GlineIsIpMask(agline) ? agline->ip.s_addr != client_addr(cptr).s_addr :
+    	(GlineIsRealName(agline) ? match(agline->host+2, PunteroACadena(cptr->info)) :
 #ifdef HISPANO_WEBCHAT
-        match(agline->host, PunteroACadena(cptr->user->host))) == 0 &&
+        match(agline->host, PunteroACadena(cptr->user->host)))) == 0 &&
 #else
-        match(agline->host, PunteroACadena(cptr->sockhost))) == 0 &&
+        match(agline->host, PunteroACadena(cptr->sockhost)))) == 0 &&
 #endif
         match(agline->name, PunteroACadena(cptr->user->username)) == 0)
     {

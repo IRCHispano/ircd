@@ -12,6 +12,7 @@
 #define GLINE_ACTIVE	1
 #define GLINE_IPMASK	2
 #define GLINE_LOCAL	4
+#define GLINE_REALNAME  8
 
 /*
  * G-line macros.
@@ -20,11 +21,15 @@
 #define GlineIsActive(g)	((g)->gflags & GLINE_ACTIVE)
 #define GlineIsIpMask(g)	((g)->gflags & GLINE_IPMASK)
 #define GlineIsLocal(g)		((g)->gflags & GLINE_LOCAL)
+#define GlineIsRealName(g)      ((g)->gflags & GLINE_REALNAME)
 
 #define SetActive(g)		((g)->gflags |= GLINE_ACTIVE)
 #define ClearActive(g)		((g)->gflags &= ~GLINE_ACTIVE)
 #define SetGlineIsIpMask(g)	((g)->gflags |= GLINE_IPMASK)
 #define SetGlineIsLocal(g)	((g)->gflags |= GLINE_LOCAL)
+#define SetGlineRealName(g)     ((g)->gflags |= GLINE_REALNAME)
+
+
 
 /*=============================================================================
  * Structures

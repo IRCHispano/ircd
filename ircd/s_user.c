@@ -5622,8 +5622,8 @@ nickkilldone:
 #endif
     }
     else
-    {                           /* El cambio proviene de otro server */
-      sendto_one(sptr, ":%s NICK :%s", parv[0], nick);
+    { /* Si no es un usuario quien se intenta cambiar el nick salgo */
+      return 0;
     }
     if (sptr->name)
     {

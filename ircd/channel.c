@@ -3851,7 +3851,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         {
           unsigned char *p;
 
-          for (p = name; *p; p++)
+          for (p = (unsigned char *)name; *p; p++)
           {
             if (*p < 32)
             {
