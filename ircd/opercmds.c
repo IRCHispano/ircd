@@ -2057,16 +2057,11 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
       if(find_exception(acptr)) /* Si hay una excepcion me lo salto */
         continue;
 
-      if ((GlineIsIpMask(agline) ? agline->ip.s_addr != client_addr(acptr).s_addr :
+      if ((GlineIsIpMask(agline) ? match(agline->host, inet_ntoa(client_addr(acptr))) :
           (GlineIsRealName(agline) ? match(agline->host+2, PunteroACadena(acptr->info)) :
-#ifdef HISPANO_WEBCHAT
-            match(agline->host, PunteroACadena(acptr->user->host)))) == 0 &&
-#else
             match(agline->host, PunteroACadena(acptr->sockhost)))) == 0 &&
-#endif
             match(agline->name, PunteroACadena(acptr->user->username)) == 0)
       {
-
         int longitud;
         char buf[MAXLEN * 2];
         char comtemp[MAXLEN * 2];

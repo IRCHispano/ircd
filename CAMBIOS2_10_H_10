@@ -1,3 +1,18 @@
+* 2009/04/02 dfm@unr.com         (u2.10.H.10.115)            FEATURE/FIX
+------------------------------------------------------------------------
+  Restituyo el funcionamiento de glines a ips numericas con mascara, a
+  como estaba originalmente.
+  
+  Soporte de canales con mayusculas/minusculas de BDD, ahora en la tabla
+  c hay que poner ademas de los modos de canal separado por :
+  
+  Ejemplo:
+  tabla=c
+  clave=#canal
+  valor=+nt-ki:#CANaL
+  
+  Elimino codigo innecesario y potencialmente peligroso de m_nick_remoto
+  
 * 2009/03/30 dfm@unr.com         (u2.10.H.10.114)            FEATURE/FIX
 ------------------------------------------------------------------------
   Implementacion de GLINEs por realname, las GLINEs que empiezan por $R

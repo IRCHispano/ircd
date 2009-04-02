@@ -5637,58 +5637,7 @@ nickkilldone:
   }
   else
   {
-    /* Local client setting NICK the first time */
-    SlabStringAllocDup(&(sptr->name), nick, 0);
-    if (!sptr->user)
-    {
-      sptr->user = make_user(sptr);
-      sptr->user->server = &me;
-    }
-    SetLocalNumNick(sptr);
-    hAddClient(sptr);
-
-    /*
-     * If the client hasn't gotten a cookie-ping yet,
-     * choose a cookie and send it. -record!jegelhof@cloud9.net
-     */
-    if (!sptr->cookie)
-    {
-      char tmp[COOKIECRYPTLEN+COOKIELEN+1];
-      do
-      {
-        sptr->cookie = SlabStringAlloc(COOKIELEN+1);
-        genera_cookie(sptr->cookie, COOKIELEN);
-      }
-      while ((!sptr->cookie) || IsCookieVerified(sptr));
-
-      if(cifrado_cookies) {
-        char *tmp2=sptr->cookie;
-        SetCookieEncrypted(sptr);
-        cifra_cookie(tmp, sptr->cookie);
-
-        while(*tmp2) {
-          *tmp2 = toUpper(*tmp2);
-          tmp2++;
-        }
-
-      } else
-        strncpy(tmp, sptr->cookie, COOKIELEN+1);
-
-
-      sendto_one(cptr, "PING :%s", tmp);
-    }
-    else if (sptr->user->host && IsCookieVerified(sptr))
-    {
-      /*
-       * USER and PONG already received, now we have NICK.
-       * register_user may reject the client and call exit_client
-       * for it - must test this and exit m_nick too !
-       */
-      sptr->lastnick = TStime();  /* Always local client */
-      if (register_user(cptr, sptr, nick,
-          PunteroACadena(sptr->user->username)) == CPTR_KILLED)
-        return CPTR_KILLED;
-    }
+    return 0;
   }
 
 /*
