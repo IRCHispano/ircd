@@ -4547,6 +4547,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
               NumServ(&me), NumNick(sptr), me.name);
         sptr->flags |= FLAGS_KILLED;
         exit_client(cptr, sptr, &me, "Nick collision (you're a ghost)");
+        sptr=NULL;
       }
       if (lastnick != acptr->lastnick)
         return 0;               /* Ignore the NICK */
@@ -4589,6 +4590,9 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (lastnick == acptr->lastnick)
     return 0;
 
+  if (!sptr)
+    return 0;
+  
 nickkilldone:
 
   /*
@@ -5421,6 +5425,7 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
             cptr->name);
         sptr->flags |= FLAGS_KILLED;
         exit_client(cptr, sptr, &me, "Nick collision (you're a ghost)");
+        sptr=NULL;
       }
       if (lastnick != acptr->lastnick)
         return 0;               /* Ignore the NICK */
@@ -5461,6 +5466,9 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
     exit_client(cptr, acptr, &me, "Nick collision (You collided yourself)");
   }
   if (lastnick == acptr->lastnick)
+    return 0;
+
+  if (!sptr)
     return 0;
 
 nickkilldone:

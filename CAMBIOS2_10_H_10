@@ -1,3 +1,10 @@
+* 2009/04/06 dfm@unr.com         (u2.10.H.10.116)            FEATURE/FIX
+------------------------------------------------------------------------
+  Correcciones en m_nick_local y m_nick_remoto para evitar segmentation
+  faults potenciales, por acceder a zonas de memoria fuera de uso.
+  
+  El nombre de servidor no se muestra en un WHOIS aunque tenga U-Line.
+
 * 2009/04/02 dfm@unr.com         (u2.10.H.10.115)            FEATURE/FIX
 ------------------------------------------------------------------------
   Restituyo el funcionamiento de glines a ips numericas con mascara, a
