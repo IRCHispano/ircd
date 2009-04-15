@@ -1,12 +1,16 @@
 #if !defined(MATCH_H)
 #define MATCH_H
 
+#include "pcre.h"
+
 /*=============================================================================
  * System headers used by this header file
  */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#define OVECCOUNT 3
 
 /*=============================================================================
  * Structures
@@ -31,5 +35,7 @@ extern int matchexec(const char *string, const char *cmask, int minlen);
 extern int matchdecomp(char *mask, const char *cmask);
 extern int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen);
 extern int matchcompIP(struct in_mask *imask, const char *mask);
+extern int match_pcre(pcre *re, char *subject);
+extern int match_pcre_str(char *regexp, char *subject);
 
 #endif /* MATCH_H */

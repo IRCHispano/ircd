@@ -1,3 +1,8 @@
+* 2009/04/15 dfm@unr.com         (u2.10.H.10.117)                FEATURE
+------------------------------------------------------------------------
+  Soporte de expresiones regulares tipo perl para glines por realname y
+  tabla j (nicks jupeados)
+
 * 2009/04/06 dfm@unr.com         (u2.10.H.10.116)            FEATURE/FIX
 ------------------------------------------------------------------------
   Correcciones en m_nick_local y m_nick_remoto para evitar segmentation

@@ -67,7 +67,9 @@ OBJS=IPcheck.o bsd.o channel.o class.o common.o crule.o dbuf.o fileio.o ircd.o \
      random.o res.o runmalloc.o s_auth.o s_bsd.o s_conf.o s_debug.o s_err.o \
      s_misc.o s_numeric.o s_ping.o s_serv.o s_user.o send.o sprintf_irc.o \
      support.o userload.o whocmds.o whowas.o hash.o s_bdd.o \
-     m_config.o m_watch.o persistent_malloc.o slab_alloc.o aes256.o
+     m_config.o m_watch.o persistent_malloc.o slab_alloc.o aes256.o \
+     pcre_compile.o pcre_exec.o pcre_newline.o pcre_globals.o \
+     pcre_tables.o pcre_chartables.o pcre_try_flipped.o
 
 SRC=${OBJS:%.o=%.c}
 
@@ -99,6 +101,8 @@ chkcrule.o: crule.c ../include/sys.h ../include/../config/config.h \
 chkconf: chkconf.o match.o common.o chkcrule.o runmalloc.o fileio.o
 	${CC} ${CFLAGS} ${CPPFLAGS} \
 	    chkconf.o match.o common.o chkcrule.o runmalloc.o fileio.o \
+            pcre_compile.o pcre_exec.o pcre_newline.o pcre_globals.o \
+            pcre_tables.o pcre_chartables.o pcre_try_flipped.o \
 	    ${LDFLAGS} ${IRCDLIBS} -o chkconf
 
 install: build
@@ -296,7 +300,7 @@ list.o: list.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/support.h ../include/s_misc.h ../include/s_bsd.h \
   ../include/res.h ../include/common.h ../include/s_user.h \
   ../include/opercmds.h ../include/m_watch.h ../include/hash.h \
-  ../include/slab_alloc.h ../libevent/event.h
+  ../include/slab_alloc.h ../include/pcre.h ../libevent/event.h
 map.o: map.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
@@ -309,7 +313,7 @@ match.o: match.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
   ../zlib/zlib.h ../zlib/zconf.h ../include/common.h ../include/match.h \
-  ../include/ircd.h ../libevent/event.h
+  ../include/ircd.h ../include/pcre.h ../libevent/event.h
 numnicks.o: numnicks.c ../include/numnicks.h ../include/sys.h \
   ../config/config.h ../config/setup.h ../include/runmalloc.h \
   ../include/h.h ../include/s_debug.h ../include/s_serv.h \
@@ -548,3 +552,10 @@ m_watch.o: m_watch.c ../include/sys.h ../config/config.h \
 persistent_malloc.o: persistent_malloc.c ../include/persistent_malloc.h
 slab_alloc.o: slab_alloc.c ../include/runmalloc.h ../include/slab_alloc.h
 aes256.o: aes256.c ../include/aes256.h
+pcre_compile.o: pcre_compile.c ../include/pcre_internal.h
+pcre_exec.o: pcre_exec.c ../include/pcre_internal.h
+pcre_newline.o: pcre_newline.c ../include/pcre_internal.h
+pcre_globals.o: pcre_globals.c ../include/pcre_internal.h
+pcre_tables.o: pcre_tables.c ../include/pcre_internal.h
+pcre_chartables.o: pcre_chartables.c ../include/pcre_internal.h
+pcre_try_flipped.o: pcre_try_flipped.c ../include/pcre_internal.h

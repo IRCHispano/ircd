@@ -1,6 +1,8 @@
 #if !defined(OPERCMDS_H)
 #define OPERCMDS_H
 
+#include "pcre.h"
+
 /*=============================================================================
  * General defines
  */
@@ -43,6 +45,7 @@ struct Gline {
   time_t expire;
   time_t lastmod;
   time_t lifetime;
+  pcre *re;
   unsigned int gflags;
 };
 

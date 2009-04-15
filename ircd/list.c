@@ -42,6 +42,7 @@
 #include "hash.h"
 #include "slab_alloc.h"
 
+
 #include <assert.h>
 
 RCSTAG_CC("$Id$");
@@ -451,6 +452,8 @@ aGline *make_gline(int is_ipmask, char *host, char *reason,
     char *name, time_t expire, time_t lastmod, time_t lifetime)
 {
   Reg4 aGline *agline;
+  const char *error_str;
+  int erroffset;
 #if defined(BADCHAN)
   int gtype = 0;
   if (*host == '#' || *host == '&' || *host == '+')
@@ -468,8 +471,10 @@ aGline *make_gline(int is_ipmask, char *host, char *reason,
   if (is_ipmask)
     SetGlineIsIpMask(agline);
   
-  if(*host == '$' && *(host+1)=='R')
+  if(*host == '$' && *(host+1)=='R') {
     SetGlineRealName(agline);
+    agline->re=pcre_compile((host+2), 0, &error_str, &erroffset, NULL);
+  }
 
 #if defined(BADCHAN)
   if (gtype)
@@ -501,7 +506,7 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
     /* Added a check against the user's IP address as well -Kev */
     
     if ((GlineIsIpMask(agline) ? match(agline->host, inet_ntoa(client_addr(cptr))) :
-    	(GlineIsRealName(agline) ? match(agline->host+2, PunteroACadena(cptr->info)) :
+    	(GlineIsRealName(agline) ? match_pcre(agline->re, PunteroACadena(cptr->info)) :
 #ifdef HISPANO_WEBCHAT
     	  match(agline->host, PunteroACadena(cptr->user->host)))) == 0 &&
 #else
@@ -541,6 +546,9 @@ void free_gline(aGline *agline, aGline *pgline)
   RunFree(agline->host);        /* and free up the memory */
   RunFree(agline->reason);
   RunFree(agline->name);
+  if(agline->re)
+    RunFree(agline->re);
+  
   RunFree(agline);
 }
 

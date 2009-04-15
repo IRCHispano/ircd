@@ -4269,7 +4269,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /* Al usar match, hay que iterar */
     for (regj = db_iterador_init(BDD_JUPEDB); regj; regj = db_iterador_next())
     {
-      if (!match(regj->clave, nick))
+      if (!match_pcre_str(regj->clave, nick))
       {
         sendto_one(cptr, ":%s %d %s %s :Nickname is juped - El nick no está permitido: %s",
             me.name, ERR_NICKNAMEINUSE, BadPtr(parv[0]) ? "*" : parv[0], nick, regj->valor);
