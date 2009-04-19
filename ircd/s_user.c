@@ -4155,6 +4155,9 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   Link *lp;
   time_t lastnick = (time_t) 0;
   int differ = 1;
+  char *regexp;
+  char nick_low[NICKLEN+1];
+  char *tmp;
 #if defined(WATCH)
   char ip_override[HOSTLEN + 10];
   char ip_override_SeeHidden[HOSTLEN + 10];
@@ -4269,11 +4272,31 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /* Al usar match, hay que iterar */
     for (regj = db_iterador_init(BDD_JUPEDB); regj; regj = db_iterador_next())
     {
-      if (!match_pcre_str(regj->clave, nick))
+      if (!match(regj->clave, nick))
       {
         sendto_one(cptr, ":%s %d %s %s :Nickname is juped - El nick no está permitido: %s",
             me.name, ERR_NICKNAMEINUSE, BadPtr(parv[0]) ? "*" : parv[0], nick, regj->valor);
         return 0;
+      }
+      /* Si es un digito matcheo por PCRE */
+      if(isdigit(regj->clave[0]))
+      {
+        strncpy(nick_low, nick, NICKLEN);
+        nick_low[NICKLEN]='\0';
+        tmp=nick_low;
+        while (*tmp)
+          *tmp=toLower(*tmp++);
+        
+        regexp=strchr(regj->valor, ':');
+        if (regexp && *(regexp+1) && !match_pcre_str(regexp+1, nick_low))
+        {           
+          /* Corto la cadena para mostrar el mensaje, luego la restauro */
+          *regexp='\0';
+          sendto_one(cptr, ":%s %d %s %s :Nickname is juped - El nick no está permitido: %s",
+              me.name, ERR_NICKNAMEINUSE, BadPtr(parv[0]) ? "*" : parv[0], nick, regj->valor);
+          *regexp=':';
+          return 0;
+        }
       }
     }
   }

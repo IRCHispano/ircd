@@ -1,3 +1,22 @@
+* 2009/04/19 dfm@unr.com         (u2.10.H.10.118)                FEATURE
+------------------------------------------------------------------------
+  Ahora las expresiones regulares PCRE de la tabla j se usan asi:
+  
+  La clave tiene que empezar por un numero y en el valor se pone el
+  texto que se muestra al intentar cambiar de nick y seguido de : la
+  expresion regular:
+  
+  El nick contra el que se realizara la comprobacion es el nick pasado
+  a minusculas.
+  
+  Ejemplo:
+  tabja: j
+  clave: 0
+  valor: No se permiten nicks de 5 o 6 letras:[a-z]{5,6}
+  
+  Esto evitaria nicks como:
+  AdEeee, aweqw, GGeReq, AAAAa
+
 * 2009/04/15 dfm@unr.com         (u2.10.H.10.117)                FEATURE
 ------------------------------------------------------------------------
   Soporte de expresiones regulares tipo perl para glines por realname y
