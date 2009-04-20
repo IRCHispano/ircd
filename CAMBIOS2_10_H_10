@@ -1,3 +1,8 @@
+* 2009/04/20 dfm@unr.com         (u2.10.H.10.119)                    FIX
+------------------------------------------------------------------------
+  Correccion de error al liberar una gline cuando el pcre no habia sido
+  sido inicializado.
+
 * 2009/04/19 dfm@unr.com         (u2.10.H.10.118)                FEATURE
 ------------------------------------------------------------------------
   Ahora las expresiones regulares PCRE de la tabla j se usan asi:

@@ -467,12 +467,14 @@ aGline *make_gline(int is_ipmask, char *host, char *reason,
   agline->expire = expire;
   agline->lastmod = lastmod;
   agline->lifetime = lifetime;
+  agline->re = NULL; /* Inicializo a NULL, para saber si hacer free luego */
   agline->gflags = GLINE_ACTIVE;  /* gline is active */
   if (is_ipmask)
     SetGlineIsIpMask(agline);
   
-  if(*host == '$' && *(host+1)=='R') {
-    SetGlineRealName(agline);
+  /* Si empieza por $R es de tipo RealName */
+  if(*host == '$' && *(host+1) == 'R') {
+    SetGlineRealName(agline); /* REALNAME GLINE */
     agline->re=pcre_compile((host+2), 0, &error_str, &erroffset, NULL);
   }
 
