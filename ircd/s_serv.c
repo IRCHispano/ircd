@@ -1175,6 +1175,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
       send_channel_modes(cptr, chptr);
   }
 
+#if defined(HUB)
   /*
    * Propago todas las glines
    * 
@@ -1198,6 +1199,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
               agline->lifetime - TStime(), agline->reason);
       }
   }
+#endif
   
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
   completa_microburst();
@@ -1324,20 +1326,5 @@ int m_desynch(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /* Send message to remote +g clients */
     sendto_g_serv_butone(cptr, "%s DESYNCH :%s", NumServ(sptr), parv[parc - 1]);
   }
-  return 0;
-}
-
-/*
- * Reenvio de glines durante el burst
- */
-
-int reenvia_gline(aClient *cptr, aGline *agline)
-{
-  if (Protocol(cptr) < 10 || GlineIsLocal(agline) || !agline->lastmod || agline->expire < TStime())
-    return 0;
-
-  sendto_one(cptr, "%s " TOK_GLINE " %s +%s " TIME_T_FMT " " TIME_T_FMT " " TIME_T_FMT " :%s", 
-      NumServ(&me), NumServ(cptr), agline->host, agline->expire - TStime(), agline->lastmod, agline->lifetime - TStime(), agline->reason);
-  
   return 0;
 }

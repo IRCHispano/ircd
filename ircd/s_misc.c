@@ -451,7 +451,7 @@ int exit_client(aClient *cptr,  /* Connection being handled by
         else
 #endif
           sendto_one(bcptr, "%s " TOK_SQUIT " %s 0 :%s", NumServ(sptr), me.name, comment);
-
+        update_nextconnect(0);
       }
       else if (!IsConnecting(bcptr))
         sendto_one(bcptr, "ERROR :Closing Link: %s by %s (%s)",
@@ -516,7 +516,7 @@ int exit_client(aClient *cptr,  /* Connection being handled by
       sendto_ops("Received SQUIT %s from %s :", bcptr->name,
           IsServer(sptr) ? sptr->name : get_client_name(sptr, FALSE));
     sendto_op_mask(SNO_NETWORK, "Net break: %s %s (%s)",
-                   bcptr->serv->up->name, bcptr->name, comment);
+                   bcptr->serv->up->name, bcptr->name, comment);    
   }
 
   /*

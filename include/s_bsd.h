@@ -234,12 +234,12 @@ extern struct sockaddr_in vserv;
 #define HMODE_SERVICESBOT             0x00000020  /* Es un bot de canales */
 #define HMODE_HIDDEN                  0x00000040  /* IP Oculta */
 #define HFLAG_IPVIRTUAL_PERSONALIZADA 0x00000080  /* IP virtual personalizada */
-
+#define HMODE_USERDEAF                0x00000100  /* Usuario no puede recibir privados */
 
 /* Modos hispano  a propagar */
 #define SEND_HMODES \
     (HMODE_NICKREGISTERED | HMODE_HELPOP | HMODE_SERVICESBOT | HMODE_HIDDEN | HMODE_HIDDENVIEWER \
-       | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG)
+       | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG | HMODE_USERDEAF)
 
 /* Modos hispano TODOS */
 #define ALL_HMODES \
@@ -253,6 +253,7 @@ extern struct sockaddr_in vserv;
 #define IsHiddenViewer(x)       ((x)->hmodes & HMODE_HIDDENVIEWER)
 #define IsNickSuspended(x)      ((x)->hmodes & HMODE_NICKSUSPENDED)
 #define IsMsgOnlyReg(x)                ((x)->hmodes & HMODE_MSGONLYREG)
+#define IsUserDeaf(x)           ((x)->hmodes & HMODE_USERDEAF)
 
 #define TieneIpVirtualPersonalizada(x)  ((x)->hmodes & HFLAG_IPVIRTUAL_PERSONALIZADA)
 
@@ -265,6 +266,7 @@ extern struct sockaddr_in vserv;
 #define SetHiddenViewer(x)      ((x)->hmodes |= HMODE_HIDDENVIEWER)
 #define SetNickSuspended(x)     ((x)->hmodes |= HMODE_NICKSUSPENDED)
 #define SetMsgOnlyReg(x)       ((x)->hmodes |= HMODE_MSGONLYREG)
+#define SetUserDeaf(x)          ((x)->hmodes |= HMODE_USERDEAF)
 
 #define SetIpVirtualPersonalizada(x)    ((x)->hmodes |= HFLAG_IPVIRTUAL_PERSONALIZADA)
 
@@ -278,6 +280,7 @@ extern struct sockaddr_in vserv;
 #define ClearServicesBot(x)     ((x)->hmodes &= ~HMODE_SERVICESBOT)
 #define ClearHidden(x)          ((x)->hmodes &= ~HMODE_HIDDEN)
 #define ClearHiddenViewer(x)    ((x)->hmodes &= ~HMODE_HIDDENVIEWER)
+#define ClearUserDeaf(x)        ((x)->hmodes &= ~HMODE_USERDEAF)
 
 #define ClearIpVirtualPersonalizada(x)  ((x)->hmodes &= ~HFLAG_IPVIRTUAL_PERSONALIZADA)
 

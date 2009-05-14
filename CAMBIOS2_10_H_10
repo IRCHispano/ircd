@@ -1,3 +1,20 @@
+* 2009/05/04 dfm@unr.com         (u2.10.H.10.120)                FEATURE
+------------------------------------------------------------------------
+  Ahora las glines solo las propagan los HUBs en los bursts.
+  
+  Cambiado tiempo de propagacion a 1 dia.
+  
+  Deshabilitado chequedo de overlapping de gline y la revision de gline
+  si existe es sensitiva a mayusculas/minusculas para no afectar a las 
+  glines de realname.
+  
+  Implementacion de glines de realname case insensitive con $r ahora se
+  matchea contra la gline en minusculas (segun el charset del ircd)
+
+  Correccion de eficiencia en el matcheo de nick por pcre, ahora el nick
+  en minusculas solo se calcula una vez en cada cambio de nick y no una
+  por iteracion de la tabla j.
+
 * 2009/04/20 dfm@unr.com         (u2.10.H.10.119)                    FIX
 ------------------------------------------------------------------------
   Correccion de error al liberar una gline cuando el pcre no habia sido

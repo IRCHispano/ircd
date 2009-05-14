@@ -472,9 +472,11 @@ aGline *make_gline(int is_ipmask, char *host, char *reason,
   if (is_ipmask)
     SetGlineIsIpMask(agline);
   
-  /* Si empieza por $R es de tipo RealName */
-  if(*host == '$' && *(host+1) == 'R') {
+  /* Si empieza por $R o $r es de tipo RealName */
+  if(*host == '$' && (*(host+1) == 'R' || *(host+1) == 'r')) {
     SetGlineRealName(agline); /* REALNAME GLINE */
+    if(*(host+1) == 'r')
+      SetGlineRealNameCI(agline);
     agline->re=pcre_compile((host+2), 0, &error_str, &erroffset, NULL);
   }
 
@@ -492,7 +494,18 @@ aGline *make_gline(int is_ipmask, char *host, char *reason,
 aGline *find_gline(aClient *cptr, aGline **pgline)
 {
   Reg3 aGline *agline = gline, *a2gline = NULL;
+  char cptr_info_low[REALLEN+1];
+  char *tmp;
 
+  /* Paso el realname a minusculas para matcheo en pcre */
+  strncpy(cptr_info_low, PunteroACadena(cptr->info), REALLEN);
+  cptr_info_low[REALLEN]='\0';
+
+  tmp=cptr_info_low;
+  
+  while (*tmp)
+    *tmp=toLower(*tmp++);
+  
   while (agline)
   {                             /* look through all glines */
     if (agline->expire <= TStime())
@@ -504,11 +517,16 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
       continue;
     }
 
+    if(GlineIsRealNameCI(agline))
+      tmp=cptr_info_low;
+    else if(GlineIsRealName(agline))
+      tmp=PunteroACadena(cptr->info);
+
     /* Does gline match? */
     /* Added a check against the user's IP address as well -Kev */
-    
+        
     if ((GlineIsIpMask(agline) ? match(agline->host, inet_ntoa(client_addr(cptr))) :
-    	(GlineIsRealName(agline) ? match_pcre(agline->re, PunteroACadena(cptr->info)) :
+    	(GlineIsRealName(agline) ? match_pcre(agline->re, tmp) :
 #ifdef HISPANO_WEBCHAT
     	  match(agline->host, PunteroACadena(cptr->user->host)))) == 0 &&
 #else

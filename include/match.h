@@ -37,5 +37,6 @@ extern int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen);
 extern int matchcompIP(struct in_mask *imask, const char *mask);
 extern int match_pcre(pcre *re, char *subject);
 extern int match_pcre_str(char *regexp, char *subject);
+extern int match_pcre_ci(pcre *re, char *subject);
 
 #endif /* MATCH_H */

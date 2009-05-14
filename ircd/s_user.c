@@ -946,7 +946,8 @@ static int user_hmodes[] = {
   HMODE_HIDDENVIEWER,   'X',
   HMODE_SERVICESBOT,    'B',
   HMODE_NICKSUSPENDED,  'S',
-  HMODE_MSGONLYREG,    'R',
+  HMODE_MSGONLYREG,     'R',
+  HMODE_USERDEAF,       'D',
   0,			0
 };
 
@@ -1234,6 +1235,11 @@ static int m_message(aClient *cptr, aClient *sptr,
       {
         if (MyUser(sptr) && check_target_limit(sptr, acptr, acptr->name, 0))
           continue;
+        
+        if(MyUser(sptr) && !IsOper(sptr) && sptr->ip.s_addr != acptr->ip.s_addr
+            && IsUserDeaf(acptr))
+          continue;
+        
         if (MyUser(sptr) && IsMsgOnlyReg(acptr) && !IsNickRegistered(sptr)
             && !IsAnOper(sptr))
         {
@@ -2135,7 +2141,8 @@ void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh,
   }
 
   if (cptr && MyUser(cptr))
-    send_umode(cptr, sptr, old, ALL_UMODES, oldh, ALL_HMODES);
+    send_umode(cptr, sptr, old, ALL_UMODES, oldh, 
+    IsOper(sptr) ? ALL_HMODES : ALL_HMODES & ~HMODE_USERDEAF);
 }
 
 /*
@@ -2835,9 +2842,19 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 
 /*
+** Si somos IRCOPs y hemos puesto o quitado el flag D, lo acepta.
+** dfm@unr.com 20090427
+*/
+  if (!IsServer(cptr) && !IsOper(sptr))
+    if(sethmodes & HMODE_USERDEAF)
+      SetUserDeaf(sptr);
+    else
+      ClearUserDeaf(sptr);
+
+/*
 ** Si somos IRCOPs y hemos puesto el flag K, lo acepta.
 ** jcea@argo.es - 16/Dic/97
-*/
+*/  
   if (!(setflags & FLAGS_CHSERV) && !IsServer(cptr)
 #if defined(OPER_CHANNEL_SERVICE_ESNET)
       && !IsOper(sptr)
@@ -2847,7 +2864,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
       )
     sptr->flags &= ~FLAGS_CHSERV;
-
+  
 /* MODO +s capado para usuarios */
   if (!(setflags & FLAGS_SERVNOTICE) && !IsServer(cptr)
       && !IsOper(sptr) && !IsHelpOp(sptr))
@@ -3035,11 +3052,11 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (tmpmask != acptr->snomask)
       set_snomask(acptr, tmpmask, SNO_SET);
   }
-
+  
 #if 1 /* ALTERNATIVA SVSMODE A TODOS */
 
   if (MyUser(acptr))
-    send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, SEND_HMODES);
+    send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, IsOper(acptr) ? SEND_HMODES : SEND_HMODES & ~HMODE_USERDEAF);
 #if !defined(NO_PROTOCOL9)
   sendto_lowprot_butone(cptr, 9, ":%s SVSMODE %s %s", acptr->name, acptr->name, parv[2]);
 #endif
@@ -3070,11 +3087,21 @@ char *umode_str(aClient *cptr, aClient *acptr)
   int *s, flag, c_flags;
   int c_hmodes;
 
-  c_hmodes = cptr->hmodes & SEND_HMODES;
+  c_hmodes =  cptr->hmodes & SEND_HMODES;
 
   for (s = user_hmodes; (flag = *s); s += 2)
-    if ((c_hmodes & flag))
-      *m++ = *(s + 1);
+    if (c_hmodes & flag)
+      if(acptr)
+      {
+        if (flag & HMODE_USERDEAF)
+        {
+          if (IsAnOper(acptr))
+            *m++ = *(s + 1);
+        } else
+          *m++ = *(s + 1);         
+      }
+      else
+        *m++ = *(s + 1);
 
   c_flags = cptr->flags & SEND_UMODES;  /* cleaning up the original code */
 
@@ -4264,7 +4291,14 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     return 0;
   }
-
+  
+  /* Calculo el nick en minusculas por si hay que matchearlo en pcre */
+  strncpy(nick_low, nick, NICKLEN);
+  nick_low[NICKLEN]='\0';
+  tmp=nick_low;
+  while (*tmp)
+    *tmp=toLower(*tmp++);
+  
   if ((!IsServer(cptr)) && !nick_aleatorio)
   {
     struct db_reg *regj;
@@ -4278,15 +4312,10 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
             me.name, ERR_NICKNAMEINUSE, BadPtr(parv[0]) ? "*" : parv[0], nick, regj->valor);
         return 0;
       }
+      
       /* Si es un digito matcheo por PCRE */
       if(isdigit(regj->clave[0]))
-      {
-        strncpy(nick_low, nick, NICKLEN);
-        nick_low[NICKLEN]='\0';
-        tmp=nick_low;
-        while (*tmp)
-          *tmp=toLower(*tmp++);
-        
+      {        
         regexp=strchr(regj->valor, ':');
         if (regexp && *(regexp+1) && !match_pcre_str(regexp+1, nick_low))
         {           

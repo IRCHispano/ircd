@@ -1998,6 +1998,8 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
   aClient *acptr;
   aGline *agline;
   int fd, gtype = 0;
+  char cptr_info_low[REALLEN+1];
+  char *tmp;
 
 #if defined(BADCHAN)
   if (*host == '#' || *host == '&' || *host == '+')
@@ -2007,7 +2009,7 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
   if (!lifetime) /* si no me ponen tiempo de vida uso el tiempo de expiracion */
     lifetime = expire;
 
-  if(!buscar_uline(cptr->confs, sptr->name) && !lastmod) /* Si no tengo uline y me pasan ultima mod 0 salgo */
+  if((!IsHub(sptr) || !buscar_uline(cptr->confs, sptr->name)) && !lastmod) /* Si no es hub y no tiene uline y me pasan ultima mod 0 salgo */
     return;
 
   /* Inform ops */
@@ -2056,9 +2058,23 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
 
       if(find_exception(acptr)) /* Si hay una excepcion me lo salto */
         continue;
+      
+      if(GlineIsRealNameCI(agline)) {
+        /* Paso el realname a minusculas para matcheo en pcre */
+        strncpy(cptr_info_low, PunteroACadena(acptr->info), REALLEN);
+        cptr_info_low[REALLEN]='\0';
+        
+        tmp=cptr_info_low;
+        
+        while (*tmp)
+          *tmp=toLower(*tmp++);
+        
+        tmp=cptr_info_low;
+      } else if(GlineIsRealName(agline))
+        tmp=PunteroACadena(acptr->info);
 
       if ((GlineIsIpMask(agline) ? match(agline->host, inet_ntoa(client_addr(acptr))) :
-          (GlineIsRealName(agline) ? match_pcre(agline->re, PunteroACadena(acptr->info)) :
+          (GlineIsRealName(agline) ? match_pcre(agline->re, tmp) :
             match(agline->host, PunteroACadena(acptr->sockhost)))) == 0 &&
             match(agline->name, PunteroACadena(acptr->user->username)) == 0)
       {
@@ -2185,6 +2201,7 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
   char *user, *host;
   int active, ip_mask, gtype = 0;
   time_t expire = 0, lastmod = 0, lifetime = 0;
+  int tiene_uline;
 
   if(parc>5)
     lastmod = atoi(parv[4]);
@@ -2207,8 +2224,17 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
   if (*parv[2] == '+' || *parv[2] == '-')
     parv[2]++;              /* step past mode indicator */
 
-  if(!propaga_gline(cptr, sptr, active, expire, lastmod, lifetime, parc, parv))
-    return 0;
+  tiene_uline=buscar_uline(cptr->confs, sptr->name);
+  
+  if(!tiene_uline) /* Si no tiene uline */
+  {
+    if(!IsHub(sptr) || !lastmod || !IsBurstOrBurstAck(sptr)) /* y no es hub o me pasan ultima mod 0 o no estoy en burst */ 
+      return 0; /* salgo */
+  }
+  else
+    if(!propaga_gline(cptr, sptr, active, expire, lastmod, lifetime, parc, parv))
+      return 0;
+  
 
   if (!(host = strchr(parv[2], '@')))
   {                         /* convert user@host */
@@ -2230,14 +2256,16 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
       agline = agline->next)
   {
     if (!strCasediff(agline->name, user)
-        && !strCasediff(agline->host, host))
+        && ((GlineIsRealName(agline) && !strcmp(agline->host, host)) ||
+            (!GlineIsRealName(agline) && !strCasediff(agline->host, host)))
+       ) /* No chequeo casediff por si es pcre */
       break;
     a2gline = agline;
   }
 
   if (!active && agline)
   {                         /* removing the gline */
-    if(!buscar_uline(cptr->confs, sptr->name))
+    if(!tiene_uline)
       return 0;
 
     /* notify opers */
@@ -2261,11 +2289,14 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
     }
     else if (!agline)
     {                       /* create gline */
+/* Elimino el chequeo de gline overlappeada, consume mucha CPU */
+#if 0
       for (agline = gtype ? badchan : gline; agline; agline = agline->next)
           if (!mmatch(agline->name, user) &&
               (ip_mask ? GlineIsIpMask(agline) : !GlineIsIpMask(agline)) &&
               !mmatch(agline->host, host))
             return 0;         /* found an existing G-line that matches */
+#endif
         /* add the line: */
         add_gline(cptr, sptr, ip_mask, host, parv[parc - 1], user, expire, lastmod, lifetime, 0);
     }
@@ -2532,12 +2563,6 @@ int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
   */
 int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_t lastmod, time_t lifetime, int parc, char **parv) {
   aClient *acptr = NULL;
-
-  if(!buscar_uline(cptr->confs, sptr->name)) /* Si no tengo uline y me pasan ultima mod 0 y no estoy en burst salgo */
-    if(!lastmod || !IsBurstOrBurstAck(sptr))
-      return 0;
-    else
-      return 1;
 
   /* forward the message appropriately */
   if (!strCasediff(parv[1], "*")) /* global! */

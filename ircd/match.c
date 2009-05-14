@@ -25,7 +25,6 @@
 #include "match.h"
 #include "ircd.h"
 
-
 RCSTAG_CC("$Id$");
 
 /*
@@ -1062,5 +1061,25 @@ int match_pcre_str(char *regexp, char *subject)
   res=match_pcre(re, subject);
   RunFree(re);
  
+  return res;
+}
+
+int match_pcre_ci(pcre *re, char *subject) {
+  char *low=NULL, *tmp=NULL;
+  int res;
+
+  DupString(low, subject);
+  
+  if(low==NULL)
+    return 0;
+  
+  tmp=low;
+  
+  while (*tmp)
+    *tmp=toLower(*tmp++);
+  
+  res = match_pcre(re, low);
+
+  RunFree(low);
   return res;
 }
