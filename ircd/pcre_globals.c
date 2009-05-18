@@ -51,21 +51,21 @@ differently, and global variables are not used (see pcre.in). */
 #endif
 
 #include "pcre_internal.h"
-#include "sys.h"
+#include "runmalloc.h"
 
 #ifndef VPCOMPAT
 #if defined(MEMLEAKSTATS)
-PCRE_EXP_DATA_DEFN void *(*pcre_malloc)(size_t) = RunMalloc_memleak;
+PCRE_EXP_DATA_DEFN void *(*pcre_malloc)(size_t) = _RunMalloc;
 #else
-PCRE_EXP_DATA_DEFN void *(*pcre_malloc)(size_t) = RunMalloc;
+PCRE_EXP_DATA_DEFN void *(*pcre_malloc)(size_t) = _RunMalloc;
 #endif
-PCRE_EXP_DATA_DEFN void  (*pcre_free)(void *) = RunFree;
+PCRE_EXP_DATA_DEFN void  (*pcre_free)(void *) = _RunFree;
 #if defined(MEMLEAKSTATS)
-PCRE_EXP_DATA_DEFN void *(*pcre_stack_malloc)(size_t) = RunMalloc_memleak;
+PCRE_EXP_DATA_DEFN void *(*pcre_stack_malloc)(size_t) = _RunMalloc;
 #else
-PCRE_EXP_DATA_DEFN void *(*pcre_stack_malloc)(size_t) = RunMalloc;
+PCRE_EXP_DATA_DEFN void *(*pcre_stack_malloc)(size_t) = _RunMalloc;
 #endif
-PCRE_EXP_DATA_DEFN void  (*pcre_stack_free)(void *) = RunFree;
+PCRE_EXP_DATA_DEFN void  (*pcre_stack_free)(void *) = _RunFree;
 PCRE_EXP_DATA_DEFN int   (*pcre_callout)(pcre_callout_block *) = NULL;
 #endif
 

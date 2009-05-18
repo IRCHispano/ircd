@@ -1,3 +1,11 @@
+* 2009/05/04 dfm@unr.com         (u2.10.H.10.121)                    FIX
+------------------------------------------------------------------------
+  Correccion de error de compilacion cuando no esta definido el modo
+  DEBUGMODE.
+  
+  Se a~aden nuevas macros para que compile bien el pcre en todos los
+  casos.
+
 * 2009/05/04 dfm@unr.com         (u2.10.H.10.120)                FEATURE
 ------------------------------------------------------------------------
   Ahora las glines solo las propagan los HUBs en los bursts.
