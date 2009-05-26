@@ -2755,13 +2755,26 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   /*
    * Stop users making themselves operators too easily:
    */
+  
+  /* Si es admin puede hacerse ircop en cualquier momento */
+  if (MyUser(sptr) && (!(setflags & FLAGS_OPER))
+      && IsOper(sptr))
+  {
+    struct db_reg *reg = db_buscar_registro(BDD_OPERDB, sptr->name);
+    if (!reg || atoi(reg->valor) < 10)
+      ClearOper(sptr);
+  }
+
+/*  
   if (!(setflags & FLAGS_OPER) && IsOper(sptr) && !IsServer(cptr))
     ClearOper(sptr);
+*/
   if (!(setflags & FLAGS_LOCOP) && IsLocOp(sptr) && !IsServer(cptr))
     sptr->flags &= ~FLAGS_LOCOP;
   if ((setflags & (FLAGS_OPER | FLAGS_LOCOP)) && !IsAnOper(sptr) &&
       MyConnect(sptr))
-    det_confs_butmask(sptr, CONF_CLIENT & ~CONF_OPS);
+    det_confs_butmask(sptr, CONF_CLIENT & ~CONF_OPS);  
+  
   /* new umode; servers can set it, local users cannot;
    * prevents users from /kick'ing or /mode -o'ing */
   /* el modo +/-r solo se acepta de los Servidores */

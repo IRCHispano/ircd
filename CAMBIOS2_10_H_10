@@ -1,3 +1,8 @@
+* 2009/05/26 dfm@unr.com         (u2.10.H.10.122)                FEATURE
+------------------------------------------------------------------------
+  Los usuarios que tengan en la tabla 'o' nivel 10 o superior pueden
+  hacerse ircops en cualquier momento.
+
 * 2009/05/04 dfm@unr.com         (u2.10.H.10.121)                    FIX
 ------------------------------------------------------------------------
   Correccion de error de compilacion cuando no esta definido el modo
