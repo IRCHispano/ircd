@@ -313,7 +313,8 @@ match.o: match.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
   ../zlib/zlib.h ../zlib/zconf.h ../include/common.h ../include/match.h \
-  ../include/ircd.h ../include/pcre.h ../libevent/event.h
+  ../include/ircd.h ../include/pcre.h ../libevent/event.h \
+  ../include/runmalloc.h
 numnicks.o: numnicks.c ../include/numnicks.h ../include/sys.h \
   ../config/config.h ../config/setup.h ../include/runmalloc.h \
   ../include/h.h ../include/s_debug.h ../include/s_serv.h \
@@ -555,7 +556,8 @@ aes256.o: aes256.c ../include/aes256.h
 pcre_compile.o: pcre_compile.c ../include/pcre_internal.h
 pcre_exec.o: pcre_exec.c ../include/pcre_internal.h
 pcre_newline.o: pcre_newline.c ../include/pcre_internal.h
-pcre_globals.o: pcre_globals.c ../include/pcre_internal.h
+pcre_globals.o: pcre_globals.c ../include/pcre_internal.h \
+  ../include/runmalloc.h
 pcre_tables.o: pcre_tables.c ../include/pcre_internal.h
 pcre_chartables.o: pcre_chartables.c ../include/pcre_internal.h
 pcre_try_flipped.o: pcre_try_flipped.c ../include/pcre_internal.h

@@ -1,3 +1,8 @@
+* 2009/06/24 dfm@unr.com         (u2.10.H.10.123)                    FIX
+------------------------------------------------------------------------
+  Problema de compilacion y segfaults en malloc y free al usar modo
+  DEBUGMALLOC debido a inclusion de librerias desde pcre.
+
 * 2009/05/26 dfm@unr.com         (u2.10.H.10.122)                FEATURE
 ------------------------------------------------------------------------
   Los usuarios que tengan en la tabla 'o' nivel 10 o superior pueden

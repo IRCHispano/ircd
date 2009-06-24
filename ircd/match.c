@@ -24,6 +24,7 @@
 #include "common.h"
 #include "match.h"
 #include "ircd.h"
+#include "runmalloc.h"
 
 RCSTAG_CC("$Id$");
 
