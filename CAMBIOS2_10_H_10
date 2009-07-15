@@ -1,3 +1,8 @@
+* 2009/07/15 dfm@unr.com         (u2.10.H.10.125)                    FIX
+------------------------------------------------------------------------
+  Correccion de problema de compilacion al regenerarse el Makefile.in
+  tomando como modelo el Makefile.am en libevent.
+
 * 2009/07/15 dfm@unr.com         (u2.10.H.10.124)                FEATURE
 ------------------------------------------------------------------------
   Tabla r para redireccion automatica de canales, en el clave va el

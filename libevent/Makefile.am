@@ -83,6 +83,7 @@ libevent_extra_la_LDFLAGS = -release $(RELEASE) -version-info $(VERSION_INFO)
 include_HEADERS = event.h evhttp.h evdns.h evrpc.h evutil.h event-config.h
 
 INCLUDES = -I$(srcdir)/compat $(SYS_INCLUDES)
+build: all
 
 man_MANS = event.3 evdns.3
 

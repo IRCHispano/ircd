@@ -303,7 +303,6 @@ include_HEADERS = event.h evhttp.h evdns.h evrpc.h evutil.h event-config.h
 INCLUDES = -I$(srcdir)/compat $(SYS_INCLUDES)
 man_MANS = event.3 evdns.3
 DISTCLEANFILES = *~ event-config.h
-build: all
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -913,6 +912,7 @@ event-config.h: config.h
 	    -e 's/#undef /#undef _EVENT_/' \
 	    -e 's/#ifndef /#ifndef _EVENT_/' < config.h >> $@
 	echo "#endif" >> $@
+build: all
 
 verify: libevent.la
 	cd test && make verify
