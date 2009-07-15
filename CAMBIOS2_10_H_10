@@ -1,3 +1,11 @@
+* 2009/07/15 dfm@unr.com         (u2.10.H.10.124)                FEATURE
+------------------------------------------------------------------------
+  Tabla r para redireccion automatica de canales, en el clave va el
+  canal redirigido y en el valor el destino de la redireccion. Solo se
+  verifica en JOINs locales.
+  
+  Un usuario +k puede poner BANs ilimitados.
+
 * 2009/06/24 dfm@unr.com         (u2.10.H.10.123)                    FIX
 ------------------------------------------------------------------------
   Problema de compilacion y segfaults en malloc y free al usar modo

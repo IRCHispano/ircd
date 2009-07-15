@@ -290,7 +290,7 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid,
       banp = &(*banp)->next;
     }
   }
-  if (MyUser(cptr) && !removed_bans && (len > MAXBANLENGTH || (cnt >= MAXBANS)))
+  if (MyUser(cptr) && !IsChannelService(cptr) && !removed_bans && (len > MAXBANLENGTH || (cnt >= MAXBANS)))
   {
     sendto_one(cptr, err_str(ERR_BANLISTFULL), me.name, cptr->name,
         chptr->chname, banid);
@@ -3768,6 +3768,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
   size_t jlen = 0, mlen = 0;
   size_t *buflen;
   char *p = NULL, *bufptr;
+  struct db_reg *ch_redir;
 
   if (IsServer(sptr))           /* Un servidor entrando en un canal? */
     return 0;
@@ -3863,6 +3864,11 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
           if (*p)
             continue;           /* Si el nombre no nos gusta, pasamos de este canal */
         }
+        
+        /* Redireccion de canales */
+        if(ch_redir = db_buscar_registro(BDD_CHANREDIRECTDB, name))
+          name=ch_redir->valor;
+        
 
 #if defined(BADCHAN)
         if (bad_channel(name) && !IsAnOper(sptr))
