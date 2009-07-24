@@ -3768,8 +3768,10 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
   size_t jlen = 0, mlen = 0;
   size_t *buflen;
   char *p = NULL, *bufptr;
-  struct db_reg *ch_redir;
-
+#ifdef TERRA_CHAT
+  struct db_reg *ch_redir = NULL;
+#endif
+  
   if (IsServer(sptr))           /* Un servidor entrando en un canal? */
     return 0;
 
@@ -3864,11 +3866,12 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
           if (*p)
             continue;           /* Si el nombre no nos gusta, pasamos de este canal */
         }
-        
+
+#ifdef TERRA_CHAT
         /* Redireccion de canales */
         if(ch_redir = db_buscar_registro(BDD_CHANREDIRECTDB, name))
           name=ch_redir->valor;
-        
+#endif
 
 #if defined(BADCHAN)
         if (bad_channel(name) && !IsAnOper(sptr))
@@ -3890,7 +3893,13 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
         else if (strlen(name) > CHANNELLEN)
         {
-          *(name + CHANNELLEN) = '\0';
+          /* Si es una redireccion NO corto el nombre del canal, es decir
+           * no corto el registro de la BDD en memoria 
+           */
+#ifdef TERRA_CHAT
+          if(!ch_redir) /* No es redireccion... */
+#endif
+          *(name + CHANNELLEN) = '\0'; /* ...pues corto el nombre */
           if (ChannelExists(name))
           {
             flags = CHFL_DEOPPED;
@@ -4145,6 +4154,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[0] = sender prefix
  * parv[1] = nick
  * parv[2] = channel
+ * parv[3] = (opcional) C (hacer que compruebe si el usuario puede entrar)
  */
 int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
@@ -4154,6 +4164,8 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   Reg4 char *name;
   int i = 0, zombie = 0, sendcreate = 0;
   unsigned int flags = 0;
+  char *p=NULL;
+  char *names_parv[2];
 
   if (!IsServer(cptr) || !IsServer(sptr) || parc < 3)
     return 0;
@@ -4183,116 +4195,130 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   
   if(!MyUser(acptr))
   {
-    sendcmdto_one(acptr, sptr, "SVSJOIN", TOK_SVSJOIN, ":%s", parv[2]);    
+    if(parc>3)
+      sendcmdto_one(acptr, sptr, "SVSJOIN", TOK_SVSJOIN, "%s %s", parv[2], parv[3]);
+    else
+      sendcmdto_one(acptr, sptr, "SVSJOIN", TOK_SVSJOIN, "%s", parv[2]);
+      
     return 0;
   }
 
-  name = parv[2];
-
-  clean_channelname(name);
-  if (IsLocalChannel(name))
-    return 0;
-
-  if (!IsChannelName(name))
-    return 0;
-
-  if (ChannelExists(name))
+  for (name = strtoken(&p, parv[2], ","); name; name = strtoken(&p, NULL, ","))
   {
-    flags = CHFL_DEOPPED;
-    sendcreate = 0;
-  }
-  else if (strlen(name) > CHANNELLEN)
-  {
-    *(name + CHANNELLEN) = '\0';
+    clean_channelname(name);
+    if (IsLocalChannel(name))
+      continue;
+  
+    if (!IsChannelName(name))
+      continue;
+    
     if (ChannelExists(name))
     {
       flags = CHFL_DEOPPED;
       sendcreate = 0;
+    }
+    else if (strlen(name) > CHANNELLEN)
+    {
+      *(name + CHANNELLEN) = '\0';
+      if (ChannelExists(name))
+      {
+        flags = CHFL_DEOPPED;
+        sendcreate = 0;
+      }
+      else
+      {
+        flags = IsModelessChannel(name) ? CHFL_DEOPPED : CHFL_CHANOP;
+        sendcreate = 1;
+      }
     }
     else
     {
       flags = IsModelessChannel(name) ? CHFL_DEOPPED : CHFL_CHANOP;
       sendcreate = 1;
     }
-  }
-
-  chptr = get_channel(acptr, name, CREATE);
-
-  if (chptr && (lp = find_user_link(chptr->members, acptr)))
-  {
-    if (lp->flags & CHFL_ZOMBIE)
+  
+    chptr = get_channel(acptr, name, CREATE);
+  
+    /* Si no puede entrar y el tercer parametro empieza por C que no entre */
+    if(parc>3 && *parv[3]=='C' && chptr && can_join(acptr, chptr, ""))
+      continue;
+  
+    
+    if (chptr && (lp = find_user_link(chptr->members, acptr)))
     {
-      zombie = 1;
-      flags = lp->flags & (CHFL_DEOPPED | CHFL_SERVOPOK);
-      remove_user_from_channel(acptr, chptr);
-      chptr = get_channel(acptr, name, CREATE);
+      if (lp->flags & CHFL_ZOMBIE)
+      {
+        zombie = 1;
+        flags = lp->flags & (CHFL_DEOPPED | CHFL_SERVOPOK);
+        remove_user_from_channel(acptr, chptr);
+        chptr = get_channel(acptr, name, CREATE);
+      }
+      else
+       continue;
     }
-    else
-     return 0;
-  }
-
-  if (!chptr->creationtime) /* A remote JOIN created this channel ? */
-    chptr->creationtime = MAGIC_REMOTE_JOIN_TS;
-  if (!zombie)
-    flags |= CHFL_SERVOPOK;
-
-  /*
-   * Complete user entry to the new channel (if any)
-   */
-  add_user_to_channel(chptr, acptr, flags);
-
-  /*
-   * Notify all other users on the new channel
-   */
-  sendto_channel_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
-
-  del_invite(acptr, chptr);
-  if (chptr->topic)
-  {
-    sendto_one(acptr, rpl_str(RPL_TOPIC), me.name, acptr->name, name, chptr->topic);
-    sendto_one(acptr, rpl_str(RPL_TOPICWHOTIME), me.name, acptr->name, name,
-        chptr->topic_nick, chptr->topic_time);
-  }
-
-  parv[0] = acptr->name;
-  parv[1] = name;
-  m_names(cptr, acptr, 2, parv);
-
-
-  /* Propagate joins to P09 servers */
-#if !defined(NO_PROTOCOL9)
-  sendto_lowprot_butone(NULL, 9,  ":%s JOIN %s", acptr->name, name);
-#endif
-  if (!sendcreate)              /* Propgate joins to P10 servers */
-    sendto_highprot_butone(NULL, 10, "%s%s " TOK_JOIN " %s",  NumNick(acptr), name);
-  else                         /* and now creation events */
-    sendto_highprot_butone(NULL, 10, "%s%s " TOK_CREATE " %s " TIME_T_FMT,
-        NumNick(acptr), name, TStime());
-
-  /* shouldn't ever set TS for remote JOIN's */
-  if (!sendcreate)
-  {                           /* check for channels that need TS's */
-    chptr = get_channel(acptr, name, !CREATE);
-    if (chptr && chptr->mode.mode & MODE_SENDTS)
-    {                       /* send a TS? */
-#if !defined(NO_PROTOCOL9)
-      sendto_lowprot_butone(NULL, 9, ":%s MODE %s + " TIME_T_FMT, me.name, chptr->chname, chptr->creationtime); /* ok, send TS */
-#endif
-      sendto_highprot_butone(NULL, 10, "%s " TOK_MODE " %s + " TIME_T_FMT, NumServ(&me), chptr->chname, chptr->creationtime); /* ok, send TS */
-      chptr->mode.mode &= ~MODE_SENDTS;
-      /* reset flag */
+  
+    if (!chptr->creationtime) /* A remote JOIN created this channel ? */
+      chptr->creationtime = MAGIC_REMOTE_JOIN_TS;
+    if (!zombie)
+      flags |= CHFL_SERVOPOK;
+  
+    /*
+     * Complete user entry to the new channel (if any)
+     */
+    add_user_to_channel(chptr, acptr, flags);
+  
+    /*
+     * Notify all other users on the new channel
+     */
+    sendto_channel_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
+  
+    del_invite(acptr, chptr);
+    if (chptr->topic)
+    {
+      sendto_one(acptr, rpl_str(RPL_TOPIC), me.name, acptr->name, name, chptr->topic);
+      sendto_one(acptr, rpl_str(RPL_TOPICWHOTIME), me.name, acptr->name, name,
+          chptr->topic_nick, chptr->topic_time);
+    }
+  
+    names_parv[0] = acptr->name;
+    names_parv[1] = name;
+    m_names(cptr, acptr, 2, names_parv);
+  
+  
+    /* Propagate joins to P09 servers */
+  #if !defined(NO_PROTOCOL9)
+    sendto_lowprot_butone(NULL, 9,  ":%s JOIN %s", acptr->name, name);
+  #endif
+    if (!sendcreate)              /* Propgate joins to P10 servers */
+      sendto_highprot_butone(NULL, 10, "%s%s " TOK_JOIN " %s",  NumNick(acptr), name);
+    else                         /* and now creation events */
+      sendto_highprot_butone(NULL, 10, "%s%s " TOK_CREATE " %s " TIME_T_FMT,
+          NumNick(acptr), name, TStime());
+  
+    /* shouldn't ever set TS for remote JOIN's */
+    if (!sendcreate)
+    {                           /* check for channels that need TS's */
+      chptr = get_channel(acptr, name, !CREATE);
+      if (chptr && chptr->mode.mode & MODE_SENDTS)
+      {                       /* send a TS? */
+  #if !defined(NO_PROTOCOL9)
+        sendto_lowprot_butone(NULL, 9, ":%s MODE %s + " TIME_T_FMT, me.name, chptr->chname, chptr->creationtime); /* ok, send TS */
+  #endif
+        sendto_highprot_butone(NULL, 10, "%s " TOK_MODE " %s + " TIME_T_FMT, NumServ(&me), chptr->chname, chptr->creationtime); /* ok, send TS */
+        chptr->mode.mode &= ~MODE_SENDTS;
+        /* reset flag */
+      }
+    }
+  
+    if (sendcreate)
+    {                           /* ok, send along modes for creation events to P09 */
+      chptr = get_channel(acptr, name, !CREATE);
+  #if !defined(NO_PROTOCOL9)
+      sendto_lowprot_butone(NULL, 9, ":%s MODE %s +o %s " TIME_T_FMT, me.name,
+          chptr->chname, acptr->name, chptr->creationtime);
+  #endif
     }
   }
-
-  if (sendcreate)
-  {                           /* ok, send along modes for creation events to P09 */
-    chptr = get_channel(acptr, name, !CREATE);
-#if !defined(NO_PROTOCOL9)
-    sendto_lowprot_butone(NULL, 9, ":%s MODE %s +o %s " TIME_T_FMT, me.name,
-        chptr->chname, acptr->name, chptr->creationtime);
-#endif
-  }
-
 }
 
 /*

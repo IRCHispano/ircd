@@ -948,6 +948,7 @@ static int user_hmodes[] = {
   HMODE_NICKSUSPENDED,  'S',
   HMODE_MSGONLYREG,     'R',
   HMODE_USERDEAF,       'D',
+  HMODE_STRIPCOLOR,     'c',
   0,			0
 };
 
@@ -1090,7 +1091,7 @@ int check_target_limit(aClient *sptr, void *target, const char *name,
   return 0;
 }
 
-#if defined(NO_IRCHISPANO)
+
 /*
  * Elimino colores mIRC de un mensaje, adaptado de strip_color2 de xchat
  * 
@@ -1137,7 +1138,6 @@ void strip_color (const char *src, int len, char *dst)
     }
   *dst = 0;
 }
-#endif
 
 /*
  * m_message (used in m_private() and m_notice())
@@ -1158,6 +1158,7 @@ static int m_message(aClient *cptr, aClient *sptr,
   Reg2 char *s;
   aChannel *chptr;
   char *nick, *server, *p, *cmd, *host;
+  char buffer_nocolor[1024];
 
   sptr->flags &= ~FLAGS_TS8;
 
@@ -1207,13 +1208,18 @@ static int m_message(aClient *cptr, aClient *sptr,
                 me.name, parv[0], chptr->chname);
             continue;
           }
-#if defined(NO_IRCHISPANO)
-          // Si tiene modo +c elimino colores
-          if (MyUser(sptr) && (chptr->mode.mode & MODE_NOCOLOUR))
-            strip_color(parv[parc-1], strlen(parv[parc-1]), parv[parc-1]);
-#endif
-          sendto_channel_butone(cptr, sptr, chptr,
-              ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
+
+          if(chptr->mode.mode & MODE_NOCOLOUR) {
+            /* Calcula el color solo una vez */
+            strip_color(parv[parc-1], strlen(parv[parc-1]), buffer_nocolor);
+            
+            sendto_channel_color_butone(cptr, sptr, chptr,
+                ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
+            sendto_channel_nocolor_butone(cptr, sptr, chptr,
+                ":%s %s %s :%s", parv[0], cmd, chptr->chname, buffer_nocolor);
+          } else
+            sendto_channel_butone(cptr, sptr, chptr,
+                ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
         }
         else                    /* if (!notice) */
           /* Enviamos el mensaje tambien SI es notice */

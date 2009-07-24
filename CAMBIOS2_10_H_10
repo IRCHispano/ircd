@@ -1,3 +1,24 @@
+* 2009/07/24 dfm@unr.com         (u2.10.H.10.126)                FEATURE
+------------------------------------------------------------------------
+  Define TERRA_CHAT en make config a~adido para hacer que haya
+  redirecciones de canales.
+
+  Modo +c de canales y +c de usuarios.
+  
+  Cuando un canal esta +c los usuarios que tienen como modo +c no
+  recibiran colores, el resto si.
+  
+  SVSJOIN ahora acepta un tercer que si empieza por 'C' que hace que un
+  usuario entre solo en canales que puede.
+  
+  SVSJOIN acepta multiples canales separados por comas.
+  
+  <Flash_noi> Al hacer un SVSJOIN sobre un usuario a un canal que no
+              esta creado. Se propaga un JOIN y no un CREATE
+  <Flash_noi> y por tanto el usuario no obtiene ni @ ni nada.
+ 
+  Corregido el fallo reportado, gracias Flash_noi :)
+
 * 2009/07/15 dfm@unr.com         (u2.10.H.10.125)                    FIX
 ------------------------------------------------------------------------
   Correccion de problema de compilacion al regenerarse el Makefile.in

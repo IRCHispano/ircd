@@ -36,6 +36,10 @@ extern void send_queued(aClient *to);
 extern void vsendto_one(aClient *to, char *pattern, va_list vl);
 extern void sendto_channel_butone(aClient *one, aClient *from,
     aChannel *chptr, char *pattern, ...) __attribute__ ((format(printf, 4, 5)));
+extern void sendto_channel_color_butone(aClient *one, aClient *from,
+    aChannel *chptr, char *pattern, ...) __attribute__ ((format(printf, 4, 5)));
+extern void sendto_channel_nocolor_butone(aClient *one, aClient *from,
+    aChannel *chptr, char *pattern, ...) __attribute__ ((format(printf, 4, 5)));
 extern void sendto_lchanops_butone(aClient *one, aClient *from,
     aChannel *chptr, char *pattern, ...) __attribute__ ((format(printf, 4, 5)));
 extern void sendto_chanopsserv_butone(aClient *one, aClient *from,

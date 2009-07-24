@@ -235,11 +235,12 @@ extern struct sockaddr_in vserv;
 #define HMODE_HIDDEN                  0x00000040  /* IP Oculta */
 #define HFLAG_IPVIRTUAL_PERSONALIZADA 0x00000080  /* IP virtual personalizada */
 #define HMODE_USERDEAF                0x00000100  /* Usuario no puede recibir privados */
+#define HMODE_STRIPCOLOR              0x00000200  /* El usuario no recibe colores en +c */
 
 /* Modos hispano  a propagar */
 #define SEND_HMODES \
     (HMODE_NICKREGISTERED | HMODE_HELPOP | HMODE_SERVICESBOT | HMODE_HIDDEN | HMODE_HIDDENVIEWER \
-       | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG | HMODE_USERDEAF)
+       | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG | HMODE_USERDEAF | HMODE_STRIPCOLOR)
 
 /* Modos hispano TODOS */
 #define ALL_HMODES \
@@ -252,8 +253,9 @@ extern struct sockaddr_in vserv;
 #define IsHidden(x)             ((x)->hmodes & HMODE_HIDDEN)
 #define IsHiddenViewer(x)       ((x)->hmodes & HMODE_HIDDENVIEWER)
 #define IsNickSuspended(x)      ((x)->hmodes & HMODE_NICKSUSPENDED)
-#define IsMsgOnlyReg(x)                ((x)->hmodes & HMODE_MSGONLYREG)
+#define IsMsgOnlyReg(x)         ((x)->hmodes & HMODE_MSGONLYREG)
 #define IsUserDeaf(x)           ((x)->hmodes & HMODE_USERDEAF)
+#define IsStripColor(x)         ((x)->hmodes & HMODE_STRIPCOLOR)
 
 #define TieneIpVirtualPersonalizada(x)  ((x)->hmodes & HFLAG_IPVIRTUAL_PERSONALIZADA)
 
@@ -265,8 +267,9 @@ extern struct sockaddr_in vserv;
 #define SetHidden(x)            ((x)->hmodes |= HMODE_HIDDEN)
 #define SetHiddenViewer(x)      ((x)->hmodes |= HMODE_HIDDENVIEWER)
 #define SetNickSuspended(x)     ((x)->hmodes |= HMODE_NICKSUSPENDED)
-#define SetMsgOnlyReg(x)       ((x)->hmodes |= HMODE_MSGONLYREG)
+#define SetMsgOnlyReg(x)        ((x)->hmodes |= HMODE_MSGONLYREG)
 #define SetUserDeaf(x)          ((x)->hmodes |= HMODE_USERDEAF)
+#define SetStripColor(x)        ((x)->hmodes |= HMODE_STRIPCOLOR)
 
 #define SetIpVirtualPersonalizada(x)    ((x)->hmodes |= HFLAG_IPVIRTUAL_PERSONALIZADA)
 
@@ -275,12 +278,13 @@ extern struct sockaddr_in vserv;
 #define ClearNickRegistered(x)  ((x)->hmodes &= ~HMODE_NICKREGISTERED)
 #define ClearHelpOp(x)          ((x)->hmodes &= ~HMODE_HELPOP)
 #define ClearNickSuspended(x)   ((x)->hmodes &= ~HMODE_NICKSUSPENDED)
-#define ClearMsgOnlyReg(x)     ((x)->hmodes &= ~HMODE_MSGONLYREG)
+#define ClearMsgOnlyReg(x)      ((x)->hmodes &= ~HMODE_MSGONLYREG)
 
 #define ClearServicesBot(x)     ((x)->hmodes &= ~HMODE_SERVICESBOT)
 #define ClearHidden(x)          ((x)->hmodes &= ~HMODE_HIDDEN)
 #define ClearHiddenViewer(x)    ((x)->hmodes &= ~HMODE_HIDDENVIEWER)
 #define ClearUserDeaf(x)        ((x)->hmodes &= ~HMODE_USERDEAF)
+#define ClearStripColor(x)      ((x)->hmodes &= ~HMODE_STRIPCOLOR)
 
 #define ClearIpVirtualPersonalizada(x)  ((x)->hmodes &= ~HFLAG_IPVIRTUAL_PERSONALIZADA)
 
