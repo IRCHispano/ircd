@@ -493,8 +493,10 @@ void sendto_channel_color_butone(aClient *one, aClient *from, aChannel *chptr,
     if (acptr->from == one ||   /* ...was the one I should skip */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
-    if (MyConnect(acptr) && !IsStripColor(acptr))       /* (It is always a client) */
-      vsendto_prefix_one(acptr, from, pattern, vl);
+    if (MyConnect(acptr)) {       /* (It is always a client) */
+      if(!IsStripColor(acptr))
+        vsendto_prefix_one(acptr, from, pattern, vl);
+    }
     else if (sentalong[(i = acptr->from->fd)] != sentalong_marker)
     {
       sentalong[i] = sentalong_marker;
