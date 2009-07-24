@@ -1097,13 +1097,13 @@ int check_target_limit(aClient *sptr, void *target, const char *name,
  * 
  * -- FreeMind 2009/02/16 
  */
-void strip_color (const char *src, int len, char *dst)
+void strip_color (const char *src, int maxlength, char *dst)
 {
   int rcol = 0, bgcol = 0;
   char *start = dst;
+  int pos=0;
 
-  if (len == -1) len = strlen (src);
-  while (len-- > 0)
+  while (*src && pos<maxlength)
     {
       if (rcol > 0 && (isdigit ((unsigned char)*src) ||
           (*src == ',' && isdigit ((unsigned char)src[1]) && !bgcol)))
@@ -1135,6 +1135,7 @@ void strip_color (const char *src, int len, char *dst)
             }
           }
       src++;
+      pos++;
     }
   *dst = 0;
 }
@@ -1211,7 +1212,7 @@ static int m_message(aClient *cptr, aClient *sptr,
 
           if(chptr->mode.mode & MODE_NOCOLOUR) {
             /* Calcula el color solo una vez */
-            strip_color(parv[parc-1], strlen(parv[parc-1]), buffer_nocolor);
+            strip_color(parv[parc-1], sizeof(buffer_nocolor), buffer_nocolor);
             
             sendto_channel_color_butone(cptr, sptr, chptr,
                 ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
