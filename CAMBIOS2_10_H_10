@@ -1,3 +1,13 @@
+* 2009/07/26 dfm@unr.com         (u2.10.H.10.129)                FEATURE
+------------------------------------------------------------------------
+  Redireccion de canales configurable por BDD. Ahora se puede decidir
+  que nodos deben aceptar redirecciones de canales poniendo en la tabla
+  'z' de la BDD un registro con clave:
+  
+  redirect:nombre.de.servidor
+  
+  y cualquier valor.
+
 * 2009/07/24 dfm@unr.com         (u2.10.H.10.128)                    FIX
 ------------------------------------------------------------------------
   Correccion de error de duplicacion de mensajes a usuarios locales

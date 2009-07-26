@@ -81,6 +81,7 @@ int ocultar_servidores = 0;
 int activar_modos = 0;
 int activar_ident = 0;
 int auto_invisible = 0;
+int activar_redireccion_canales = 0;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -565,6 +566,10 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               nicklen = 9;  /* Nicklen original por RFC1459 */
             }
+            else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
+            {
+              activar_redireccion_canales=0;
+            }              
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -877,6 +882,11 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         else
           nicklen = x;
       }
+      else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
+      {
+        activar_redireccion_canales=1;
+      }              
+
       break;
 
     case BDD_IPVIRTUALDB:

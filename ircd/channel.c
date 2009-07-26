@@ -3768,9 +3768,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
   size_t jlen = 0, mlen = 0;
   size_t *buflen;
   char *p = NULL, *bufptr;
-#ifdef TERRA_CHAT
   struct db_reg *ch_redir = NULL;
-#endif
   
   if (IsServer(sptr))           /* Un servidor entrando en un canal? */
     return 0;
@@ -3867,11 +3865,9 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
             continue;           /* Si el nombre no nos gusta, pasamos de este canal */
         }
 
-#ifdef TERRA_CHAT
         /* Redireccion de canales */
-        if(ch_redir = db_buscar_registro(BDD_CHANREDIRECTDB, name))
+        if(activar_redireccion_canales && (ch_redir = db_buscar_registro(BDD_CHANREDIRECTDB, name)))
           name=ch_redir->valor;
-#endif
 
 #if defined(BADCHAN)
         if (bad_channel(name) && !IsAnOper(sptr))
@@ -3893,13 +3889,11 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
         else if (strlen(name) > CHANNELLEN)
         {
-          /* Si es una redireccion NO corto el nombre del canal, es decir
-           * no corto el registro de la BDD en memoria 
+          /* Si es una redireccion NO corto el nombre del canal,
+           * porque cortaria el registro de la BDD en memoria 
            */
-#ifdef TERRA_CHAT
-          if(!ch_redir) /* No es redireccion... */
-#endif
-          *(name + CHANNELLEN) = '\0'; /* ...pues corto el nombre */
+          if(!ch_redir) /* Si no es redireccion... */
+            *(name + CHANNELLEN) = '\0'; /* ...pues corto el nombre */
           if (ChannelExists(name))
           {
             flags = CHFL_DEOPPED;

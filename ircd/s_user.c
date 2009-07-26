@@ -1103,7 +1103,7 @@ void strip_color (const char *src, int maxlength, char *dst)
   char *start = dst;
   int pos=0;
 
-  while (*src && pos<maxlength)
+  while (*src && pos<(maxlength - 1))
     {
       if (rcol > 0 && (isdigit ((unsigned char)*src) ||
           (*src == ',' && isdigit ((unsigned char)src[1]) && !bgcol)))
