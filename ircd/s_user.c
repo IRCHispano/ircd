@@ -1684,8 +1684,8 @@ int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       if(strlen(comment)>QUITLEN)
         comment[QUITLEN]='\0';
-      else
-        return exit_client_msg(cptr, sptr, &me, "Quit: %s", comment);
+      
+      return exit_client_msg(cptr, sptr, &me, "Quit: %s", comment);
     }
     else
       return exit_client(cptr, sptr, &me, "Quit");

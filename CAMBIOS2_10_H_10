@@ -1,3 +1,7 @@
+* 2009/08/12 dfm@unr.com         (u2.10.H.10.131)                    FIX
+------------------------------------------------------------------------
+  Correccion de un error en m_quit en el parche anterior.
+
 * 2009/08/12 dfm@unr.com         (u2.10.H.10.130)            FEATURE/FIX
 ------------------------------------------------------------------------
   Quit personalizable por BDD y por servidor. Ahora se puede
