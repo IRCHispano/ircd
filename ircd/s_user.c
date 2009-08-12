@@ -1670,18 +1670,22 @@ int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (MyConnect(sptr)) /* Si es una conexion local */
   {
+    if(mensaje_quit_personalizado)
+      return exit_client(cptr, sptr, &me, mensaje_quit_personalizado);
+
     if (sptr->user)
     {
       Link *lp;
       for (lp = sptr->user->channel; lp; lp = lp->next)
         if ((can_send(sptr, lp->value.chptr) != 0) || (lp->value.chptr->mode.mode & MODE_NOQUITPARTS))
-          return exit_client(cptr, sptr, sptr, "Signed off");
+          return exit_client(cptr, sptr, &me, "Signed off");
     }
     if (comment)
     {
       if(strlen(comment)>QUITLEN)
         comment[QUITLEN]='\0';
-      return exit_client_msg(cptr, sptr, &me, "Quit: %s", comment);
+      else
+        return exit_client_msg(cptr, sptr, &me, "Quit: %s", comment);
     }
     else
       return exit_client(cptr, sptr, &me, "Quit");

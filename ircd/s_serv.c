@@ -358,7 +358,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
           "Access denied. No C line for server %s", inpath);
     }
 
-    encr = cptr->passwd;
+    encr = PunteroACadena(cptr->passwd);
 #if !defined(GODMODE)
     if (*aconf->passwd && !!strcmp(aconf->passwd, encr))
     {

@@ -279,7 +279,8 @@ dbuf.o: dbuf.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/common.h ../include/struct.h ../include/whowas.h \
   ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h \
   ../include/list.h ../include/send.h ../libevent/event.h
-fileio.o: fileio.c ../include/fileio.h ../include/runmalloc.h
+fileio.o: fileio.c ../include/fileio.h ../include/runmalloc.h \
+  ../include/sys.h
 ircd.o: ircd.c ../include/sys.h ../config/config.h ../config/setup.h \
   ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
   ../include/res.h ../include/list.h ../include/struct.h \
@@ -551,7 +552,8 @@ m_watch.o: m_watch.c ../include/sys.h ../config/config.h \
   ../include/s_conf.h ../include/s_err.h ../include/s_user.h \
   ../include/send.h ../include/support.h ../include/m_watch.h
 persistent_malloc.o: persistent_malloc.c ../include/persistent_malloc.h
-slab_alloc.o: slab_alloc.c ../include/runmalloc.h ../include/slab_alloc.h
+slab_alloc.o: slab_alloc.c ../include/runmalloc.h ../include/slab_alloc.h \
+  ../include/sys.h
 aes256.o: aes256.c ../include/aes256.h
 pcre_compile.o: pcre_compile.c ../include/pcre_internal.h
 pcre_exec.o: pcre_exec.c ../include/pcre_internal.h

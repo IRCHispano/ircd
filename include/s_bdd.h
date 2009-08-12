@@ -99,6 +99,7 @@ extern int ocultar_servidores;
 extern int activar_ident;
 extern int auto_invisible;
 extern int activar_redireccion_canales;
+extern char *mensaje_quit_personalizado;
 
 /* -- mman.h no contiene algunas definicieones en plataformas antiguas -- */
 #if !defined(MAP_FAILED)

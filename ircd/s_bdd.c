@@ -82,6 +82,7 @@ int activar_modos = 0;
 int activar_ident = 0;
 int auto_invisible = 0;
 int activar_redireccion_canales = 0;
+char *mensaje_quit_personalizado = NULL;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -570,6 +571,14 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               activar_redireccion_canales=0;
             }              
+            else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
+            {
+              if(mensaje_quit_personalizado)
+              {
+                RunFree(mensaje_quit_personalizado);
+                mensaje_quit_personalizado=NULL;
+              }
+            }             
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -886,7 +895,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         activar_redireccion_canales=1;
       }              
-
+      else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
+      {
+        SlabStringAllocDup(&mensaje_quit_personalizado, v, strlen(v));
+      }        
       break;
 
     case BDD_IPVIRTUALDB:

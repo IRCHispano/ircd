@@ -1766,7 +1766,10 @@ void event_auth_callback(int fd, short event, aClient *cptr)
 }
 
 void deadsocket(aClient *cptr) {
-  exit_client(cptr, cptr, &me,
+  if(!IsServer(cptr) && mensaje_quit_personalizado)
+    exit_client(cptr, cptr, &me, mensaje_quit_personalizado);
+  else
+    exit_client(cptr, cptr, &me,
       IsDead(cptr) ? LastDeadComment(cptr) : strerror(get_sockerr(cptr)));
 }
 
@@ -1823,9 +1826,13 @@ void event_client_read_callback(int fd, short event, aClient *cptr) {
   if ((IsServer(cptr) || IsHandshake(cptr)) && errno == 0 && length == 0) // EOF DE SERVIDOR
     exit_client_msg(cptr, cptr, &me, "Server %s closed the connection (%s)",
         PunteroACadena(cptr->name), cptr->serv->last_error_msg);
-  else
-    exit_client_msg(cptr, cptr, &me, "Read error: %s", // ERROR DE LECTURA DE CLIENTE
+  else {
+    if(mensaje_quit_personalizado)
+      exit_client(cptr, cptr, &me, mensaje_quit_personalizado);
+    else
+      exit_client_msg(cptr, cptr, &me, "Read error: %s", // ERROR DE LECTURA DE CLIENTE
         (length < 0) ? strerror(get_sockerr(cptr)) : "EOF from client");
+  }
 }
 
 /*
@@ -1992,7 +1999,10 @@ void event_checkping_callback(int fd, short event, aClient *cptr)
    * It's already done when "FLAGS_DEADSOCKET" is set.
    */
   if (IsDead(cptr))
+  {
     deadsocket(cptr);
+    return;
+  }
 
 #if defined(R_LINES) && defined(R_LINES_OFTEN)
   rflag = IsUser(cptr) ? find_restrict(cptr) : 0;
@@ -2067,8 +2077,13 @@ void event_checkping_callback(int fd, short event, aClient *cptr)
                   ":%s %d %s :Compatible clients are available at "
                   "ftp://ftp.irc.org/irc/clients",
                   me.name, ERR_BADPING, cptr->name);
+              
             }
-          exit_client_msg(cptr, cptr, &me, "Ping timeout");
+
+          if(IsRegistered(cptr) && mensaje_quit_personalizado)
+            exit_client(cptr, cptr, &me, mensaje_quit_personalizado);
+          else
+            exit_client(cptr, cptr, &me, "Ping timeout");
         }
       return;
     }
