@@ -1076,8 +1076,10 @@ int match_pcre_ci(pcre *re, char *subject) {
   
   tmp=low;
   
-  while (*tmp)
-    *tmp=toLower(*tmp++);
+  while (*tmp) {
+    *tmp=toLower(*tmp);
+    *tmp++;
+  }
   
   res = match_pcre(re, low);
 

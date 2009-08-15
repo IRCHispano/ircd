@@ -2066,8 +2066,10 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
         
         tmp=cptr_info_low;
         
-        while (*tmp)
-          *tmp=toLower(*tmp++);
+        while (*tmp) {
+          *tmp=toLower(*tmp);
+          *tmp++;
+        }
         
         tmp=cptr_info_low;
       } else if(GlineIsRealName(agline))

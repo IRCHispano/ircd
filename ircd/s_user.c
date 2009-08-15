@@ -898,7 +898,7 @@ void send_features(aClient *sptr, char *nick)
   char buf[500];
 
   sprintf(buf, "CHANMODES=b,k,l,imnpst");
-  strcat(buf, "rRMCNu");
+  strcat(buf, "crRMCNu");
   sprintf(buf, "%s CHANTYPES=#&+ KICKLEN=%d MAXBANS=%d", buf, KICKLEN, MAXBANS);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
@@ -1670,7 +1670,7 @@ int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (MyConnect(sptr)) /* Si es una conexion local */
   {
-    if(mensaje_quit_personalizado)
+    if(IsRegistered(sptr) && mensaje_quit_personalizado)
       return exit_client(cptr, sptr, &me, mensaje_quit_personalizado);
 
     if (sptr->user)
@@ -4320,8 +4320,10 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   strncpy(nick_low, nick, NICKLEN);
   nick_low[NICKLEN]='\0';
   tmp=nick_low;
-  while (*tmp)
-    *tmp=toLower(*tmp++);
+  while (*tmp) {
+    *tmp=toLower(*tmp);
+    *tmp++;
+  }
   
   if ((!IsServer(cptr)) && !nick_aleatorio)
   {

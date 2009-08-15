@@ -1,3 +1,16 @@
+* 2009/08/15 dfm@unr.com         (u2.10.H.10.132)                FEATURE
+------------------------------------------------------------------------
+  Cambio codigo que da problemas al compilar con -O3 con el gcc 3.3.6
+
+  Optimizacion en quit personalizado, ahorro un strlen()
+  
+  Si el usuario no ha terminado de entrar en el ircd no modifico el
+  mensaje de quit
+  
+  Corrijo envio de modos de canal, ahora incluyo el c en el mensaje de
+  bienvenida
+
+  
 * 2009/08/12 dfm@unr.com         (u2.10.H.10.131)                    FIX
 ------------------------------------------------------------------------
   Correccion de un error en m_quit en el parche anterior.

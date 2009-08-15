@@ -503,8 +503,10 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
 
   tmp=cptr_info_low;
   
-  while (*tmp)
-    *tmp=toLower(*tmp++);
+  while (*tmp) {
+    *tmp=toLower(*tmp);
+    *tmp++;
+  }
   
   while (agline)
   {                             /* look through all glines */

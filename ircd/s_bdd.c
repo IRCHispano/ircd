@@ -897,7 +897,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       }              
       else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
       {
-        SlabStringAllocDup(&mensaje_quit_personalizado, v, strlen(v));
+        SlabStringAllocDup(&mensaje_quit_personalizado, v, 0);
       }        
       break;
 
