@@ -1,3 +1,7 @@
+* 2009/08/18 ruben@irc-dev.net   (u2.10.H.10.133)                FEATURE
+------------------------------------------------------------------------
+  Se aumenta el tamano maximo de banes por canal a 150.
+
 * 2009/08/15 dfm@unr.com         (u2.10.H.10.132)                FEATURE
 ------------------------------------------------------------------------
   Cambio codigo que da problemas al compilar con -O3 con el gcc 3.3.6
