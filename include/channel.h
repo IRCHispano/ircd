@@ -34,7 +34,7 @@
 #define TOPICLEN	240
 #define CHANNELLEN	64
 
-#define MAXBANS		75
+#define MAXBANS		150
 #define MAXBANLENGTH	2560      /* Este valor debe ajustarse si se cambia el anterior */
 
 #define KICKLEN                160
