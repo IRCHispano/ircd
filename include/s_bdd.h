@@ -98,6 +98,7 @@ extern int cifrado_cookies;
 extern int ocultar_servidores;
 extern int activar_ident;
 extern int auto_invisible;
+extern int excepcion_invisible;
 extern int activar_redireccion_canales;
 extern char *mensaje_quit_personalizado;
 

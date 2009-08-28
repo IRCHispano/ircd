@@ -1,3 +1,11 @@
+* 2009/08/28 dfm@unr.com         (u2.10.H.10.134)                FEATURE
+------------------------------------------------------------------------
+  Se permite especificar mediante BDD servidores que no ponen
+  automaticamente +i a sus usuarios de la siguiente forma:
+  
+  clave: noinvisible:nombre.de.servidor
+  y cualquier valor.
+
 * 2009/08/18 ruben@irc-dev.net   (u2.10.H.10.133)                FEATURE
 ------------------------------------------------------------------------
   Se aumenta el tamano maximo de banes por canal a 150.

@@ -81,6 +81,7 @@ int ocultar_servidores = 0;
 int activar_modos = 0;
 int activar_ident = 0;
 int auto_invisible = 0;
+int excepcion_invisible = 0;
 int activar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
 
@@ -578,7 +579,11 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                 RunFree(mensaje_quit_personalizado);
                 mensaje_quit_personalizado=NULL;
               }
-            }             
+            }
+            else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
+            {
+              excepcion_invisible=0;
+            }   
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -899,8 +904,11 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         SlabStringAllocDup(&mensaje_quit_personalizado, v, 0);
       }        
+      else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
+      {
+        excepcion_invisible = !0;
+      }     
       break;
-
     case BDD_IPVIRTUALDB:
       {
         aClient *sptr;
