@@ -1617,6 +1617,9 @@ static void almacena_hash(unsigned char que_bdd)
   char path[1024];
   char hash[20];
   int db_file;
+  
+  if(bootopt & BOOT_BDDCHECK)
+    return;
 
   sprintf_irc(path, "%s/hashes", DBPATH);
   inttobase64(hash, tabla_hash_hi[que_bdd], 6);
@@ -1992,6 +1995,7 @@ static void initdb2(unsigned char que_bdd)
   struct tabla_en_memoria mapeo;
   char *destino, *p = NULL, *p2, *p3;
   int p_len = 0;
+  char str[13];
 
   borrar_db(que_bdd);
 
@@ -2078,7 +2082,15 @@ static void initdb2(unsigned char que_bdd)
 ** cargada se corresponda con el HASH almacenado
 */
   lee_hash(que_bdd, &hi, &lo);
-  if ((tabla_hash_hi[que_bdd] != hi) || (tabla_hash_lo[que_bdd] != lo))
+
+  if(bootopt & BOOT_BDDCHECK)
+  {
+    inttobase64(str, tabla_hash_hi[que_bdd], 6);
+    inttobase64(str + 6, tabla_hash_lo[que_bdd], 6);
+    str[12]='\0';
+    fprintf(stderr, "%c %s\n",que_bdd,str);
+  }
+  else if ((tabla_hash_hi[que_bdd] != hi) || (tabla_hash_lo[que_bdd] != lo))
   {
     sendto_ops("ATENCION - Base de Datos "
         "'%c' aparentemente corrupta. Borrando...", que_bdd);

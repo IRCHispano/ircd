@@ -309,7 +309,7 @@ void event_try_connections_callback(int fd, short event, struct event *ev)
  */
 static int bad_command(void)
 {
-  printf("Usage: ircd %s[-h servername] [-p portnumber] [-x loglevel] [-t]\n",
+  printf("Usage: ircd %s[-h servername] [-p portnumber] [-x loglevel] [-t] [-b]\n",
 #if defined(CMDLINE_CONFIG)
       "[-f config] "
 #else
@@ -529,6 +529,9 @@ int main(int argc, char *argv[])
       case 'a':
         bootopt |= BOOT_AUTODIE;
         break;
+      case 'b':
+        bootopt |= (BOOT_BDDCHECK | BOOT_TTY);
+        break;        
       case 'c':
         bootopt |= BOOT_CONSOLE;
         break;
@@ -705,6 +708,7 @@ int main(int argc, char *argv[])
   }
 #endif
 
+  
   hash_init();
 #if defined(DEBUGMODE)
   initlists();
@@ -719,6 +723,7 @@ int main(int argc, char *argv[])
   me.port = portnum;
   init_sys();
   setup_signals();
+  
   me.flags = FLAGS_LISTEN;
   if ((bootopt & BOOT_INETD))
   {
@@ -738,19 +743,23 @@ int main(int argc, char *argv[])
     printf("Couldn't open configuration file %s\n", configfile);
     exit(-1);
   }
-  if (!(bootopt & BOOT_INETD))
+  
+  if(!(bootopt & BOOT_BDDCHECK))
   {
-    static char star[] = "*";
-    aConfItem *aconf;
+    if (!(bootopt & BOOT_INETD))
+    {
+      static char star[] = "*";
+      aConfItem *aconf;
 
-    if ((aconf = find_me()) && portarg == 0 && aconf->port != 0)
-      portnum = aconf->port;
-    Debug((DEBUG_ERROR, "Port = %u", portnum));
-    if (inetport(&me, star, portnum))
+      if ((aconf = find_me()) && portarg == 0 && aconf->port != 0)
+        portnum = aconf->port;
+      Debug((DEBUG_ERROR, "Port = %u", portnum));
+      if (inetport(&me, star, portnum))
+        exit(1);
+    }
+    else if (inetport(&me, "*", 0))
       exit(1);
   }
-  else if (inetport(&me, "*", 0))
-    exit(1);
 
   read_tlines();
   rmotd = read_motd(RPATH);
@@ -790,11 +799,19 @@ int main(int argc, char *argv[])
   
   init_timers();
 
+  if(bootopt & BOOT_BDDCHECK)
+  {
+    initdb();
+    exit(0);
+  }
+  
   Debug((DEBUG_NOTICE, "Server ready..."));
 #if defined(USE_SYSLOG)
   syslog(LOG_NOTICE, "Server Ready");
 #endif
   initdb();
+  
+  
 
   for (;;)
   {

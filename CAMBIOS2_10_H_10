@@ -1,3 +1,8 @@
+* 2009/09/22 dfm@unr.com         (u2.10.H.10.135)                FEATURE
+------------------------------------------------------------------------
+  Con la opcion de arranque -b se indica al ircd que vuelque los hashes
+  de la db a stderr
+
 * 2009/08/28 dfm@unr.com         (u2.10.H.10.134)                FEATURE
 ------------------------------------------------------------------------
   Se permite especificar mediante BDD servidores que no ponen

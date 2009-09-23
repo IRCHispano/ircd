@@ -2119,6 +2119,9 @@ void event_checkping_callback(int fd, short event, aClient *cptr)
 int add_listener(aConfItem *aconf)
 {
   aClient *cptr;
+  
+  if(bootopt & BOOT_BDDCHECK)
+    return 0;
 
   cptr = make_client(NULL, STAT_ME);
   cptr->flags = FLAGS_LISTEN;

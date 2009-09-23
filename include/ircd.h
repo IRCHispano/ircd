@@ -23,6 +23,7 @@
 #define BOOT_INETD	8
 #define BOOT_TTY	16
 #define BOOT_AUTODIE	32
+#define BOOT_BDDCHECK   64
 
 #define AR_TTL          600           /* TTL in seconds for dns cache entries */
 
