@@ -1,3 +1,8 @@
+* 2009/10/06 dfm@unr.com         (u2.10.H.10.136)                    FIX
+------------------------------------------------------------------------
+  Corregido bug en /stats M cuando se intenta mostrar un malloc con
+  el puntero al nombre de codigo fuente a null
+
 * 2009/09/22 dfm@unr.com         (u2.10.H.10.135)                FEATURE
 ------------------------------------------------------------------------
   Con la opcion de arranque -b se indica al ircd que vuelque los hashes

@@ -187,7 +187,8 @@ void report_memleak_stats(aClient *sptr, int parc, char *parv[])
     if (loc[hash].number_of_allocations > 0)
       sendto_one(sptr, rpl_str(RPL_STATMEM), me.name, parv[0],
           loc[hash].number_of_allocations,
-          location[hash].line, location[hash].filename
+          location[hash].line,
+          location[hash].filename ? location[hash].filename : "(null)"
 #if defined(MEMSIZESTATS)
           , loc[hash].size
 #endif
