@@ -23,7 +23,7 @@
 CC=gcc
 CFLAGS=-W -Wall
 
-all: misc.o aes256.o tea.o cifranick ipreal ipvirtual cifraping descifraping
+all: misc.o aes256.o tea.o cifranick ipreal ipvirtual cifraping descifraping cifratexto descifratexto
 
 tea.o: tea.c tea.h
 	$(CC) $(CFLAGS) -c -o tea.o tea.c
@@ -40,6 +40,12 @@ cifraping: cifraping.c aes256.o misc.o
 descifraping: descifraping.c aes256.o misc.o
 	$(CC) $(CFLAGS) -o descifraping descifraping.c aes256.o misc.o
 
+cifratexto: cifratexto.c aes256.o misc.o
+	$(CC) $(CFLAGS) -o cifratexto cifratexto.c aes256.o misc.o
+
+descifratexto: descifratexto.c aes256.o misc.o
+	$(CC) $(CFLAGS) -o descifratexto descifratexto.c aes256.o misc.o
+
 cifranick: cifranick.c tea.o misc.o
 	$(CC) $(CFLAGS) -o cifranick cifranick.c tea.o misc.o
 
@@ -48,11 +54,11 @@ ipreal: ipreal.c tea.o misc.o
 
 ipvirtual: ipvirtual.c tea.o misc.o
 	$(CC) $(CFLAGS) -o ipvirtual ipvirtual.c tea.o misc.o
-
+	
 install:       
 	@echo 'Ya esta instalado, no hacia falta ;-).'
 
 clean:
-	/bin/rm -f cifranick ipreal ipvirtual core cifraping descifraping *.c~ *.o
+	/bin/rm -f cifranick ipreal ipvirtual core cifraping descifraping cifratexto descifratexto *.c~ *.o
 
 distclean: clean

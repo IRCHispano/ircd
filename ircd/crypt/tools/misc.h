@@ -55,5 +55,6 @@ extern void genera_aleatorio(unsigned char *, int);
 extern unsigned int base64toint(const char *);
 extern const char *inttobase64(char *, unsigned int v, unsigned int count);
 void inetoa_r(char *buf, unsigned int ip);
+void xor(uint8_t *dst, uint8_t *org, size_t tam);
 
 #endif /* MISC_H_ */

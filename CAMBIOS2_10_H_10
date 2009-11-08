@@ -1,3 +1,8 @@
+* 2009/11/08 dfm@unr.com         (u2.10.H.10.137)                 FEATURE
+------------------------------------------------------------------------
+  Nuevas utilidades para cifrar mensajes de tama~o arbitrario usando AES
+  256 en modo CBC.
+
 * 2009/10/06 dfm@unr.com         (u2.10.H.10.136)                    FIX
 ------------------------------------------------------------------------
   Corregido bug en /stats M cuando se intenta mostrar un malloc con

@@ -212,3 +212,15 @@ void inetoa_r(char *buf, unsigned int ip)
   d = *s++;
   sprintf(buf, "%u.%u.%u.%u", d, c, b, a);
 }
+
+/*
+ * Funcion para hacer un XOR entre dos vectores
+ * 
+ * Necesario para poder cifrar en CBC
+ * 
+ */
+void xor(uint8_t *dst, uint8_t *org, size_t tam) {
+  unsigned int i=0;
+  for(i=0;i<tam;i++) 
+    dst[i]=dst[i]^org[i];
+}
