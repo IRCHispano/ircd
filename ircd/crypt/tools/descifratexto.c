@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     msg = argv[2];
     msg_len = strlen(msg);
     key_len = (key_len>44) ? 44 : key_len;
-    x_len = (msg_len/8) *6;
+    x_len = 6 * (msg_len/4);
     
     strncpy(key+(44-key_len), argv[1], (key_len));
     key[44]='\0';
