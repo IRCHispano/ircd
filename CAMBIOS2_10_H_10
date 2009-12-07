@@ -1,3 +1,10 @@
+* 2009/12/07 dfm@unr.com         (u2.10.H.10.138)                    FIX
+------------------------------------------------------------------------
+  Arreglo de la funcionalidad de password en I:line.
+  
+  Esta funcionalidad fallaba debido a un bug  introducido en los parches
+  de slab allocation.
+
 * 2009/11/08 dfm@unr.com         (u2.10.H.10.137)                 FEATURE
 ------------------------------------------------------------------------
   Nuevas utilidades para cifrar mensajes de tama~o arbitrario usando AES

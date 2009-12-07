@@ -601,7 +601,7 @@ static int register_user(aClient *cptr, aClient *sptr,
 #if defined(USEONE)
         && strcmp("ONE", aconf->passwd)
 #endif
-        && (!BadPtr(sptr->passwd) && strcmp(sptr->passwd, aconf->passwd)))
+        && strcmp(PunteroACadena(sptr->passwd), aconf->passwd))
     {
       ircstp->is_ref++;
       sendto_one(sptr, err_str(ERR_PASSWDMISMATCH), me.name, parv[0]);
