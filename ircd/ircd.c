@@ -380,7 +380,7 @@ static void open_debugfile(void)
     if (NULL != me.name)
       SlabStringAllocDup(&(cptr->sockhost), me.name, HOSTLEN);
 
-    printf("isatty = %d ttyname = %#x\n", isatty(2), (unsigned int)ttyname(2), NULL);
+    printf("isatty = %d ttyname = %#x\n", isatty(2), (unsigned int)ttyname(2));
     if (!(bootopt & BOOT_TTY))  /* leave debugging output on fd 2 */
     {
       if ((fd = creat(LOGFILE, 0600)) < 0)
