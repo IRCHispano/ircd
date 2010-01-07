@@ -237,12 +237,13 @@ void report_error(char *text, aClient *cptr)
  * depending on the IP# mask given by 'name'.  Returns the fd of the
  * socket created or -1 on error.
  */
-int inetport(aClient *cptr, char *name, unsigned short int port)
+int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
 {
   static struct sockaddr_in server;
   int ad[4], opt;
   socklen_t len = sizeof(server);
   char ipname[20];
+  char ipvirtual[20];
 
   ad[0] = ad[1] = ad[2] = ad[3] = 0;
 
@@ -254,6 +255,12 @@ int inetport(aClient *cptr, char *name, unsigned short int port)
   sscanf(name, "%d.%d.%d.%d", &ad[0], &ad[1], &ad[2], &ad[3]);
   sprintf_irc(ipname, "%d.%d.%d.%d", ad[0], ad[1], ad[2], ad[3]);
 
+  if(virtual && *virtual)
+  {
+    sscanf(virtual, "%d.%d.%d.%d", &ad[0], &ad[1], &ad[2], &ad[3]);
+    sprintf_irc(ipvirtual, "%d.%d.%d.%d", ad[0], ad[1], ad[2], ad[3]);
+  }
+  
   if (cptr != &me)
   {
     char temp_sockhost[HOSTLEN + 1];
@@ -298,7 +305,10 @@ int inetport(aClient *cptr, char *name, unsigned short int port)
 #if !defined(VIRTUAL_HOST)
     server.sin_addr.s_addr = INADDR_ANY;
 #else
-    server.sin_addr = vserv.sin_addr;
+    if(virtual && *virtual)
+      server.sin_addr.s_addr = inet_addr(ipvirtual);
+    else
+      server.sin_addr = vserv.sin_addr;
 #endif
 #if defined(TESTNET)
     server.sin_port = htons(port + 10000);
@@ -2141,7 +2151,7 @@ int add_listener(aConfItem *aconf)
     return 0;
   }
 
-  if (inetport(cptr, aconf->host, aconf->port))
+  if (inetport(cptr, aconf->host, aconf->port, aconf->name))
     cptr->fd = -2;
 
   if (cptr->fd >= 0)

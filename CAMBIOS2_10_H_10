@@ -1,3 +1,31 @@
+* 2010/01/07 dfm@unr.com         (u2.10.H.10.139)                FEATURE
+------------------------------------------------------------------------
+  Poder elegir puerto a escuchar en las P lines cuando el ircd esta
+  compilado con VIRTUAL_HOST
+  
+  El puerto se especifica en el tercer argumento, ejemplo:
+  
+  P:::1.2.3.4:6667
+  
+  Escucharia en el puerto 6667 de la direccion 1.2.3.4
+  
+  Poder especificar el puerto de escucha del servidor (el de la M line)
+  en el segundo parametro.
+  
+  NOTA IMPORTANTE:
+  
+  Especificar el puerto en la M line es diferente a arrancar el ircd
+  con -w ip_interface.
+  
+  Cuando se arranca el ircd con -w todos los puertos que no tengan
+  especificada IP se escucharan en la ip indicada tras -w, si no
+  usamos -w y solo ponemos una ip en M line el resto de puertos que
+  no tengan espeficidada IP se escucharan en INADDR_ANY y el del
+  servidor en el de la M line y si ponemos una ip en -w y otra diferente
+  en la M line sucedera que por defecto todos los puertos que no tengan
+  especificada IP se escucharan en la ip tras -w y el del servidor
+  en la indicada en la M line.
+
 * 2009/12/07 dfm@unr.com         (u2.10.H.10.138)                    FIX
 ------------------------------------------------------------------------
   Arreglo de la funcionalidad de password en I:line.

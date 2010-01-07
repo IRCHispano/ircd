@@ -380,7 +380,7 @@ static void open_debugfile(void)
     if (NULL != me.name)
       SlabStringAllocDup(&(cptr->sockhost), me.name, HOSTLEN);
 
-    printf("isatty = %d ttyname = %#x\n", isatty(2), (unsigned int)ttyname(2));
+    printf("isatty = %d ttyname = %#x\n", isatty(2), (unsigned int)ttyname(2), NULL);
     if (!(bootopt & BOOT_TTY))  /* leave debugging output on fd 2 */
     {
       if ((fd = creat(LOGFILE, 0600)) < 0)
@@ -754,10 +754,10 @@ int main(int argc, char *argv[])
       if ((aconf = find_me()) && portarg == 0 && aconf->port != 0)
         portnum = aconf->port;
       Debug((DEBUG_ERROR, "Port = %u", portnum));
-      if (inetport(&me, star, portnum))
+      if (inetport(&me, star, portnum, aconf->passwd))
         exit(1);
     }
-    else if (inetport(&me, "*", 0))
+    else if (inetport(&me, "*", 0, NULL))
       exit(1);
   }
 
