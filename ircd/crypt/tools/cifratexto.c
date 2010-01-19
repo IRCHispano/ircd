@@ -39,10 +39,10 @@ int main(int argc, char *argv[])
 {
     aes256_context ctx;
     uint8_t k[32], v[16], v2[16], s[8];
-    unsigned char key[45];
+    unsigned char key[33];
     unsigned int key_len, msg_len;
     unsigned int i;
-    unsigned int j,x_len,res_len;
+    unsigned int j,x_len;
     char *msg,*res;
     uint8_t *x;
     
@@ -59,12 +59,12 @@ int main(int argc, char *argv[])
 
     memset(s, 0, sizeof(s));
 
-    memset(key, 'A', sizeof(key));
+    memset(key, 'A', sizeof(key)-1);
     
     key_len = strlen(argv[1]);
     msg = argv[2];
     msg_len = strlen(msg);
-    key_len = (key_len>44) ? 44 : key_len;
+    key_len = (key_len>32) ? 32 : key_len;
     x_len = 24 + msg_len - msg_len % 16;
     x = (uint8_t *) malloc(x_len);
     res = (char *) malloc(x_len*sizeof(char)*2);
@@ -72,8 +72,8 @@ int main(int argc, char *argv[])
     memset(x, 0, x_len);
     memset(res, 0, x_len*sizeof(char)*2);
     
-    strncpy((char *)key+(44-key_len), argv[1], (key_len));
-    key[44]='\0';
+    strncpy((char *)key+(32-key_len), argv[1], (key_len));
+    key[32]='\0';
     
     genera_aleatorio(s, sizeof(s));
 
@@ -86,7 +86,6 @@ int main(int argc, char *argv[])
     DUMP("CLAVE....: ", i, k, sizeof(k));
     DUMP("MENSAJE..: ", i, msg, msg_len);
 
-    memset(x, 0, res_len*sizeof(char));
     memcpy(x,s,8);
     
     aes256_init(&ctx, k);
@@ -96,7 +95,7 @@ int main(int argc, char *argv[])
       xor(v, v2, sizeof(v));
       aes256_encrypt_ecb(&ctx, v);
       memcpy(v2, v, sizeof(v));
-      memcpy(x+j+sizeof(s), v, 16);
+      memcpy(x+j+8, v, 16);
     }
     aes256_done(&ctx);
     

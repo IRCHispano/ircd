@@ -21,7 +21,7 @@
 # de los nicks para la tabla 'n'.
 
 CC=gcc
-CFLAGS=-W -Wall
+CFLAGS=-W -Wall -g -ggdb
 
 all: misc.o aes256.o tea.o cifranick ipreal ipvirtual cifraping descifraping cifratexto descifratexto
 

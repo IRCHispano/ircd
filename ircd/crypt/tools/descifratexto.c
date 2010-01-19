@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 {
     aes256_context ctx;
     uint8_t k[32], v[16], v2[16], v3[16], *x, *z;
-    char key[45], *msg;
+    char key[33], *msg;
     unsigned int key_len, msg_len, x_len, j;
     unsigned int i;
     
@@ -59,11 +59,11 @@ int main(int argc, char *argv[])
     key_len = strlen(argv[1]);
     msg = argv[2];
     msg_len = strlen(msg);
-    key_len = (key_len>44) ? 44 : key_len;
-    x_len = 6 * (msg_len/4);
+    key_len = (key_len>32) ? 32 : key_len;
+    x_len = 6 * (msg_len/8)+8;
     
-    strncpy(key+(44-key_len), argv[1], (key_len));
-    key[44]='\0';
+    strncpy(key+(32-key_len), argv[1], (key_len));
+    key[32]='\0';
     
     printf("String clave (base64): %s\n", key);
     printf("String mensaje.......: %s\n", msg);
@@ -79,16 +79,16 @@ int main(int argc, char *argv[])
     DUMP("CLAVE....: ", i, k, sizeof(k));
     DUMP("ENCRIPT..: ", i, x, x_len);
     aes256_init(&ctx, k);
-    for(j=0;j<x_len;j=j+16) {
+    for(j=8;j<=(x_len-24);j=j+16) {
       memset(v, 0, sizeof(v));
-      memcpy(v, x+j+8, (x_len-j) > 16 ? 16 : (x_len-j));
+      memcpy(v, x+j, x_len-j > 16 ? 16 : x_len-j);
 
       memcpy(v3, v, sizeof(v));
       aes256_decrypt_ecb(&ctx, v);
       xor(v, v2, sizeof(v));
       memcpy(v2, v3, sizeof(v));
 
-      memcpy(z+j, v, (x_len-j) > 16 ? 16 : (x_len-j));
+      memcpy(z+j-8, v, x_len-j > 16 ? 16 : x_len-j);
     }
 
     aes256_done(&ctx);

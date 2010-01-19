@@ -1,3 +1,7 @@
+* 2010/01/19 dfm@unr.com         (u2.10.H.10.140)                    FIX
+------------------------------------------------------------------------
+  Correcciones varias en el sistema de cifrado de textos.
+
 * 2010/01/07 dfm@unr.com         (u2.10.H.10.139)                FEATURE
 ------------------------------------------------------------------------
   Poder elegir puerto a escuchar en las P lines cuando el ircd esta
