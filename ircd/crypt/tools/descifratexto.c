@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     msg = argv[2];
     msg_len = strlen(msg);
     key_len = (key_len>32) ? 32 : key_len;
-    x_len = 6 * (msg_len/8)+8;
+    x_len = 3 * (msg_len/4)+8;
     
     strncpy(key+(32-key_len), argv[1], (key_len));
     key[32]='\0';
@@ -94,6 +94,9 @@ int main(int argc, char *argv[])
     aes256_done(&ctx);
     DUMP("DESCRIPT.: ", i, v, sizeof(v));
     printf("Resultado: %s\n\n", (char *)z);
+
+    free(x);
+    free(z);
 
     exit(EXIT_SUCCESS);
 }

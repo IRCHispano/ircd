@@ -1,3 +1,8 @@
+* 2010/01/21 dfm@unr.com         (u2.10.H.10.141)                    FIX
+------------------------------------------------------------------------
+  Ajustes en el sistema de cifrado de textos, corrijo el calculo de
+  tama~o en la conversion de Base64 a binario.
+
 * 2010/01/19 dfm@unr.com         (u2.10.H.10.140)                    FIX
 ------------------------------------------------------------------------
   Correcciones varias en el sistema de cifrado de textos.

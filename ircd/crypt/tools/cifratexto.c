@@ -105,5 +105,8 @@ int main(int argc, char *argv[])
     
     printf("Resultado (base64): %s\n\n", res);
 
+    free(x);
+    free(res);
+
     exit(EXIT_SUCCESS);
 }
