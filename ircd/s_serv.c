@@ -1133,12 +1133,24 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
          * been received. -avalon
          * Or only NICK in new format. --Run
          */
+#ifdef MIGRACION_DEEPSPACE_P10
+        char xxx_buf[8];
+
+        sendto_one(cptr, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s :%s",
+            acptr->user->server->name,
+            acptr->name, acptr->hopcount + 1, acptr->lastnick,
+            PunteroACadena(acptr->user->username),
+            PunteroACadena(acptr->user->host), acptr->user->server->name,
+            inttobase64(xxx_buf,ntohl(acptr->ip.s_addr), 6),
+            PunteroACadena(acptr->info));
+#else
         sendto_one(cptr, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
             acptr->user->server->name,
             acptr->name, acptr->hopcount + 1, acptr->lastnick,
             PunteroACadena(acptr->user->username),
             PunteroACadena(acptr->user->host), acptr->user->server->name,
             PunteroACadena(acptr->info));
+#endif
         send_umode(cptr, acptr, 0, SEND_UMODES, 0, SEND_HMODES);
         send_user_joins(cptr, acptr);
       }

@@ -822,10 +822,18 @@ static int register_user(aClient *cptr, aClient *sptr,
 #else /* Remove the following when all servers are 2.10 */
 
   /* First send message to all 2.9 servers */
+#ifdef MIGRACION_DEEPSPACE_P10
+  sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s :%s",
+      user->server->name, nick, sptr->hopcount + 1, sptr->lastnick,
+      PunteroACadena(user->username), PunteroACadena(user->host),
+      user->server->name, inttobase64(ip_base64, ntohl(sptr->ip.s_addr), 6),
+      PunteroACadena(sptr->info));
+#else
   sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
       user->server->name, nick, sptr->hopcount + 1, sptr->lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host),
       user->server->name, PunteroACadena(sptr->info));
+#endif
   for (lp = me.serv->down; lp; lp = lp->next)
   {
     if (lp->value.cptr == cptr)
