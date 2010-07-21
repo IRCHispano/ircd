@@ -616,6 +616,10 @@ int parse_server(aClient *cptr, char *buffer, char *bufend)
       }
     }
     numeric_prefix[i] = '\0';
+
+    if(!numeric_prefix[0])
+      return exit_client_msg(cptr, cptr, &me, "Garbage data");
+    
     /*
      * We got a numeric nick as prefix
      * 1 or 2 character prefixes are from servers

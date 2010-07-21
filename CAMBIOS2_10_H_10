@@ -1,3 +1,8 @@
+* 2010/07/21 dfm@unr.com         (u2.10.H.10.144)                FEATURE
+------------------------------------------------------------------------
+  Cancelo un link de un servidor si envia un numeric vacio, si un server
+  envia algo asi es que probablemente este enviando basura.
+  
 * 2010/07/21 dfm@unr.com         (u2.10.H.10.143)                    FIX
 ------------------------------------------------------------------------
   Corrijo bug historico al intentar obtener el usuario o el servidor
