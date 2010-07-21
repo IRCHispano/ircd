@@ -161,6 +161,10 @@ static struct Client *FindXNServer(const char *numeric)
 struct Client *FindNServer(const char *numeric)
 {
   unsigned int len = strlen(numeric);
+  
+  /* Si llega un numeric vacio retorno NULL */
+  if (len == 0)
+    return NULL;
 
   if (len < 3)
   {
@@ -179,7 +183,13 @@ struct Client *FindNServer(const char *numeric)
 struct Client *findNUser(const char *yxx)
 {
   struct Client *server = 0;
-  if (5 == strlen(yxx))
+  unsigned int len = strlen(yxx);
+  
+  /* Si llega un numeric vacio retorno NULL */
+  if (len == 0)
+    return NULL;
+  
+  if (len == 5)
   {
     if (0 != (server = FindXNServer(yxx)))
     {

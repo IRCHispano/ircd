@@ -17,7 +17,7 @@
 #include <arpa/nameser.h>
 #if defined(__APPLE__)
 #define BIND_8_COMPAT 1
-#include <nameser8_compat.h>
+#include <arpa/nameser_compat.h>
 #endif
 #include <resolv.h>
 /* dn_skipname is really an internal function,

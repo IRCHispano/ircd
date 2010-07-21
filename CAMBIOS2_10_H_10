@@ -1,3 +1,10 @@
+* 2010/07/21 dfm@unr.com         (u2.10.H.10.143)                    FIX
+------------------------------------------------------------------------
+  Corrijo bug historico al intentar obtener el usuario o el servidor
+  de un numerico vacio.
+
+  Cambio include de res.c para compilacion en Mac OS X 10.6
+  
 * 2010/03/25 zoltan@irc-dev.net  (u2.10.H.10.142)                FEATURE
 ------------------------------------------------------------------------
   Parches temporales para la migración de deep.space a P10.
@@ -8,7 +15,7 @@
   En este primer parche, cambiamos el comando NICK para que mande la IP
   en formato base64 para que los services puedan tener la IP de cada 
   usuario.
-           
+    
 * 2010/01/21 dfm@unr.com         (u2.10.H.10.141)                    FIX
 ------------------------------------------------------------------------
   Ajustes en el sistema de cifrado de textos, corrijo el calculo de
