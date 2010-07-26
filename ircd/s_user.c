@@ -76,7 +76,7 @@
 #include "class.h"
 #include "slab_alloc.h"
 #include "network.h"
-#include "aes256.h"
+#include "aes.h"
 
 
 RCSTAG_CC("$Id$");
@@ -213,7 +213,7 @@ void genera_cookie(char *out, int count) {
 
 void cifra_cookie(char *out, char *cookie)
 {
-    aes256_context ctx;
+    aes_context ctx;
     uint8_t k[32], x[24], v[16], s[8];
     unsigned char key[45], res[45];
     int key_len, msg_len;
@@ -233,10 +233,15 @@ void cifra_cookie(char *out, char *cookie)
     genera_aleatorio(s, sizeof(s));
     memcpy(k,clave_de_cifrado_de_cookies,24);
     memcpy(k+24,s,8);
-
+/*
     aes256_init(&ctx, k);
     aes256_encrypt_ecb(&ctx, v);
     aes256_done(&ctx);
+*/
+    aes_setkey_dec(&ctx, k, 256);
+    aes_setkey_dec(&ctx, k, 256);
+    aes_crypt_ecb(&ctx, AES_ENCRYPT, v, v);
+
     memcpy(x,s,8);
     memcpy(x+8,v,16);
 
@@ -245,7 +250,7 @@ void cifra_cookie(char *out, char *cookie)
 
 void descifra_cookie(char *out, char *cookie)
 {
-    aes256_context ctx;
+    aes_context ctx;
     uint8_t k[32], v[16], x[24];
     char key[45], msg[33];
     int key_len, msg_len;
@@ -265,10 +270,14 @@ void descifra_cookie(char *out, char *cookie)
     memcpy(k,clave_de_cifrado_de_cookies,24);
     memcpy(k+24,x,8);
     memcpy(v,x+8,16);
-
+/*
     aes256_init(&ctx, k);
     aes256_decrypt_ecb(&ctx, v);
     aes256_done(&ctx);
+*/
+    aes_setkey_dec(&ctx, k, 256);
+    aes_setkey_dec(&ctx, k, 256);
+    aes_crypt_ecb(&ctx, AES_DECRYPT, v, v);
 
     strncpy(out, (char *)v, COOKIELEN);
     out[COOKIELEN]='\0';

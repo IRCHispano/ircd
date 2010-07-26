@@ -228,6 +228,7 @@ struct User {
   char *host;
 #if defined(BDD_VIP)
   char *virtualhost;
+  char *virtualhost_generic;
 #endif
 #if defined(LIST_DEBUG)
   struct Client *bcptr;

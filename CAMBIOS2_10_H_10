@@ -1,3 +1,7 @@
+* 2010/07/26 dfm@unr.com         (u2.10.H.10.145)                FEATURE
+------------------------------------------------------------------------
+  Implementacion eficiente del algoritmo AES
+
 * 2010/07/21 dfm@unr.com         (u2.10.H.10.144)                FEATURE
 ------------------------------------------------------------------------
   Cancelo un link de un servidor si envia un numeric vacio, si un server
