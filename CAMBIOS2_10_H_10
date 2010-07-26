@@ -1,3 +1,7 @@
+* 2010/07/26 dfm@unr.com         (u2.10.H.10.146)                FEATURE
+------------------------------------------------------------------------
+  Activo define para el precalculo del SBOX y constantes del AES
+
 * 2010/07/26 dfm@unr.com         (u2.10.H.10.145)                FEATURE
 ------------------------------------------------------------------------
   Implementacion eficiente del algoritmo AES

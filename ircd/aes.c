@@ -29,7 +29,10 @@
 #include "aes.h"
 #include "padlock.h"
 
+#define POLARSSL_AES_ROM_TABLES
+
 RCSTAG_CC("$Id: aes256.c 256 2008-12-01 14:40:06Z dfmartinez $");
+
 /*
  * 32-bit integer manipulation macros (little endian)
  */
