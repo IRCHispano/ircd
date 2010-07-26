@@ -233,13 +233,8 @@ void cifra_cookie(char *out, char *cookie)
     genera_aleatorio(s, sizeof(s));
     memcpy(k,clave_de_cifrado_de_cookies,24);
     memcpy(k+24,s,8);
-/*
-    aes256_init(&ctx, k);
-    aes256_encrypt_ecb(&ctx, v);
-    aes256_done(&ctx);
-*/
-    aes_setkey_dec(&ctx, k, 256);
-    aes_setkey_dec(&ctx, k, 256);
+
+    aes_setkey_enc(&ctx, k, 256);
     aes_crypt_ecb(&ctx, AES_ENCRYPT, v, v);
 
     memcpy(x,s,8);
@@ -270,12 +265,7 @@ void descifra_cookie(char *out, char *cookie)
     memcpy(k,clave_de_cifrado_de_cookies,24);
     memcpy(k+24,x,8);
     memcpy(v,x+8,16);
-/*
-    aes256_init(&ctx, k);
-    aes256_decrypt_ecb(&ctx, v);
-    aes256_done(&ctx);
-*/
-    aes_setkey_dec(&ctx, k, 256);
+
     aes_setkey_dec(&ctx, k, 256);
     aes_crypt_ecb(&ctx, AES_DECRYPT, v, v);
 
