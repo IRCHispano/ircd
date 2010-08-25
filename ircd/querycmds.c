@@ -286,10 +286,15 @@ int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
   sprintf_irc(since, "%d%02d%02d-%02d:%02d", 1900 + since_t->tm_year,
       since_t->tm_mon + 1, since_t->tm_mday, since_t->tm_hour, since_t->tm_min);
 
-  sendto_one(sptr, rpl_str(RPL_LOCALUSERS), me.name, parv[0],
-      nrof.local_clients, max_client_count, date(max_client_count_TS), since);
+  if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
+    sendto_one(sptr, rpl_str(RPL_LOCALUSERS), me.name, parv[0], 0, 0, "", "");
+  else
+    sendto_one(sptr, rpl_str(RPL_LOCALUSERS), me.name, parv[0],
+        nrof.local_clients, max_client_count, date(max_client_count_TS), since);
+
   sendto_one(sptr, rpl_str(RPL_GLOBALUSERS), me.name, parv[0], nrof.clients,
       max_global_count, date(max_global_count_TS), since);
+
   return 0;
 }
 
@@ -318,10 +323,17 @@ int m_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (nrof.channels > 0)
     sendto_one(sptr, rpl_str(RPL_LUSERCHANNELS), me.name, parv[0],
         nrof.channels);
-  sendto_one(sptr, rpl_str(RPL_LUSERME), me.name, parv[0], nrof.local_clients,
-      nrof.local_servers);
-  sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],
-      max_connection_count, max_client_count);
+  if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
+    sendto_one(sptr, rpl_str(RPL_LUSERME), me.name, parv[0], 0, 0);
+  else
+    sendto_one(sptr, rpl_str(RPL_LUSERME), me.name, parv[0], nrof.local_clients,
+        nrof.local_servers);
+  if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
+    sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0], 0, 0);
+  else
+    sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],
+        max_connection_count, max_client_count);
+
   return 0;
 }
 

@@ -1,3 +1,14 @@
+* 2010/08/25 dfm@unr.com         (u2.10.H.10.148)            FEATURE/FIX
+------------------------------------------------------------------------
+  Oculto la cantidad de usuarios locales si esta ocultar_servidores
+  en la BDD y el usuario no es ni ircop ni oper.
+  
+  Elimino cambio de timeout de event_try_connections_callback que podia
+  dar problemas en algunos casos en algunos casos concretos cuando
+  la conexion de la Y line tiene un tiempo mas alto que otras Y lines
+  haciendo que la proxima reconexion sea en un tiempo superior a las
+  otras.
+
 * 2010/07/26 dfm@unr.com         (u2.10.H.10.147)                    FIX
 ------------------------------------------------------------------------
   Correccion de uso de algoritmo AES

@@ -1101,7 +1101,6 @@ void close_connection(aClient *cptr)
     aconf->hold = now;
     aconf->hold += (aconf->hold - cptr->since > HANGONGOODLINK) ?
         HANGONRETRYDELAY : ConfConFreq(aconf);
-    update_nextconnect(aconf->hold - now);
   }
 
   if (cptr->authfd >= 0) {
