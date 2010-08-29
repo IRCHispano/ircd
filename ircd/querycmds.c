@@ -278,7 +278,8 @@ int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
   Reg1 struct tm *since_t = localtime(&me.since);
   char since[15];
 
-  if (parc > 2)
+  /* Solo ircops y opers tienen acceso a users remotos */
+  if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
     if (hunt_server(1, cptr, sptr, MSG_USERS, TOK_USERS, "%s :%s", 2, parc, parv) !=
         HUNTED_ISME)
       return 0;
@@ -286,7 +287,7 @@ int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
   sprintf_irc(since, "%d%02d%02d-%02d:%02d", 1900 + since_t->tm_year,
       since_t->tm_mon + 1, since_t->tm_mday, since_t->tm_hour, since_t->tm_min);
 
-  if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
+  if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr)))
     sendto_one(sptr, rpl_str(RPL_LOCALUSERS), me.name, parv[0], 0, 0, "", "");
   else
     sendto_one(sptr, rpl_str(RPL_LOCALUSERS), me.name, parv[0],
@@ -307,7 +308,8 @@ int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
  */
 int m_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  if (parc > 2)
+  /* Solo ircops y opers tienen acceso a users remotos */
+  if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
     if (hunt_server(1, cptr, sptr, MSG_LUSERS, TOK_USERS, "%s :%s", 2, parc, parv) !=
         HUNTED_ISME)
       return 0;
@@ -323,12 +325,12 @@ int m_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (nrof.channels > 0)
     sendto_one(sptr, rpl_str(RPL_LUSERCHANNELS), me.name, parv[0],
         nrof.channels);
-  if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
+  if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr)))
     sendto_one(sptr, rpl_str(RPL_LUSERME), me.name, parv[0], 0, 0);
   else
     sendto_one(sptr, rpl_str(RPL_LUSERME), me.name, parv[0], nrof.local_clients,
         nrof.local_servers);
-  if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
+  if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr)))
     sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0], 0, 0);
   else
     sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],

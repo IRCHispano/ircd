@@ -1,3 +1,8 @@
+* 2010/08/29 dfm@unr.com         (u2.10.H.10.149)                    FIX
+------------------------------------------------------------------------
+  Correcciones por un fallo que puede afectar al funcionamiento del
+  parche al hacer users remotos
+
 * 2010/08/25 dfm@unr.com         (u2.10.H.10.148)            FEATURE/FIX
 ------------------------------------------------------------------------
   Oculto la cantidad de usuarios locales si esta ocultar_servidores
