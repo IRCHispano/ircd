@@ -3540,6 +3540,83 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
   return 0;
 }
 
+#ifdef UTF8_TO_LATIN1
+int is_utf8(const unsigned char *src, int n)
+{
+  const unsigned char *slim = src + n;
+
+  while (src < slim) {
+    int wc;
+
+    if (*src < 0x80) {
+      wc = *src;
+      src++;
+    } else if ((*src & 0xE0) == 0xC0) {
+      if ((slim - src) < 2) return 0;
+      wc = (*src++ & 0x1F) << 6;
+      if ((*src & 0xC0) != 0x80) {
+        return 0;
+      } else {
+        wc |= *src & 0x3F;
+      }
+      if (wc < 0x80) {
+        return 0;
+      }
+      src++;
+    } else if ((*src & 0xF0) == 0xE0) {
+      /* less common */
+      if ((slim - src) < 3) return 0;
+      wc = (*src++ & 0x0F) << 12;
+      if ((*src & 0xC0) != 0x80) {
+        return 0;
+      } else {
+        wc |= (*src++ & 0x3F) << 6;
+        if ((*src & 0xC0) != 0x80) {
+          return 0;
+        } else {
+          wc |= *src & 0x3F;
+        }
+      }
+      if (wc < 0x800) {
+        return 0;
+      }
+      src++;
+    } else {
+      /* very unlikely */
+      return 0;
+    }
+  }
+
+  /* it's UTF-8 */
+  return 1;
+}
+
+void utf8_to_latin1( unsigned char* src, char *dst ) {
+  int utf8;
+  while ( *src != '\0' ) {
+    if ( *src < 0x80 ) {
+      // normal ASCII, just copy char
+      *dst++ = *src++;
+    } else {
+      // utf-8 char
+      if ( ( *src >= 0xC0 ) && ( *(src+1) >= 0x80 ) ) {
+        // we have a 2-byte UTF-8 char
+        utf8 = ((*src & 0x1F) << 6) + (*(src+1) & 0x3F);
+        if ( utf8 < 0x100 ) {
+          // latin1
+          *dst++ = utf8;
+        }
+        // advance
+        src += 2;
+      } else {
+        // ignore all other
+        src++;
+      }
+    }
+  }
+  *dst = '\0';
+}
+#endif /* UTF8_TO_LATIN1 */
 /*
  * Remove bells and commas from channel name
  */
@@ -3553,6 +3630,8 @@ static void clean_channelname(char *cn)
       *cn = '\0';
       return;
     }
+/* Esta parte estropea canales en utf8 */
+#if 0
     if (isIrcCl(*cn))
 #if !defined(FIXME)
     {
@@ -3563,6 +3642,7 @@ static void clean_channelname(char *cn)
       if ((unsigned char)(*cn) == 0xd0)
         *cn = (char)0xf0;
     }
+#endif
 #endif
   }
 }
@@ -3769,6 +3849,9 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
   size_t *buflen;
   char *p = NULL, *bufptr;
   struct db_reg *ch_redir = NULL;
+#ifdef UTF8_TO_LATIN1 /* Esto es por si se quiere activar la conversion */
+  char latin1[BUFSIZE];
+#endif /* UTF8_TO_LATIN1 */ 
   
   if (IsServer(sptr))           /* Un servidor entrando en un canal? */
     return 0;
@@ -3799,6 +3882,19 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (!*p)
         break;
     }
+
+#ifdef UTF8_TO_LATIN1
+  /* Convierto el nombre de canal de UTF8 a LATIN1 para mantener compatibilidad
+   * entre mIRCs y para que clients de irc con UTF8 y LATIN1 puedan entrar en
+   * los mismos canales y no haya que hacer adaptaciones en services
+   */
+  p=parv[1];
+  if(is_utf8(p, strlen(p)))
+  {
+    utf8_to_latin1(p, latin1);
+    parv[1]=latin1;
+  }
+#endif /* UTF8_TO_LATIN1 */
 
   keysOrTS = parv[2];           /* Remember where our keys are or the TS is;
                                    parv[2] needs to be NULL for the call to

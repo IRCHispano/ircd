@@ -1,3 +1,12 @@
+* 2010/10/13 dfm@unr.com         (u2.10.H.10.150)                FEATURE
+------------------------------------------------------------------------
+  Permito caracteres UTF8 en los canales de la misma forma que hace
+  Undernet.
+  
+  A~ado con define UTF8_TO_LATIN1 el codigo necesario para efectuar
+  una conversion a LATIN1 de forma transparente y automatica al
+  usuario. NOTA: No esta activado por defecto
+
 * 2010/08/29 dfm@unr.com         (u2.10.H.10.149)                    FIX
 ------------------------------------------------------------------------
   Correcciones por un fallo que puede afectar al funcionamiento del
