@@ -57,6 +57,7 @@
 #define BDD_AUTOINVISIBLE    "auto.invisible"
 #define BDD_NICKLEN           "nicklen"
 #define BDD_CLAVE_DE_CIFRADO_DE_COOKIES "clave.de.cifrado.de.cookies"
+#define BDD_COMPRESION_ZLIB_CLIENTE "compresion.zlib.cliente"
 
 /* Para las features de los pseudoBOTS */
 #define BDD_CHANSERV      "ChanServ"
@@ -101,6 +102,7 @@ extern int auto_invisible;
 extern int excepcion_invisible;
 extern int activar_redireccion_canales;
 extern char *mensaje_quit_personalizado;
+extern int compresion_zlib_cliente;
 
 /* -- mman.h no contiene algunas definicieones en plataformas antiguas -- */
 #if !defined(MAP_FAILED)

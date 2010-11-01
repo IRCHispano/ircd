@@ -84,6 +84,7 @@ int auto_invisible = 0;
 int excepcion_invisible = 0;
 int activar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
+int compresion_zlib_cliente = 1;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -568,6 +569,10 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               nicklen = 9;  /* Nicklen original por RFC1459 */
             }
+            else if(!strcmp(c, BDD_COMPRESION_ZLIB_CLIENTE))
+            {
+              compresion_zlib_cliente = 1;
+            }
             else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
             {
               activar_redireccion_canales=0;
@@ -881,6 +886,14 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         auto_invisible = !0;
       } 
+      else if(!strcmp(c, BDD_COMPRESION_ZLIB_CLIENTE))
+      {
+        int x = atoi(v);
+        if(x<0 || x>9)
+            compresion_zlib_cliente=0;
+        else
+            compresion_zlib_cliente=x;
+      }
       else if (!strcmp(c, BDD_NICKLEN))
       {
         int x;

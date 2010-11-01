@@ -716,6 +716,11 @@ static int register_user(aClient *cptr, aClient *sptr,
     Count_newremoteclient(nrof, sptr);
   }
   SetUser(sptr);
+
+#if defined(ESNET_NEG)
+  config_resolve_speculative(cptr);
+#endif
+  
   if (IsInvisible(sptr))
     ++nrof.inv_clients;
   if (IsOper(sptr))

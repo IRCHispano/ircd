@@ -34,6 +34,7 @@
 #include "m_config.h"
 #include "send.h"
 #include "numnicks.h"
+#include "s_bdd.h"
 
 #include <assert.h>
 
@@ -88,13 +89,13 @@ void config_resolve_speculative(aClient *cptr)
 
   p = mira_conf_negociacion(cptr->name, YO2EL);
 
-  if (IsServer(cptr))
+  if (IsServer(cptr) || (IsCookieEncrypted(cptr) && compresion_zlib_cliente))
   {
 #if defined(ZLIB_ESNET)
     if (!strchr(p, 'z') && (cptr->negociacion & ZLIB_ESNET_OUT_SPECULATIVE))
     {
 #if !defined(NO_PROTOCOL9)
-      if (Protocol(cptr) < 10)
+      if (!IsServer(cptr) || Protocol(cptr) < 10)
         sendto_one(cptr, ":%s " MSG_CONFIG " ACK :zlib", me.name);
       else
 #endif
@@ -107,7 +108,7 @@ void config_resolve_speculative(aClient *cptr)
       cptr->comp_out->zalloc = z_alloc;
       cptr->comp_out->zfree = z_free;
       cptr->comp_out->opaque = 0;
-      estado = deflateInit(cptr->comp_out, 9);
+      estado = deflateInit(cptr->comp_out, IsServer(cptr) ? 9 : compresion_zlib_cliente);
       assert(estado == Z_OK);
       cptr->comp_out_total_in = 0;
       cptr->comp_out_total_out = 0;

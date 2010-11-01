@@ -1,3 +1,12 @@
+* 2010/11/1  dfm@unr.com         (u2.10.H.10.151)                FEATURE
+------------------------------------------------------------------------
+  Posibilidad de compresion ZLIB para clientes de webchat (que tengan la
+  cookie encriptada)
+  
+  Ademas permito la configuracion del nivel del compresion de 1 a 9
+  mediante la BDD en la tabla z usando la clave compresion.zlib.cliente
+  en caso de poner valor 0 se desactivara la compresion de cliente
+
 * 2010/10/13 dfm@unr.com         (u2.10.H.10.150)                FEATURE
 ------------------------------------------------------------------------
   Permito caracteres UTF8 en los canales de la misma forma que hace

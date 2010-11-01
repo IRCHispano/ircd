@@ -1042,21 +1042,6 @@ void close_connection(aClient *cptr)
       ircstp->is_skr += (ircstp->is_sbr >> 10);
       ircstp->is_sbr &= 0x3ff;
     }
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-/*
-** Siempre es una conexion nuestra
-*/
-    if (cptr->negociacion & ZLIB_ESNET_IN)
-    {
-      inflateEnd(cptr->comp_in);
-      RunFree(cptr->comp_in);
-    }
-    if (cptr->negociacion & ZLIB_ESNET_OUT)
-    {
-      deflateEnd(cptr->comp_out);
-      RunFree(cptr->comp_out);
-    }
-#endif
   }
   else if (IsUser(cptr))
   {
@@ -1080,6 +1065,22 @@ void close_connection(aClient *cptr)
   else
     ircstp->is_ni++;
 
+#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
+/*
+** Siempre es una conexion nuestra
+*/
+    if (cptr->negociacion & ZLIB_ESNET_IN)
+    {
+      inflateEnd(cptr->comp_in);
+      RunFree(cptr->comp_in);
+    }
+    if (cptr->negociacion & ZLIB_ESNET_OUT)
+    {
+      deflateEnd(cptr->comp_out);
+      RunFree(cptr->comp_out);
+    }
+#endif
+  
   /*
    * Remove outstanding DNS queries.
    */

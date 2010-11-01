@@ -542,7 +542,7 @@ m_config.o: m_config.c ../include/sys.h ../config/config.h \
   ../include/struct.h ../include/whowas.h ../include/dbuf.h \
   ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h ../include/msg.h \
   ../include/s_conf.h ../include/list.h ../include/m_config.h \
-  ../include/send.h ../libevent/event.h
+  ../include/send.h ../libevent/event.h ../include/s_bdd.h
 m_watch.o: m_watch.c ../include/sys.h ../config/config.h \
   ../config/setup.h ../include/runmalloc.h ../include/h.h \
   ../include/s_debug.h ../include/hash.h ../include/s_serv.h \
