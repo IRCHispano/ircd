@@ -1,3 +1,19 @@
+* 2010/11/6  dfm@unr.com         (u2.10.H.10.152)                FEATURE
+------------------------------------------------------------------------
+  Posibilidad de uso de tokens para JOIN, QUIT y PRIVMSG para usuarios
+  de webchat, ademas cuando se usan los tokens todos los nicks van sin
+  !user@host y los QUITs van sin motivo.
+  
+  Sin tokenizar:
+  :friyo!freemind@CfBFMe.CbXCps.virtual JOIN :#prueba
+  :friyo!freemind@CfBFMe.CbXCps.virtual PRIVMSG #prueba :holaa
+  :friyo!freemind@CfBFMe.CbXCps.virtual QUIT :Quit: Leaving
+  
+  Tokenizado:
+  :friyo J :#prueba
+  :friyo P #prueba :holaa
+  :friyo Q
+
 * 2010/11/1  dfm@unr.com         (u2.10.H.10.151)                FEATURE
 ------------------------------------------------------------------------
   Posibilidad de compresion ZLIB para clientes de webchat (que tengan la

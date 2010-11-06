@@ -38,18 +38,19 @@
 
 #include <assert.h>
 
-typedef enum { FIN, ZLIB } opcion;
+typedef enum { FIN, ZLIB, TOK } opcion;
 
 static struct {
   char *texto;
   opcion opcion;
-} opciones[] = {
+}
+opciones[] = {
 #if defined(ZLIB_ESNET)
-  {
-  "zlib", ZLIB},
+  {"zlib", ZLIB},
 #endif
-  {
-NULL, FIN}};
+  {"tok", TOK},
+  {NULL, FIN}
+};
 
 #if defined(ZLIB_ESNET)
 voidpf z_alloc(voidpf opaque, uInt items, uInt size)
@@ -188,6 +189,12 @@ int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
         cptr->negociacion |= ZLIB_ESNET_OUT_SPECULATIVE;
         break;
 #endif
+      case TOK:
+          if(IsCookieEncrypted(cptr)) {
+            sendto_one(sptr, ":%s " MSG_CONFIG " ACK :tok", me.name);
+            cptr->negociacion |= USER_TOK;
+          }
+          break;
       case FIN:
         assert(0);              /* No deberia darse nunca */
     }
@@ -226,7 +233,7 @@ int m_config(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return config_ack(cptr, sptr, parv[0], parv[2], opciones[i].opcion);
   if (!strcasecmp("REQ", parv[1]))
     return config_req(cptr, sptr, parv[0], parv[2], opciones[i].opcion);
-
+  
   return 0;
 }
 
@@ -240,6 +247,7 @@ void envia_config_req(aClient *cptr)
     sendto_one(cptr, ":%s " MSG_CONFIG " REQ :zlib", me.name);
 #endif
 }
+
 
 #endif /* M_CONFIG.C */
 

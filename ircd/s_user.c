@@ -1226,13 +1226,32 @@ static int m_message(aClient *cptr, aClient *sptr,
             /* Calcula el color solo una vez */
             strip_color(parv[parc-1], sizeof(buffer_nocolor), buffer_nocolor);
             
-            sendto_channel_color_butone(cptr, sptr, chptr,
-                ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
-            sendto_channel_nocolor_butone(cptr, sptr, chptr,
-                ":%s %s %s :%s", parv[0], cmd, chptr->chname, buffer_nocolor);
-          } else
-            sendto_channel_butone(cptr, sptr, chptr,
-                ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
+            if(!strCasecmp(cmd,"PRIVMSG")) {
+              sendto_channel_tok_color_butone(cptr, sptr, chptr,
+                  ":%s %s %s :%s", parv[0], "P", chptr->chname, parv[parc - 1]);
+              sendto_channel_tok_nocolor_butone(cptr, sptr, chptr,
+                  ":%s %s %s :%s", parv[0], "P", chptr->chname, buffer_nocolor);
+              sendto_channel_notok_color_butone(cptr, sptr, chptr,
+                  ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
+              sendto_channel_notok_nocolor_butone(cptr, sptr, chptr,
+                  ":%s %s %s :%s", parv[0], cmd, chptr->chname, buffer_nocolor);
+
+            } else {
+              sendto_channel_color_butone(cptr, sptr, chptr,
+                  ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
+              sendto_channel_nocolor_butone(cptr, sptr, chptr,
+                  ":%s %s %s :%s", parv[0], cmd, chptr->chname, buffer_nocolor);
+            }
+          } else {
+            if(!strCasecmp(cmd,"PRIVMSG")) {
+              sendto_channel_tok_butone(cptr, sptr, chptr,
+                  ":%s %s %s :%s", parv[0], "P", chptr->chname, parv[parc - 1]);
+              sendto_channel_notok_butone(cptr, sptr, chptr,
+                  ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
+            } else
+              sendto_channel_butone(cptr, sptr, chptr,
+                  ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
+          }
         }
         else                    /* if (!notice) */
           /* Enviamos el mensaje tambien SI es notice */

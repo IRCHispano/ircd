@@ -400,7 +400,8 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
 
     par = va_arg(vl, char *);
     strcpy(sender, from->name);
-    if (user)
+
+    if (user && !(to->negociacion & USER_TOK))
     {
       if (user->username)
       {
@@ -422,7 +423,7 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
      * Flag is used instead of strchr(sender, '@') for speed and
      * also since username/nick may have had a '@' in them. -avalon
      */
-    if (!flag && MyConnect(from) && user->host)
+    if (!flag && MyConnect(from) && user->host && !(to->negociacion & USER_TOK))
     {
       strcat(sender, "@");
 #if defined(BDD_VIP)
@@ -476,6 +477,66 @@ void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
   return;
 }
 
+void sendto_channel_tok_butone(aClient *one, aClient *from, aChannel *chptr,
+    char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+  Reg3 int i;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  for (lp = chptr->members; lp; lp = lp->next)
+  {
+    acptr = lp->value.cptr;
+    if (acptr->from == one ||   /* ...was the one I should skip */
+        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
+      continue;
+    if (MyConnect(acptr)) {       /* (It is always a client) */
+      if((acptr->negociacion & USER_TOK))
+        vsendto_prefix_one(acptr, from, pattern, vl);
+    }
+  }
+  va_end(vl);
+  return;
+}
+
+void sendto_channel_notok_butone(aClient *one, aClient *from, aChannel *chptr,
+    char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+  Reg3 int i;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  for (lp = chptr->members; lp; lp = lp->next)
+  {
+    acptr = lp->value.cptr;
+    if (acptr->from == one ||   /* ...was the one I should skip */
+        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
+      continue;
+    if (MyConnect(acptr)) {      /* (It is always a client) */
+      if(!(acptr->negociacion & USER_TOK))
+        vsendto_prefix_one(acptr, from, pattern, vl);
+    }
+    else if (sentalong[(i = acptr->from->fd)] != sentalong_marker)
+    {
+      sentalong[i] = sentalong_marker;
+      /* Don't send channel messages to links that are still eating
+         the net.burst: -- Run 2/1/1997 */
+      if (!IsBurstOrBurstAck(acptr->from))
+        vsendto_prefix_one(acptr, from, pattern, vl);
+    }
+  }
+  va_end(vl);
+  return;
+}
+
 void sendto_channel_color_butone(aClient *one, aClient *from, aChannel *chptr,
     char *pattern, ...)
 {
@@ -510,6 +571,67 @@ void sendto_channel_color_butone(aClient *one, aClient *from, aChannel *chptr,
   return;
 }
 
+void sendto_channel_tok_color_butone(aClient *one, aClient *from, aChannel *chptr,
+    char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+  Reg3 int i;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  for (lp = chptr->members; lp; lp = lp->next)
+  {
+    acptr = lp->value.cptr;
+    if (acptr->from == one ||   /* ...was the one I should skip */
+        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
+      continue;
+    if (MyConnect(acptr)) {       /* (It is always a client) */
+      if(!IsStripColor(acptr) && (acptr->negociacion & USER_TOK))
+        vsendto_prefix_one(acptr, from, pattern, vl);
+    }
+  }
+  va_end(vl);
+  return;
+}
+
+void sendto_channel_notok_color_butone(aClient *one, aClient *from, aChannel *chptr,
+    char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+  Reg3 int i;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  for (lp = chptr->members; lp; lp = lp->next)
+  {
+    acptr = lp->value.cptr;
+    if (acptr->from == one ||   /* ...was the one I should skip */
+        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
+      continue;
+    if (MyConnect(acptr)) {       /* (It is always a client) */
+      if(!IsStripColor(acptr) && !(acptr->negociacion & USER_TOK))
+        vsendto_prefix_one(acptr, from, pattern, vl);
+    }
+    else if (sentalong[(i = acptr->from->fd)] != sentalong_marker)
+    {
+      sentalong[i] = sentalong_marker;
+      /* Don't send channel messages to links that are still eating
+         the net.burst: -- Run 2/1/1997 */
+      if (!IsBurstOrBurstAck(acptr->from))
+        vsendto_prefix_one(acptr, from, pattern, vl);
+    }
+  }
+  va_end(vl);
+  return;
+}
+
+
 void sendto_channel_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
     char *pattern, ...)
 {
@@ -528,6 +650,54 @@ void sendto_channel_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
     if (MyConnect(acptr) && IsStripColor(acptr))       /* (It is always a client) */
+      vsendto_prefix_one(acptr, from, pattern, vl);
+  }
+  va_end(vl);
+  return;
+}
+
+void sendto_channel_tok_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
+    char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+  Reg3 int i;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  for (lp = chptr->members; lp; lp = lp->next)
+  {
+    acptr = lp->value.cptr;
+    if (acptr->from == one ||   /* ...was the one I should skip */
+        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
+      continue;
+    if (MyConnect(acptr) && IsStripColor(acptr) && (acptr->negociacion & USER_TOK))       /* (It is always a client) */
+      vsendto_prefix_one(acptr, from, pattern, vl);
+  }
+  va_end(vl);
+  return;
+}
+
+void sendto_channel_notok_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
+    char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+  Reg3 int i;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  for (lp = chptr->members; lp; lp = lp->next)
+  {
+    acptr = lp->value.cptr;
+    if (acptr->from == one ||   /* ...was the one I should skip */
+        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
+      continue;
+    if (MyConnect(acptr) && IsStripColor(acptr) && !(acptr->negociacion & USER_TOK))       /* (It is always a client) */
       vsendto_prefix_one(acptr, from, pattern, vl);
   }
   va_end(vl);
@@ -728,6 +898,63 @@ void sendto_common_channels(aClient *acptr, char *pattern, ...)
   return;
 }
 
+void sendto_common_tok_channels(aClient *acptr, char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *chan;
+  Reg2 Link *member;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  if (acptr->fd >= 0)
+    sentalong[acptr->fd] = sentalong_marker;
+  /* loop through acptr's channels, and the members on their channels */
+  if (acptr->user)
+    for (chan = acptr->user->channel; chan; chan = chan->next)
+      for (member = chan->value.chptr->members; member; member = member->next)
+      {
+        Reg3 aClient *cptr = member->value.cptr;
+        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && (cptr->negociacion & USER_TOK))
+        {
+          sentalong[cptr->fd] = sentalong_marker;
+          vsendto_prefix_one(cptr, acptr, pattern, vl);
+        }
+      }
+  va_end(vl);
+  return;
+}
+
+void sendto_common_notok_channels(aClient *acptr, char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *chan;
+  Reg2 Link *member;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  if (acptr->fd >= 0)
+    sentalong[acptr->fd] = sentalong_marker;
+  /* loop through acptr's channels, and the members on their channels */
+  if (acptr->user)
+    for (chan = acptr->user->channel; chan; chan = chan->next)
+      for (member = chan->value.chptr->members; member; member = member->next)
+      {
+        Reg3 aClient *cptr = member->value.cptr;
+        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && !(cptr->negociacion & USER_TOK))
+        {
+          sentalong[cptr->fd] = sentalong_marker;
+          vsendto_prefix_one(cptr, acptr, pattern, vl);
+        }
+      }
+  if (MyConnect(acptr))
+    vsendto_prefix_one(acptr, acptr, pattern, vl);
+  va_end(vl);
+  return;
+}
+
+
 /*
  * sendto_channel_butserv
  *
@@ -746,6 +973,34 @@ void sendto_channel_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
   va_end(vl);
   return;
 }
+
+void sendto_channel_tok_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+
+  for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
+    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && (acptr->negociacion & USER_TOK))
+      vsendto_prefix_one(acptr, from, pattern, vl);
+  va_end(vl);
+  return;
+}
+
+void sendto_channel_notok_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+
+  for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
+    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && !(acptr->negociacion & USER_TOK))
+      vsendto_prefix_one(acptr, from, pattern, vl);
+  va_end(vl);
+  return;
+}
+
+
 
 /*
  * Send a msg to all ppl on servers/hosts that match a specified mask

@@ -85,9 +85,10 @@
 #if defined(ZLIB_ESNET)
 #include "zlib.h"
 
-#define ZLIB_ESNET_IN   1
-#define ZLIB_ESNET_OUT  2
-#define ZLIB_ESNET_OUT_SPECULATIVE     4
+#define ZLIB_ESNET_IN   0x1
+#define ZLIB_ESNET_OUT  0x2
+#define ZLIB_ESNET_OUT_SPECULATIVE     0x4
+#define USER_TOK  0x8
 #endif
 
 struct Client {
