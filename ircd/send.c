@@ -401,7 +401,11 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
     par = va_arg(vl, char *);
     strcpy(sender, from->name);
 
+#if defined(ESNET_NEG)
     if (user && !(to->negociacion & USER_TOK))
+#else
+    if (user)
+#endif
     {
       if (user->username)
       {
@@ -423,7 +427,11 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
      * Flag is used instead of strchr(sender, '@') for speed and
      * also since username/nick may have had a '@' in them. -avalon
      */
+#if defined(ESNET_NEG)
     if (!flag && MyConnect(from) && user->host && !(to->negociacion & USER_TOK))
+#else
+    if (!flag && MyConnect(from) && user->host)
+#endif
     {
       strcat(sender, "@");
 #if defined(BDD_VIP)
@@ -477,6 +485,7 @@ void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
   return;
 }
 
+#if defined(ESNET_NEG)
 void sendto_channel_tok_butone(aClient *one, aClient *from, aChannel *chptr,
     char *pattern, ...)
 {
@@ -536,6 +545,7 @@ void sendto_channel_notok_butone(aClient *one, aClient *from, aChannel *chptr,
   va_end(vl);
   return;
 }
+#endif
 
 void sendto_channel_color_butone(aClient *one, aClient *from, aChannel *chptr,
     char *pattern, ...)
@@ -571,6 +581,7 @@ void sendto_channel_color_butone(aClient *one, aClient *from, aChannel *chptr,
   return;
 }
 
+#if defined(ESNET_NEG)
 void sendto_channel_tok_color_butone(aClient *one, aClient *from, aChannel *chptr,
     char *pattern, ...)
 {
@@ -630,7 +641,7 @@ void sendto_channel_notok_color_butone(aClient *one, aClient *from, aChannel *ch
   va_end(vl);
   return;
 }
-
+#endif
 
 void sendto_channel_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
     char *pattern, ...)
@@ -656,6 +667,7 @@ void sendto_channel_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
   return;
 }
 
+#if defined(ESNET_NEG)
 void sendto_channel_tok_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
     char *pattern, ...)
 {
@@ -703,6 +715,7 @@ void sendto_channel_notok_nocolor_butone(aClient *one, aClient *from, aChannel *
   va_end(vl);
   return;
 }
+#endif
 
 void sendto_lchanops_butone(aClient *one, aClient *from, aChannel *chptr,
     char *pattern, ...)
@@ -898,6 +911,7 @@ void sendto_common_channels(aClient *acptr, char *pattern, ...)
   return;
 }
 
+#if defined(ESNET_NEG)
 void sendto_common_tok_channels(aClient *acptr, char *pattern, ...)
 {
   va_list vl;
@@ -953,7 +967,7 @@ void sendto_common_notok_channels(aClient *acptr, char *pattern, ...)
   va_end(vl);
   return;
 }
-
+#endif
 
 /*
  * sendto_channel_butserv
@@ -974,6 +988,7 @@ void sendto_channel_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
   return;
 }
 
+#if defined(ESNET_NEG)
 void sendto_channel_tok_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
 {
   va_list vl;
@@ -999,7 +1014,7 @@ void sendto_channel_notok_butserv(aChannel *chptr, aClient *from, char *pattern,
   va_end(vl);
   return;
 }
-
+#endif
 
 
 /*

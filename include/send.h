@@ -67,6 +67,7 @@ extern void sendbufto_op_mask(snomask_t mask);
 extern void sendbufto_serv_butone(aClient *one);
 extern void sendcmdto_one(aClient *to, aClient *from, char *cmd, char *token, const char *pattern, ...);
 
+#if defined(ESNET_NEG)
 extern void sendto_channel_tok_butone(aClient *one, aClient *from, aChannel *chptr,  char *pattern, ...);
 extern void sendto_channel_notok_butone(aClient *one, aClient *from, aChannel *chptr,  char *pattern, ...);
 extern void sendto_channel_tok_color_butone(aClient *one, aClient *from, aChannel *chptr,  char *pattern, ...);
@@ -77,6 +78,7 @@ extern void sendto_common_tok_channels(aClient *acptr, char *pattern, ...);
 extern void sendto_common_notok_channels(aClient *acptr, char *pattern, ...);
 extern void sendto_channel_tok_butserv(aChannel *chptr, aClient *from, char *pattern, ...);
 extern void sendto_channel_notok_butserv(aChannel *chptr, aClient *from, char *pattern, ...);
+#endif
 
 extern char sendbuf[2048];
 

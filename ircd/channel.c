@@ -4112,9 +4112,12 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
       /*
        * Notify all other users on the new channel
        */
+#if defined(ESNET_NEG)
       sendto_channel_notok_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
       sendto_channel_tok_butserv(chptr, sptr, ":%s J :%s", parv[0], name);
-
+#else
+      sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
+#endif
       if (MyUser(sptr))
       {
         del_invite(sptr, chptr);

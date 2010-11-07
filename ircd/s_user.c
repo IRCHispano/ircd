@@ -1225,7 +1225,7 @@ static int m_message(aClient *cptr, aClient *sptr,
           if(chptr->mode.mode & MODE_NOCOLOUR) {
             /* Calcula el color solo una vez */
             strip_color(parv[parc-1], sizeof(buffer_nocolor), buffer_nocolor);
-            
+#if defined(ESNET_NEG)            
             if(!strCasecmp(cmd,"PRIVMSG")) {
               sendto_channel_tok_color_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], "P", chptr->chname, parv[parc - 1]);
@@ -1237,20 +1237,28 @@ static int m_message(aClient *cptr, aClient *sptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, buffer_nocolor);
 
             } else {
+#else
               sendto_channel_color_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
               sendto_channel_nocolor_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, buffer_nocolor);
+#endif
+#if defined(ESNET_NEG)            
             }
+#endif            
           } else {
+#if defined(ESNET_NEG)            
             if(!strCasecmp(cmd,"PRIVMSG")) {
               sendto_channel_tok_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], "P", chptr->chname, parv[parc - 1]);
               sendto_channel_notok_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
-            } else
+            }
+#else
+            else
               sendto_channel_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
+#endif
           }
         }
         else                    /* if (!notice) */
@@ -1294,6 +1302,7 @@ static int m_message(aClient *cptr, aClient *sptr,
           {
             if (MyUser(acptr))
               add_target(acptr, sptr);
+#if defined(ESNET_NEG)
             if(!strCasecmp(cmd, "PRIVMSG")) {
               if (MyUser(acptr) && (acptr->negociacion & USER_TOK))
                 sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
@@ -1302,6 +1311,7 @@ static int m_message(aClient *cptr, aClient *sptr,
                 sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
                     parv[0], cmd, acptr->name, parv[parc - 1]);
             } else
+#endif
               sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
                   parv[0], cmd, acptr->name, parv[parc - 1]);
           }

@@ -1,3 +1,7 @@
+* 2010/11/7  dfm@unr.com         (u2.10.H.10.153)                    FIX
+------------------------------------------------------------------------
+  Evito problema de compilacion si no esta definido ESNET_NEG
+
 * 2010/11/6  dfm@unr.com         (u2.10.H.10.152)                FEATURE
 ------------------------------------------------------------------------
   Posibilidad de uso de tokens para JOIN, QUIT y PRIVMSG para usuarios
