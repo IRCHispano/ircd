@@ -1,3 +1,8 @@
+* 2010/11/9  dfm@unr.com         (u2.10.H.10.154)                    FIX
+------------------------------------------------------------------------
+  Corrijo bug introducido en la version .153, no se reciben mensajes en
+  canales que no esten +c
+
 * 2010/11/7  dfm@unr.com         (u2.10.H.10.153)                    FIX
 ------------------------------------------------------------------------
   Evito problema de compilacion si no esta definido ESNET_NEG
