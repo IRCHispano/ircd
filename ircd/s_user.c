@@ -1237,12 +1237,11 @@ static int m_message(aClient *cptr, aClient *sptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, buffer_nocolor);
 
             } else {
-#else
+#endif
               sendto_channel_color_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
               sendto_channel_nocolor_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, buffer_nocolor);
-#endif
 #if defined(ESNET_NEG)            
             }
 #endif            
@@ -1254,11 +1253,11 @@ static int m_message(aClient *cptr, aClient *sptr,
               sendto_channel_notok_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
             }
-#else
             else
+#endif
               sendto_channel_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
-#endif
+
           }
         }
         else                    /* if (!notice) */
