@@ -1301,18 +1301,8 @@ static int m_message(aClient *cptr, aClient *sptr,
           {
             if (MyUser(acptr))
               add_target(acptr, sptr);
-#if defined(ESNET_NEG)
-            if(!strCasecmp(cmd, "PRIVMSG")) {
-              if (MyUser(acptr) && (acptr->negociacion & USER_TOK))
-                sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
-                    parv[0], "P", acptr->name, parv[parc - 1]);
-              else
-                sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
-                    parv[0], cmd, acptr->name, parv[parc - 1]);
-            } else
-#endif
-              sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
-                  parv[0], cmd, acptr->name, parv[parc - 1]);
+            sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
+               parv[0], cmd, acptr->name, parv[parc - 1]);
           }
           else {
             if (IsServer(sptr))
