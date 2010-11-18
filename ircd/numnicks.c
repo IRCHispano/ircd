@@ -32,6 +32,7 @@
 #include "s_bsd.h"
 #include "s_debug.h"
 #include "s_bdd.h"
+#include "channel.h"
 
 #include <assert.h>
 
@@ -79,6 +80,11 @@ static int numerics_extendidos = 0;
  */
 static unsigned int lastNNServer = 0;
 static struct Client *server_list[NN_MAX_SERVER];
+
+#ifdef ESNET_NEG
+#define NN_MAX_CHANNELS		262144  /* NUMNICKBASE ^ 3 */
+static struct Channel *channel_list[NN_MAX_CHANNELS];
+#endif
 
 /* *INDENT-OFF* */
 
@@ -508,6 +514,41 @@ const char *CreateNNforProtocol9server(const struct Client *server)
     serv->nn_last = 0;
   return YXX;
 }
+
+#ifdef ESNET_NEG
+int SetXXXChannel(struct Channel *chptr)
+{
+  static unsigned int last_cn = 0;
+  unsigned int count = 0;
+
+  while (channel_list[last_cn & (NN_MAX_CHANNELS-1)])
+  {
+    if (++count == NN_MAX_CHANNELS)
+    {
+      assert(count < NN_MAX_CHANNELS);
+      return 0;
+    }
+    if (++last_cn == NN_MAX_CHANNELS)
+      last_cn = 0;
+  }
+  channel_list[last_cn & (NN_MAX_CHANNELS-1)] = chptr; /* Reserve the numeric ! */
+
+  inttobase64(chptr->numeric, last_cn, 3);
+
+  if (++last_cn == NN_MAX_CHANNELS)
+    last_cn = 0;
+  return 1;
+}
+
+void RemoveXXXChannel(const char *xxx)
+{
+  if (*xxx)
+  {
+    channel_list[base64toint(xxx) & NN_MAX_CHANNELS] = 0;
+  }
+}
+
+#endif
 
 void buf_to_base64_r(unsigned char *out, const unsigned char *buf, size_t buf_len)
 {

@@ -1228,9 +1228,9 @@ static int m_message(aClient *cptr, aClient *sptr,
 #if defined(ESNET_NEG)            
             if(!strCasecmp(cmd,"PRIVMSG")) {
               sendto_channel_tok_color_butone(cptr, sptr, chptr,
-                  ":%s %s %s :%s", parv[0], "P", chptr->chname, parv[parc - 1]);
+                  ":%s %s %s :%s", parv[0], "P", chptr->numeric, parv[parc - 1]);
               sendto_channel_tok_nocolor_butone(cptr, sptr, chptr,
-                  ":%s %s %s :%s", parv[0], "P", chptr->chname, buffer_nocolor);
+                  ":%s %s %s :%s", parv[0], "P", chptr->numeric, buffer_nocolor);
               sendto_channel_notok_color_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
               sendto_channel_notok_nocolor_butone(cptr, sptr, chptr,
@@ -1249,7 +1249,7 @@ static int m_message(aClient *cptr, aClient *sptr,
 #if defined(ESNET_NEG)            
             if(!strCasecmp(cmd,"PRIVMSG")) {
               sendto_channel_tok_butone(cptr, sptr, chptr,
-                  ":%s %s %s :%s", parv[0], "P", chptr->chname, parv[parc - 1]);
+                  ":%s %s %s :%s", parv[0], "P", chptr->numeric, parv[parc - 1]);
               sendto_channel_notok_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
             }

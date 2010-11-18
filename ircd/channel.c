@@ -3683,6 +3683,22 @@ aChannel *get_channel(aClient *sptr, char *chname, int flag)
     chptr->creationtime = mio_flag ? TStime() : (time_t) 0;
     channel = chptr;
     hAddChannel(chptr);
+#ifdef ESNET_NEG
+    if (!SetXXXChannel(chptr))
+    {
+      /* No se pudo, borramos */
+      if (chptr->prevch)
+        chptr->prevch->nextch = chptr->nextch;
+      else
+        channel = chptr->nextch;
+      if (chptr->nextch)
+        chptr->nextch->prevch = chptr->prevch;
+      hRemChannel(chptr);
+      --nrof.channels;
+      RunFree((char *)chptr);
+      return NULL;
+    }
+#endif
   }
   return chptr;
 }
@@ -3816,6 +3832,10 @@ void sub1_from_channel(aChannel *chptr)
     chptr->nextch->prevch = chptr->prevch;
   hRemChannel(chptr);
   --nrof.channels;
+
+#ifdef ESNET_NEG
+  RemoveXXXChannel(chptr->numeric);
+#endif
 
   if (chptr->mode.key)
   {
@@ -4114,7 +4134,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
        */
 #if defined(ESNET_NEG)
       sendto_channel_notok_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
-      sendto_channel_tok_butserv(chptr, sptr, ":%s J :%s", parv[0], name);
+      sendto_channel_tok_butserv(chptr, sptr, ":%s J :%s", parv[0], chptr->numeric);
 #else
       sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
 #endif
@@ -6888,6 +6908,12 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
   if (!BadPtr(para))
   {
+#ifdef ESNET_NEG
+    if (sptr->negociacion & USER_TOK)
+      sendto_one(sptr, ":%s %d %s %s %s :End of /NAMES list", me.name, RPL_ENDOFNAMES, parv[0],
+           ch2ptr ? ch2ptr->chname : para, ch2ptr ? ch2ptr->numeric : "*");
+    else
+#endif
     sendto_one(sptr, rpl_str(RPL_ENDOFNAMES), me.name, parv[0],
         ch2ptr ? ch2ptr->chname : para);
     return (1);
