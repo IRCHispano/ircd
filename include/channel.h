@@ -181,6 +181,9 @@ struct Channel {
   struct SLink *members;
   struct SLink *invites;
   struct SLink *banlist;
+#ifdef ESNET_NEG
+  char numeric[4];
+#endif
   char chname[1];
 };
 
