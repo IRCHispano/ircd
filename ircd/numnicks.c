@@ -544,7 +544,7 @@ void RemoveXXXChannel(const char *xxx)
 {
   if (*xxx)
   {
-    channel_list[base64toint(xxx) & NN_MAX_CHANNELS] = 0;
+    channel_list[base64toint(xxx) & (NN_MAX_CHANNELS-1)] = 0;
   }
 }
 
