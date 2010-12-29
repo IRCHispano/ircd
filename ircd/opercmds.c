@@ -2180,6 +2180,8 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (IsServer(cptr)) /* Si la gline la manda un servidor */
     ms_gline(cptr, sptr, agline, a2gline, parc, parv);
+  else if (IsUser(sptr) && IsAnOper(sptr))
+    ms_gline(cptr, sptr, agline, a2gline, parc, parv);
   else
     mo_gline(cptr, sptr, agline, a2gline, parc, parv);
 

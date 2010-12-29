@@ -1,3 +1,10 @@
+* 2010/12/29  zoltan@irc-dev.net (u2.10.H.10.158)                FEATURE
+------------------------------------------------------------------------
+  Con el fin de facilitar el trabajo del nuevo bot de antispam (Nick O en
+  IRC-Hispano), pudiendose meter glines por sí mismo, sin necesidad de 
+  un service, modifico el comando GLINE para que un IRCop con Uworld pueda
+  meter glines locales.
+
 * 2010/12/01  zoltan@irc-dev.net (u2.10.H.10.157)                    FIX
 ------------------------------------------------------------------------
   Un par de fixes del parche anterior.
