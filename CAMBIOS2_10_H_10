@@ -1,3 +1,13 @@
+* 2010/12/30  zoltan@irc-dev.net (u2.10.H.10.159)                    FIX
+------------------------------------------------------------------------
+  Corrigo el contador de Bots no oficiales que no in/decrementa cuando se
+  hace un SVSMODE.
+
+  Un ircop con UWorld puede poner el modo +B.
+
+  Permito que un ircop pueda meter una gline a un nick y el ircd la trata
+  a la IP del nick. Para el antispam.
+
 * 2010/12/29  zoltan@irc-dev.net (u2.10.H.10.158)                FEATURE
 ------------------------------------------------------------------------
   Con el fin de facilitar el trabajo del nuevo bot de antispam (Nick O en

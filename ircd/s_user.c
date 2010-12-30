@@ -2935,6 +2935,12 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     set_snomask(sptr, 0, SNO_SET);
   }
 
+  if (!(sethmodes & HMODE_SERVICESBOT) && !IsServer(cptr)
+      && !IsOper(sptr) && !buscar_uline(cptr->confs, sptr->name))
+  {
+    sptr->hmodes &= ~HMODE_SERVICESBOT;
+  }
+
 
 /*
 ** El +X solo se lo pueden poner los admins.
@@ -3104,6 +3110,10 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     --nrof.helpers;
   if (!(sethmodes & HMODE_HELPOP) && IsHelpOp(acptr))
     ++nrof.helpers;
+  if ((sethmodes & HMODE_SERVICESBOT) && !IsServicesBot(sptr))
+    --nrof.bots_oficiales;
+  if (!(sethmodes & HMODE_SERVICESBOT) && IsServicesBot(sptr))
+    ++nrof.bots_oficiales;
   if ((setflags & FLAGS_INVISIBLE) && !IsInvisible(acptr))
     --nrof.inv_clients;
   if (!(setflags & FLAGS_INVISIBLE) && IsInvisible(acptr))

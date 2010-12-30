@@ -2245,6 +2245,17 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
     user = "*";             /* no @'s; assume username is '*' */
     host = parv[2];
   }
+  else if (IsUser(sptr))
+  {
+    /* Gline puesto a nick, sustituir a IP */
+    aClient *acptr;
+ 
+    acptr = FindClient(parv[2]);
+    if (!acptr)
+      return 0;
+    user = "*";
+    host = inetntoa_c(acptr);
+  }
   else
   {
     user = parv[2];
