@@ -1,3 +1,7 @@
+* 2010/12/30  zoltan@irc-dev.net (u2.10.H.10.160)                    FIX
+------------------------------------------------------------------------
+  Par de fixes del parche anterior.
+
 * 2010/12/30  zoltan@irc-dev.net (u2.10.H.10.159)                    FIX
 ------------------------------------------------------------------------
   Corrigo el contador de Bots no oficiales que no in/decrementa cuando se

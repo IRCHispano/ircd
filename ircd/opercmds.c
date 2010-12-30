@@ -2235,26 +2235,31 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
     if(!IsHub(sptr) || !lastmod || !IsBurstOrBurstAck(sptr)) /* y no es hub o me pasan ultima mod 0 o no estoy en burst */ 
       return 0; /* salgo */
   }
-  else
+  else {
+    /* El usuario puede especificar una gline de nick, que no tiene @ ni . (IPv4) ni : (IPv6) */
+    if (IsUser(sptr)) 
+    {
+      if (!((strchr(parv[2], '@')) || (strchr(parv[2], '.')) || (strchr(parv[2], ':'))))
+      {
+        aClient *acptr;
+
+        acptr = FindClient(parv[2]);
+        /* Encontrado, ahora a cambiar por IP */
+        if (acptr)
+          parv[2] = inetntoa_c(acptr);
+      }
+    }
+
     if(!propaga_gline(cptr, sptr, active, expire, lastmod, lifetime, parc, parv))
       return 0;
+
+  }
   
 
   if (!(host = strchr(parv[2], '@')))
   {                         /* convert user@host */
     user = "*";             /* no @'s; assume username is '*' */
     host = parv[2];
-  }
-  else if (IsUser(sptr))
-  {
-    /* Gline puesto a nick, sustituir a IP */
-    aClient *acptr;
- 
-    acptr = FindClient(parv[2]);
-    if (!acptr)
-      return 0;
-    user = "*";
-    host = inetntoa_c(acptr);
   }
   else
   {
