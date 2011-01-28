@@ -3882,6 +3882,13 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
+  if (IsUserNoJoin(sptr)) {
+    struct db_reg *reg;
+    if ((reg = db_buscar_registro(BDD_CONFIGDB, BDD_CANAL_DEBUG))) {
+      parv[1] = reg->valor;
+    }
+  }
+
   for (p = parv[1]; *p; p++)    /* find the last "JOIN 0" in the line -Kev */
     if (*p == '0'
         && (*(p + 1) == ',' || *(p + 1) == '\0' || !isIrcCh(*(p + 1))))

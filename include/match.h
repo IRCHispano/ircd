@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+struct irc_in_addr;
 
 #define OVECCOUNT 3
 
@@ -38,5 +39,7 @@ extern int matchcompIP(struct in_mask *imask, const char *mask);
 extern int match_pcre(pcre *re, char *subject);
 extern int match_pcre_str(char *regexp, char *subject);
 extern int match_pcre_ci(pcre *re, char *subject);
+
+extern int ipmask_check(const struct irc_in_addr *addr, const struct irc_in_addr *mask, unsigned char bits);
 
 #endif /* MATCH_H */

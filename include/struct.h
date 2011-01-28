@@ -40,6 +40,10 @@
 #define HOSTLEN		63
 #define REALLEN		70
 #define PASSWDLEN	20
+/** Maximum length of a numeric IP (v4 or v6) address.
+ * "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"
+ */
+#define SOCKIPLEN 45
 #define BUFSIZE		512           /* WARNING: *DONT* CHANGE THIS!!!! */
 #define MAXTARGETS	20
 #define STARTTARGETS	10

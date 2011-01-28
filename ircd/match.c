@@ -25,6 +25,7 @@
 #include "match.h"
 #include "ircd.h"
 #include "runmalloc.h"
+#include "res.h"
 
 RCSTAG_CC("$Id$");
 
@@ -1013,6 +1014,28 @@ int matchcompIP(struct in_mask *imask, const char *mask)
   imask->fall = unco;
   return ((bits & ~filt) ? -1 : 0);
 
+}
+
+/** Test whether an address matches the most significant bits of a mask.
+ * @param[in] addr Address to test.
+ * @param[in] mask Address to test against.
+ * @param[in] bits Number of bits to test.
+ * @return 0 on mismatch, 1 if bits < 128 and all bits match; -1 if
+ * bits == 128 and all bits match.
+ */
+int ipmask_check(const struct irc_in_addr *addr, const struct irc_in_addr *mask, unsigned char bits)
+{
+  int k;
+
+  for (k = 0; k < 8; k++) {
+    if (bits < 16)
+      return !(htons(addr->in6_16[k] ^ mask->in6_16[k]) >> (16-bits));
+    if (addr->in6_16[k] != mask->in6_16[k])
+      return 0;
+    if (!(bits -= 16))
+      return 1;
+  }
+  return -1;
 }
 
 int match_pcre(pcre *re, char *subject)

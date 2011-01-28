@@ -33,6 +33,7 @@
 #include "s_debug.h"
 #include "s_bdd.h"
 #include "channel.h"
+#include "res.h"
 
 #include <assert.h>
 
@@ -480,6 +481,103 @@ struct Client *find_match_server(char *mask)
   return 0;
 }
 
+/** Encode an IP address in the base64 used by numnicks.
+ * For IPv4 addresses (including IPv4-mapped and IPv4-compatible IPv6
+ * addresses), the 32-bit host address is encoded directly as six
+ * characters.
+ *
+ * For IPv6 addresses, each 16-bit address segment is encoded as three
+ * characters, but the longest run of zero segments is encoded using an
+ * underscore.
+ * @param[out] buf Output buffer to write to.
+ * @param[in] addr IP address to encode.
+ * @param[in] count Number of bytes writable to \a buf.
+ * @param[in] v6_ok If non-zero, peer understands base-64 encoded IPv6 addresses.
+ */
+const char* iptobase64(char* buf, const struct irc_in_addr* addr, unsigned int count, int v6_ok)
+{
+  if (irc_in_addr_is_ipv4(addr)) {
+    assert(count >= 6);
+    inttobase64(buf, (ntohs(addr->in6_16[6]) << 16) | ntohs(addr->in6_16[7]), 6);
+  } else if (!v6_ok) {
+    assert(count >= 6);
+    if (addr->in6_16[0] == htons(0x2002))
+        inttobase64(buf, (ntohs(addr->in6_16[1]) << 16) | ntohs(addr->in6_16[2]), 6);
+    else
+        strcpy(buf, "AAAAAA");
+  } else {
+    unsigned int max_start, max_zeros, curr_zeros, zero, ii;
+    char *output = buf;
+
+    assert(count >= 25);
+    /* Can start by printing out the leading non-zero parts. */
+    for (ii = 0; (addr->in6_16[ii]) && (ii < 8); ++ii) {
+      inttobase64(output, ntohs(addr->in6_16[ii]), 3);
+      output += 3;
+    }
+    /* Find the longest run of zeros. */
+    for (max_start = zero = ii, max_zeros = curr_zeros = 0; ii < 8; ++ii) {
+      if (!addr->in6_16[ii])
+        curr_zeros++;
+      else if (curr_zeros > max_zeros) {
+        max_start = ii - curr_zeros;
+        max_zeros = curr_zeros;
+        curr_zeros = 0;
+      }
+    }
+    if (curr_zeros > max_zeros) {
+      max_start = ii - curr_zeros;
+      max_zeros = curr_zeros;
+      curr_zeros = 0;
+    }
+    /* Print the rest of the address */
+    for (ii = zero; ii < 8; ) {
+      if ((ii == max_start) && max_zeros) {
+        *output++ = '_';
+        ii += max_zeros;
+      } else {
+        inttobase64(output, ntohs(addr->in6_16[ii]), 3);
+        output += 3;
+        ii++;
+      }
+    }
+    *output = '\0';
+  }
+  return buf;
+}
+
+/** Decode an IP address from base64.
+ * @param[in] input Input buffer to decode.
+ * @param[out] addr IP address structure to populate.
+ */
+void base64toip(const char* input, struct irc_in_addr* addr)
+{
+  memset(addr, 0, sizeof(*addr));
+  if (strlen(input) == 6) {
+    unsigned int in = base64toint(input);
+    /* An all-zero address should stay that way. */
+    if (in) {
+      addr->in6_16[5] = htons(65535);
+      addr->in6_16[6] = htons(in >> 16);
+      addr->in6_16[7] = htons(in & 65535);
+    }
+  } else {
+    unsigned int pos = 0;
+    do {
+      if (*input == '_') {
+        unsigned int left;
+        for (left = (25 - strlen(input)) / 3 - pos; left; left--)
+          addr->in6_16[pos++] = 0;
+        input++;
+      } else {
+        unsigned short accum = convert2n[(unsigned char)*input++];
+        accum = (accum << NUMNICKLOG) | convert2n[(unsigned char)*input++];
+        accum = (accum << NUMNICKLOG) | convert2n[(unsigned char)*input++];
+        addr->in6_16[pos++] = ntohs(accum);
+      }
+    } while (pos < 8);
+  }
+}
 
 /*
  * CreateNNforProtocol9server

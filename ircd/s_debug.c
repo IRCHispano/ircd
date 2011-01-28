@@ -171,6 +171,9 @@ char serveropts[] = {
 #if defined(USE_POLL) && defined(HAVE_POLL_H)
     'U',
 #endif
+#if defined(IPV6)
+    '6',
+#endif
 #if defined(VIRTUAL_HOST)
     'v',
 #endif

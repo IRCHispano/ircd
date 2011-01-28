@@ -961,6 +961,8 @@ static int user_hmodes[] = {
   HMODE_MSGONLYREG,     'R',
   HMODE_USERDEAF,       'D',
   HMODE_STRIPCOLOR,     'c',
+  HMODE_USERBLIND,      'P',
+  HMODE_USERNOJOIN,     'C',
   0,			0
 };
 
@@ -1222,6 +1224,8 @@ static int m_message(aClient *cptr, aClient *sptr,
             continue;
           }
 
+          if (IsUserBlind(sptr))
+            continue;
           if(chptr->mode.mode & MODE_NOCOLOUR) {
             /* Calcula el color solo una vez */
             strip_color(parv[parc-1], sizeof(buffer_nocolor), buffer_nocolor);
@@ -2191,7 +2195,7 @@ void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh,
 
   if (cptr && MyUser(cptr))
     send_umode(cptr, sptr, old, ALL_UMODES, oldh, 
-    IsOper(sptr) ? ALL_HMODES : ALL_HMODES & ~HMODE_USERDEAF);
+    IsOper(sptr) ? ALL_HMODES : ALL_HMODES & ~HMODES_HIDDEN);
 }
 
 /*
@@ -3128,7 +3132,7 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if 1 /* ALTERNATIVA SVSMODE A TODOS */
 
   if (MyUser(acptr))
-    send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, IsOper(acptr) ? SEND_HMODES : SEND_HMODES & ~HMODE_USERDEAF);
+    send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, IsOper(acptr) ? SEND_HMODES : SEND_HMODES & ~HMODES_HIDDEN);
 #if !defined(NO_PROTOCOL9)
   sendto_lowprot_butone(cptr, 9, ":%s SVSMODE %s %s", acptr->name, acptr->name, parv[2]);
 #endif
@@ -3165,7 +3169,7 @@ char *umode_str(aClient *cptr, aClient *acptr)
     if (c_hmodes & flag)
       if(acptr)
       {
-        if (flag & HMODE_USERDEAF)
+        if (flag & HMODES_HIDDEN)
         {
           if (IsAnOper(acptr))
             *m++ = *(s + 1);

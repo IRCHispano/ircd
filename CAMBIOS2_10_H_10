@@ -1,3 +1,12 @@
+* 2011/01/28  zoltan@irc-dev.net (u2.10.H.10.161)                    FIX
+------------------------------------------------------------------------
+  Subo los BAN a 200.
+
+  Corregido un bug de la BDD que impedia actualizar el nombre de un canal
+  si hay usuarios dentro.
+
+  Actualizacion del configure que estaba un poco antiguo.
+
 * 2010/12/30  zoltan@irc-dev.net (u2.10.H.10.160)                    FIX
 ------------------------------------------------------------------------
   Par de fixes del parche anterior.

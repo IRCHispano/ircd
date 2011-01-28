@@ -236,15 +236,22 @@ extern struct sockaddr_in vserv;
 #define HFLAG_IPVIRTUAL_PERSONALIZADA 0x00000080  /* IP virtual personalizada */
 #define HMODE_USERDEAF                0x00000100  /* Usuario no puede recibir privados */
 #define HMODE_STRIPCOLOR              0x00000200  /* El usuario no recibe colores en +c */
+#define HMODE_USERBLIND               0x00000400  /* El resto de usuarios no ven lo que este dice en un canal */
+#define HMODE_USERNOJOIN              0x00000800  /* Al intentar entrar a un canal entra siempre a uno de debug */
+
 
 /* Modos hispano  a propagar */
 #define SEND_HMODES \
     (HMODE_NICKREGISTERED | HMODE_HELPOP | HMODE_SERVICESBOT | HMODE_HIDDEN | HMODE_HIDDENVIEWER \
-       | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG | HMODE_USERDEAF | HMODE_STRIPCOLOR)
+       | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG | HMODE_USERDEAF | HMODE_STRIPCOLOR | HMODE_USERBLIND \
+       | HMODE_USERNOJOIN)
 
 /* Modos hispano TODOS */
 #define ALL_HMODES \
     (SEND_HMODES)
+
+#define HMODES_HIDDEN \
+    (HMODE_USERDEAF | HMODE_USERBLIND | HMODE_USERNOJOIN)
 
 /* Macros comprobacion modos hispano */
 #define IsNickRegistered(x)     ((x)->hmodes & HMODE_NICKREGISTERED)
@@ -256,6 +263,8 @@ extern struct sockaddr_in vserv;
 #define IsMsgOnlyReg(x)         ((x)->hmodes & HMODE_MSGONLYREG)
 #define IsUserDeaf(x)           ((x)->hmodes & HMODE_USERDEAF)
 #define IsStripColor(x)         ((x)->hmodes & HMODE_STRIPCOLOR)
+#define IsUserBlind(x)          ((x)->hmodes & HMODE_USERBLIND)
+#define IsUserNoJoin(x)         ((x)->hmodes & HMODE_USERNOJOIN)
 
 #define TieneIpVirtualPersonalizada(x)  ((x)->hmodes & HFLAG_IPVIRTUAL_PERSONALIZADA)
 
@@ -270,6 +279,8 @@ extern struct sockaddr_in vserv;
 #define SetMsgOnlyReg(x)        ((x)->hmodes |= HMODE_MSGONLYREG)
 #define SetUserDeaf(x)          ((x)->hmodes |= HMODE_USERDEAF)
 #define SetStripColor(x)        ((x)->hmodes |= HMODE_STRIPCOLOR)
+#define SetUserBlind(x)         ((x)->hmodes |= HMODE_USERBLIND)
+#define SetUserNoJoin(x)        ((x)->hmodes |= HMODE_USERNOJOIN)
 
 #define SetIpVirtualPersonalizada(x)    ((x)->hmodes |= HFLAG_IPVIRTUAL_PERSONALIZADA)
 
@@ -285,6 +296,8 @@ extern struct sockaddr_in vserv;
 #define ClearHiddenViewer(x)    ((x)->hmodes &= ~HMODE_HIDDENVIEWER)
 #define ClearUserDeaf(x)        ((x)->hmodes &= ~HMODE_USERDEAF)
 #define ClearStripColor(x)      ((x)->hmodes &= ~HMODE_STRIPCOLOR)
+#define ClearUserBlind(x)       ((x)->hmodes &= ~HMODE_USERBLIND)
+#define ClearUserNoJoin(x)      ((x)->hmodes &= ~HMODE_USERNOJOIN)
 
 #define ClearIpVirtualPersonalizada(x)  ((x)->hmodes &= ~HFLAG_IPVIRTUAL_PERSONALIZADA)
 

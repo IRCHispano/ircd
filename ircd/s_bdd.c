@@ -650,14 +650,17 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
   aChannel *chptr;
   int add, del;
   char *tmp=strchr(modos,':'); /* Nombre con mays/mins correcto */
+  int cambionombre = 0;
 
   /* Si hay nombre especificado ... */
   if(tmp!=NULL)
   {
     *tmp='\0';                  /* corto token */
     tmp++;                      /* avanzo un caracter */
-    if(strCasecmp(nombre, tmp)) /* Si no coincide el nombre vuelvo al original */
+    if (strCasecmp(nombre, tmp)) /* Si no coincide el nombre vuelvo al original */
       tmp=nombre;
+    else
+      cambionombre = 1;    
   } else
     tmp=nombre;   /* Si no hay nombre especificado vuelvo al original */
   
@@ -665,8 +668,15 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
   mascara_canal_flags(modos, &add, &del);
   chptr->modos_obligatorios = add | MODE_REGCHAN;
   chptr->modos_prohibidos = del & ~MODE_REGCHAN;
+
   if (chptr->users)
   {                             /* Hay usuarios dentro */
+    /* ajustamos el nombre equivalente */
+    if (cambionombre && strcmp(nombre, tmp)) {
+        hRemChannel(chptr);
+        strcpy(chptr->chname, tmp);
+        hAddChannel(chptr);
+    }
 /*
     char *buf;
 

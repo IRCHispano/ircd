@@ -29,6 +29,7 @@
 /*
  * General defines
  */
+struct irc_in_addr;
 
 /*
  * used for buffer size calculations in channel.c
@@ -80,7 +81,8 @@ extern struct Client *FindNServer(const char *numeric);
 
 extern unsigned int base64toint(const char *str);
 extern const char *inttobase64(char *buf, unsigned int v, unsigned int count);
-
+extern const char* iptobase64(char* buf, const struct irc_in_addr* addr, unsigned int count, int v6_ok);
+extern void base64toip(const char* s, struct irc_in_addr* addr);
 #ifdef ESNET_NEG
 extern int SetXXXChannel(struct Channel *chptr);
 extern void RemoveXXXChannel(const char *xxx);

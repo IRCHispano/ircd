@@ -122,6 +122,19 @@ fi
 
 AC_C_UINTPTR_T
 
+
+#dnl comprueba el IPv6 de la maquina
+
+AC_CHECK_TYPE([struct sockaddr_in6],
+          [unet_have_sockaddr_in6=yes],
+          [unet_have_sockaddr_in6=no],
+[#include <sys/types.h>
+#include <netinet/in.h>])
+
+if test x"$unet_have_sockaddr_in6" = xyes; then
+    AC_DEFINE([IPV6], 1, [Enable IPv6 support])
+fi
+
 #dnl Do we have a system call poll?
 #unet_FUNC_POLL_SYSCALL
 

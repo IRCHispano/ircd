@@ -34,10 +34,10 @@
 #define TOPICLEN	240
 #define CHANNELLEN	64
 
-#define MAXBANS		150
-#define MAXBANLENGTH	5250      /* Este valor debe ajustarse si se cambia el anterior
+#define MAXBANS		200
+#define MAXBANLENGTH	7000      /* Este valor debe ajustarse si se cambia el anterior
                                    Es el tamano de todas las mascaras de ban sumadas
-                                   Para 150, 35*150 = 5250 */
+                                   Para 2000, 35*200 = 7000 */
 
 #define KICKLEN                160
 

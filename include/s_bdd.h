@@ -58,7 +58,7 @@
 #define BDD_NICKLEN           "nicklen"
 #define BDD_CLAVE_DE_CIFRADO_DE_COOKIES "clave.de.cifrado.de.cookies"
 #define BDD_COMPRESION_ZLIB_CLIENTE "compresion.zlib.cliente"
-
+#define BDD_CANAL_DEBUG "debugchan"
 /* Para las features de los pseudoBOTS */
 #define BDD_CHANSERV      "ChanServ"
 #define BDD_NICKSERV      "NickServ"
