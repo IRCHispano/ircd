@@ -110,11 +110,7 @@ int start_ping(aClient *cptr)
     return -1;
 
   memcpy(&remote_addr.sin_addr, &cptr->ip, sizeof(struct in_addr));
-#if defined(TESTNET)
-  remote_addr.sin_port = htons(cptr->port + 10000);
-#else
   remote_addr.sin_port = htons(cptr->port);
-#endif
   remote_addr.sin_family = AF_INET;
 
   if (MyUser(cptr->acpt) 
@@ -155,11 +151,7 @@ void send_ping(aClient *cptr)
   struct timeval tv;
 
   memcpy(&remote_addr.sin_addr, &cptr->ip, sizeof(struct in_addr));
-#if defined(TESTNET)
-  remote_addr.sin_port = htons(cptr->port + 10000);
-#else
   remote_addr.sin_port = htons(cptr->port);
-#endif
   remote_addr.sin_family = AF_INET;
 
   gettimeofday(&tv, NULL);
@@ -223,11 +215,7 @@ void read_ping(aClient *cptr)
   char *s;
 
   memcpy(&remote_addr.sin_addr, &cptr->ip, sizeof(struct in_addr));
-#if defined(TESTNET)
-  remote_addr.sin_port = htons(cptr->port + 10000);
-#else
   remote_addr.sin_port = htons(cptr->port);
-#endif
   remote_addr.sin_family = AF_INET;
 
   gettimeofday(&tv, NULL);

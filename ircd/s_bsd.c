@@ -310,11 +310,7 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
     else
       server.sin_addr = vserv.sin_addr;
 #endif
-#if defined(TESTNET)
-    server.sin_port = htons(port + 10000);
-#else
     server.sin_port = htons(port);
-#endif
     if (bind(cptr->fd, (struct sockaddr *)&server, sizeof(server)) == -1)
     {
       report_error("binding stream socket %s: %s", cptr);
@@ -335,23 +331,14 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
   {
     char buf[1024];
 
-#if defined(TESTNET)
-    sprintf_irc(buf, rpl_str(RPL_MYPORTIS), PunteroACadena(me.name), "*",
-        ntohs(server.sin_port) - 10000);
-#else
     sprintf_irc(buf, rpl_str(RPL_MYPORTIS), PunteroACadena(me.name), "*",
         ntohs(server.sin_port));
-#endif
     write(1, buf, strlen(buf));
   }
   if (cptr->fd > highest_fd)
     highest_fd = cptr->fd;
   cptr->ip.s_addr = inet_addr(ipname);
-#if defined(TESTNET)
-  cptr->port = ntohs(server.sin_port) - 10000;
-#else
   cptr->port = ntohs(server.sin_port);
-#endif
   listen(cptr->fd, 128);        /* Use listen port backlog of 128 */
   loc_clients[cptr->fd] = cptr;
 
@@ -595,11 +582,7 @@ static int check_init(aClient *cptr, char *sockn)
     strncpy(sockn, me.name, HOSTLEN);
   }
   memcpy(&cptr->ip, &sk.sin_addr, sizeof(struct in_addr));
-#if defined(TESTNET)
-  cptr->port = ntohs(sk.sin_port) - 10000;
-#else
   cptr->port = ntohs(sk.sin_port);
-#endif
 
   return 0;
 }
@@ -1376,11 +1359,7 @@ aClient *add_connection(aClient *cptr, int fd, int type)
      */
     get_sockhost(acptr, inetntoa(addr.sin_addr));
     memcpy(&acptr->ip, &addr.sin_addr, sizeof(struct in_addr));
-#if defined(TESTNET)
-    acptr->port = ntohs(addr.sin_port) - 10000;
-#else
     acptr->port = ntohs(addr.sin_port);
-#endif
 
     /*
      * Check that this socket (client) is allowed to accept
@@ -2501,11 +2480,7 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
   }
   memcpy(&server.sin_addr, &aconf->ipnum, sizeof(struct in_addr));
   memcpy(&cptr->ip, &aconf->ipnum, sizeof(struct in_addr));
-#if defined(TESTNET)
-  server.sin_port = htons(((aconf->port > 0) ? aconf->port : portnum) + 10000);
-#else
   server.sin_port = htons(((aconf->port > 0) ? aconf->port : portnum));
-#endif
   *lenp = sizeof(server);
 
   CreateClientEvent(cptr);
@@ -2604,11 +2579,7 @@ int setup_ping(void)
 #else
   from.sin_addr.s_addr = htonl(INADDR_ANY);
 #endif
-#if defined(TESTNET)
-  from.sin_port = htons(atoi(UDP_PORT) + 10000);
-#else
   from.sin_port = htons(atoi(UDP_PORT));
-#endif
   from.sin_family = AF_INET;
 
   if ((udpfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)

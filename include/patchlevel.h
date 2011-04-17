@@ -345,15 +345,11 @@
  * Deliberate empty lines
  */
 
-#if defined(TESTNET)
 #define PATCH32 \
 		\
 		\
 		\
-		".testnet"
-#else
-#define PATCH32 ""
-#endif
+		""
 
 /*
  * Deliberate empty lines

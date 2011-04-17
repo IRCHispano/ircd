@@ -836,13 +836,12 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (start_timestamp > 780000000)
     {
 #if !defined(RELIABLE_CLOCK)
-#if defined(TESTNET)
       sendto_ops("Debug: my start time: " TIME_T_FMT " ; others start time: "
           TIME_T_FMT, me.serv->timestamp, start_timestamp);
       sendto_ops("Debug: receive time: " TIME_T_FMT " ; received timestamp: "
           TIME_T_FMT " ; difference %ld",
           recv_time, timestamp, timestamp - recv_time);
-#endif
+
       if (start_timestamp < me.serv->timestamp)
       {
         sendto_ops("got earlier start time: " TIME_T_FMT " < " TIME_T_FMT,
