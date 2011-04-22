@@ -3438,7 +3438,7 @@ int is_silenced(aClient *sptr, aClient *acptr)
   Reg1 Link *lp;
   Reg2 anUser *user;
   static char sender[HOSTLEN + NICKLEN + USERLEN + 5];
-  static char senderip[16 + NICKLEN + USERLEN + 5];
+  static char senderip[SOCKIPLEN + NICKLEN + USERLEN + 5];
 #if defined(BDD_VIP)
   static char sendervirtual[100 + HOSTLEN + NICKLEN + USERLEN + 5];
 #endif
