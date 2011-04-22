@@ -81,7 +81,7 @@ extern int init_resolver(void);
 extern void del_queries(char *cp);
 extern void add_local_domain(char *hname, int size);
 extern struct hostent *gethost_byname(char *name, Link *lp);
-extern struct hostent *gethost_byaddr(struct in_addr *addr, Link *lp);
+extern struct hostent *gethost_byaddr(struct irc_in_addr *addr, Link *lp);
 extern struct hostent *get_res(char *lp);
 extern void flush_cache(void);
 extern int m_dns(aClient *cptr, aClient *sptr, int parc, char *parv[]);

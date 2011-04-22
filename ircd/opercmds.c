@@ -2075,7 +2075,7 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
       } else if(GlineIsRealName(agline))
         tmp=PunteroACadena(acptr->info);
 
-      if ((GlineIsIpMask(agline) ? match(agline->host, inet_ntoa(client_addr(acptr))) :
+      if ((GlineIsIpMask(agline) ? match(agline->host, ircd_ntoa(client_addr(acptr))) :
           (GlineIsRealName(agline) ? match_pcre(agline->re, tmp) :
             match(agline->host, PunteroACadena(acptr->sockhost)))) == 0 &&
             match(agline->name, PunteroACadena(acptr->user->username)) == 0)
@@ -2246,7 +2246,7 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
         acptr = FindClient(parv[2]);
         /* Encontrado, ahora a cambiar por IP */
         if (acptr)
-          parv[2] = inetntoa_c(acptr);
+          parv[2] = ircd_ntoa_c(acptr);
       }
     }
 

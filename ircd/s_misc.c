@@ -210,7 +210,7 @@ char *get_client_name(aClient *sptr, int showip)
 
         sprintf_irc(nbuf, "%s[%s@%s]", PunteroACadena(sptr->name),
             (sptr->flags & FLAGS_GOTID) ? sptr->username : "",
-            inetntoa_c(sptr));
+            ircd_ntoa_c(sptr));
       }
       else
       {
@@ -406,7 +406,7 @@ int exit_client(aClient *cptr,  /* Connection being handled by
       sprintf_irc(sendbuf,
           ":%s NOTICE * :*** Notice -- Client exiting: %s (%s@%s) [%s] [%s]",
           me.name, bcptr->name, PunteroACadena(bcptr->user->username),
-          bcptr->user->host, comment, inetntoa_c(bcptr));
+          bcptr->user->host, comment, ircd_ntoa_c(bcptr));
       sendbufto_op_mask(SNO_CONNEXIT);
     }
 #else /* SNO_CONNEXIT_IP */

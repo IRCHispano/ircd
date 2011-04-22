@@ -188,10 +188,10 @@ static char *make_nick_user_host(char *nick, char *name, char *host)
  * Create a string of form "foo!bar@123.456.789.123" given foo, bar and the
  * IP-number as the parameters.  If NULL, they become "*".
  */
-static char *make_nick_user_ip(char *nick, char *name, struct in_addr ip)
+static char *make_nick_user_ip(char *nick, char *name, struct irc_in_addr *ip)
 {
   static char ipbuf[NICKLEN + USERLEN + 16 + 3];
-  sprintf_irc(ipbuf, "%s!%s@%s", nick, name, inetntoa(ip));
+  sprintf_irc(ipbuf, "%s!%s@%s", nick, name, ircd_ntoa(ip));
   return ipbuf;
 }
 
@@ -421,9 +421,9 @@ static int is_banned(aClient *cptr, aChannel *chptr, Link *member)
         ip_s =
             make_nick_user_ip(cptr->name, PunteroACadena(cptr->user->username),
 #ifdef HISPANO_WEBCHAT
-            MyUser(cptr) ? cptr->ip_real : cptr->ip);
+            MyUser(cptr) ? &cptr->ip_real : &cptr->ip);
 #else
-            cptr->ip);
+            &cptr->ip);
 #endif
       if (match(tmp->value.ban.banstr, ip_s) == 0)
         break;

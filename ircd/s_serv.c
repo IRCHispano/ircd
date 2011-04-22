@@ -1133,14 +1133,14 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
          * Or only NICK in new format. --Run
          */
 #ifdef MIGRACION_DEEPSPACE_P10
-        char xxx_buf[8];
+        char xxx_buf[25];
 
         sendto_one(cptr, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s :%s",
             acptr->user->server->name,
             acptr->name, acptr->hopcount + 1, acptr->lastnick,
             PunteroACadena(acptr->user->username),
             PunteroACadena(acptr->user->host), acptr->user->server->name,
-            inttobase64(xxx_buf,ntohl(acptr->ip.s_addr), 6),
+            iptobase64(xxx_buf, &acptr->ip, sizeof(xxx_buf), IsIPv6(cptr)), 
             PunteroACadena(acptr->info));
 #else
         sendto_one(cptr, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
@@ -1156,7 +1156,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
       else
 #endif
       {
-        char xxx_buf[8];
+        char xxx_buf[25];
         char *s = umode_str(acptr, NULL);
         sendto_one(cptr, *s ?
             "%s " TOK_NICK " %s %d " TIME_T_FMT " %s %s +%s %s %s%s :%s" :
@@ -1164,13 +1164,13 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
             NumServ(acptr->user->server),
             acptr->name, acptr->hopcount + 1, acptr->lastnick,
             PunteroACadena(acptr->user->username),
-            PunteroACadena(acptr->user->host), s, inttobase64(xxx_buf,
+            PunteroACadena(acptr->user->host), s, iptobase64(xxx_buf,
 #ifdef HISPANO_WEBCHAT
-            MyUser(acptr) ? ntohl(acptr->ip_real.s_addr) : ntohl(acptr->ip.s_addr), 6), NumNick(acptr),
+            MyUser(acptr) ? &acptr->ip_real : &acptr->ip,
 #else
-            ntohl(acptr->ip.s_addr), 6), NumNick(acptr),
+            &acptr->ip,
 #endif
-            PunteroACadena(acptr->info));
+            sizeof(xxx_buf), IsIPv6(cptr)), NumNick(acptr), PunteroACadena(acptr->info));
       }
     }
   }

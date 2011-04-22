@@ -1304,7 +1304,7 @@ int find_exception(aClient *cptr)
       continue;
 
     if ((tmp->host && (match(tmp->host, PunteroACadena(cptr->sockhost)) == 0 ||
-        match(tmp->host, inetntoa_c(cptr)) == 0))
+        match(tmp->host, ircd_ntoa_c(cptr)) == 0))
         && (tmp->name
         && (match(tmp->name, PunteroACadena(cptr->user->username)) == 0))
         && (BadPtr(tmp->passwd) || (!BadPtr(cptr->passwd)
@@ -1319,7 +1319,7 @@ int find_exception(aClient *cptr)
         reg = db_iterador_next())
     {
       if ((reg->clave && (match(reg->clave, PunteroACadena(cptr->sockhost)) == 0 ||
-          match(reg->clave, inetntoa_c(cptr)) == 0))
+          match(reg->clave, ircd_ntoa_c(cptr)) == 0))
           && (reg->valor
           && (match(reg->valor, PunteroACadena(cptr->user->username)) == 0)))
         return 1;
@@ -1363,7 +1363,7 @@ int find_kill(aClient *cptr)
     if ((tmp->status & CONF_KLINE) && tmp->host && tmp->name &&
         (match(tmp->host, host) == 0 ||
         ((tmp->status == CONF_IPKILL) &&
-        match(tmp->host, inetntoa_c(cptr)) == 0)) &&
+        match(tmp->host, ircd_ntoa_c(cptr)) == 0)) &&
         (!username || match(tmp->name, username) == 0) &&
         (!tmp->port || (tmp->port == cptr->acpt->port)))
     {

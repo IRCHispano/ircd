@@ -1,3 +1,16 @@
+* 2011/04/22  zoltan@irc-dev.net (u2.10.H.10.162)                FEATURE
+------------------------------------------------------------------------
+  Parche de compatibilidad de IPv6 para aceptar clientes de servidores
+  IPv6.
+
+  Pasa de 32 a 128 bits el campo de la IP de cada usuario aunque el
+  servidor solo acepte conexiones IPv4.
+
+  Se ha modificado control de clones, IP en base64, WHO, UPING, entre
+  otras cosas.
+
+  No está implementado aun el cifrado en IPv6, sale "ip:real.virtual6".
+
 * 2011/01/28  zoltan@irc-dev.net (u2.10.H.10.161)                    FIX
 ------------------------------------------------------------------------
   Subo los BAN a 200.

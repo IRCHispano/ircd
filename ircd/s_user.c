@@ -508,7 +508,8 @@ static int register_user(aClient *cptr, aClient *sptr,
   short digitgroups = 0;
   anUser *user = sptr->user;
   Dlink *lp;
-  char ip_base64[8];
+  char ip_base64[25];
+  char sendbuf4[2048];
   int found_g;
 
   user->last = now;
@@ -757,7 +758,7 @@ static int register_user(aClient *cptr, aClient *sptr,
     sprintf_irc(sendbuf,
         ":%s NOTICE * :*** Notice -- Client connecting: %s (%s@%s) [%s] {%d}",
         me.name, nick, PunteroACadena(user->username),
-        PunteroACadena(user->host), inetntoa_c(sptr), get_client_class(sptr));
+        PunteroACadena(user->host), ircd_ntoa_c(sptr), get_client_class(sptr));
     sendbufto_op_mask(SNO_CONNEXIT);
 #else /* SNO_CONNEXIT_IP */
     sprintf_irc(sendbuf,
@@ -817,9 +818,9 @@ static int register_user(aClient *cptr, aClient *sptr,
       NumServ(user->server), nick, sptr->hopcount + 1, sptr->lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
 #ifdef HISPANO_WEBCHAT
-      inttobase64(ip_base64, MyUser(sptr) ? ntohl(sptr->ip_real.s_addr)  : ntohl(sptr->ip.s_addr), 6),
+      iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), IsIPv6(cptr)),
 #else
-      inttobase64(ip_base64, ntohl(sptr->ip.s_addr), 6),
+      iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), IsIPv6(cptr)),
 #endif
       NumNick(sptr), PunteroACadena(sptr->info));
 
@@ -830,7 +831,7 @@ static int register_user(aClient *cptr, aClient *sptr,
   sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s :%s",
       user->server->name, nick, sptr->hopcount + 1, sptr->lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host),
-      user->server->name, inttobase64(ip_base64, ntohl(sptr->ip.s_addr), 6),
+      user->server->name, iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), IsIPv6(cptr)),
       PunteroACadena(sptr->info));
 #else
   sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
@@ -868,16 +869,32 @@ static int register_user(aClient *cptr, aClient *sptr,
       NumServ(user->server), nick, sptr->hopcount + 1, (int)(sptr->lastnick),
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
 #ifdef HISPANO_WEBCHAT
-      inttobase64(ip_base64, MyUser(sptr) ? ntohl(sptr->ip_real.s_addr) : ntohl(sptr->ip.s_addr), 6),
+      iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), 1),
 #else
-      inttobase64(ip_base64, ntohl(sptr->ip.s_addr), 6),
+      iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 1),
 #endif
       NumNick(sptr), PunteroACadena(sptr->info));
+
+  sprintf_irc(sendbuf4, *tmpstr ?
+      "%s " TOK_NICK " %s %d %d %s %s +%s %s %s%s :%s" :
+      "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
+      NumServ(user->server), nick, sptr->hopcount + 1, (int)(sptr->lastnick),
+      PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
+#ifdef HISPANO_WEBCHAT
+      iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), 0),
+#else
+      iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 0),
+#endif
+      NumNick(sptr), PunteroACadena(sptr->info));
+
   for (lp = me.serv->down; lp; lp = lp->next)
   {
     if (lp->value.cptr == cptr || Protocol(lp->value.cptr) < 10)
       continue;
-    sendbufto_one(lp->value.cptr);
+    if (IsIPv6(lp->value.cptr))
+      sendbufto_one(lp->value.cptr);
+    else
+      sendto_one(lp->value.cptr, sendbuf4);
   }
 
 #endif
@@ -1285,7 +1302,7 @@ static int m_message(aClient *cptr, aClient *sptr,
         if (MyUser(sptr) && check_target_limit(sptr, acptr, acptr->name, 0))
           continue;
         
-        if(MyUser(sptr) && !IsOper(sptr) && sptr->ip.s_addr != acptr->ip.s_addr
+        if(MyUser(sptr) && !IsOper(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip)
             && IsUserDeaf(acptr))
           continue;
         
@@ -1934,7 +1951,7 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * Therefore we still need to detect numeric nick collisions too.
      */
     if (MyConnect(acptr) && IsServer(cptr) && Protocol(cptr) > 9)
-      sendto_one(cptr, "%s " TOK_KILL " %s%s :%s!%s (Ghost5)",
+      sendto_one(cptr, "%s " TOK_KILL " %s%s y:%s!%s (Ghost5)",
           NumServ(&me), NumNick(acptr), inpath, path);
     acptr->flags |= FLAGS_KILLED;
   }
@@ -2249,7 +2266,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
       find_conf_exact(name, PunteroACadena(sptr->username),
       PunteroACadena(sptr->sockhost), CONF_OPS))
       && !(aconf =
-      find_conf_exact(name, sptr->username, inetntoa(cptr->ip), CONF_OPS)))
+      find_conf_exact(name, sptr->username, (char *)ircd_ntoa(&cptr->ip), CONF_OPS)))
   {
     sendto_one(sptr, err_str(ERR_NOOPERHOST), me.name, parv[0]);
     sendto_realops("Failed OPER attempt by %s (%s@%s)",
@@ -2372,6 +2389,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       aConfItem *aconf2;
       Reg1 Link *tmp, *tmp2;
+      struct in_addr addr4;
 
       /*
        * Desligamos las clases que tiene el usuario
@@ -2392,7 +2410,11 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
       aconf2->confClass = make_class();
       DupString(aconf2->name, sptr->name);
       DupString(aconf2->host, PunteroACadena(sptr->sockhost));
-      aconf2->ipnum = sptr->ip;
+
+      /* Pasamos de irc_in_addr a in_addr */
+      addr4.s_addr = (sptr->ip.in6_16[6] | sptr->ip.in6_16[7] << 16);
+      aconf2->ipnum = addr4;
+
       aconf2->status = CONF_CLIENT;
 
       if (!BadPtr(class))       /* Clase en el /OPER */
@@ -2604,7 +2626,7 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
           || IsChannelService(sptr)
 #endif
           || IsHiddenViewer(sptr)
-          || !IsHidden(acptr)) ? inetntoa_c(acptr) : "0.0.0.0");
+          || !IsHidden(acptr)) ? ircd_ntoa_c(acptr) : "0.0.0.0");
     }
     else
     {
@@ -3426,7 +3448,7 @@ int is_silenced(aClient *sptr, aClient *acptr)
   sprintf_irc(sender, "%s!%s@%s", sptr->name, PunteroACadena(user->username),
       PunteroACadena(user->host));
   sprintf_irc(senderip, "%s!%s@%s", sptr->name, PunteroACadena(user->username),
-      inetntoa_c(sptr));
+      ircd_ntoa_c(sptr));
 #if defined(BDD_VIP)
   sprintf_irc(sendervirtual, "%s!%s@%s", sptr->name,
       PunteroACadena(user->username), get_virtualhost(sptr));
@@ -3732,38 +3754,47 @@ void make_virtualhost(aClient *acptr, int mostrar)
     return;
   }
 
-  while (1)
+  /* IPv4 */
+  if (irc_in_addr_is_ipv4(&acptr->ip))
   {
-    /* resultado */
-    x[0] = x[1] = 0;
+    while (1)
+    {
+      /* resultado */
+      x[0] = x[1] = 0;
 
-    v[0] = (clave_de_cifrado_binaria[0] & 0xffff0000) + ts;
+      v[0] = (clave_de_cifrado_binaria[0] & 0xffff0000) + ts;
 #ifdef HISPANO_WEBCHAT
-    v[1] = MyUser(acptr) ? ntohl((unsigned long)acptr->ip_real.s_addr) : ntohl((unsigned long)acptr->ip.s_addr);
+      v[1] = MyUser(acptr) ? 
+                  (ntohl((unsigned long)acptr->ip_real.in6_16[6]) << 16 | ntohl((unsigned long)acptr->ip_real.in6_16[7])) : 
+                 : (ntohl((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohl((unsigned long)acptr->ip..in6_16[7]))
 #else
-    v[1] = ntohl((unsigned long)acptr->ip.s_addr);
+      v[1] = ntohl((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohl((unsigned long)acptr->ip.in6_16[7]);
 #endif
 
-    tea(v, clave_de_cifrado_binaria, x);
+      tea(v, clave_de_cifrado_binaria, x);
 
-    /* formato direccion virtual: qWeRty.AsDfGh.virtual */
-    inttobase64(ip_virtual_temporal, x[0], 6);
-    ip_virtual_temporal[6] = '.';
-    inttobase64(ip_virtual_temporal + 7, x[1], 6);
-    strcpy(ip_virtual_temporal + 13, ".virtual");
+      /* formato direccion virtual: qWeRty.AsDfGh.virtual */
+      inttobase64(ip_virtual_temporal, x[0], 6);
+      ip_virtual_temporal[6] = '.';
+      inttobase64(ip_virtual_temporal + 7, x[1], 6);
+      strcpy(ip_virtual_temporal + 13, ".virtual");
 
-    /* el nombre de Host es correcto? */
-    if (strchr(ip_virtual_temporal, '[') == NULL &&
+      /* el nombre de Host es correcto? */
+      if (strchr(ip_virtual_temporal, '[') == NULL &&
         strchr(ip_virtual_temporal, ']') == NULL)
-      break;                    /* nice host name */
-    else
-    {
+        break;                    /* nice host name */
+      else
+      {
       if (++ts == 65536)
-      {                         /* No deberia ocurrir nunca */
-        strcpy(ip_virtual_temporal, PunteroACadena(acptr->user->host));
-        break;
+        {                         /* No deberia ocurrir nunca */
+          strcpy(ip_virtual_temporal, PunteroACadena(acptr->user->host));
+          break;
+        }
       }
     }
+  } else { /* IPv6 */
+    strncpy(ip_virtual_temporal, ircd_ntoa(&acptr->ip), HOSTLEN);
+    strncat(ip_virtual_temporal, ".virtual6", HOSTLEN);
   }
 
 #if defined(BDD_VIP3)
@@ -4911,13 +4942,13 @@ nickkilldone:
     if (Protocol(cptr) < 10)
     {
       SetRemoteNumNick(sptr, nnp9);
-      sptr->ip.s_addr = 0;
+      memset(&sptr->ip, 0, sizeof(struct irc_in_addr));
     }
     else
     {
 #endif
       SetRemoteNumNick(sptr, parv[parc - 2]);
-      sptr->ip.s_addr = htonl(base64toint(parv[parc - 3]));
+      base64toip(parv[parc - 3], &sptr->ip);
       /* IP# of remote client */
 #if !defined(NO_PROTOCOL9)
     }
@@ -5658,13 +5689,13 @@ nickkilldone:
     if (Protocol(cptr) < 10)
     {
       SetRemoteNumNick(sptr, nnp9);
-      sptr->ip.s_addr = 0;
+      memset(&sptr->ip, 0, sizeof(struct irc_in_addr));
     }
     else
     {
 #endif
       SetRemoteNumNick(sptr, parv[parc - 2]);
-      sptr->ip.s_addr = htonl(base64toint(parv[parc - 3]));
+      base64toip(parv[parc - 3], &sptr->ip);
       /* IP# of remote client */
 #if !defined(NO_PROTOCOL9)
     }

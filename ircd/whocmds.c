@@ -235,7 +235,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
 #endif
 
     if (!p2)
-      p2 = inetntoa_c(acptr);
+      p2 = ircd_ntoa_c(acptr);
     *(p1++) = ' ';
     while ((*p2) && (*(p1++) = *(p2++)));
   }
@@ -581,11 +581,12 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
   if (!(commas || (counter < 1)))
   {
     int minlen, cset;
-    static struct in_mask imask;
+    struct irc_in_addr imask;
+    unsigned char ibits;
     if (mask)
     {
       matchcomp(mymask, &minlen, &cset, mask);
-      if (matchcompIP(&imask, mask))
+      if (!ipmask_parse(mask, &imask, &ibits))
         matchsel &= ~WHO_FIELD_NIP;
       if ((minlen > NICKLEN) || !(cset & NTL_IRCNK))
         matchsel &= ~WHO_FIELD_NIC;
@@ -631,14 +632,21 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               && ((!(matchsel & WHO_FIELD_NIP)) || (IsHidden(acptr)
               && !IsHiddenViewer(sptr))
 #ifdef HISPANO_WEBCHAT
+              || !ipmask_check((MyUser(acptr) ? &acptr->ip :  &acptr->ip_real, &imask, ibits))
+/*
               || (((((MyUser(acptr) ? acptr->ip_real.s_addr : acptr->ip.s_addr) & imask.mask.s_addr) !=
               imask.bits.s_addr)) || (imask.fall
-              && matchexec(MyUser(acptr) ? inet_ntoa(acptr->ip_real) : inet_ntoa(acptr->ip), mymask, minlen)))))
+              && matchexec(MyUser(acptr) ? ircd_ntoa(&acptr->ip_real) : ircd_ntoa(&acptr->ip), mymask, minlen)))))
+*/
 #else
+              || !ipmask_check(&acptr->ip, &imask, ibits))
+/*
               || ((((acptr->ip.s_addr & imask.mask.s_addr) !=
               imask.bits.s_addr)) || (imask.fall
-              && matchexec(inet_ntoa(acptr->ip), mymask, minlen)))))
+              && matchexec(ircd_ntoa(&acptr->ip), mymask, minlen)))))
+*/
 #endif
+              )
             continue;
 #else
           if ((mask) &&
@@ -653,9 +661,12 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               && ((!(matchsel & WHO_FIELD_REN))
               || matchexec(PunteroACadena(acptr->info), mymask, minlen))
               && ((!(matchsel & WHO_FIELD_NIP))
+              || !ipmask_check(&acptr->ip, &imask, ibits)))
+/*
               || ((((acptr->ip.s_addr & imask.mask.s_addr) !=
               imask.bits.s_addr)) || (imask.fall
-              && matchexec(inet_ntoa(acptr->ip), mymask, minlen)))))
+              && matchexec(ircd_ntoa(&acptr->ip), mymask, minlen)))))
+*/
             continue;
 #endif
           if (!SHOW_MORE(sptr, counter))
@@ -694,14 +705,21 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             && ((!(matchsel & WHO_FIELD_NIP))
             || (IsHidden(acptr) && !IsHiddenViewer(sptr))
 #ifdef HISPANO_WEBCHAT
+            || !ipmask_check((MyUser(acptr) ? &acptr->ip_real : &acptr->ip), &imask, ibits))
+/*
             || (((((MyUser(acptr) ? acptr->ip_real.s_addr : acptr->ip.s_addr) & imask.mask.s_addr) != imask.bits.s_addr))
             || (imask.fall
-            && matchexec(MyUser(acptr) ? inet_ntoa(acptr->ip_real) : inet_ntoa(acptr->ip), mymask, minlen)))))
+            && matchexec(MyUser(acptr) ? ircd_ntoa(&acptr->ip_real) : ircd_ntoa(&acptr->ip), mymask, minlen)))))
+*/
 #else
+            || !ipmask_check(&acptr->ip, &imask, ibits))
+/*
             || ((((acptr->ip.s_addr & imask.mask.s_addr) != imask.bits.s_addr))
             || (imask.fall
-            && matchexec(inet_ntoa(acptr->ip), mymask, minlen)))))
+            && matchexec(ircd_ntoa(&acptr->ip), mymask, minlen)))))
+*/
 #endif
+            )
           continue;
 #else
         if ((mask) &&
@@ -716,9 +734,12 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             && ((!(matchsel & WHO_FIELD_REN))
             || matchexec(PunteroACadena(acptr->info), mymask, minlen))
             && ((!(matchsel & WHO_FIELD_NIP))
+            || !ipmask_check(&acptr->ip, &imask, ibits))
+/*
             || ((((acptr->ip.s_addr & imask.mask.s_addr) != imask.bits.s_addr))
             || (imask.fall
-            && matchexec(inet_ntoa(acptr->ip), mymask, minlen)))))
+            && matchexec(ircd_ntoa(acptr->ip), mymask, minlen)))))
+*/
           continue;
 #endif
         if (!SHOW_MORE(sptr, counter))
@@ -986,7 +1007,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
           if (IsHidden(acptr) && (IsHiddenViewer(sptr) || acptr == sptr))
             sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY),  me.name, parv[0],
-                name, user->username, user->host, inetntoa_c(acptr));
+                name, user->username, user->host, ircd_ntoa_c(acptr));
 
           sendto_one(sptr, rpl_str(RPL_WHOISMODES), me.name,
               parv[0], name, umode_str(acptr, sptr));

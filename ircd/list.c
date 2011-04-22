@@ -527,7 +527,7 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
     /* Does gline match? */
     /* Added a check against the user's IP address as well -Kev */
         
-    if ((GlineIsIpMask(agline) ? match(agline->host, inet_ntoa(client_addr(cptr))) :
+    if ((GlineIsIpMask(agline) ? match(agline->host, ircd_ntoa(client_addr(cptr))) :
     	(GlineIsRealName(agline) ? match_pcre(agline->re, tmp) :
 #ifdef HISPANO_WEBCHAT
     	  match(agline->host, PunteroACadena(cptr->user->host)))) == 0 &&

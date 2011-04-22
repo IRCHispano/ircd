@@ -240,6 +240,7 @@ void report_error(char *text, aClient *cptr)
 int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
 {
   static struct sockaddr_in server;
+  struct in_addr addr4;
   int ad[4], opt;
   socklen_t len = sizeof(server);
   char ipname[20];
@@ -337,7 +338,14 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
   }
   if (cptr->fd > highest_fd)
     highest_fd = cptr->fd;
-  cptr->ip.s_addr = inet_addr(ipname);
+
+  /* Pasamos de in_addr a irc_in_addr */
+  addr4.s_addr = inet_addr(ipname);
+  memset(&cptr->ip, 0, sizeof(struct irc_in_addr));
+  cptr->ip.in6_16[5] = htons(65535);
+  cptr->ip.in6_16[6] = htons(ntohl(addr4.s_addr) >> 16);
+  cptr->ip.in6_16[7] = htons(ntohl(addr4.s_addr) & 65535);
+
   cptr->port = ntohs(server.sin_port);
   listen(cptr->fd, 128);        /* Use listen port backlog of 128 */
   loc_clients[cptr->fd] = cptr;
@@ -576,12 +584,19 @@ static int check_init(aClient *cptr, char *sockn)
     return -1;
   }
   strcpy(sockn, inetntoa(sk.sin_addr));
+
   if (inet_netof(sk.sin_addr) == IN_LOOPBACKNET)
   {
     cptr->hostp = NULL;
     strncpy(sockn, me.name, HOSTLEN);
   }
-  memcpy(&cptr->ip, &sk.sin_addr, sizeof(struct in_addr));
+
+  /* Pasamos de sockaddr_in a irc_in_addr */
+  memset(&cptr->ip, 0, sizeof(struct irc_in_addr));
+  cptr->ip.in6_16[5] = htons(65535);
+  cptr->ip.in6_16[6] = htons(ntohl(sk.sin_addr.s_addr) >> 16);
+  cptr->ip.in6_16[7] = htons(ntohl(sk.sin_addr.s_addr) & 65535);
+
   cptr->port = ntohs(sk.sin_port);
 
   return 0;
@@ -603,10 +618,14 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
   Reg2 struct hostent *hp = NULL;
   Reg3 int i;
   enum AuthorizationCheckResult acr;
+  struct in_addr addr4;
+
+  /* Pasamos de irc_in_addr a in_addr */
+  addr4.s_addr = (cptr->ip.in6_16[6] | cptr->ip.in6_16[7] << 16);
 
   ClearAccess(cptr);
   Debug((DEBUG_DNS, "ch_cl: check access for %s[%s]",
-      cptr->name, inetntoa(cptr->ip)));
+      cptr->name, ircd_ntoa(&cptr->ip)));
 
   if (check_init(cptr, sockname))
     return ACR_BAD_SOCKET;
@@ -620,17 +639,17 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
   if (hp)
   {
     for (i = 0; hp->h_addr_list[i]; i++)
-      if (!memcmp(hp->h_addr_list[i], &cptr->ip, sizeof(struct in_addr)))
+      if (!memcmp(hp->h_addr_list[i], &addr4, sizeof(struct in_addr)))
         break;
     if (!hp->h_addr_list[i])
     {
       sendto_op_mask(SNO_IPMISMATCH, "IP# Mismatch: %s != %s[%08x]",
-          inetntoa(cptr->ip), hp->h_name, *((unsigned int *)hp->h_addr));
+          ircd_ntoa(&cptr->ip), hp->h_name, *((unsigned int *)hp->h_addr));
 #ifndef HISPANO_WEBCHAT
       if (IsUserPort(cptr))
       {
         sprintf_irc(sendbuf, IP_LOOKUP_BAD,
-            me.name, inetntoa(cptr->ip), hp->h_name,
+            me.name, ircd_ntoa(&cptr->ip), hp->h_name,
             *((unsigned int *)hp->h_addr));
         write(cptr->fd, sendbuf, strlen(sendbuf));
       }
@@ -663,7 +682,7 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
   }
   else
   {
-    strcpy(host_buf, inetntoa(cptr->ip));
+    strcpy(host_buf, ircd_ntoa(&cptr->ip));
     num_clones = IPbusca_clones(host_buf);
   }
 
@@ -719,8 +738,8 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
 
   Debug((DEBUG_DNS, "ch_cl: access ok: %s[%s]", cptr->name, sockname));
 
-  if (inet_netof(cptr->ip) == IN_LOOPBACKNET || IsUnixSocket(cptr) ||
-      inet_netof(cptr->ip) == inet_netof(mysk.sin_addr))
+  if (inet_netof(addr4) == IN_LOOPBACKNET || IsUnixSocket(cptr) ||
+      inet_netof(addr4) == inet_netof(mysk.sin_addr))
   {
     ircstp->is_loc++;
   }
@@ -752,6 +771,10 @@ int check_server(aClient *cptr)
   char abuff[HOSTLEN + USERLEN + 2];
   char sockname[HOSTLEN + 1], fullname[HOSTLEN + 1];
   int i;
+  struct in_addr addr4;
+
+  /* Pasamos de irc_in_addr a in_addr */
+  addr4.s_addr = (cptr->ip.in6_16[6] | cptr->ip.in6_16[7] << 16);
 
   name = cptr->name;
   Debug((DEBUG_DNS, "sv_cl: check access for %s[%s]", name,
@@ -831,12 +854,12 @@ check_serverback:
   if (hp)
   {
     for (i = 0; hp->h_addr_list[i]; i++)
-      if (!memcmp(hp->h_addr_list[i], &cptr->ip, sizeof(struct in_addr)))
+      if (!memcmp(hp->h_addr_list[i], &addr4, sizeof(struct in_addr)))
         break;
     if (!hp->h_addr_list[i])
     {
       sendto_op_mask(SNO_IPMISMATCH, "IP# Mismatch: %s != %s[%08x]",
-          inetntoa(cptr->ip), hp->h_name, *((unsigned int *)hp->h_addr));
+          ircd_ntoa(&cptr->ip), hp->h_name, *((unsigned int *)hp->h_addr));
       hp = NULL;
     }
   }
@@ -888,7 +911,7 @@ check_serverback:
   {
     if (!c_conf)
       c_conf =
-          find_conf_ip(lp, (char *)&cptr->ip, PunteroACadena(cptr->username),
+          find_conf_ip(lp, (char *)&addr4, PunteroACadena(cptr->username),
           CFLAG);
   }
   else
@@ -921,7 +944,7 @@ check_serverback:
   attach_confs(cptr, name, CONF_HUB | CONF_LEAF | CONF_UWORLD);
 
   if ((c_conf->ipnum.s_addr == INADDR_NONE) && !IsUnixSocket(cptr))
-    memcpy(&c_conf->ipnum, &cptr->ip, sizeof(struct in_addr));
+    memcpy(&c_conf->ipnum, &addr4, sizeof(struct in_addr));
   if (!IsUnixSocket(cptr))
     get_sockhost(cptr, c_conf->host);
 
@@ -1358,7 +1381,12 @@ aClient *add_connection(aClient *cptr, int fd, int type)
      * have something valid to put into error messages...
      */
     get_sockhost(acptr, inetntoa(addr.sin_addr));
-    memcpy(&acptr->ip, &addr.sin_addr, sizeof(struct in_addr));
+
+    /* Pasamos de sockaddr_in a irc_in_addr */
+    memset(&acptr->ip, 0, sizeof(struct irc_in_addr));
+    acptr->ip.in6_16[5] = htons(65535);
+    acptr->ip.in6_16[6] = htons(ntohl(addr.sin_addr.s_addr) >> 16);
+    acptr->ip.in6_16[7] = htons(ntohl(addr.sin_addr.s_addr) & 65535);
     acptr->port = ntohs(addr.sin_port);
 
     /*

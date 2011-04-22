@@ -272,7 +272,12 @@ void read_ping(aClient *cptr)
 
 int ping_server(aClient *cptr)
 {
-  if ((!cptr->ip.s_addr)
+  struct in_addr addr4;
+
+  /* Pasamos de irc_in_addr a in_addr */
+  addr4.s_addr = (cptr->ip.in6_16[6] | cptr->ip.in6_16[7] << 16);
+
+  if ((!addr4.s_addr)
 #if defined(UNIXPORT)
       && (cptr->sockhost && (strlen(cptr->sockhost) > 2)
       && (cptr->sockhost[2]) != '/')
@@ -293,17 +298,18 @@ int ping_server(aClient *cptr)
     s = strchr(PunteroACadena(cptr->sockhost), '@');
     s++;                        /* should never be NULL;
                                    cptr->sockhost is actually a conf->host */
-    if ((cptr->ip.s_addr = inet_addr(s)) == INADDR_NONE)
+    if ((addr4.s_addr = inet_addr(s)) == INADDR_NONE)
     {
-      cptr->ip.s_addr = INADDR_ANY;
+      addr4.s_addr = INADDR_ANY;
       hp = gethost_byname(s, &lin);
       Debug((DEBUG_NOTICE, "ping_sv: hp %p ac %p ho %s", hp, cptr, s));
       if (!hp)
         return 0;
-      memcpy(&cptr->ip, hp->h_addr, sizeof(struct in_addr));
+      memcpy(&addr4, hp->h_addr, sizeof(struct in_addr));
     }
   }
 
+  /* TODO: Pasar de addr4 a cptr->ip */
   return start_ping(cptr);
 }
 

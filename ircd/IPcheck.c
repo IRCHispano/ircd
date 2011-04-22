@@ -50,7 +50,7 @@ extern time_t now;
  * the channels he/she was on.
  */
 struct ip_targets_st {
-  struct in_addr ip;
+  struct irc_in_addr ip;
   unsigned char free_targets;
   unsigned char targets[MAXTARGETS];
 };
@@ -58,7 +58,7 @@ struct ip_targets_st {
 /* We keep one IPregistry for each IP number (for both, remote and local clients) */
 struct IPregistry {
   union {
-    struct in_addr ip;          /* The IP number of the registry entry. */
+    struct irc_in_addr ip;      /* The IP number of the registry entry. */
     struct ip_targets_st *ptr;  /* The IP number of the registry entry, and a list of targets */
   } ip_targets;
 
@@ -85,10 +85,35 @@ static struct IPregistry_vector IPregistry_hashtable[HASHTABSIZE];
  * Calculate a `hash' value between 0 and HASHTABSIZE, from the internet address `in_addr'.
  * Apply it immedeately to the table, effectively hiding the table itself.
  */
-#define CALCULATE_HASH(in_addr) \
-  struct IPregistry_vector *hash; \
-  do { unsigned int ip = (in_addr).s_addr; \
-       hash = &IPregistry_hashtable[((ip >> 14) + (ip >> 7) + ip) & (HASHTABSIZE - 1)]; } while(0)
+//#define CALCULATE_HASH(irc_in_addr) \
+//  struct IPregistry_vector *hash; \
+//  do { unsigned int ip = (irc_in_addr).in6_16[0] ^ (irc_in_addr).in6_16[1] ^ (irc_in_addr).in6_16[2] ^ (irc_in_addr).in6_16[3]; \
+//       hash = &IPregistry_hashtable[ip & (HASHTABSIZE - 1)]; } while(0)
+
+struct IPregistry_vector *hash;
+
+void CALCULATE_HASH(struct irc_in_addr addr)
+{
+  struct irc_in_addr iptemp;
+  unsigned int iphash;
+
+  if (irc_in_addr_is_ipv4(&addr)) {
+    iptemp.in6_16[0] = htons(0x2002);
+    iptemp.in6_16[1] = addr.in6_16[6];
+    iptemp.in6_16[2] = addr.in6_16[7];
+    iptemp.in6_16[3] = 0;
+
+    do {
+      iphash = iptemp.in6_16[0] ^ iptemp.in6_16[1] ^ iptemp.in6_16[2] ^ iptemp.in6_16[3];
+      hash = &IPregistry_hashtable[iphash & (HASHTABSIZE - 1)];
+    } while(0);
+ } else {
+    do {
+      iphash = addr.in6_16[0] ^ addr.in6_16[1] ^ addr.in6_16[2] ^ addr.in6_16[3];
+      hash = &IPregistry_hashtable[iphash & (HASHTABSIZE - 1)]; 
+    } while(0);
+  }
+}
 
 /*
  * Fit `now' in an unsigned short, the advantage is that we use less memory `struct IPregistry::last_connect' can be smaller
@@ -112,10 +137,28 @@ static struct IPregistry_vector IPregistry_hashtable[HASHTABSIZE];
 #endif
 
 /* IP(entry) returns the `struct in_addr' of the IPregistry. */
-#define IP(entry) (HAS_TARGETS(entry) ? (entry)->ip_targets.ptr->ip : (entry)->ip_targets.ip)
+#define IP(entry) (HAS_TARGETS(entry) ? &(entry)->ip_targets.ptr->ip : &(entry)->ip_targets.ip)
 #define FREE_TARGETS(entry) (HAS_TARGETS(entry) ? (entry)->ip_targets.ptr->free_targets : (entry)->free_targets)
 
 static unsigned short count = 10000, average_length = 4;
+
+/** Convert IP addresses to canonical form for comparison.  IPv4
+ * addresses are translated into 6to4 form; IPv6 addresses are left
+ * alone.
+ * @param[out] out Receives canonical format for address.
+ * @param[in] in IP address to canonicalize.
+ */
+static void IPregistry_canonicalize(struct irc_in_addr *out, const struct irc_in_addr *in)
+{
+    if (irc_in_addr_is_ipv4(in)) {
+        out->in6_16[0] = htons(0x2002);
+        out->in6_16[1] = in->in6_16[6];
+        out->in6_16[2] = in->in6_16[7];
+        out->in6_16[3] = out->in6_16[4] = out->in6_16[5] = 0;
+        out->in6_16[6] = out->in6_16[7] = 0;
+    } else
+        memcpy(out, in, sizeof(*out));
+}
 
 static struct IPregistry *IPregistry_add(struct IPregistry_vector *iprv)
 {
@@ -130,28 +173,38 @@ static struct IPregistry *IPregistry_add(struct IPregistry_vector *iprv)
 }
 
 static struct IPregistry *IPregistry_find(struct IPregistry_vector *iprv,
-    struct in_addr ip)
+    struct irc_in_addr ip)
 {
+  struct irc_in_addr canon;
+
   if (iprv->length > 0)
   {
     struct IPregistry *i, *end = &iprv->vector[iprv->length];
-    for (i = &iprv->vector[0]; i < end; ++i)
-      if (IP(i).s_addr == ip.s_addr)
+    IPregistry_canonicalize(&canon, &ip);
+    for (i = &iprv->vector[0]; i < end; ++i) {
+      int bits = (canon.in6_16[0] == htons(0x2002)) ? 48 : 64;
+      if (ipmask_check(&canon, IP(i), bits))
         return i;
+    }
   }
   return NULL;
 }
 
 static struct IPregistry *IPregistry_find_with_expire(struct IPregistry_vector
-    *iprv, struct in_addr ip)
+    *iprv, struct irc_in_addr ip)
 {
   struct IPregistry *last = &iprv->vector[iprv->length - 1];  /* length always > 0 because searched element always exists */
   struct IPregistry *curr;
   struct IPregistry *retval = NULL; /* Core dump if we find nothing :/ - can be removed when code is stable */
+  struct irc_in_addr canon;
+  int bits;
+
+  IPregistry_canonicalize(&canon, &ip);
+  bits = (canon.in6_16[0] == htons(0x2002)) ? 48 : 64;
 
   for (curr = &iprv->vector[0]; curr < last;)
   {
-    if (IP(curr).s_addr == ip.s_addr)
+    if (ipmask_check(&canon, IP(curr), bits))
       /* `curr' is element we looked for */
       retval = curr;
     else if (curr->connected == 0)
@@ -176,7 +229,7 @@ static struct IPregistry *IPregistry_find_with_expire(struct IPregistry_vector
       else if (CONNECTED_SINCE(curr) > 120U && HAS_TARGETS(curr))
       {
         /* Expire storage of targets */
-        struct in_addr ip1 = curr->ip_targets.ptr->ip;
+        struct irc_in_addr ip1 = curr->ip_targets.ptr->ip;
         curr->free_targets = curr->ip_targets.ptr->free_targets;
         RunFree(curr->ip_targets.ptr);
         curr->ip_targets.ip = ip1;
@@ -186,7 +239,7 @@ static struct IPregistry *IPregistry_find_with_expire(struct IPregistry_vector
     ++curr;
   }
   /* Now check the last element in the list (curr == last) */
-  if (IP(curr).s_addr == ip.s_addr)
+  if (ipmask_check(&canon, IP(curr), bits))
     /* `curr' is element we looked for */
     retval = curr;
   else if (curr->connected == 0)
@@ -208,7 +261,7 @@ static struct IPregistry *IPregistry_find_with_expire(struct IPregistry_vector
     else if (CONNECTED_SINCE(curr) > 120U && HAS_TARGETS(curr))
     {
       /* Expire storage of targets */
-      struct in_addr ip1 = curr->ip_targets.ptr->ip;
+      struct irc_in_addr ip1 = curr->ip_targets.ptr->ip;
       curr->free_targets = curr->ip_targets.ptr->free_targets;
       RunFree(curr->ip_targets.ptr);
       curr->ip_targets.ip = ip1;
@@ -283,6 +336,7 @@ int IPcheck_local_connect(aClient *cptr)
   int clones = 0;
 #endif
   struct IPregistry *entry;
+
   CALCULATE_HASH(cptr->ip);
   SetIPChecked(cptr);           /* Mark that we did add/update an IPregistry entry */
 #if defined(BDD_CLONES)
@@ -295,9 +349,11 @@ int IPcheck_local_connect(aClient *cptr)
 #endif
 
   if (!(entry = IPregistry_find(hash, cptr->ip)))
-  {
+  { struct irc_in_addr canon;
+
+    IPregistry_canonicalize(&canon, &cptr->ip);
     entry = IPregistry_add(hash);
-    entry->ip_targets.ip = cptr->ip;  /* The IP number of registry entry */
+    entry->ip_targets.ip = canon;  /* The IP number of registry entry */
     entry->last_connect = NOW;  /* Seconds since last connect (attempt) */
     entry->connected = 1;       /* Number of currently connected clients with this IP number */
     entry->connect_attempts = 1;  /* Number of clients that connected with this IP number */
@@ -366,6 +422,7 @@ int IPcheck_remote_connect(aClient *cptr, const char *UNUSED(hostname),
     int is_burst)
 {
   struct IPregistry *entry;
+
   CALCULATE_HASH(cptr->ip);
   SetIPChecked(cptr);           /* Mark that we did add/update an IPregistry entry */
   if (!(entry = IPregistry_find(hash, cptr->ip)))
@@ -413,6 +470,7 @@ int IPcheck_remote_connect(aClient *cptr, const char *UNUSED(hostname),
 void IPcheck_connect_fail(aClient *cptr)
 {
   struct IPregistry *entry;
+
   CALCULATE_HASH(cptr->ip);
   entry = IPregistry_find(hash, cptr->ip);
   entry->connect_attempts--;
@@ -430,6 +488,7 @@ void IPcheck_connect_succeeded(aClient *cptr)
 {
   struct IPregistry *entry;
   const char *tr = "";
+
   CALCULATE_HASH(cptr->ip);
   entry = IPregistry_find(hash, cptr->ip);
   if (HAS_TARGETS(entry))
@@ -456,6 +515,7 @@ void IPcheck_connect_succeeded(aClient *cptr)
 void IPcheck_disconnect(aClient *cptr)
 {
   struct IPregistry *entry;
+
   CALCULATE_HASH(cptr->ip);
   entry = IPregistry_find_with_expire(hash, cptr->ip);
   if (--(entry->connected) == 0)  /* If this was the last one, set `last_connect' to disconnect time (used for expiration) */
@@ -513,6 +573,7 @@ void IPcheck_disconnect(aClient *cptr)
 unsigned short IPcheck_nr(aClient *cptr)
 {
   struct IPregistry *entry;
+
   CALCULATE_HASH(cptr->ip);
   entry = IPregistry_find(hash, cptr->ip);
   return (entry ? entry->connected : 0);
@@ -539,7 +600,7 @@ int IPbusca_clones_cptr(aClient *cptr)
   {
     int i;
 
-    strcpy(host_buf, inetntoa(cptr->ip));
+    strcpy(host_buf, ircd_ntoa(&cptr->ip));
     if (IPbusca_clones(host_buf) != -1) /* HIT! */
       return 0;
   }

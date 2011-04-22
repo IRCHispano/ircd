@@ -106,9 +106,9 @@ char *inetntoa(struct in_addr in)
   return buf;
 }
 
-char *inetntoa_c(aClient *cptr)
+char *ircd_ntoa_c(aClient *cptr)
 {
-  return inetntoa(client_addr(cptr));
+  return (char *)ircd_ntoa(client_addr(cptr));
 }
 
 /*
@@ -435,15 +435,15 @@ ipmask_parse(const char *input, struct irc_in_addr *ip, unsigned char *pbits)
   } else return 0; /* parse failed */
 }
 
-struct in_addr client_addr(aClient *cptr)
+struct irc_in_addr *client_addr(aClient *cptr)
 {
 #ifdef HISPANO_WEBCHAT
   if (MyConnect(cptr))
-    return cptr->ip_real;
+    return &cptr->ip_real;
   else
-    return cptr->ip;
+    return &cptr->ip;
 #else
-  return cptr->ip;
+  return &cptr->ip;
 #endif
 	
 }

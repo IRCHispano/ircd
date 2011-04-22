@@ -501,16 +501,20 @@ struct hostent *gethost_byname(char *name, Link *lp)
   return NULL;
 }
 
-struct hostent *gethost_byaddr(struct in_addr *addr, Link *lp)
+struct hostent *gethost_byaddr(struct irc_in_addr *addr, Link *lp)
 {
   aCache *cp;
+  struct in_addr addrreal;
+
+  /* Pasamos de irc_in_addr a in_addr */
+  addrreal.s_addr = (addr->in6_16[6] | addr->in6_16[7] << 16);
 
   reinfo.re_nu_look++;
-  if ((cp = find_cache_number(NULL, addr)))
+  if ((cp = find_cache_number(NULL, &addrreal)))
     return &cp->he.h;
   if (!lp)
     return NULL;
-  do_query_number(lp, addr, NULL);
+  do_query_number(lp, &addrreal, NULL);
   return NULL;
 }
 
@@ -1687,3 +1691,4 @@ size_t cres_mem(aClient *sptr)
       me.name, RPL_STATSDEBUG, sptr->name, sm, im, nm);
   return ts + sm + im + nm;
 }
+
