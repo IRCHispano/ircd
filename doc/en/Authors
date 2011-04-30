@@ -1,30 +1,6 @@
-/************************************************************************
- *   IRC - Internet Relay Chat, doc/AUTHORS
- *   Copyright (C) 1990
- *
- * AUTHORS FILE:
- *   This file attempts to remember all contributors to the IRC
- *   developement. Names can be only added this file, no name
- *   should never be removed. This file must be included into all
- *   distributions of IRC and derived works.
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 1, or (at your option)
- *   any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
 IRC was conceived of and written by Jarkko Oikarinen <jto@tolsun.oulu.fi>.
 IRC was originally written in University of Oulu, Computing Center.
+
 Jan 1991 - IRC 2.6  jto@tolsun.oulu.fi
 	- Multiple Channels and protocol changes
 
@@ -141,26 +117,35 @@ UNDERNET (1991 - 1999)
 --------
 
 The Undernet versions (TSpre8, u2.9 and u2.10) are based on ircd-2.8.10 and
-contain thousands of hours of work by Carlo Wood <carlo@runaway.xs4all.nl>
-(Run on IRC). The number of protocol enhancements, changes and additions that
-have been added are too many to summarize.  All patches are kept in the patch
-repository at http://www.xs4all.nl/~carlo17/ircd-dev/
+contain thousands of hours of work by Carlo Wood <carlo@alinoe.com>
+(Run on IRC). The number of protocol enhancements, changes and additions
+that have been added are too many to summarize.  All patches are kept in the
+cvs repository at http://coder-com.undernet.org/.  Discussions on this
+server code are currently on the mailing list coder-com@undernet.org, or in
+#coder-com on undernet.
+
+The current maintainer is Bleep.
 
 Various additions and bugfixes have been contributed by:
 
 Aaron <agifford@sci.dixie.edu>
+Bleep <tomh@inxpress.net>
+CaptJay <captjay@superlink.net>
 CapVideo <majdi@puck.nether.net>
 Chaos <simon@troll.elec.uow.edu.au>
 Cym <cym@acrux.net>
 Derrick <dirk@servtech.com>
 Ensor <dholmes@rahul.net>
 flux <cmlambertus@ucdavis.edu>
-Ghostwolf <foxxe@wolfspirit.org>
+Ghostwolf <foxxe@trms.com>
+Gte- <gte@atomicrevs.demon.co.uk>
+Isomer <isomer@coders.net>
 Jamey <woodjr@durrance.Colorado.EDU>
 Jarle <jarlel@II.UIB.NO>
 Kev <klmitch@mit.edu>
 Nemesi <cocito@tin.it>
 Niels <niels@holding.pi.net>
+Run <carlo@alinoe.com>
 record <jegelhof@cloud9.net>
 smg <smg@lm.com>
 SeKs <intru@step.polymtl.ca>
@@ -169,3 +154,48 @@ Starfox <starfox@quicklink.com>
 Trio <trio@b62897.STUDENT.CWRU.Edu>
 WildThang <dvmitche@antietam.nssl.uoknor.edu>
 Xorath <vorac@wheel.dcn.davis.ca.us>
+
+UNDERNET (2000 - 2004)
+--------
+
+The Undernet versions (P9, P10, u2.10.11 and u2.10.12) are based on
+ircu2.10.07 and contain many hours of work by Coder Commitee.
+The number of protocol enhancements, changes and additions
+that have been added are too many to summarize. All patches are kept in the
+cvs repository at http://coder-com.undernet.org/.  Discussions on this
+server code are currently on the mailing list coder-com@undernet.org, or in
+#coder-com on undernet.
+
+The current maintainer is Isomer.
+
+Various additions, testings and bugfixes have been contributed by:
+
+A1kmm <ircu_stuff@mware.virtualave.net>
+Bleep <tomh@inxpress.net>
+Gte- <gte@atomicrevs.demon.co.uk>
+Isomer <isomer@coders.net>
+Kev <klmitch@mit.edu>
+Delete <delete@cyberabuse.org>
+Ghostwolf <foxxe@wtfs.net>
+Braden <dbtem@yahoo.com>
+net <net@astrolink.org>
+Steven <steven@doyle.net>
+OmniDynmc <omni@dynmc.net>
+Dianora <db@db.net>
+Sengaia <sengaia@undernet.org>
+Cyberdude <Cyberdude@undernet.org>
+Maniac- <maniac@cetlink.net>
+Vampire- <vampire@p16.pub.ro>
+mbuna <mbuna@bugged.org>
+beware <steendijk@tomaatnet.nl>
+n3tguy <netguy@spidernet.net>
+reed <reed@reedloden.com>
+Math <math@rootservices.net>
+hikari <shadow@undernet.org>
+Bleep <tom.helvey@cox.net>
+froo <froo@quakenet.org>
+splidge <splidge@quakenet.org>
+Zarjazz <zarjazz@quakenet.org>
+Spike <ekips@pandora.be>
+Jeekay <jeekay@netgamers.org>
+Entrope <entrope@gamesurge.net>
