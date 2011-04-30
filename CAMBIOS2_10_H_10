@@ -1,3 +1,7 @@
+* 2011/05/01  zoltan@irc-dev.net (u2.10.H.10.163)                    FIX
+------------------------------------------------------------------------
+  Lote de fixes de los parches de IPv6.
+
 * 2011/04/22  zoltan@irc-dev.net (u2.10.H.10.162)                FEATURE
 ------------------------------------------------------------------------
   Parche de compatibilidad de IPv6 para aceptar clientes de servidores
