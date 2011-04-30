@@ -29,7 +29,7 @@
 #include "struct.h"
 #include "s_serv.h"
 #include "msg.h"
-#include "runmalloc.h"
+#include "ircd_alloc.h"
 #include "s_conf.h"
 #include "m_config.h"
 #include "send.h"
@@ -55,12 +55,12 @@ opciones[] = {
 #if defined(ZLIB_ESNET)
 voidpf z_alloc(voidpf opaque, uInt items, uInt size)
 {
-  return RunCalloc(items, size);
+  return MyCalloc(items, size);
 }
 
 void z_free(voidpf opaque, voidpf address)
 {
-  RunFree(address);
+  MyFree(address);
 }
 
 #endif
@@ -103,7 +103,7 @@ void config_resolve_speculative(aClient *cptr)
         sendto_one(cptr, "%s " TOK_CONFIG " ACK :zlib", NumServ(&me));
       cptr->negociacion &= ~ZLIB_ESNET_OUT_SPECULATIVE;
       cptr->negociacion |= ZLIB_ESNET_OUT;
-      cptr->comp_out = RunMalloc(sizeof(z_stream));
+      cptr->comp_out = MyMalloc(sizeof(z_stream));
       if (!cptr->comp_out)
         outofmemory();
       cptr->comp_out->zalloc = z_alloc;
@@ -130,7 +130,7 @@ int config_ack(aClient *cptr, aClient *sptr, char *fuente, char *valor,
 #if defined(ZLIB_ESNET)
       case ZLIB:
         cptr->negociacion |= ZLIB_ESNET_IN;
-        cptr->comp_in = RunMalloc(sizeof(z_stream));
+        cptr->comp_in = MyMalloc(sizeof(z_stream));
         if (!cptr->comp_in)
           outofmemory();
         cptr->comp_in->next_in = Z_NULL;

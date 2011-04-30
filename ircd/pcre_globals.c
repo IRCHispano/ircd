@@ -47,7 +47,7 @@ all threads. However, when compiling for Virtual Pascal, things are done
 differently, and global variables are not used (see pcre.in). */
 
 #include "sys.h"
-#include "runmalloc.h"
+#include "ircd_alloc.h"
 
 #ifdef HAVE_CONFIG_H
 #include "pcre_config.h"
@@ -56,10 +56,10 @@ differently, and global variables are not used (see pcre.in). */
 #include "pcre_internal.h"
 
 #ifndef VPCOMPAT
-PCRE_EXP_DATA_DEFN void *(*pcre_malloc)(size_t) = _RunMalloc;
-PCRE_EXP_DATA_DEFN void  (*pcre_free)(void *) = _RunFree;
-PCRE_EXP_DATA_DEFN void *(*pcre_stack_malloc)(size_t) = _RunMalloc;
-PCRE_EXP_DATA_DEFN void  (*pcre_stack_free)(void *) = _RunFree;
+PCRE_EXP_DATA_DEFN void *(*pcre_malloc)(size_t) = malloc;
+PCRE_EXP_DATA_DEFN void  (*pcre_free)(void *) = free;
+PCRE_EXP_DATA_DEFN void *(*pcre_stack_malloc)(size_t) = malloc;
+PCRE_EXP_DATA_DEFN void  (*pcre_stack_free)(void *) = free;
 PCRE_EXP_DATA_DEFN int   (*pcre_callout)(pcre_callout_block *) = NULL;
 #endif
 

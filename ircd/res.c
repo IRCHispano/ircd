@@ -42,6 +42,7 @@ extern int dn_skipname(const unsigned char *, const unsigned char *);
 #include "support.h"
 #include "common.h"
 #include "sprintf_irc.h"
+#include "ircd_alloc.h"
 
 RCSTAG_CC("$Id$");
 
@@ -297,10 +298,10 @@ static void rem_request(ResRQ *old_request)
         old_request, *rptr, r2ptr));
 
     if (old_request->he.buf)
-      RunFree(old_request->he.buf);
+      MyFree(old_request->he.buf);
     if (old_request->name)
-      RunFree(old_request->name);
-    RunFree(old_request);
+      MyFree(old_request->name);
+    MyFree(old_request);
   }
 }
 
@@ -311,7 +312,7 @@ static ResRQ *make_request(Link *lp)
 {
   ResRQ *nreq;
 
-  if ((nreq = (ResRQ *)RunMalloc(sizeof(ResRQ))) == NULL)
+  if ((nreq = (ResRQ *)MyMalloc(sizeof(ResRQ))) == NULL)
     return NULL;
   memset(nreq, 0, sizeof(ResRQ));
   nreq->sentat = now;
@@ -543,7 +544,7 @@ static int do_query_name(Link *lp, char *name, ResRQ *rptr)
     if ((rptr = make_request(lp)) == NULL)
       return -1;
     rptr->type = T_A;
-    rptr->name = (char *)RunMalloc(strlen(name) + 1);
+    rptr->name = (char *)MyMalloc(strlen(name) + 1);
     strcpy(rptr->name, name);
   }
   return (query_name(hname, C_IN, T_A, rptr));
@@ -659,7 +660,7 @@ static int proc_answer(ResRQ *rptr, HEADER * hptr, unsigned char *buf,
    */
   if (!rptr->he.buf)
   {
-    if ((rptr->he.buf = (char *)RunMalloc(MAXGETHOSTLEN)) == NULL)
+    if ((rptr->he.buf = (char *)MyMalloc(MAXGETHOSTLEN)) == NULL)
       return 0;
     /* 
      * Array of alias list pointers starts at beginning of buf 
@@ -979,7 +980,7 @@ struct hostent *get_res(char *lp)
     else if (*rptr->he.h.h_aliases)
     {
       if (last->he.buf)
-        RunFree(last->he.buf);
+        MyFree(last->he.buf);
       last->he.buf = rptr->he.buf;
       rptr->he.buf = NULL;
       memcpy(&last->he.h, &rptr->he.h, sizeof(struct hostent));
@@ -1063,7 +1064,7 @@ static int dup_hostent(aHostent *new_hp, struct hostent *hp)
   bytes_needed += (2 * sizeof(void *));
 
   /* Allocate memory */
-  if ((new_hp->buf = (char *)RunMalloc(bytes_needed)) == NULL)
+  if ((new_hp->buf = (char *)MyMalloc(bytes_needed)) == NULL)
     return -1;
 
   new_hp->h.h_addrtype = hp->h_addrtype;
@@ -1152,7 +1153,7 @@ static int update_hostent(aHostent *hp, char **addr, char **alias)
   bytes_needed += 2 * sizeof(void *);
 
   /* Allocate memory */
-  if ((buf = (char *)RunMalloc(bytes_needed)) == NULL)
+  if ((buf = (char *)MyMalloc(bytes_needed)) == NULL)
     return -1;
 
   /* first write the address list */
@@ -1204,7 +1205,7 @@ static int update_hostent(aHostent *hp, char **addr, char **alias)
   /* release the old buffer */
   p = hp->buf;
   hp->buf = buf;
-  RunFree(p);
+  MyFree(p);
   return 0;
 }
 
@@ -1484,7 +1485,7 @@ static aCache *make_cache(ResRQ *rptr)
   /*
    * A matching entry wasnt found in the cache so go and make one up.
    */
-  if ((cp = (aCache *)RunMalloc(sizeof(aCache))) == NULL)
+  if ((cp = (aCache *)MyMalloc(sizeof(aCache))) == NULL)
     return NULL;
   memset(cp, 0, sizeof(aCache));
   dup_hostent(&cp->he, hp);
@@ -1570,8 +1571,8 @@ static void rem_cache(aCache *ocp)
   }
 
   if (ocp->he.buf)
-    RunFree(ocp->he.buf);
-  RunFree((char *)ocp);
+    MyFree(ocp->he.buf);
+  MyFree(ocp);
 
   incache--;
   cainfo.ca_dels++;

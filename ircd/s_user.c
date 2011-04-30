@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #endif
 #include <stdlib.h>
+#include "ircd_alloc.h"
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -2008,7 +2009,7 @@ int m_away(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /* Marking as not away */
     if (away)
     {
-      RunFree(away);
+      MyFree(away);
       sptr->user->away = NULL;
     }
 #if !defined(NO_PROTOCOL9)
@@ -2030,9 +2031,9 @@ int m_away(aClient *cptr, aClient *sptr, int parc, char *parv[])
   sendto_highprot_butone(cptr, 10, "%s%s " TOK_AWAY " :%s ", NumNick(sptr), awy2);
 
   if (away)
-    away = (char *)RunRealloc(away, strlen(awy2) + 1);
+    away = (char *)MyRealloc(away, strlen(awy2) + 1);
   else
-    away = (char *)RunMalloc(strlen(awy2) + 1);
+    away = (char *)MyMalloc(strlen(awy2) + 1);
 
   sptr->user->away = away;
   strcpy(away, awy2);
@@ -2519,7 +2520,7 @@ int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[])
       clave_bdd = password;
     }
     if (cptr->passbdd)
-      RunFree(cptr->passbdd);
+      MyFree(cptr->passbdd);
     DupString(cptr->passbdd, clave_bdd);
   }
   len = strlen(password);
@@ -2529,9 +2530,9 @@ int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[])
     password[len] = '\0';
   }
   if (cptr->passwd)
-    RunFree(cptr->passwd);
+    MyFree(cptr->passwd);
 
-  cptr->passwd = RunMalloc(len + 1);
+  cptr->passwd = MyMalloc(len + 1);
   assert(cptr->passwd);
   strcpy(cptr->passwd, password);
 
@@ -3495,7 +3496,7 @@ int del_silence(aClient *sptr, char *mask)
     {
       tmp = *lp;
       *lp = tmp->next;
-      RunFree(tmp->value.cp);
+      MyFree(tmp->value.cp);
       free_link(tmp);
       ret = 0;
     }
@@ -3519,7 +3520,7 @@ static int add_silence(aClient *sptr, char *mask)
     {
       Link *tmp = lp;
       *lpp = lp = lp->next;
-      RunFree(tmp->value.cp);
+      MyFree(tmp->value.cp);
       free_link(tmp);
       continue;
     }
@@ -3540,7 +3541,7 @@ static int add_silence(aClient *sptr, char *mask)
   lp = make_link();
   memset(lp, 0, sizeof(Link));
   lp->next = sptr->user->silence;
-  lp->value.cp = (char *)RunMalloc(strlen(mask) + 1);
+  lp->value.cp = (char *)MyMalloc(strlen(mask) + 1);
   strcpy(lp->value.cp, mask);
   if ((ip_start = strrchr(mask, '@')) && check_if_ipmask(ip_start + 1))
     lp->flags = CHFL_SILENCE_IPMASK;

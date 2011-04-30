@@ -49,6 +49,7 @@
 #include "opercmds.h"
 #include "querycmds.h"
 #include "whocmds.h"
+#include "ircd_alloc.h"
 
 #include <assert.h>
 
@@ -194,7 +195,7 @@ static aMessage **do_msg_tree_tok(aMessageTree *mtree, char *prefix,
     {
       if ((*mptr)->tok[lp] == c)
       {
-        mtree1 = (aMessageTree *)RunMalloc(sizeof(aMessageTree));
+        mtree1 = (aMessageTree *)MyMalloc(sizeof(aMessageTree));
         mtree1->final = NULL;
         mtree->pointers[c - 'A'] = mtree1;
         strcpy(newprefix, prefix);
@@ -252,7 +253,7 @@ static aMessage *do_msg_tree_cmd(aMessageTree *mtree, char *prefix,
     {
       if (mptr->cmd[lp] == c)
       {
-        mtree1 = (aMessageTree *)RunMalloc(sizeof(aMessageTree));
+        mtree1 = (aMessageTree *)MyMalloc(sizeof(aMessageTree));
         mtree1->final = NULL;
         mtree->pointers[c - 'A'] = mtree1;
         strcpy(newprefix, prefix);
@@ -302,7 +303,7 @@ void initmsgtree(void)
     continue;
   qsort(msgtab, i, sizeof(aMessage),
       (int (*)(const void *, const void *))mcmdcmp);
-  msgtab_tok = (aMessage **)RunMalloc((i + 1) * sizeof(aMessage *));
+  msgtab_tok = (aMessage **)MyMalloc((i + 1) * sizeof(aMessage *));
   for (ii = 0; ii < i; ++ii)
     msgtab_tok[ii] = msgtab + ii;
   msgtab_tok[i] = NULL;         /* Needed by `do_msg_tree_tok' */
@@ -310,7 +311,7 @@ void initmsgtree(void)
       (int (*)(const void *, const void *))mtokcmp);
   msg = do_msg_tree_cmd(&msg_tree_cmd, "", msgtab);
   msgtok = do_msg_tree_tok(&msg_tree_tok, "", msgtab_tok);
-  RunFree(msgtab_tok);
+  MyFree(msgtab_tok);
 }
 
 /*

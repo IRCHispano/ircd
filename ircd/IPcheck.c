@@ -22,6 +22,7 @@
 #include "sys.h"
 #include <netinet/in.h>
 #include "h.h"
+#include "ircd_alloc.h"
 #include "s_debug.h"
 #include "IPcheck.h"
 #include "querycmds.h"
@@ -167,7 +168,7 @@ static struct IPregistry *IPregistry_add(struct IPregistry_vector *iprv)
   {
     iprv->allocated_length += 4;
     iprv->vector =
-        (struct IPregistry *)RunRealloc(iprv->vector,
+        (struct IPregistry *)MyRealloc(iprv->vector,
         iprv->allocated_length * sizeof(struct IPregistry));
   }
   return &iprv->vector[iprv->length++];
@@ -209,7 +210,7 @@ static struct IPregistry *IPregistry_find_with_expire(struct IPregistry_vector
       {
         /* `curr' expired */
         if (HAS_TARGETS(curr))
-          RunFree(curr->ip_targets.ptr);
+          MyFree(curr->ip_targets.ptr);
         *curr = *last--;
         iprv->length--;
         if (--count == 0)
@@ -227,7 +228,7 @@ static struct IPregistry *IPregistry_find_with_expire(struct IPregistry_vector
         /* Expire storage of targets */
         struct irc_in_addr ip1 = curr->ip_targets.ptr->ip;
         curr->free_targets = curr->ip_targets.ptr->free_targets;
-        RunFree(curr->ip_targets.ptr);
+        MyFree(curr->ip_targets.ptr);
         curr->ip_targets.ip = ip1;
       }
     }
@@ -244,7 +245,7 @@ static struct IPregistry *IPregistry_find_with_expire(struct IPregistry_vector
     {
       /* `curr' expired */
       if (HAS_TARGETS(curr))
-        RunFree(curr->ip_targets.ptr);
+        MyFree(curr->ip_targets.ptr);
       iprv->length--;
       if (--count == 0)
       {
@@ -259,7 +260,7 @@ static struct IPregistry *IPregistry_find_with_expire(struct IPregistry_vector
       /* Expire storage of targets */
       struct irc_in_addr ip1 = curr->ip_targets.ptr->ip;
       curr->free_targets = curr->ip_targets.ptr->free_targets;
-      RunFree(curr->ip_targets.ptr);
+      MyFree(curr->ip_targets.ptr);
       curr->ip_targets.ip = ip1;
     }
   }
@@ -270,7 +271,7 @@ static struct IPregistry *IPregistry_find_with_expire(struct IPregistry_vector
     struct IPregistry *newpos;
     iprv->allocated_length = iprv->length;
     newpos =
-        (struct IPregistry *)RunRealloc(iprv->vector,
+        (struct IPregistry *)MyRealloc(iprv->vector,
         iprv->allocated_length * sizeof(struct IPregistry));
     if (newpos != iprv->vector) /* Is this ever true? */
     {
@@ -535,10 +536,10 @@ void IPcheck_disconnect(aClient *cptr)
     if (HAS_TARGETS(entry))
     {
       entry->free_targets = entry->ip_targets.ptr->free_targets;
-      RunFree(entry->ip_targets.ptr);
+      MyFree(entry->ip_targets.ptr);
     }
     entry->ip_targets.ptr =
-        (struct ip_targets_st *)RunMalloc(sizeof(struct ip_targets_st));
+        (struct ip_targets_st *)MyMalloc(sizeof(struct ip_targets_st));
     entry->ip_targets.ptr->ip = canon;
     entry->ip_targets.ptr->free_targets = entry->free_targets;
     entry->free_targets = HAS_TARGETS_MAGIC;

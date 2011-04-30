@@ -44,6 +44,7 @@
 #include "s_bsd.h"
 #include "common.h"
 #include "crule.h"
+#include "ircd_alloc.h"
 
 #else /* includes and defines to make the stand-alone test parser */
 
@@ -55,7 +56,7 @@
 #define BadPtr(x) (!(x) || (*(x) == '\0'))
 #define DupString(x,y) \
 	do { \
-	  x = (char *)RunMalloc(strlen(y)+1); \
+	  x = (char *)MyMalloc(strlen(y)+1); \
 	strcpy(x,y); \
 	} while(0)
 
@@ -67,12 +68,12 @@
 RCSTAG_CC("$Id$");
 
 #if defined(CR_DEBUG) || defined(CR_CHKCONF)
-#undef RunMalloc
+#undef MyMalloc
 #undef malloc
-#define RunMalloc malloc
-#undef RunFree
+#define MyMalloc malloc
+#undef MyFree
 #undef free
-#define RunFree free
+#define MyFree free
 #endif
 
 /* some constants and shared data types */
@@ -437,7 +438,7 @@ static int crule_parseorexpr(crule_treeptr * orrootp, int *next_tokp,
     errcode = crule_parseandexpr(&andexpr, next_tokp, ruleptr);
     if ((errcode == CR_NOERR) && (*next_tokp == CR_OR))
     {
-      orptr = (crule_treeptr) RunMalloc(sizeof(crule_treeelem));
+      orptr = (crule_treeptr) MyMalloc(sizeof(crule_treeelem));
 #if defined(CR_DEBUG)
       fprintf(stderr, "allocating or element at %ld\n", orptr);
 #endif
@@ -493,7 +494,7 @@ static int crule_parseandexpr(crule_treeptr * androotp, int *next_tokp,
     errcode = crule_parseprimary(&primary, next_tokp, ruleptr);
     if ((errcode == CR_NOERR) && (*next_tokp == CR_AND))
     {
-      andptr = (crule_treeptr) RunMalloc(sizeof(crule_treeelem));
+      andptr = (crule_treeptr) MyMalloc(sizeof(crule_treeelem));
 #if defined(CR_DEBUG)
       fprintf(stderr, "allocating and element at %ld\n", andptr);
 #endif
@@ -567,7 +568,7 @@ static int crule_parseprimary(crule_treeptr * primrootp,
         errcode = crule_gettoken(next_tokp, ruleptr);
         break;
       case CR_NOT:
-        *insertionp = (crule_treeptr) RunMalloc(sizeof(crule_treeelem));
+        *insertionp = (crule_treeptr) MyMalloc(sizeof(crule_treeelem));
 #if defined(CR_DEBUG)
         fprintf(stderr, "allocating primary element at %ld\n", *insertionp);
 #endif
@@ -616,7 +617,7 @@ static int crule_parsefunction(crule_treeptr * funcrootp,
     }
     if ((errcode = crule_gettoken(next_tokp, ruleptr)) != CR_NOERR)
       return (errcode);
-    *funcrootp = (crule_treeptr) RunMalloc(sizeof(crule_treeelem));
+    *funcrootp = (crule_treeptr) MyMalloc(sizeof(crule_treeelem));
 #if defined(CR_DEBUG)
     fprintf(stderr, "allocating function element at %ld\n", *funcrootp);
 #endif
@@ -717,12 +718,12 @@ void crule_free(char **elem)
   {
     numargs = (*((crule_treeptr *) elem))->numargs;
     for (arg = 0; arg < numargs; arg++)
-      RunFree((char *)(*((crule_treeptr *) elem))->arg[arg]);
+      MyFree((*((crule_treeptr *) elem))->arg[arg]);
   }
 #if defined(CR_DEBUG)
   fprintf(stderr, "freeing element at %ld\n", *elem);
 #endif
-  RunFree(*elem);
+  MyFree(*elem);
   *elem = NULL;
 }
 

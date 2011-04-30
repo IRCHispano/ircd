@@ -61,6 +61,7 @@
 #include "s_bsd.h"
 #include "s_bdd.h"
 #include "network.h"
+#include "ircd_alloc.h"
 
 RCSTAG_CC("$Id$");
 
@@ -193,21 +194,21 @@ void add_history(aClient *cptr, int still_on)
 #endif
 
     if (ww.oldww->name)
-      RunFree(ww.oldww->name);
+      MyFree(ww.oldww->name);
     if (ww.oldww->username)
-      RunFree(ww.oldww->username);
+      MyFree(ww.oldww->username);
     if (ww.oldww->hostname)
-      RunFree(ww.oldww->hostname);
+      MyFree(ww.oldww->hostname);
 #if defined(BDD_VIP)
     if (ww.oldww->virtualhost)
-      RunFree(ww.oldww->virtualhost);
+      MyFree(ww.oldww->virtualhost);
 #endif
     if (ww.oldww->servername)
-      RunFree(ww.oldww->servername);
+      MyFree(ww.oldww->servername);
     if (ww.oldww->realname)
-      RunFree(ww.oldww->realname);
+      MyFree(ww.oldww->realname);
     if (ww.oldww->away)
-      RunFree(ww.oldww->away);
+      MyFree(ww.oldww->away);
   }
 
   /* Initialize aWhoWas struct `newww' */

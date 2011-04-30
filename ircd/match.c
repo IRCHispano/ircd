@@ -24,7 +24,7 @@
 #include "common.h"
 #include "match.h"
 #include "ircd.h"
-#include "runmalloc.h"
+#include "ircd_alloc.h"
 #include "res.h"
 
 RCSTAG_CC("$Id$");
@@ -1083,7 +1083,7 @@ int match_pcre_str(char *regexp, char *subject)
     return 1;
   
   res=match_pcre(re, subject);
-  RunFree(re);
+  MyFree(re);
  
   return res;
 }
@@ -1106,6 +1106,6 @@ int match_pcre_ci(pcre *re, char *subject) {
   
   res = match_pcre(re, low);
 
-  RunFree(low);
+  MyFree(low);
   return res;
 }

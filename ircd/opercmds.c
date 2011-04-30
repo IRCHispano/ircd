@@ -700,11 +700,11 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     case 'M':
 #if defined(MEMSIZESTATS)
-      sendto_one(sptr, rpl_str(RPL_STATMEMTOT),
-          me.name, parv[0], get_mem_size(), get_alloc_cnt());
+//      sendto_one(sptr, rpl_str(RPL_STATMEMTOT),
+  //        me.name, parv[0], get_mem_size(), get_alloc_cnt());
 #endif
 #if defined(MEMLEAKSTATS)
-      report_memleak_stats(sptr, parc, parv);
+    //  report_memleak_stats(sptr, parc, parv);
 #endif
 #if !defined(MEMSIZESTATS) && !defined(MEMLEAKSTATS)
       sendto_one(sptr, ":%s NOTICE %s :stats M : Memory allocation monitoring "

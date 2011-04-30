@@ -41,7 +41,7 @@
 #include "common.h"
 #include "ircd.h"
 #include "fileio.h"
-#include "runmalloc.h"
+#include "ircd_alloc.h"
 
 RCSTAG_CC("$Id$");
 
@@ -64,7 +64,7 @@ static char *chk_configfile = CPATH;
 static char nullfield[] = "";
 static char maxsendq[12];
 
-/* A few dummy variables and functions needed to link with runmalloc.o */
+/* A few dummy variables and functions needed to link with MyMalloc.o */
 time_t now;
 struct Client {
   time_t since;
@@ -168,14 +168,14 @@ static aConfItem *chk_initconf(void)
     if (aconf)
     {
       if (aconf->host)
-        RunFree(aconf->host);
+        MyFree(aconf->host);
       if (aconf->passwd)
-        RunFree(aconf->passwd);
+        MyFree(aconf->passwd);
       if (aconf->name)
-        RunFree(aconf->name);
+        MyFree(aconf->name);
     }
     else
-      aconf = (aConfItem *)RunMalloc(sizeof(*aconf));
+      aconf = (aConfItem *)MyMalloc(sizeof(*aconf));
     aconf->host = (char *)NULL;
     aconf->passwd = (char *)NULL;
     aconf->name = (char *)NULL;
@@ -440,9 +440,9 @@ static aConfItem *chk_initconf(void)
         int len = 3;            /* *@\0 = 3 */
 
         len += strlen(aconf->host);
-        newhost = (char *)RunMalloc(len);
+        newhost = (char *)MyMalloc(len);
         sprintf(newhost, "*@%s", aconf->host);
-        RunFree(aconf->host);
+        MyFree(aconf->host);
         aconf->host = newhost;
       }
 
@@ -523,9 +523,9 @@ static void new_class(int cn)
 {
   numclasses++;
   if (classarr)
-    classarr = (int *)RunRealloc(classarr, sizeof(int) * numclasses);
+    classarr = (int *)MyRealloc(classarr, sizeof(int) * numclasses);
   else
-    classarr = (int *)RunMalloc(sizeof(int));
+    classarr = (int *)MyMalloc(sizeof(int));
   classarr[numclasses - 1] = cn;
 }
 

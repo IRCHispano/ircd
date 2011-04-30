@@ -37,6 +37,7 @@
 #include "support.h"
 #include "numeric.h"
 #include "s_err.h"
+#include "ircd_alloc.h"
 
 RCSTAG_CC("$Id$");
 
@@ -602,7 +603,7 @@ void list_next_channels(aClient *cptr)
   /* If we did all buckets, clean the client and send RPL_LISTEND. */
   if (args->bucket >= HASHSIZE)
   {
-    RunFree(cptr->listing);
+    MyFree(cptr->listing);
     cptr->listing = NULL;
     sendto_one(cptr, rpl_str(RPL_LISTEND), me.name, cptr->name);
   }

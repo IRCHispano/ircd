@@ -91,6 +91,7 @@
 #include "IPcheck.h"
 #include "msg.h"
 #include "slab_alloc.h"
+#include "ircd_alloc.h"
 
 RCSTAG_CC("$Id$");
 
@@ -1078,12 +1079,12 @@ void close_connection(aClient *cptr)
     if (cptr->negociacion & ZLIB_ESNET_IN)
     {
       inflateEnd(cptr->comp_in);
-      RunFree(cptr->comp_in);
+      MyFree(cptr->comp_in);
     }
     if (cptr->negociacion & ZLIB_ESNET_OUT)
     {
       deflateEnd(cptr->comp_out);
-      RunFree(cptr->comp_out);
+      MyFree(cptr->comp_out);
     }
 #endif
   
@@ -1128,7 +1129,7 @@ void close_connection(aClient *cptr)
   DBufClear(&cptr->recvQ);
   if (cptr->passwd)
   {
-    RunFree(cptr->passwd);
+    MyFree(cptr->passwd);
     cptr->passwd = NULL;
   }
   set_snomask(cptr, 0, SNO_SET);
@@ -1750,12 +1751,12 @@ void event_ping_callback(int fd, short event, aClient *cptr)
 
   if (event & EV_READ)  // HAY DATOS PENDIENTES DE LEER
   {
-    read_ping(cptr);          /* This can RunFree(cptr) ! */
+    read_ping(cptr);          /* This can MyFree(cptr) ! */
     return;
   }
 
   cptr->lasttime = now;
-  send_ping(cptr);          /* This can RunFree(cptr) ! */
+  send_ping(cptr);          /* This can MyFree(cptr) ! */
 }
 
 /*

@@ -69,7 +69,7 @@
  * Externally visible function-like macros
  */
 
-#define DupString(x, y)   (strcpy((x = (char *)RunMalloc(strlen(y) + 1)), y))
+#define DupString(x, y)   (strcpy((x = (char *)MyMalloc(strlen(y) + 1)), y))
 
 #define toLower(c)        (NTL_tolower_tab[(c)-CHAR_MIN])
 #define toUpper(c)        (NTL_toupper_tab[(c)-CHAR_MIN])
@@ -229,9 +229,9 @@ extern int strnCasecmp(const char *a, const char *b, const size_t n);
                                   if((x)->z) \
                                     event_del((x)->z); \
                                   else \
-                                    (x)->z=(struct event*)RunMalloc(sizeof(struct event)); \
+                                    (x)->z=(struct event*)MyMalloc(sizeof(struct event)); \
                                   if(!(x)->w) \
-                                    (x)->w=(struct timeval*)RunMalloc(sizeof(struct timeval)); \
+                                    (x)->w=(struct timeval*)MyMalloc(sizeof(struct timeval)); \
                                   evtimer_set((x)->z, (void *)(y), (void *)(x)); \
                                 } while (0)
 #define CreateTimerEvent(x,y)   CreateGTimerEvent(x,y,evtimer,tm_timer)
@@ -241,7 +241,7 @@ extern int strnCasecmp(const char *a, const char *b, const size_t n);
                                   if((x)->z) \
                                     event_del((x)->z); \
                                   else \
-                                    (x)->z=(struct event*)RunMalloc(sizeof(struct event)); \
+                                    (x)->z=(struct event*)MyMalloc(sizeof(struct event)); \
                                   event_set((x)->z, (x)->v, (w), (void *)y, (void *)x); \
                                   assert(event_add((x)->z, NULL)!=-1); \
                                 } while (0)

@@ -62,6 +62,7 @@
 #include "slab_alloc.h"
 #include "s_bdd.h"
 #include "msg.h"
+#include "ircd_alloc.h"
 
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
 #include "dbuf.h"
@@ -609,7 +610,7 @@ static void exit_one_client(aClient *bcptr, char *comment)
     /* Stop a running /LIST clean */
     if (MyUser(bcptr) && bcptr->listing)
     {
-      RunFree(bcptr->listing);
+      MyFree(bcptr->listing);
       bcptr->listing = NULL;
     }
 
@@ -653,9 +654,9 @@ static void exit_one_client(aClient *bcptr, char *comment)
 #endif /* WATCH */
 
     if (MyConnect(bcptr) && bcptr->passwd)
-      RunFree(bcptr->passwd);
+      MyFree(bcptr->passwd);
     if (MyConnect(bcptr) && bcptr->passbdd)
-      RunFree(bcptr->passbdd);
+      MyFree(bcptr->passbdd);
 
     if (IsInvisible(bcptr))
       --nrof.inv_clients;

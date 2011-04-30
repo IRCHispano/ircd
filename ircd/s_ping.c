@@ -61,7 +61,7 @@
 #include "numnicks.h"
 #include "msg.h"
 #include "slab_alloc.h"
-
+#include "ircd_alloc.h"
 
 RCSTAG_CC("$Id$");
 
@@ -518,7 +518,7 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (fd > highest_fd)
     highest_fd = fd;
   loc_clients[fd] = cptr = make_client(NULL, STAT_PING);
-  cptr->confs = (Link *)RunMalloc(UPINGBUFSIZE);  /* Really a (char *) */
+  cptr->confs = (Link *)MyMalloc(UPINGBUFSIZE);  /* Really a (char *) */
   cptr->fd = fd;
   cptr->port = port;
   cptr->hopcount = cptr->receiveB = cptr->sendB = MIN(20, atoi(parv[4]));
@@ -613,7 +613,7 @@ void end_ping(aClient *cptr)
   loc_clients[cptr->fd] = NULL;
   if (cptr->acpt)
     ClearAskedPing(cptr->acpt);
-  RunFree((char *)cptr->confs);
+  MyFree(cptr->confs);
   free_client(cptr);
 }
 

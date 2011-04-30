@@ -34,6 +34,7 @@
 #include "s_bdd.h"
 #include "channel.h"
 #include "res.h"
+#include "ircd_alloc.h"
 
 #include <assert.h>
 
@@ -271,7 +272,7 @@ void SetServerYXX(struct Client *cptr, struct Client *server, const char *yxx)
    * determine that SetServerYXX has been called - and then calls
    * ClearServerYXX. However, freeing the allocation happens in free_client() */
   server->serv->client_list =
-      (struct Client **)RunCalloc(server->serv->nn_mask + 1,
+      (struct Client **)MyCalloc(server->serv->nn_mask + 1,
       sizeof(struct Client *));
 }
 
@@ -313,7 +314,7 @@ void SetYXXCapacity(struct Client *c, unsigned int capacity)
     inttobase64(c->serv->nn_capacity, max_clients, 2);
   }
   c->serv->nn_mask = max_clients; /* Our Numeric Nick mask */
-  c->serv->client_list = (struct Client **)RunCalloc(max_clients + 1,
+  c->serv->client_list = (struct Client **)MyCalloc(max_clients + 1,
       sizeof(struct Client *));
   server_list[base64toint(c->yxx)] = c;
 }

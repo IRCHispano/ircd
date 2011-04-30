@@ -20,7 +20,7 @@
  */
 #include "sys.h"
 #include "fileio.h"
-#include "runmalloc.h"          /* RunMalloc, RunFree */
+#include "ircd_alloc.h"          /* MyMalloc, MyFree */
 #include <stdio.h>              /* BUFSIZ, EOF */
 #include <fcntl.h>              /* O_RDONLY, O_WRONLY, ... */
 #include <unistd.h>             /* read, write, open, close */
@@ -91,7 +91,7 @@ FBFILE *fdbopen(int fd, const char *mode)
    * ignore mode, if file descriptor hasn't been opened with the
    * correct mode, the first use will fail
    */
-  FBFILE *fb = (FBFILE *) RunMalloc(sizeof(FBFILE));
+  FBFILE *fb = (FBFILE *) MyMalloc(sizeof(FBFILE));
   if (NULL != fb)
   {
     fb->ptr = fb->endp = fb->buf;
@@ -105,7 +105,7 @@ void fbclose(FBFILE * fb)
 {
   assert(fb);
   close(fb->fd);
-  RunFree(fb);
+  MyFree(fb);
 }
 
 static int fbfill(FBFILE * fb)

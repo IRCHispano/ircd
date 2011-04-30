@@ -1,3 +1,8 @@
+* 2011/05/01 zoltan@irc-dev.net      (u2.10.H.11.01)                 PORT
+  -----------------------------------------------------------------------
+  Cambiamos las rutinas de memoria, RunMalloc por MyMalloc con vistas a
+  nuevos ports como CIDR, nuevos glines, excepciones, etc..
+
 * 2011/05/01 zoltan@irc-dev.net      (u2.10.H.11.00)              
   -----------------------------------------------------------------------
   Subimos de version, esta version es de paso de compatibilidad.

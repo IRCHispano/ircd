@@ -271,8 +271,6 @@ char *strchr(), *strrchr(), *strtok();
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif
 
-#include "runmalloc.h"
-
 #define MyCoreDump *((int *)NULL)=0
 
 /* This isn't really POSIX :(, but we really need it -- can this be replaced ? */

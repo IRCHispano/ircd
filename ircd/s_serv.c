@@ -57,7 +57,7 @@
 #include "IPcheck.h"
 #include "slab_alloc.h"
 #include "opercmds.h"
-
+#include "ircd_alloc.h"
 
 RCSTAG_CC("$Id$");
 
@@ -76,7 +76,7 @@ static int exit_new_server(aClient *cptr, aClient *sptr,
 {
   va_list vl;
   char *buf =
-      (char *)RunMalloc(strlen(me.name) + strlen(host) + 22 + strlen(fmt));
+      (char *)MyMalloc(strlen(me.name) + strlen(host) + 22 + strlen(fmt));
   va_start(vl, fmt);
   if (!IsServer(sptr))
     return vexit_client_msg(cptr, cptr, &me, fmt, vl);
@@ -85,7 +85,7 @@ static int exit_new_server(aClient *cptr, aClient *sptr,
   strcat(buf, fmt);
   vsendto_one(cptr, buf, vl);
   va_end(vl);
-  RunFree(buf);
+  MyFree(buf);
   return 0;
 }
 
@@ -370,7 +370,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif /* not GODMODE */
     if (cptr->passwd)
     {
-      RunFree(cptr->passwd);
+      MyFree(cptr->passwd);
       cptr->passwd = NULL;
     }
 #if !defined(HUB)
@@ -1252,7 +1252,7 @@ int m_error(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (sptr->serv)
   {
-    RunFree(sptr->serv->last_error_msg);
+    MyFree(sptr->serv->last_error_msg);
     DupString(sptr->serv->last_error_msg, para);
   }
 

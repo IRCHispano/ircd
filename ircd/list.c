@@ -41,7 +41,7 @@
 #include "m_watch.h"
 #include "hash.h"
 #include "slab_alloc.h"
-
+#include "ircd_alloc.h"
 
 #include <assert.h>
 
@@ -103,7 +103,7 @@ aClient *make_client(aClient *from, int status)
   if (!from)
     size = CLIENT_LOCAL_SIZE;
 
-  if (!(cptr = (aClient *)RunMalloc(size)))
+  if (!(cptr = (aClient *)MyMalloc(size)))
     outofmemory();
   memset(cptr, 0, size);        /* All variables are 0 by default */
 
@@ -154,33 +154,33 @@ void free_client(aClient *cptr)
     DelRWAuthEvent(cptr);
     
     if(cptr->evread)
-      RunFree(cptr->evread);
+      MyFree(cptr->evread);
 
     if(cptr->evwrite)
-      RunFree(cptr->evwrite);
+      MyFree(cptr->evwrite);
     
     if(cptr->evauthread)
-      RunFree(cptr->evauthread);
+      MyFree(cptr->evauthread);
 
     if(cptr->evauthwrite)
-      RunFree(cptr->evauthwrite);
+      MyFree(cptr->evauthwrite);
 
     if(cptr->evtimer)
     {
-      RunFree(cptr->evtimer);
+      MyFree(cptr->evtimer);
       assert(cptr->tm_timer);
-      RunFree(cptr->tm_timer);
+      MyFree(cptr->tm_timer);
     }
 
     if(cptr->evcheckping)
     {
-      RunFree(cptr->evcheckping);
+      MyFree(cptr->evcheckping);
       assert(cptr->tm_checkping);
-      RunFree(cptr->tm_checkping);
+      MyFree(cptr->tm_checkping);
     }
   }
 
-  RunFree(cptr);
+  MyFree(cptr);
 }
 
 /*
@@ -194,7 +194,7 @@ anUser *make_user(aClient *cptr)
   user = cptr->user;
   if (!user)
   {
-    if (!(user = (anUser *)RunMalloc(sizeof(anUser))))
+    if (!(user = (anUser *)MyMalloc(sizeof(anUser))))
       outofmemory();
     memset(user, 0, sizeof(anUser));  /* All variables are 0 by default */
 #if defined(DEBUGMODE)
@@ -212,7 +212,7 @@ aServer *make_server(aClient *cptr)
 
   if (!serv)
   {
-    if (!(serv = (aServer *)RunMalloc(sizeof(aServer))))
+    if (!(serv = (aServer *)MyMalloc(sizeof(aServer))))
       outofmemory();
     memset(serv, 0, sizeof(aServer)); /* All variables are 0 by default */
 
@@ -238,7 +238,7 @@ void free_user(anUser *user)
         && user->server->invited)));
 
     if (user->away)
-      RunFree(user->away);
+      MyFree(user->away);
 
     if (user->username)
       SlabStringFree(user->username);
@@ -247,7 +247,7 @@ void free_user(anUser *user)
     if (user->host)
       SlabStringFree(user->host);
 
-    RunFree(user);
+    MyFree(user);
 #if defined(DEBUGMODE)
     users.inuse--;
 #endif
@@ -285,11 +285,11 @@ void remove_client_from_list(aClient *cptr)
     if (cptr->serv->user)
       free_user(cptr->serv->user);
     if (cptr->serv->client_list)
-      RunFree(cptr->serv->client_list);
-    RunFree(cptr->serv->last_error_msg);
+      MyFree(cptr->serv->client_list);
+    MyFree(cptr->serv->last_error_msg);
     if (cptr->serv->by)
       SlabStringFree(cptr->serv->by);
-    RunFree(cptr->serv);
+    MyFree(cptr->serv);
 #if defined(DEBUGMODE)
     servs.inuse--;
 #endif
@@ -342,7 +342,7 @@ Link *make_link(void)
 {
   Reg1 Link *lp;
 
-  lp = (Link *)RunMalloc(sizeof(Link));
+  lp = (Link *)MyMalloc(sizeof(Link));
 #if defined(DEBUGMODE)
   links.inuse++;
 #endif
@@ -351,7 +351,7 @@ Link *make_link(void)
 
 void free_link(Link *lp)
 {
-  RunFree(lp);
+  MyFree(lp);
 #if defined(DEBUGMODE)
   links.inuse--;
 #endif
@@ -360,7 +360,7 @@ void free_link(Link *lp)
 Dlink *add_dlink(Dlink **lpp, aClient *cp)
 {
   Dlink *lp;
-  lp = (Dlink *)RunMalloc(sizeof(Dlink));
+  lp = (Dlink *)MyMalloc(sizeof(Dlink));
   lp->value.cptr = cp;
   lp->prev = NULL;
   if ((lp->next = *lpp))
@@ -378,14 +378,14 @@ void remove_dlink(Dlink **lpp, Dlink *lp)
   }
   else if ((*lpp = lp->next))
     lp->next->prev = NULL;
-  RunFree(lp);
+  MyFree(lp);
 }
 
 aConfClass *make_class(void)
 {
   Reg1 aConfClass *tmp;
 
-  tmp = (aConfClass *) RunMalloc(sizeof(aConfClass));
+  tmp = (aConfClass *) MyMalloc(sizeof(aConfClass));
 #if defined(DEBUGMODE)
   classs.inuse++;
 #endif
@@ -394,7 +394,7 @@ aConfClass *make_class(void)
 
 void free_class(aConfClass * tmp)
 {
-  RunFree(tmp);
+  MyFree(tmp);
 #if defined(DEBUGMODE)
   classs.inuse--;
 #endif
@@ -404,7 +404,7 @@ aConfItem *make_conf(void)
 {
   Reg1 aConfItem *aconf;
 
-  aconf = (struct ConfItem *)RunMalloc(sizeof(aConfItem));
+  aconf = (struct ConfItem *)MyMalloc(sizeof(aConfItem));
 #if defined(DEBUGMODE)
   aconfs.inuse++;
 #endif
@@ -436,12 +436,12 @@ void delist_conf(aConfItem *aconf)
 void free_conf(aConfItem *aconf)
 {
   del_queries((char *)aconf);
-  RunFree(aconf->host);
+  MyFree(aconf->host);
   if (aconf->passwd)
     memset(aconf->passwd, 0, strlen(aconf->passwd));
-  RunFree(aconf->passwd);
-  RunFree(aconf->name);
-  RunFree(aconf);
+  MyFree(aconf->passwd);
+  MyFree(aconf->name);
+  MyFree(aconf);
 #if defined(DEBUGMODE)
   aconfs.inuse--;
 #endif
@@ -460,7 +460,7 @@ aGline *make_gline(int is_ipmask, char *host, char *reason,
     gtype = 1;                  /* BAD CHANNEL GLINE */
 #endif
 
-  agline = (struct Gline *)RunMalloc(sizeof(aGline)); /* alloc memory */
+  agline = (struct Gline *)MyMalloc(sizeof(aGline)); /* alloc memory */
   DupString(agline->host, host);  /* copy vital information */
   DupString(agline->reason, reason);
   DupString(agline->name, name);
@@ -565,13 +565,13 @@ void free_gline(aGline *agline, aGline *pgline)
       gline = agline->next;
   }
 
-  RunFree(agline->host);        /* and free up the memory */
-  RunFree(agline->reason);
-  RunFree(agline->name);
+  MyFree(agline->host);        /* and free up the memory */
+  MyFree(agline->reason);
+  MyFree(agline->name);
   if(agline->re)
-    RunFree(agline->re);
+    MyFree(agline->re);
   
-  RunFree(agline);
+  MyFree(agline);
 }
 
 #if defined(BADCHAN)
@@ -611,7 +611,7 @@ aWatch *make_watch(char *nick)
   if (BadPtr(nick))
     return NULL;
 
-  wptr = (aWatch *) RunMalloc(sizeof(aWatch));
+  wptr = (aWatch *) MyMalloc(sizeof(aWatch));
   if (!wptr)
     outofmemory();
   memset(wptr, 0, sizeof(aWatch));
@@ -632,8 +632,8 @@ void free_watch(aWatch * wptr)
 {
 
   hRemWatch(wptr);
-  RunFree(wptr->nick);
-  RunFree(wptr);
+  MyFree(wptr->nick);
+  MyFree(wptr);
 
 #if defined(DEBUGMODE)
   watchs.inuse--;

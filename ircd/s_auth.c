@@ -58,6 +58,7 @@
 #include "slab_alloc.h"
 #include "sprintf_irc.h"
 #include "s_bdd.h"
+#include "ircd_alloc.h"
 
 RCSTAG_CC("$Id$");
 

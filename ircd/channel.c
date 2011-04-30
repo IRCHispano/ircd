@@ -49,6 +49,7 @@
 #include "sprintf_irc.h"
 #include "querycmds.h"
 #include "network.h"
+#include "ircd_alloc.h"
 
 RCSTAG_CC("$Id$");
 
@@ -263,8 +264,8 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid,
         *banp = tmp->next;
 #if 0
         /* Silently remove overlapping bans */
-        RunFree(tmp->value.ban.banstr);
-        RunFree(tmp->value.ban.who);
+        MyFree(tmp->value.ban.banstr);
+        MyFree(tmp->value.ban.who);
         free_link(tmp);
 #else
         /* These will be sent to the user later as -b */
@@ -301,9 +302,9 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid,
     char *ip_start;
     ban = make_link();
     ban->next = chptr->banlist;
-    ban->value.ban.banstr = (char *)RunMalloc(strlen(banid) + 1);
+    ban->value.ban.banstr = (char *)MyMalloc(strlen(banid) + 1);
     strcpy(ban->value.ban.banstr, banid);
-    ban->value.ban.who = (char *)RunMalloc(strlen(cptr->name) + 1);
+    ban->value.ban.who = (char *)MyMalloc(strlen(cptr->name) + 1);
     strcpy(ban->value.ban.who, cptr->name);
     ban->value.ban.when = now;
     ban->flags = CHFL_BAN;      /* This bit is never used I think... */
@@ -337,8 +338,8 @@ static Link *next_removed_overlapped_ban(void)
   if (prev_ban)
   {
     if (prev_ban->value.ban.banstr) /* Can be set to NULL in set_mode() */
-      RunFree(prev_ban->value.ban.banstr);
-    RunFree(prev_ban->value.ban.who);
+      MyFree(prev_ban->value.ban.banstr);
+    MyFree(prev_ban->value.ban.who);
     free_link(prev_ban);
   }
   if (tmp)
@@ -367,8 +368,8 @@ static int del_banid(aChannel *chptr, char *banid, int change)
       if (change)
       {
         *ban = tmp->next;
-        RunFree(tmp->value.ban.banstr);
-        RunFree(tmp->value.ban.who);
+        MyFree(tmp->value.ban.banstr);
+        MyFree(tmp->value.ban.who);
         free_link(tmp);
         /* Erase ban-valid-bit, for channel members that are banned */
         for (tmp = chptr->members; tmp; tmp = tmp->next)
@@ -2043,14 +2044,14 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
               {                 /* No hace falta controlar el taman~o, porque ya se ha hecho antes */
                 int KeyLen = strlen(cp);
                 if (mode->key)
-                  RunFree(mode->key);
-                mode->key = (char *)RunMalloc(sizeof(char) * (KeyLen + 1));
+                  MyFree(mode->key);
+                mode->key = (char *)MyMalloc(sizeof(char) * (KeyLen + 1));
                 strcpy(mode->key, cp);
               }
               else
               {
                 if (mode->key)
-                  RunFree(mode->key);
+                  MyFree(mode->key);
                 mode->key = NULL;
               }
             }
@@ -2372,7 +2373,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
       {
         sendbuf[sblen++] = ' ';
         strcpy(sendbuf + sblen, banstr[cnt]);
-        RunFree(banstr[cnt]);
+        MyFree(banstr[cnt]);
         sblen += len[cnt];
       }
       for (lp = chptr->members; lp; lp = lp->next)
@@ -3020,15 +3021,15 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
               {                 /* No hace falta controlar el taman~o, porque ya se ha recortado antes */
                 int KeyLen = strlen(cp);
                 if (mode->key)
-                  RunFree(mode->key);
-                mode->key = (char *)RunMalloc(sizeof(char) * (KeyLen + 1));
+                  MyFree(mode->key);
+                mode->key = (char *)MyMalloc(sizeof(char) * (KeyLen + 1));
                 strcpy(mode->key, cp);
                 mode->key[KeyLen] = '\0';
               }
               else
               {
                 if (mode->key)
-                  RunFree(mode->key);
+                  MyFree(mode->key);
                 mode->key = NULL;
               }
             }
@@ -3378,7 +3379,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
       {
         sendbuf[sblen++] = ' ';
         strcpy(sendbuf + sblen, banstr[cnt]);
-        RunFree(banstr[cnt]);
+        MyFree(banstr[cnt]);
         sblen += len[cnt];
       }
       for (lp = chptr->members; lp; lp = lp->next)
@@ -3673,7 +3674,7 @@ aChannel *get_channel(aClient *sptr, char *chname, int flag)
     return (chptr);
   if (flag == CREATE)
   {
-    chptr = (aChannel *)RunMalloc(sizeof(aChannel) + len);
+    chptr = (aChannel *)MyMalloc(sizeof(aChannel) + len);
     ++nrof.channels;
     memset(chptr, 0, sizeof(aChannel));
     strcpy(chptr->chname, chname);
@@ -3696,7 +3697,7 @@ aChannel *get_channel(aClient *sptr, char *chname, int flag)
         chptr->nextch->prevch = chptr->prevch;
       hRemChannel(chptr);
       --nrof.channels;
-      RunFree((char *)chptr);
+      MyFree(chptr);
       return NULL;
     }
 #endif
@@ -3821,8 +3822,8 @@ void sub1_from_channel(aChannel *chptr)
   {
     obtmp = tmp;
     tmp = tmp->next;
-    RunFree(obtmp->value.ban.banstr);
-    RunFree(obtmp->value.ban.who);
+    MyFree(obtmp->value.ban.banstr);
+    MyFree(obtmp->value.ban.who);
     free_link(obtmp);
   }
   if (chptr->prevch)
@@ -3840,15 +3841,15 @@ void sub1_from_channel(aChannel *chptr)
 
   if (chptr->mode.key)
   {
-    RunFree(chptr->mode.key);
+    MyFree(chptr->mode.key);
   }
 
   if (chptr->topic)
   {
-    RunFree(chptr->topic);
+    MyFree(chptr->topic);
   }
 
-  RunFree((char *)chptr);
+  MyFree(chptr);
 }
 
 /*
@@ -4932,12 +4933,12 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 strcat(bparambuf, " ");
                 strcat(bparambuf, param);
                 if (current_mode->key)
-                  RunFree(current_mode->key);
+                  MyFree(current_mode->key);
                 KeyLen = strlen(param);
                 if (KeyLen > KEYLEN)
                   KeyLen = KEYLEN;
                 current_mode->key =
-                    (char *)RunMalloc(sizeof(char) * (KeyLen + 1));
+                    (char *)MyMalloc(sizeof(char) * (KeyLen + 1));
                 strncpy(current_mode->key, param, KeyLen);
                 current_mode->key[KeyLen] = '\0';
               }
@@ -5453,7 +5454,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if ((prev_mode & MODE_KEY))
     {
       if (current_mode->key)
-        RunFree(current_mode->key);
+        MyFree(current_mode->key);
       current_mode->key = NULL;
       cancel_mode(sptr, chptr, 'k', prev_key, &count);
     }
@@ -5512,8 +5513,8 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
         cancel_mode(sptr, chptr, 'b', tmp->value.ban.banstr, &count);
         /* Copied from del_banid(): */
         *ban = tmp->next;
-        RunFree(tmp->value.ban.banstr);
-        RunFree(tmp->value.ban.who);
+        MyFree(tmp->value.ban.banstr);
+        MyFree(tmp->value.ban.who);
         free_link(tmp);
         /* Erase ban-valid-bit, for channel members that are banned */
         for (tmp = chptr->members; tmp; tmp = tmp->next)
@@ -6178,14 +6179,14 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
           if (chptr->topic_nick + strlen(chptr->topic_nick) + 1 - chptr->topic <
               len2)
           {
-            RunFree(chptr->topic);
-            chptr->topic = RunMalloc(len2);
+            MyFree(chptr->topic);
+            chptr->topic = MyMalloc(len2);
             assert(chptr->topic);
           }
         }
         else
         {
-          chptr->topic = RunMalloc(len2);
+          chptr->topic = MyMalloc(len2);
           assert(chptr->topic);
         }
 
@@ -6712,7 +6713,7 @@ int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 
   if (sptr->listing)            /* Already listing ? */
   {
-    RunFree(sptr->listing);
+    MyFree(sptr->listing);
     sptr->listing = NULL;
     sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, sptr->name);
     UpdateWrite(sptr);
@@ -6756,7 +6757,7 @@ int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
     if (args.max_users > args.min_users + 1 && args.max_time > args.min_time &&
         args.max_topic_time > args.min_topic_time)      /* Sanity check */
     {
-      sptr->listing = (aListingArgs *)RunMalloc(sizeof(aListingArgs));
+      sptr->listing = (aListingArgs *)MyMalloc(sizeof(aListingArgs));
       assert(0 != sptr->listing);
       memcpy(sptr->listing, &args, sizeof(aListingArgs));
       list_next_channels(sptr);

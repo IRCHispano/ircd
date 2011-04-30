@@ -74,7 +74,7 @@
 #include "hash.h"
 #include "fileio.h"
 #include "slab_alloc.h"
-
+#include "ircd_alloc.h"
 RCSTAG_CC("$Id$");
 
 static int check_time_interval(char *, char *);
@@ -681,14 +681,14 @@ static void prepara_negociaciones(void)
   for (p = conf_negociacion; p; p = p2)
   {
     p2 = p->next;
-    RunFree(p);
+    MyFree(p);
   }
   conf_negociacion = NULL;
   for (p = conf; p; p = p->next)
   {
     if (p->status & CONF_NEGOTIATION)
     {
-      p2 = RunMalloc(sizeof(aConfItem));
+      p2 = MyMalloc(sizeof(aConfItem));
       if (!p2)
         outofmemory();
       *p2 = *p;
@@ -826,13 +826,13 @@ int rehash(aClient *cptr, int sig)
   while (motd)
   {
     temp = motd->next;
-    RunFree(motd);
+    MyFree(motd);
     motd = temp;
   }
   while (rmotd)
   {
     temp = rmotd->next;
-    RunFree(rmotd);
+    MyFree(rmotd);
     rmotd = temp;
   }
   /* reload motd files */
@@ -1113,9 +1113,9 @@ int initconf(int opt)
         int len = 3;            /* *@\0 = 3 */
 
         len += strlen(aconf->host);
-        newhost = (char *)RunMalloc(len);
+        newhost = (char *)MyMalloc(len);
         sprintf_irc(newhost, "*@%s", aconf->host);
-        RunFree(aconf->host);
+        MyFree(aconf->host);
         aconf->host = newhost;
       }
     if (aconf->status & CONF_SERVER_MASK)
@@ -1130,7 +1130,7 @@ int initconf(int opt)
      * If there's a parsing error, nuke the conf structure */
     if (aconf->status & (CONF_CRULEALL | CONF_CRULEAUTO))
     {
-      RunFree(aconf->passwd);
+      MyFree(aconf->passwd);
       if ((aconf->passwd = (char *)crule_parse(aconf->name)) == NULL)
       {
         free_conf(aconf);
@@ -1253,17 +1253,17 @@ void read_tlines()
     while (tdata->tmotd)
     {
       amotd = tdata->tmotd->next;
-      RunFree(tdata->tmotd);
+      MyFree(tdata->tmotd);
       tdata->tmotd = amotd;
     }
-    RunFree(tdata);
+    MyFree(tdata);
     tdata = last;
   }
 
   for (tmp = conf; tmp; tmp = tmp->next)
     if (tmp->status == CONF_TLINES && tmp->host && tmp->passwd)
     {
-      temp = (atrecord *) RunMalloc(sizeof(atrecord));
+      temp = (atrecord *) MyMalloc(sizeof(atrecord));
       if (!temp)
         outofmemory();
       temp->hostmask = tmp->host;
@@ -1695,7 +1695,7 @@ aMotdItem *read_motd(char *motdfile)
       *tmp = '\0';
     if ((tmp = (char *)strchr(line, '\r')))
       *tmp = '\0';
-    temp = (aMotdItem *) RunMalloc(sizeof(aMotdItem));
+    temp = (aMotdItem *) MyMalloc(sizeof(aMotdItem));
     if (!temp)
       outofmemory();
     strcpy(temp->line, line);

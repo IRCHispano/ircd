@@ -23,6 +23,7 @@
 #include "common.h"
 #include "struct.h"
 #include "dbuf.h"
+#include "ircd_alloc.h"
 #include "s_serv.h"
 #include "list.h"
 
@@ -80,7 +81,7 @@ static struct DBufBuffer *dbuf_alloc(void)
   }
   else if (DBufAllocCount * DBUF_SIZE < BUFFERPOOL)
   {
-    if ((db = (struct DBufBuffer *)RunMalloc(sizeof(struct DBufBuffer))))
+    if ((db = (struct DBufBuffer *)MyMalloc(sizeof(struct DBufBuffer))))
     {
       ++DBufAllocCount;
       ++DBufUsedCount;
@@ -166,7 +167,7 @@ void completa_microburst(void)
       if (++ciclos_mburst >= 937)
       {                         /* Numero primo */
         ciclos_mburst = 1;
-        RunFree(p);
+        MyFree(p);
       }
       else
       {
@@ -305,7 +306,7 @@ int dbuf_put(struct Client *cptr, struct DBuf *dyn, const char *buf,
 */
   if (!tmp)
   {
-    tmp = RunMalloc(512 * 3);
+    tmp = MyMalloc(512 * 3);
     if (!tmp)
       return dbuf_malloc_error(dyn);
   }
@@ -338,7 +339,7 @@ int dbuf_put(struct Client *cptr, struct DBuf *dyn, const char *buf,
         }
         else
         {
-          p = RunMalloc(sizeof(struct p_mburst));
+          p = MyMalloc(sizeof(struct p_mburst));
           if (!p)
           {
             outofmemory();

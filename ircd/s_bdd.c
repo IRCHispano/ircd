@@ -61,6 +61,7 @@
 #include "IPcheck.h"
 #include "network.h"
 #include "slab_alloc.h"
+#include "ircd_alloc.h"
 
 #include "s_bdd.h"
 
@@ -154,8 +155,8 @@ int db_persistent_hit(void)
 #define p_malloc(a)	persistent_malloc(a)
 #define p_free(a)	persistent_free(a)
 #else
-#define p_malloc(a)	RunMalloc(a)
-#define p_free(a)	RunFree(a)
+#define p_malloc(a)	MyMalloc(a)
+#define p_free(a)	MyFree(a)
 #endif
 
 static struct portable_stat *get_stat(int handle, struct portable_stat *st)
@@ -370,8 +371,8 @@ static struct db_reg *db_busca_db_reg(unsigned char tabla, char *clave)
   {
     c_len = strlen(clave) + 1;
     if (c)
-      RunFree(c);
-    c = RunMalloc(c_len);
+      MyFree(c);
+    c = MyMalloc(c_len);
     if (!c)
       return 0;
   }
@@ -444,8 +445,8 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
   {
     c_len = strlen(clave) + 1;
     if (c)
-      RunFree(c);
-    c = RunMalloc(c_len);
+      MyFree(c);
+    c = MyMalloc(c_len);
     if (!c)
       return;
   }
@@ -581,7 +582,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               if(mensaje_quit_personalizado)
               {
-                RunFree(mensaje_quit_personalizado);
+                MyFree(mensaje_quit_personalizado);
                 mensaje_quit_personalizado=NULL;
               }
             }
@@ -955,12 +956,12 @@ static void copia_en_malloc(char *buf, int len, char **p)
   p2 = *p;
   if ((p2 != NULL) && (strlen(p2) < len))
   {
-    RunFree(p2);
+    MyFree(p2);
     p2 = NULL;
   }
   if (!p2)
   {
-    p2 = RunMalloc(len + 1);    /* El '\0' final */
+    p2 = MyMalloc(len + 1);    /* El '\0' final */
     *p = p2;
   }
   memcpy(p2, buf, len);
@@ -1022,8 +1023,8 @@ int db_es_miembro(unsigned char tabla, char *clave, char *subcadena)
   {
     buf_len = strlen(reg->valor) + 1;
     if (buf)
-      RunFree(buf);
-    buf = RunMalloc(buf_len);
+      MyFree(buf);
+    buf = MyMalloc(buf_len);
     if (!buf)
       return 0;
   }
@@ -2063,8 +2064,8 @@ static void initdb2(unsigned char que_bdd)
         {
           p_len = strlen(destino) + 1;
           if (p)
-            RunFree(p);
-          p = RunMalloc(p_len);
+            MyFree(p);
+          p = MyMalloc(p_len);
         }
         strcpy(p, destino);
         *strchr(p, ' ') = '\0';
@@ -2098,7 +2099,7 @@ static void initdb2(unsigned char que_bdd)
   cerrar_db(&mapeo);
 
   if (p)
-    RunFree(p);
+    MyFree(p);
 
 /*
 ** Ahora comprueba que el HASH de la BDD
@@ -2814,8 +2815,8 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     cl = i;
     if (cn)
-      RunFree(cn);
-    cn = RunMalloc(cl);
+      MyFree(cn);
+    cn = MyMalloc(cl);
     assert(cn);
   }
 
