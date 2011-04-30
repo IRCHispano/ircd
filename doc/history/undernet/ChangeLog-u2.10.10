@@ -1,10 +1,187 @@
 #
 # ChangeLog for ircu2.10.10
 #
-# $Id: ChangeLog.10,v 1.1 2000/03/22 20:59:42 jcea Exp $
+# $Id: ChangeLog-u2.10.10,v 1.1.1.1 2003-09-08 10:34:27 zolty Exp $
 #
 # Insert new changes at beginning of the change list.
 #
+-------------------------- Released 2.10.10.pl18
+* Fix ping so that users can't tell who they're pinging -- Isomer
+* Use sendto_one() method of sending numeric replies, rather than u2.10.11's
+  send_reply--since it hasn't been back-ported to u2.10.10 and since I'm too
+  lazy to do so.  -Kev
+* Fix the cores and other interesting behavior as a result of the breakage of
+  "/mode <nick> -os" -Kev
+-------------------------- Released 2.10.10.pl17
+* Admin's complaining that users can't see that their carefully written MOTD
+ -- Isomer
+-------------------------- Released 2.10.10.pl16
+* Oops, missed a "* " in ms_wallops -- Isomer
+* Fix typo in ircd.c -- Isomer
+* Add prefixes to things before they are sent to clients -- Isomer
+* Make ircd.c compile on gcc 3.0 -- mbuna
+* fix core in s_user.c, thanks to mbuna -- Isomer
+* Make ircd.c compile again :)
+* Attempt fixing core with +s, the memory leak etc.  Thanks to [Tri]! -- Isomer
+* More hub hiding stuff -- Isomer
+* Fix bug in unique_name_vector -- Vampire
+* Don't send errors on directed privmsgs (suggested by Vampire-) -- Isomer
+* Don't core for invalid modes in burst -- Isomer
+* Cleanup to m_names.c, thanks to net -- Isomer
+* After a long battle, we lost to the superior strength of res.c.
+  res.c replaced with the original -- Isomer
+* Don't report "No such server" on remote commands.  oops -- Isomer
+* Changed Undernet -> NETWORK, *.undernet.org -> HEAD_IN_SAND_SERVERNAME,
+  "The Undernet Underworld" -> HEAD_IN_SAND_SERVERINFO -- Isomer
+* Remove servernames from /who, someones clinically blind, or stupid.  Sigh
+  -- Isomer
+* You now can't /msg a -n but +m or +b'd channel -- Isomer
+* Hacked DNS -- Isomer
+* Rewrote hop count for /who. -- Isomer
+* Removed DNS caching.  If it breaks, blame Mr RIP. -- Isomer
+-------------------------- Released 2.10.10.pl15
+* Fiddle with /KILL and various exits to make the user experience uniform,
+  no matter who's doing the killing or where.  Previously, differences in
+  QUITs and in the messages sent to the killed client could help make a
+  partial map of the network; now that these messages are all uniform, there
+  is no way to tell. -Kev
+* Split ISUPPORT numeric into two numerics, so as not to exceed the 15
+  parameter limit imposed by the RFC -Kev
+* Turn on HEAD_IN_SAND_REMOTE...oops -Kev
+* Send prefixed error messages to other servers, so ERROR doesn't get
+  interpreted as a prefix -Kev
+* Reverse sense of HEAD_IN_SAND_WHO_HOPCOUNT to do what was intended; use a
+  hopcount of 0 if user is using /who on him/herself -Kev
+* Allow a user to see his/her own idle time without having to do
+  /whois <nick> <nick>; correct spelling of HEAD_IN_SAND_IDLETIME to
+  HEAD_IN_SAND_WHOIS_IDLETIME -Kev
+* Fix a missing ')' in the idle time stuff -Kev
+* Include ircd_policy.h in whocmds.c -Kev
+* Fixed bug in idle time, thanks hektik -- Isomer
+* Update 005 to be compliant with other networks -- Isomer
+* Hide hop count -- Isomer
+* Hide idletime unless you explicitly ask for it -- Isomer
+* /wallops and /wallusers would dump core because of the previous change--my
+  bad.  Now only include user@host when sptr is a client. -Kev
+* /wallops and /wallusers would leave out the user@host--noticed because
+  pl14 broke my script.  Fixed. -Kev
+* Fix several compile warnings, including the one in table_gen.c -Kev
+* Fix a bug in m_silence.c that rendered it uncompilable -Kev
+* Hopefully make mode clears during bursts appear to originate from local
+  server -Kev
+* Fix several things to send server<->server protocol messages with numeric
+  origins -Kev
+* Rework directed notices and mass-messages to use numerics and tokens
+  as appropriate; the latter required the modifications to
+  sendto_match_butone() -Kev
+* Redefined how sendto_match_butone() works, since it's only used with
+  PRIVMSG or NOTICE -Kev
+* Bumped patchlevel to pl15(development) -Kev
+* Corrected reverse-sense of HEAD_IN_SAND_REMOTE test in m_whois() -Kev
+* Clean up logic in m_whowas(), corrected numeric reply -Kev
+* Finally fixed /whois to tell you what your own server is -Kev
+* Clean up logic in add_banid() with some well-placed DupString()'s -Kev
+* Hide which server performed a nick collision kill -- Isomer
+* To allow for remote whois not giving away the remote server, all remote 
+  numerics to clients are remapped to come from the local server :/ -- Isomer
+* All remote queries are disabled for users, except /whois -- Isomer
+  (/whois now uses the second parameter for which server to use, ie:
+   /whois <ignored> <nick> will query <nick>'s server.)
+* Fixed /who showing server name -- Isomer
+* Fixed burst showing linking server -- Isomer
+* Fixed burst bans showing linked server -- Isomer
+* Fixed /whowas showing server name -- Isomer
+-------------------------- Released 2.10.10.pl14 (You got any issues with that punk?)
+* Changed (then fixed) /LINKS to output an empty links list -- Isomer
+* Make netsplit server notice say the right thing
+* Final fix for HEAD_IN_SAND_WHOIS_SERVERNAME
+* Fix a bug with implementation of HEAD_IN_SAND_NETSPLIT
+* Permit users to find out what server they're on, since they already
+  know -- Kev
+* Added HEAD_IN_SAND_WHO_SERVERNAME to cover final source of server
+  names -- Kev
+* Fixed wallops, wallusers now sends wallops to local clients,
+  wallusers to servers.
+* Added host to /kill messages -- Isomer
+* Fixed whois (opers can see server names) -- Isomer
+* Implement walluser -- Bleep
+* stats fixed -- Isomer
+* trace disabled from non opers -- Isomer
+* server name removed from whois (but not /who, shrug!) -- Isomer
+* netsplits are now represented with "*.net *.split" -- Isomer
+* Done /links -- Isomer
+* Modifications to map as suggested by nighty -- Isomer
+* Wallops is the only code that uses sendto_ops_butone now, this
+  isolates wallops entirely. No server notices sent by wallops.
+* HEAD_IN_SAND_SNOTICES done -- Bleep
+* HEAD_IN_SAND_WALLOPS done -- Bleep
+* HEAD_IN_SAND_DESYNC done -- Bleep
+* HEAD_IN_SAND_MAP done -- Isomer
+* According to CFV-165, buring our head in the sand to try and
+* hide from DoS - First pass -- Isomer
+* As requested by hop: hidden keys are shown as "*" not "" -- Isomer
+* As requested by Buff: allow admins to *disable* below behavour -- Isomer
+* As requested by Adriel, compile time option to disable mo_wallops 
+ -- Isomer
+-------------------------- Released 2.10.10.pl13
+* Don't allow two copies of the server to start -- Isomer/Kev
+-------------------------- Released 2.10.10.pl12
+* Release 2.10.10.pl12 before Mr_RIP threatens physical violence -- Isomer
+* Don't 'hubhide' nick's in /trace (oops!) -- Isomer
+* Allow K:line by realname, updated client connection logging -- Gte-
+* ircd/m_join.c: use ERR_BANNEDFROMCHAN instead of ERR_BADCHANNAME -- Kev
+--------------------------- Released 2.10.10.pl11.(release)
+* Fixed G-lined (reason), thanks to dfx -- Isomer
+* Added reason to the "G-lined (reason)" quit messages. -- Isomer
+* Removed 'for nick[1.2.3.4]' from quit messages, they're redundant
+  and make hub hiding more reliable --Isomer
+* ircd/s_user.c (hunt_server): add 'No such server' message back 
+  --Isomer
+* ircd/s_bsd.c: remove ALWAYSFLUSH - the problem wasn't ircu's fault 
+  -- Isomer
+* ircd/m_names.c (m_names): don't add a space if the user's a
+  zombie; fixes an overrun where we generate a huge number of spaces
+  in the names reply without length-checking them properly -- Kev
+* added 'ALWAYSFLUSH', if you thought the furgeson flusher was bad...
+  --Isomer
+* Fixed /USERHOST again.  Horribly embarrased.  Thanks again Liandrin 
+  --Isomer
+* Added extra field to /stats Y showing how many people are in that class.
+  Information was previously available via /trace, however tended to flood
+  you off if you weren't on a good connection.  Requested by Mr_RIP
+  -- Isomer
+* Fixed 'BADCHAN' resetting itself to 'Y', reported by Gator --Isomer
+--------------------------- Released 2.10.10.pl10
+* Released 2.10.10.pl10
+* Backported /names optimisation from 2.10.11.
+  '/names 0' now returns verbose listing, '/names' simply returns
+  ENDOFNAMES. Disallow harmfull /names usage. --Gte
+* Fixed ERR_NOSUCHNICK bug in userhost, thanks to Liandrin --Isomer
+* Conceal more bugs in IPcheck --Isomer
+* Add 'POST' as a unregistered command to disconnect people abusing web
+  proxies --Isomer.
+* Conceal bugs in IPcheck --Isomer
+* Fix for changing the wrong define --Isomer
+* Fix for the easter buggy. --Isomer
+* Fix for rpong --Run
+* Fix for other IPcheck bug, thanks BLMet. --Bleep
+* Fix for IPcheck bug, rewrite IPcheck from scratch (mostly),
+  add changes for new code to s_user.c, ircd.c --Bleep
+* Shorten connection timeout for auth queries to 60 seconds
+  If connection is from localhost use the server alias for the
+  client host. --Bleep
+* Fix for ident bug --Isomer
+* Fix for rping/rpong --Gte
+* Add m_pong to parser handler --Bleep
+* Fix for EXTENDED_NUMERICS bug doh!!! --Bleep
+* Fix for Max Undernet Server bug --Bleep
+* Fix for PRIVMSG<->NOTICE translation from hubs --Bleep
+* Fix for Bogus protocol strings for P9 servers --Bleep
+* Hookup UPING code again, cleanups --Bleep
+* Convert numerics back to mask and shift extended numerics
+  follow same mechanism --Bleep
+* Fixed bogus errno return on Solaris --Bleep
+* Fixed core on RPING bug, tokenized RPING --Bleep
 * Remove add_local_domain entirely, unused --Bleep
 * Merge u2_10_10_beta06 create branch u2_10_10_beta07 --Bleep
 * Remove size_t from socket calls, audit usage of size_t

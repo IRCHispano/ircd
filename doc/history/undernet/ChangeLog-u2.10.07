@@ -1,12 +1,14 @@
 #
 # ChangeLog for Undernet ircu Servers
 #
-# $Id: ChangeLog,v 1.11 2000/06/30 15:13:33 jcea Exp $
+# $Id: ChangeLog-u2.10.07,v 1.1.1.1 2003-09-08 10:34:27 zolty Exp $
 #
 # Please insert new entries on the top of the list, a one or two line comment
 # is sufficient. Please include your name on the entries we know who to blame.
 # Please keep lines < 80 chars.
 #-------------------------------------------------------------------------------
+* Fixed SPATH bug (again?) --Isomer
+* Fixed leaking IP with uping and wildcard connects --Isomer
 * Fix bug in extended numerics that set capacity wrong, this does not affect
   any servers currently in production, but you must use this version or above
   to define them. --Bleep
