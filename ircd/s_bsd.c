@@ -92,6 +92,8 @@
 #include "msg.h"
 #include "slab_alloc.h"
 #include "ircd_alloc.h"
+#include "ircd_string.h"
+#include "ircd_chattr.h"
 
 RCSTAG_CC("$Id$");
 
@@ -2495,7 +2497,7 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
    * conf line, whether as a result of the hostname lookup or the ip#
    * being present instead. If we dont know it, then the connect fails.
    */
-  if (isDigit(*aconf->host) && (aconf->ipnum.s_addr == INADDR_NONE))
+  if (IsDigit(*aconf->host) && (aconf->ipnum.s_addr == INADDR_NONE))
     aconf->ipnum.s_addr = inet_addr(aconf->host);
   if (aconf->ipnum.s_addr == INADDR_NONE)
   {

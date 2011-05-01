@@ -29,6 +29,7 @@
 #include "dbuf.h"
 #endif
 
+#include "ircd_defs.h"
 #include "event.h"
 #include "res.h"
 
@@ -36,22 +37,8 @@
  * General defines
  */
 
-#define NICKLEN		30
-#define USERLEN		10
-#define HOSTLEN		63
-#define REALLEN		70
-#define PASSWDLEN	20
-/** Maximum length of a numeric IP (v4 or v6) address.
- * "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"
- */
-#define SOCKIPLEN 45
-#define BUFSIZE		512           /* WARNING: *DONT* CHANGE THIS!!!! */
-#define MAXTARGETS	20
-#define STARTTARGETS	10
-#define RESERVEDTARGETS 12
 #define MAXLEN         490
 #define QUITLEN        300      /* Hispano extension */
-#define AWAYLEN        160      /* Hispano extension */
 #define COOKIELEN      16       /* Hispano extension */
 #define COOKIECRYPTLEN 44       /* Hispano extension */
 

@@ -62,6 +62,8 @@
 #include "s_bdd.h"
 #include "network.h"
 #include "ircd_alloc.h"
+#include "ircd_chattr.h"
+#include "ircd_string.h"
 
 RCSTAG_CC("$Id$");
 
@@ -408,7 +410,7 @@ static unsigned int hash_whowas_name(const char *name)
 
   do
   {
-    lower = toLower(*name);
+    lower = ToLower(*name);
     hash = (hash << 1) + lower;
     hash2 = (hash2 >> 1) + lower;
   }

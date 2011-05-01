@@ -42,6 +42,8 @@
 #include "ircd.h"
 #include "fileio.h"
 #include "ircd_alloc.h"
+#include "ircd_string.h"
+#include "ircd_chattr.h"
 
 RCSTAG_CC("$Id$");
 
@@ -471,7 +473,7 @@ static aConfItem *chk_initconf(void)
     {
       if (flags & aconf->status)
         fprintf(stderr, "ERROR: multiple %c-lines\n",
-            toUpper(confchar(aconf->status)));
+            ToUpper(confchar(aconf->status)));
       else
         flags |= aconf->status;
     }

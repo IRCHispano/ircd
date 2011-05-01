@@ -39,6 +39,7 @@
 #include "s_bdd.h"
 #include "support.h"
 #endif
+#include "ircd_string.h"
 
 RCSTAG_CC("$Id$");
 

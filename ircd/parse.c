@@ -50,6 +50,7 @@
 #include "querycmds.h"
 #include "whocmds.h"
 #include "ircd_alloc.h"
+#include "ircd_chattr.h"
 
 #include <assert.h>
 
@@ -706,7 +707,7 @@ int parse_server(aClient *cptr, char *buffer, char *bufend)
    */
   s = strchr(ch, ' ');          /* s -> End of the command code */
   len = (s) ? (s - ch) : 0;
-  if (len == 3 && isDigit(*ch))
+  if (len == 3 && IsDigit(*ch))
   {
     numeric = (*ch - '0') * 100 + (*(ch + 1) - '0') * 10 + (*(ch + 2) - '0');
     paramcount = MAXPARA;

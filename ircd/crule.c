@@ -45,6 +45,8 @@
 #include "common.h"
 #include "crule.h"
 #include "ircd_alloc.h"
+#include "ircd_chattr.h"
+#include "ircd_string.h"
 
 #else /* includes and defines to make the stand-alone test parser */
 
@@ -346,7 +348,7 @@ static int crule_gettoken(int *next_tokp, char **ruleptr)
         *next_tokp = CR_END;
         break;
       default:
-        if ((isAlpha(*(--(*ruleptr)))) || (**ruleptr == '*') ||
+        if ((IsAlpha(*(--(*ruleptr)))) || (**ruleptr == '*') ||
             (**ruleptr == '?') || (**ruleptr == '.') || (**ruleptr == '-'))
           *next_tokp = CR_WORD;
         else
@@ -363,7 +365,7 @@ static void crule_getword(char *word, int *wordlenp, size_t maxlen,
 
   word_ptr = word;
   while ((size_t)(word_ptr - word) < maxlen
-      && (isAlnum(**ruleptr)
+      && (IsAlnum(**ruleptr)
       || **ruleptr == '*' || **ruleptr == '?'
       || **ruleptr == '.' || **ruleptr == '-'))
     *word_ptr++ = *(*ruleptr)++;

@@ -59,6 +59,7 @@
 #include "sprintf_irc.h"
 #include "s_bdd.h"
 #include "ircd_alloc.h"
+#include "ircd_chattr.h"
 
 RCSTAG_CC("$Id$");
 
@@ -275,12 +276,12 @@ void read_authports(aClient *cptr)
     s = strrchr(cptr->buffer, ':');
     *s++ = '\0';
     for (t = (strrchr(cptr->buffer, ':') + 1); *t; t++)
-      if (!isSpace(*t))
+      if (!IsSpace(*t))
         break;
     strncpy(system, t, sizeof(system) - 1);
     system[sizeof(system) - 1] = 0;
     for (t = ruser; *s && (t < ruser + sizeof(ruser)); s++)
-      if (!isSpace(*s) && *s != ':' && *s != '@')
+      if (!IsSpace(*s) && *s != ':' && *s != '@')
         *t++ = *s;
     *t = '\0';
     Debug((DEBUG_INFO, "auth reply ok [%s] [%s]", system, ruser));

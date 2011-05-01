@@ -50,6 +50,8 @@
 #include "querycmds.h"
 #include "network.h"
 #include "ircd_alloc.h"
+#include "ircd_chattr.h"
+#include "ircd_string.h"
 
 RCSTAG_CC("$Id$");
 
@@ -2713,7 +2715,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
        */
       if (IsServer(sptr))
       {
-        if (parc == 1 && isDigit(*curr))
+        if (parc == 1 && IsDigit(*curr))
         {
           newtime = atoi(curr);
           if (newtime && chptr->creationtime == MAGIC_REMOTE_JOIN_TS)
@@ -3627,14 +3629,14 @@ static void clean_channelname(char *cn)
 {
   for (; *cn; cn++)
   {
-    if (!isIrcCh(*cn))
+    if (!IsChannelChar(*cn))
     {
       *cn = '\0';
       return;
     }
 /* Esta parte estropea canales en utf8 */
 #if 0
-    if (isIrcCl(*cn))
+    if (IsIrcCl(*cn))
 #if !defined(FIXME)
     {
 #endif
@@ -3893,7 +3895,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   for (p = parv[1]; *p; p++)    /* find the last "JOIN 0" in the line -Kev */
     if (*p == '0'
-        && (*(p + 1) == ',' || *(p + 1) == '\0' || !isIrcCh(*(p + 1))))
+        && (*(p + 1) == ',' || *(p + 1) == '\0' || !IsChannelChar(*(p + 1))))
     {
       /* If it's a single "0", remember the place; we will start parsing
          the channels after the last 0 in the line -Kev */
@@ -6572,7 +6574,7 @@ param_parse(aClient *sptr, const char *param, aListingArgs *args,
     case '>':
       dir = *(param++);
 
-      if (!isDigit(*param)) /* must start with a digit */
+      if (!IsDigit(*param)) /* must start with a digit */
         return show_usage(sptr);
 
       val = strtol(param, (char **)&param, 10); /* convert it... */

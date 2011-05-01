@@ -75,6 +75,8 @@
 #include "fileio.h"
 #include "slab_alloc.h"
 #include "ircd_alloc.h"
+#include "ircd_chattr.h"
+#include "ircd_string.h"
 RCSTAG_CC("$Id$");
 
 static int check_time_interval(char *, char *);
@@ -284,7 +286,7 @@ enum AuthorizationCheckResult attach_Iline(aClient *cptr, struct hostent *hp,
 
     if (aconf->passwd)
     {
-      if (isDigit(*aconf->passwd) && !aconf->passwd[1]) /* Special case: exactly one digit */
+      if (IsDigit(*aconf->passwd) && !aconf->passwd[1]) /* Special case: exactly one digit */
       {
         /* Refuse connections when there are already <digit> clients connected with the same IP number */
         unsigned short nr = *aconf->passwd - '0';
@@ -626,7 +628,7 @@ static aConfItem *find_conf_entry(aConfItem *aconf, unsigned int mask)
     if ((BadPtr(bconf->passwd) && !BadPtr(aconf->passwd)) ||
         (BadPtr(aconf->passwd) && !BadPtr(bconf->passwd)))
       continue;
-    if (!BadPtr(bconf->passwd) && (!isDigit(*bconf->passwd) || bconf->passwd[1])
+    if (!BadPtr(bconf->passwd) && (!IsDigit(*bconf->passwd) || bconf->passwd[1])
 #if defined(USEONE)
         && strCasediff(bconf->passwd, "ONE")
 #endif
@@ -1209,7 +1211,7 @@ static int lookup_confhost(aConfItem *aconf)
    * Do name lookup now on hostnames given and store the
    * ip numbers in conf structure.
    */
-  if (!isAlpha(*s) && !isDigit(*s))
+  if (!IsAlpha(*s) && !IsDigit(*s))
     goto badlookup;
 
   /*
@@ -1219,7 +1221,7 @@ static int lookup_confhost(aConfItem *aconf)
   ln.value.aconf = aconf;
   ln.flags = ASYNC_CONF;
 
-  if (isDigit(*s))
+  if (IsDigit(*s))
     aconf->ipnum.s_addr = inet_addr(s);
   else if ((hp = gethost_byname(s, &ln)))
     memcpy(&(aconf->ipnum), hp->h_addr, sizeof(struct in_addr));

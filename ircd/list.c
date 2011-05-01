@@ -42,6 +42,8 @@
 #include "hash.h"
 #include "slab_alloc.h"
 #include "ircd_alloc.h"
+#include "ircd_chattr.h"
+#include "ircd_string.h"
 
 #include <assert.h>
 
@@ -504,7 +506,7 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
   tmp=cptr_info_low;
   
   while (*tmp) {
-    *tmp=toLower(*tmp);
+    *tmp=ToLower(*tmp);
     *tmp++;
   }
   

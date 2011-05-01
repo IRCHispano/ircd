@@ -1,3 +1,7 @@
+* 2011/05/01 zoltan@irc-dev.net      (u2.10.H.11.02)                 PORT
+  -----------------------------------------------------------------------
+  Port rutinas de mapas de caracteres mas modernas.
+
 * 2011/05/01 zoltan@irc-dev.net      (u2.10.H.11.01)                 PORT
   -----------------------------------------------------------------------
   Cambiamos las rutinas de memoria, RunMalloc por MyMalloc con vistas a

@@ -58,6 +58,7 @@
 #include "slab_alloc.h"
 #include "opercmds.h"
 #include "ircd_alloc.h"
+#include "ircd_string.h"
 
 RCSTAG_CC("$Id$");
 
@@ -471,7 +472,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * or someone trying abuse a second Uworld:
      */
     else if (IsServer(acptr)
-        && (strnCasecmp(PunteroACadena(acptr->info), "JUPE", 4) == 0
+        && (ircd_strncmp(PunteroACadena(acptr->info), "JUPE", 4) == 0
         || buscar_uline(cptr->confs, acptr->name)))
     {
       if (!IsServer(sptr))
@@ -912,7 +913,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
   int split, i;
 
   split = (strCasediff(cptr->name, PunteroACadena(cptr->sockhost))
-      && strnCasecmp(PunteroACadena(cptr->info), "JUPE", 4));
+      && ircd_strncmp(PunteroACadena(cptr->info), "JUPE", 4));
   inpath = cptr->name;
   host = cptr->name;
   
@@ -1075,7 +1076,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
         continue;
       split = (MyConnect(acptr)
           && strCasediff(acptr->name, PunteroACadena(acptr->sockhost))
-          && strnCasecmp(PunteroACadena(acptr->info), "JUPE", 4));
+          && ircd_strncmp(PunteroACadena(acptr->info), "JUPE", 4));
       if (split)
       {
         if (Protocol(cptr) > 9)

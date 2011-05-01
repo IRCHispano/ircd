@@ -67,7 +67,7 @@
 #if defined(BDD_MMAP)
 #include "persistent_malloc.h"
 #endif
-
+#include "ircd_string.h"
 
 RCSTAG_CC("$Id$");
 
@@ -2067,7 +2067,7 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
         tmp=cptr_info_low;
         
         while (*tmp) {
-          *tmp=toLower(*tmp);
+          *tmp=ToLower(*tmp);
           *tmp++;
         }
         

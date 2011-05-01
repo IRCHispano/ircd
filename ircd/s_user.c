@@ -78,7 +78,8 @@
 #include "slab_alloc.h"
 #include "network.h"
 #include "aes.h"
-
+#include "ircd_string.h"
+#include "ircd_chattr.h"
 
 RCSTAG_CC("$Id$");
 
@@ -373,11 +374,11 @@ static int do_nick_name(char *nick)
 {
   Reg1 char *ch;
 
-  if (*nick == '-' || isDigit(*nick)) /* first character in [0..9-] */
+  if (*nick == '-' || IsDigit(*nick)) /* first character in [0..9-] */
     return 0;
 
   for (ch = nick; *ch && (ch - nick) < NICKLEN; ch++)
-    if (!isIrcNk(*ch))
+    if (!IsNickChar(*ch))
       break;
 
   *ch = '\0';
@@ -385,49 +386,6 @@ static int do_nick_name(char *nick)
   return (ch - nick);
 }
 
-/*
- * canonize
- *
- * reduce a string of duplicate list entries to contain only the unique
- * items.  Unavoidably O(n^2).
- */
-char *canonize(char *buffer)
-{
-  static char cbuf[BUFSIZ];
-  char *s, *t, *cp = cbuf;
-  int l = 0;
-  char *p = NULL, *p2;
-
-  *cp = '\0';
-
-  for (s = strtoken(&p, buffer, ","); s; s = strtoken(&p, NULL, ","))
-  {
-    if (l)
-    {
-      p2 = NULL;
-      for (t = strtoken(&p2, cbuf, ","); t; t = strtoken(&p2, NULL, ","))
-        if (!strCasediff(s, t))
-          break;
-        else if (p2)
-          p2[-1] = ',';
-    }
-    else
-      t = NULL;
-    if (!t)
-    {
-      if (l)
-        *(cp - 1) = ',';
-      else
-        l = 1;
-      strcpy(cp, s);
-      if (p)
-        cp += (p - s);
-    }
-    else if (p2)
-      p2[-1] = ',';
-  }
-  return cbuf;
-}
 
 /*
  * clean_user_id
@@ -461,10 +419,10 @@ static char *clean_user_id(char **dest, char *source, int tilde)
     *d++ = '~';                 /* If `dest' == `source', then this overwrites `ch' */
     --rlen;
   }
-  while (ch && !isCntrl(ch) && rlen--)
+  while (ch && !IsCntrl(ch) && rlen--)
   {
     char nch = *s++;   /* Store next character to copy */
-    *d++ = isIrcUi(ch) ? ch : '_';  /* This possibly overwrites it */
+    *d++ = IsUserChar(ch) ? ch : '_';  /* This possibly overwrites it */
     if (nch == '~')
       ch = '_';
     else
@@ -598,7 +556,7 @@ static int register_user(aClient *cptr, aClient *sptr,
       return exit_client(cptr, sptr, &me, "USER: Bogus userid.");
 
     if (!BadPtr(aconf->passwd)
-        && !(isDigit(*aconf->passwd) && !aconf->passwd[1])
+        && !(IsDigit(*aconf->passwd) && !aconf->passwd[1])
 #if defined(USEONE)
         && strcmp("ONE", aconf->passwd)
 #endif
@@ -652,20 +610,20 @@ static int register_user(aClient *cptr, aClient *sptr,
       pos++;
       c = *tmpstr;
       tmpstr++;
-      if (isLower(c))
+      if (IsLower(c))
       {
         lower++;
       }
-      else if (isUpper(c))
+      else if (IsUpper(c))
       {
         upper++;
         if ((leadcaps || pos == 1) && !lower && !digits)
           leadcaps++;
       }
-      else if (isDigit(c))
+      else if (IsDigit(c))
       {
         digits++;
-        if (pos == 1 || !isDigit(d))
+        if (pos == 1 || !IsDigit(d))
         {
           digitgroups++;
           if (digitgroups > 2)
@@ -689,9 +647,9 @@ static int register_user(aClient *cptr, aClient *sptr,
       if (lower && upper && (!leadcaps || leadcaps > 3 ||
           (upper > 2 && upper > leadcaps)))
         badid = 1;
-      else if (digitgroups == 2 && !(isDigit(tmpstr2[0]) || isDigit(c)))
+      else if (digitgroups == 2 && !(IsDigit(tmpstr2[0]) || IsDigit(c)))
         badid = 1;
-      else if ((!lower && !upper) || !isAlnum(c))
+      else if ((!lower && !upper) || !IsAlnum(c))
         badid = 1;
     }
     if (badid && (!(sptr->flags & FLAGS_GOTID) ||
@@ -1137,8 +1095,8 @@ void strip_color (const char *src, int maxlength, char *dst)
 
   while (*src && pos<(maxlength - 1))
     {
-      if (rcol > 0 && (isdigit ((unsigned char)*src) ||
-          (*src == ',' && isdigit ((unsigned char)src[1]) && !bgcol)))
+      if (rcol > 0 && (IsDigit ((unsigned char)*src) ||
+          (*src == ',' && IsDigit ((unsigned char)src[1]) && !bgcol)))
         {
           if (src[1] != ',') rcol--;
           if (*src == ',')
@@ -1248,7 +1206,7 @@ static int m_message(aClient *cptr, aClient *sptr,
             /* Calcula el color solo una vez */
             strip_color(parv[parc-1], sizeof(buffer_nocolor), buffer_nocolor);
 #if defined(ESNET_NEG)            
-            if(!strCasecmp(cmd,"PRIVMSG")) {
+            if(!ircd_strcmp(cmd,"PRIVMSG")) {
               sendto_channel_tok_color_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], "P", chptr->numeric, parv[parc - 1]);
               sendto_channel_tok_nocolor_butone(cptr, sptr, chptr,
@@ -1269,7 +1227,7 @@ static int m_message(aClient *cptr, aClient *sptr,
 #endif            
           } else {
 #if defined(ESNET_NEG)            
-            if(!strCasecmp(cmd,"PRIVMSG")) {
+            if(!ircd_strcmp(cmd,"PRIVMSG")) {
               sendto_channel_tok_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], "P", chptr->numeric, parv[parc - 1]);
               sendto_channel_notok_butone(cptr, sptr, chptr,
@@ -1693,7 +1651,7 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!strchr(host, '.'))       /* Not an IP# as hostname ? */
     sptr->flags |= (UFLAGS & atoi(host));
   if ((sptr->flags & FLAGS_SERVNOTICE))
-    set_snomask(sptr, (isDigit(*server) && !strchr(server, '.')) ?
+    set_snomask(sptr, (IsDigit(*server) && !strchr(server, '.')) ?
         (atoi(server) & SNO_USER) : SNO_DEFAULT, SNO_SET);
   user->server = &me;
   SlabStringAllocDup(&(sptr->info), realname, REALLEN);
@@ -3320,9 +3278,9 @@ int is_snomask(char *word)
   if (word)
   {
     for (; *word; word++)
-      if (isDigit(*word))
+      if (IsDigit(*word))
         return 1;
-      else if (isAlpha(*word))
+      else if (IsAlpha(*word))
         return 0;
   }
   return 0;
@@ -3568,7 +3526,7 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (MyUser(sptr))
   {
     acptr = sptr;
-    if (parc < 2 || *parv[1] == '\0' || !strCasecmp(sptr->name, parv[1]))
+    if (parc < 2 || *parv[1] == '\0' || !ircd_strcmp(sptr->name, parv[1]))
     {
       if (!(acptr->user))
         return 0;
@@ -4405,7 +4363,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   nick_low[NICKLEN]='\0';
   tmp=nick_low;
   while (*tmp) {
-    *tmp=toLower(*tmp);
+    *tmp=ToLower(*tmp);
     *tmp++;
   }
   
@@ -4424,7 +4382,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
       }
       
       /* Si es un digito matcheo por PCRE */
-      if(isdigit(regj->clave[0]))
+      if(IsDigit(regj->clave[0]))
       {        
         regexp=strchr(regj->valor, ':');
         if (regexp && *(regexp+1) && !match_pcre_str(regexp+1, nick_low))
@@ -5172,7 +5130,7 @@ nickkilldone:
         SetCookieEncrypted(sptr);
 
         while(*tmp2) {
-          *tmp2 = toUpper(*tmp2);
+          *tmp2 = ToUpper(*tmp2);
           tmp2++;
         }
 

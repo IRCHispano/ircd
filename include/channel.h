@@ -31,7 +31,6 @@
 #define MODEBUFLEN	200
 
 #define KEYLEN		23
-#define TOPICLEN	240
 #define CHANNELLEN	64
 
 #define MAXBANS		200

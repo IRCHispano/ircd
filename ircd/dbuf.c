@@ -30,7 +30,7 @@
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
 #include "send.h"
 #endif
-
+#include "ircd_chattr.h"
 #include <assert.h>
 #include <string.h>
 
@@ -532,7 +532,7 @@ static size_t dbuf_flush(struct DBuf *dyn)
   /*
    * flush extra line terms
    */
-  while (isEol(*db->start))
+  while (IsEol(*db->start))
   {
     if (++db->start == db->end)
     {
@@ -586,7 +586,7 @@ size_t dbuf_getmsg(struct DBuf *dyn, char *buf, size_t length)
   while (length > 0)
   {
     end = MIN(db->end, (start + length));
-    while (start < end && !isEol(*start))
+    while (start < end && !IsEol(*start))
       *buf++ = *start++;
 
     count = start - db->start;

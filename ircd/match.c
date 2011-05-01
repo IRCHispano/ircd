@@ -26,6 +26,8 @@
 #include "ircd.h"
 #include "ircd_alloc.h"
 #include "res.h"
+#include "ircd_chattr.h"
+#include "ircd_string.h"
 
 RCSTAG_CC("$Id$");
 
@@ -119,7 +121,7 @@ int mmatch(const char *old_mask, const char *new_mask)
  *    *               any             (*m == '*' && !mq) ||
  *    ?               any except '*'  (*m == '?' && !mq && (*n != '*' || nq)) ||
  * any except * or ?  same as m       (!((*m == '*' || *m == '?') && !mq) &&
- *                                      toLower(*m) == toLower(*n) &&
+ *                                      ToLower(*m) == ToLower(*n) &&
  *                                        !((mq && !nq) || (!mq && nq)))
  *
  * Here `any' also includes \* and \? !
@@ -129,7 +131,7 @@ int mmatch(const char *old_mask, const char *new_mask)
  *  cases upfront (which took 2 hours!)).
  */
     if ((*m == '*' && !mq) ||
-        ((!mq || nq) && toLower(*m) == toLower(*n)) ||
+        ((!mq || nq) && ToLower(*m) == ToLower(*n)) ||
         (*m == '?' && !mq && (*n != '*' || nq)))
     {
       if (*m)
@@ -184,7 +186,7 @@ int match(const char *mask, const char *string)
         if (*m == '?' || *m == '*')
           ch = *m++;
       default:
-        if (toLower(*s) != toLower(ch))
+        if (ToLower(*s) != ToLower(ch))
           return 1;
       case '?':
         if (!*s++)
@@ -214,8 +216,8 @@ got_star:
 break_while:
   if (!ch)
     return 0;                   /* mask ends with '*', we got it */
-  ch = toLower(ch);
-  while (toLower(*s++) != ch)
+  ch = ToLower(ch);
+  while (ToLower(*s++) != ch)
     if (!*s)
       return 1;
   bs = s;                       /* Next try start from here */
@@ -231,7 +233,7 @@ break_while:
         if (*m == '?' || *m == '*')
           ch = *m++;
       default:
-        if (toLower(*s) != toLower(ch))
+        if (ToLower(*s) != ToLower(ch))
         {
           m = bm;
           s = bs;
@@ -424,7 +426,8 @@ int matchcomp(char *cmask, int *minlen, int *charset, const char *mask)
             star = 0;
           };
           cnt++;
-          chset &= NTL_char_attrib[((*b++ = toLower(ch))) - CHAR_MIN];
+          *b = ToLower(ch);
+          chset &= IRCD_CharAttrTab[*b++ - CHAR_MIN];
           chset2 &= ~NTL_UPPER;
       };
 
@@ -490,7 +493,7 @@ int matchexec(const char *string, const char *cmask, int minlen)
   char ch;
 
 tryhead:
-  while ((toLower(*++s) == *++b) && *s);
+  while ((ToLower(*++s) == *++b) && *s);
   if (!*s)
     return ((*b != '\000') && ((*b++ != 'Z') || (*b != '\000')));
   if (*b != 'Z')
@@ -507,8 +510,8 @@ tryhead:
     return 2;
 
 trytail:
-  while ((toLower(*--s) == *++b) && *b && (toLower(*--s) == *++b) && *b
-      && (toLower(*--s) == *++b) && *b && (toLower(*--s) == *++b) && *b);
+  while ((ToLower(*--s) == *++b) && *b && (ToLower(*--s) == *++b) && *b
+      && (ToLower(*--s) == *++b) && *b && (ToLower(*--s) == *++b) && *b);
   if (*b != 'Z')
   {
     if (*b == 'A')
@@ -521,13 +524,13 @@ trytail:
 
   while ((ch = *++b))
   {
-    while ((toLower(*++s) != ch))
+    while ((ToLower(*++s) != ch))
       if (--trash < 0)
         return 4;
     bs = s;
 
   trychunk:
-    while ((toLower(*++s) == *++b) && *b);
+    while ((ToLower(*++s) == *++b) && *b);
     if (!*b)
       return 0;
     if (*b == 'Z')
@@ -925,7 +928,7 @@ int matchcompIP(struct in_mask *imask, const char *mask)
         do
         {
           m++;
-          if (isDigit(*m))
+          if (IsDigit(*m))
           {
             if (digits && !tmp) /* Leading zeros */
               break;
@@ -970,7 +973,7 @@ int matchcompIP(struct in_mask *imask, const char *mask)
         filt = (0xFFFFFFFF << (shift)) << 8;
         while (*++m)
         {
-          if (isDigit(*m))
+          if (IsDigit(*m))
             unco = 1;
           else
           {
@@ -1100,7 +1103,7 @@ int match_pcre_ci(pcre *re, char *subject) {
   tmp=low;
   
   while (*tmp) {
-    *tmp=toLower(*tmp);
+    *tmp=ToLower(*tmp);
     *tmp++;
   }
   

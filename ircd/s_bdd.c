@@ -62,7 +62,7 @@
 #include "network.h"
 #include "slab_alloc.h"
 #include "ircd_alloc.h"
-
+#include "ircd_chattr.h"
 #include "s_bdd.h"
 
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
@@ -381,7 +381,7 @@ static struct db_reg *db_busca_db_reg(unsigned char tabla, char *clave)
   i = 0;
   while (c[i] != 0)
   {
-    c[i] = toLower(c[i]);
+    c[i] = ToLower(c[i]);
     i++;
   }
   hashi = db_hash_registro(c, tabla_residente_y_len[tabla]);
@@ -454,7 +454,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
   /* paso a minusculas */
   while (c[i] != 0)
   {
-    c[i] = toLower(c[i]);
+    c[i] = ToLower(c[i]);
     i++;
   }
 
@@ -658,7 +658,7 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
   {
     *tmp='\0';                  /* corto token */
     tmp++;                      /* avanzo un caracter */
-    if (strCasecmp(nombre, tmp)) /* Si no coincide el nombre vuelvo al original */
+    if (ircd_strncmp(nombre, tmp)) /* Si no coincide el nombre vuelvo al original */
       tmp=nombre;
     else
       cambionombre = 1;    
@@ -735,7 +735,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
   /* paso a minusculas */
   while (c[i] != 0)
   {
-    c[i] = toLower(c[i]);
+    c[i] = ToLower(c[i]);
     i++;
   }
 
@@ -2824,7 +2824,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
   i = 0;
   while (cn[i] != 0)
   {
-    cn[i] = toLower(cn[i]);
+    cn[i] = ToLower(cn[i]);
     i++;
   }
 

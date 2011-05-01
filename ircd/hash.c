@@ -38,6 +38,7 @@
 #include "numeric.h"
 #include "s_err.h"
 #include "ircd_alloc.h"
+#include "ircd_chattr.h"
 
 RCSTAG_CC("$Id$");
 
@@ -181,7 +182,7 @@ static aWatch *watchTable[HASHSIZE];
 /* This is what the hash function will consider "equal" chars, this function 
    MUST be transitive, if HASHEQ(y,x)&&HASHEQ(y,z) then HASHEQ(y,z), and MUST
    be symmetric, if HASHEQ(a,b) then HASHEQ(b,a), obvious ok but... :) */
-#define HASHEQ(x,y) (((char) toLower((char) x)) == ((char) toLower((char) y)))
+#define HASHEQ(x,y) (((char) ToLower((char) x)) == ((char) ToLower((char) y)))
 
 /* hash_init
  * Initialize the maps used by hash functions and clear the tables */

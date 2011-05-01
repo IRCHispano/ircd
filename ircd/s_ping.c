@@ -62,6 +62,7 @@
 #include "msg.h"
 #include "slab_alloc.h"
 #include "ircd_alloc.h"
+#include "ircd_chattr.h"
 
 RCSTAG_CC("$Id$");
 
@@ -350,7 +351,7 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     else if (parc == 3)
     {
-      if (isDigit(*parv[2]))
+      if (IsDigit(*parv[2]))
         parv[parc++] = me.name;
       else
       {
@@ -361,9 +362,9 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     else if (parc == 4)
     {
-      if (isDigit(*parv[2]))
+      if (IsDigit(*parv[2]))
       {
-        if (isDigit(*parv[3]))
+        if (IsDigit(*parv[3]))
         {
           parv[parc++] = parv[3];
           parv[3] = me.name;

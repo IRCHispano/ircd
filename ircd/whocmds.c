@@ -65,6 +65,7 @@
 #include "IPcheck.h"
 #include "s_bdd.h"
 #include "network.h"
+#include "ircd_chattr.h"
 
 RCSTAG_CC("$Id$");
 
