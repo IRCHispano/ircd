@@ -1,3 +1,11 @@
+* 2011/05/04 zoltan@irc-dev.net      (u2.10.H.11.03)              FEATURE
+  -----------------------------------------------------------------------
+  Implementación de cifrado de IPs en IPv6.
+
+  Se cifra los primeros 64 bits de la IP, ya que se va a distribuir rangos
+  de /64 a los usuarios finales, de esta forma, un ban a la ip virtual
+  correspondera a todo el rango asignado al usuario.
+
 * 2011/05/01 zoltan@irc-dev.net      (u2.10.H.11.02)                 PORT
   -----------------------------------------------------------------------
   Port rutinas de mapas de caracteres mas modernas.
