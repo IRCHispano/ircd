@@ -89,7 +89,7 @@ chattr.tab.c: table_gen
 	./table_gen > chattr.tab.c
 
 table_gen: 
-	${CC} -c table_gen.c
+	${CC} ${CPPFLAGS} -c table_gen.c -o table_gen
 
 ircd: ${OBJS} ../include/patchlevel.h
 	${SHELL} version.c.SH
