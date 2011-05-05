@@ -44,7 +44,7 @@
 #include "ircd_alloc.h"
 #include "ircd_chattr.h"
 #include "ircd_string.h"
-
+#include "pcre_match.h"
 #include <assert.h>
 
 RCSTAG_CC("$Id$");

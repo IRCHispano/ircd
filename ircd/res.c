@@ -1326,7 +1326,7 @@ static void update_list(ResRQ *rptr, aCache *cp)
   {
     for (j = 0, t = cp->he.h.h_name; t; t = cp->he.h.h_aliases[j++])
     {
-      if (!strCasediff(t, s))
+      if (!ircd_strcmp(t, s))
         break;
     }
     if (!t)
@@ -1374,7 +1374,7 @@ static aCache *find_cache_name(char *name)
   {
     for (i = 0, s = cp->he.h.h_name; s; s = cp->he.h.h_aliases[i++])
     {
-      if (strCasediff(s, name) == 0)
+      if (ircd_strcmp(s, name) == 0)
       {
         cainfo.ca_na_hits++;
         update_list(0, cp);
@@ -1395,7 +1395,7 @@ static aCache *find_cache_name(char *name)
       continue;
     for (i = 0; (s = cp->he.h.h_aliases[i]); ++i)
     {
-      if (!strCasediff(name, s))
+      if (!ircd_strcmp(name, s))
       {
         cainfo.ca_na_hits++;
         update_list(0, cp);

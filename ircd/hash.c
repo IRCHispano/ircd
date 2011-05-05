@@ -406,9 +406,9 @@ aClient *hSeekClient(char *name, int TMask)
   aClient *prv;
 
   if (cptr)
-    if ((!IsStatMask(cptr, TMask)) || strCasediff(name, cptr->name))
+    if ((!IsStatMask(cptr, TMask)) || ircd_strcmp(name, cptr->name))
       while (prv = cptr, cptr = cptr->hnext)
-        if (IsStatMask(cptr, TMask) && (!strCasediff(name, cptr->name)))
+        if (IsStatMask(cptr, TMask) && (!ircd_strcmp(name, cptr->name)))
         {
           prv->hnext = cptr->hnext;
           cptr->hnext = clientTable[hashv];
@@ -433,9 +433,9 @@ aChannel *hSeekChannel(char *name)
   aChannel *prv;
 
   if (chptr)
-    if (strCasediff(name, chptr->chname))
+    if (ircd_strcmp(name, chptr->chname))
       while (prv = chptr, chptr = chptr->hnextch)
-        if (!strCasediff(name, chptr->chname))
+        if (!ircd_strcmp(name, chptr->chname))
         {
           prv->hnextch = chptr->hnextch;
           chptr->hnextch = channelTable[hashv];
@@ -537,9 +537,9 @@ aWatch *hSeekWatch(char *nick)
   aWatch *prv;
 
   if (wptr)
-    if (strCasediff(nick, wptr->nick))
+    if (ircd_strcmp(nick, wptr->nick))
       while (prv = wptr, wptr = wptr->next)
-        if (!strCasediff(nick, wptr->nick))
+        if (!ircd_strcmp(nick, wptr->nick))
         {
           prv->next = wptr->next;
           wptr->next = watchTable[hashv];

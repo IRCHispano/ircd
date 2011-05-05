@@ -31,7 +31,7 @@ RELEASE = 1.4
 #  Libevent 1.4.5 is 3:0:1 (we forgot to increment in the past)
 VERSION_INFO = 3:2:1
 
-bin_SCRIPTS = event_rpcgen.py
+#bin_SCRIPTS = event_rpcgen.py
 
 EXTRA_DIST = autogen.sh event.h event-internal.h log.h evsignal.h evdns.3 \
 	evrpc.h evrpc-internal.h min_heap.h \

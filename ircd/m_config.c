@@ -73,7 +73,7 @@ static char *mira_conf_negociacion(char *nombre, tipo_config tipo_config)
 
   for (p = conf_negociacion; p; p = p->next)
   {
-    if (!strCasediff(nombre, p->name))
+    if (!ircd_strcmp(nombre, p->name))
       break;
   }
   if (!p)

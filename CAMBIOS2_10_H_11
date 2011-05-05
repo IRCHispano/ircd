@@ -1,3 +1,13 @@
+* 2011/05/05 zoltan@irc-dev.net      (u2.10.H.11.04)                 PORT
+  -----------------------------------------------------------------------
+  Cambio el sistema de ./configure por el utilizado por undernet.
+
+  Como el make config se suprime y aun no esta features, esta provisional
+  el archivo configold.h en el include donde se configura parametros.
+  
+  No genera aun el tema de la BDD, asi que a generar tablas a mano si no
+  existen.
+
 * 2011/05/04 zoltan@irc-dev.net      (u2.10.H.11.03)              FEATURE
   -----------------------------------------------------------------------
   Implementación de cifrado de IPs en IPv6.

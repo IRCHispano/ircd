@@ -1,11 +1,14 @@
 /*
- * IRC - Internet Relay Chat, common/match.c
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/match.c
+ *
+ * Copyright (C) 2002-2007 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1996 Carlo Wood <carlo@runaway.xs4all.nl>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,30 +17,26 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
+/** @file
+ * @brief Functions to match strings against IRC mask strings.
+ * @version $Id$
+ */
+#include "config.h"
 
-#include "sys.h"
-#include "h.h"
-#include "s_debug.h"
-#include "struct.h"
-#include "common.h"
 #include "match.h"
-#include "ircd.h"
-#include "ircd_alloc.h"
-#include "res.h"
 #include "ircd_chattr.h"
 #include "ircd_string.h"
-
-RCSTAG_CC("$Id$");
+//#include "ircd_snprintf.h"
 
 /*
  * mmatch()
  *
  * Written by Run (carlo@runaway.xs4all.nl), 25-10-96
- */
-
-/*
+ *
+ *
  * From: Carlo Wood <carlo@runaway.xs4all.nl>
  * Message-Id: <199609021026.MAA02393@runaway.xs4all.nl>
  * Subject: [C-Com] Analysis for `mmatch' (was: gline4 problem)
@@ -53,6 +52,22 @@ RCSTAG_CC("$Id$");
  * And last but not least, '\?' and '\*' in `new_mask' now become one character.
  */
 
+/** Compares one mask against another.
+ * One wildcard mask may be said to be a superset of another if the
+ * set of strings matched by the first is a proper superset of the set
+ * of strings matched by the second.  In practical terms, this means
+ * that the second is made redundant by the first.
+ *
+ * The logic for this test is similar to that in match(), but a
+ * backslash in old_mask only matches a backslash in new_mask (and
+ * requires the next character to match exactly), and -- after
+ * contiguous runs of wildcards are logically collapsed -- a '?' in
+ * old_mask does not match a '*' in new_mask.
+ *
+ * @param[in] old_mask One wildcard mask.
+ * @param[in] new_mask Another wildcard mask.
+ * @return Zero if \a old_mask is a superset of \a new_mask, non-zero otherwise.
+ */
 int mmatch(const char *old_mask, const char *new_mask)
 {
   const char *m = old_mask;
@@ -127,7 +142,7 @@ int mmatch(const char *old_mask, const char *new_mask)
  * Here `any' also includes \* and \? !
  *
  * After reworking the boolean expressions, we get:
- * (Optimized to use boolean shortcircuits, with most frequently occuring
+ * (Optimized to use boolean short-circuits, with most frequently occurring
  *  cases upfront (which took 2 hours!)).
  */
     if ((*m == '*' && !mq) ||
@@ -161,96 +176,74 @@ int mmatch(const char *old_mask, const char *new_mask)
  *
  * return  0, if match
  *         1, if no match
+ *
+ *  Originally by Douglas A Lewis (dalewis@acsu.buffalo.edu)
+ *  Rewritten by Timothy Vogelsang (netski), net@astrolink.org
  */
 
-/*
- * match
- *
- * Rewritten by Andrea Cocito (Nemesi), November 1998.
- *
+/** Check a string against a mask.
+ * This test checks using traditional IRC wildcards only: '*' means
+ * match zero or more characters of any type; '?' means match exactly
+ * one character of any type.  A backslash escapes the next character
+ * so that a wildcard may be matched exactly.
+ * @param[in] mask Wildcard-containing mask.
+ * @param[in] name String to check against \a mask.
+ * @return Zero if \a mask matches \a name, non-zero if no match.
  */
-
-/****************** Nemesi's match() ***************/
-
-int match(const char *mask, const char *string)
+int match(const char *mask, const char *name)
 {
-  const char *m = mask, *s = string;
-  char ch;
-  const char *bm, *bs;          /* Will be reg anyway on a decent CPU/compiler */
+  const char *m = mask, *n = name;
+  const char *m_tmp = mask, *n_tmp = name;
+  int star_p;
 
-  /* Process the "head" of the mask, if any */
-  while ((ch = *m++) && (ch != '*'))
-    switch (ch)
-    {
-      case '\\':
-        if (*m == '?' || *m == '*')
-          ch = *m++;
-      default:
-        if (ToLower(*s) != ToLower(ch))
-          return 1;
-      case '?':
-        if (!*s++)
-          return 1;
-    };
-  if (!ch)
-    return *s;
-
-  /* We got a star: quickly find if/where we match the next char */
-got_star:
-  bm = m;                       /* Next try rollback here */
-  while ((ch = *m++))
-    switch (ch)
-    {
-      case '?':
-        if (!*s++)
-          return 1;
-      case '*':
-        bm = m;
-        continue;               /* while */
-      case '\\':
-        if (*m == '?' || *m == '*')
-          ch = *m++;
-      default:
-        goto break_while;       /* C is structured ? */
-    };
-break_while:
-  if (!ch)
-    return 0;                   /* mask ends with '*', we got it */
-  ch = ToLower(ch);
-  while (ToLower(*s++) != ch)
-    if (!*s)
+  for (;;) switch (*m) {
+  case '\0':
+    if (!*n)
+      return 0;
+  backtrack:
+    if (m_tmp == mask)
       return 1;
-  bs = s;                       /* Next try start from here */
-
-  /* Check the rest of the "chunk" */
-  while ((ch = *m++))
-  {
-    switch (ch)
-    {
-      case '*':
-        goto got_star;
-      case '\\':
-        if (*m == '?' || *m == '*')
-          ch = *m++;
-      default:
-        if (ToLower(*s) != ToLower(ch))
-        {
-          m = bm;
-          s = bs;
-          goto got_star;
-        };
-      case '?':
-        if (!*s++)
+    m = m_tmp;
+    n = ++n_tmp;
+    break;
+  case '\\':
+    m++;
+    /* allow escaping to force capitalization */
+    if (*m++ != *n++)
+      goto backtrack;
+    break;
+  case '*': case '?':
+    for (star_p = 0; ; m++) {
+      if (*m == '*')
+        star_p = 1;
+      else if (*m == '?') {
+        if (!*n++)
+          goto backtrack;
+      } else break;
+    }
+    if (star_p) {
+      if (!*m)
+        return 0;
+      else if (*m == '\\') {
+        m_tmp = ++m;
+        if (!*m)
           return 1;
-    };
-  };
-  if (*s)
-  {
-    m = bm;
-    s = bs;
-    goto got_star;
-  };
-  return 0;
+        for (n_tmp = n; *n && *n != *m; n++) ;
+      } else {
+        m_tmp = m;
+        for (n_tmp = n; *n && ToLower(*n) != ToLower(*m); n++) ;
+      }
+    }
+    /* and fall through */
+  default:
+    if (!*n)
+      return *m != '\0';
+    if (ToLower(*m) != ToLower(*n))
+      goto backtrack;
+    m++;
+    n++;
+    break;
+  }
 }
 
 /*
@@ -261,9 +254,16 @@ break_while:
  *
  * (C) Carlo Wood - 6 Oct 1998
  * Speedup rewrite by Andrea Cocito, December 1998.
- * Note that this new optimized alghoritm can *only* work in place.
+ * Note that this new optimized algorithm can *only* work in place.
  */
 
+/** Collapse a mask string to remove redundancies.
+ * Specifically, it replaces a sequence of '*' followed by additional
+ * '*' or '?' with the same number of '?'s as the input, followed by
+ * one '*'.  This minimizes useless backtracking when matching later.
+ * @param[in,out] mask Mask string to collapse.
+ * @return Pointer to the start of the string.
+ */
 char *collapse(char *mask)
 {
   int star = 0;
@@ -311,15 +311,16 @@ char *collapse(char *mask)
  ***************** Nemesi's matchcomp() / matchexec() **************
  */
 
-/* These functions allow the use of "compiled" masks, you compile a mask
+/** @page compiledmasks Compiled Masks
+ * These functions allow the use of "compiled" masks, you compile a mask
  * by means of matchcomp() that gets the plain text mask as input and writes
  * its result in the memory locations addressed by the 3 parameters:
  * - *cmask will contain the text of the compiled mask
- * - *minlen will contain the lenght of the shortest string that can match 
+ * - *minlen will contain the length of the shortest string that can match 
  *   the mask
  * - *charset will contain the minimal set of chars needed to match the mask
  * You can pass NULL as *charset and it will be simply not returned, but you
- * MUST pass valid pointers for *minlen and *cmask (wich must be big enough 
+ * MUST pass valid pointers for *minlen and *cmask (which must be big enough 
  * to contain the compiled mask text that is in the worst case as long as the 
  * text of the mask itself in plaintext format) and the return value of 
  * matchcomp() will be the number of chars actually written there (excluded 
@@ -335,7 +336,7 @@ char *collapse(char *mask)
  * of mmexec() that will tell if it completely overrides that mask (a lot like
  * what mmatch() does for plain text masks).
  * You can gain a lot of speed in many situations avoiding to matchexec() when:
- * - The maximum lenght of the field you are about to match() the mask to is
+ * - The maximum length of the field you are about to match() the mask to is
  *   shorter than minlen, in example when matching abc*def*ghil with a nick:
  *   It just cannot match since a nick is at most 9 chars long and the mask
  *   needs at least 10 chars (10 will be the value returned in minlen).
@@ -381,18 +382,20 @@ char *collapse(char *mask)
  * or when you expect to use mmexec() instead of mmatch() 3 times.
  */
 
- /* 
-  * matchcomp()
-  *
-  * Compiles a mask into a form suitable for using in matchexec().
-  */
-
+/** Compile a mask for faster matching.
+ * See also @ref compiledmasks.
+ * @param[out] cmask Output buffer for compiled mask.
+ * @param[out] minlen Minimum length of matching strings.
+ * @param[out] charset Character attributes used in compiled mask.
+ * @param[out] mask Input mask.
+ * @return Length of compiled mask, not including NUL terminator.
+ */
 int matchcomp(char *cmask, int *minlen, int *charset, const char *mask)
 {
   const char *m = mask;
   char *b = cmask;
-  char *fs = NULL;
-  char *ls = NULL;
+  char *fs = 0;
+  char *ls = 0;
   char *x1, *x2;
   int l1, l2, lmin, loop, sign;
   int star = 0;
@@ -474,16 +477,15 @@ int matchcomp(char *cmask, int *minlen, int *charset, const char *mask)
 
 }
 
-/*
- * matchexec()
- *
- * Executes a match with a mask previosuly compiled with matchcomp()
- * Note 1: If the mask isn't correctly produced by matchcomp() I will core
- * Note 2: 'min' MUST be the value returned by matchcomp on that mask,
- *         or.... I will core even faster :-)
- * Note 3: This piece of code is not intended to be nice but efficient.
+/** Compare a string to a compiled mask.
+ * If \a cmask is not from matchcomp(), or if \a minlen is not the value
+ * passed out of matchcomp(), this may core.
+ * See also @ref compiledmasks.
+ * @param[in] string String to test.
+ * @param[in] cmask Compiled mask string.
+ * @param[in] minlen Minimum length of strings that match \a cmask.
+ * @return Zero if the string matches, non-zero otherwise.
  */
-
 int matchexec(const char *string, const char *cmask, int minlen)
 {
   const char *s = string - 1;
@@ -495,7 +497,7 @@ int matchexec(const char *string, const char *cmask, int minlen)
 tryhead:
   while ((ToLower(*++s) == *++b) && *s);
   if (!*s)
-    return ((*b != '\000') && ((*b++ != 'Z') || (*b != '\000')));
+    return ((*b != '\0') && ((*b++ != 'Z') || (*b != '\0')));
   if (*b != 'Z')
   {
     if (*b == 'A')
@@ -516,7 +518,7 @@ trytail:
   {
     if (*b == 'A')
       goto trytail;
-    return (*b != '\000');
+    return (*b != '\0');
   };
 
   s = --bs;
@@ -529,7 +531,7 @@ trytail:
         return 4;
     bs = s;
 
-  trychunk:
+trychunk:
     while ((ToLower(*++s) == *++b) && *b);
     if (!*b)
       return 0;
@@ -551,29 +553,38 @@ trytail:
   return 0;
 }
 
+#if 0
+
 /*
  * matchdecomp()
  * Prints the human readable version of *cmask into *mask, (decompiles
  * cmask).
  * The area pointed by *mask MUST be big enough (the mask might be up to
  * twice the size of its compiled form if it's made all of \? or \*, and
- * this function can NOT work in place since it might enflate the mask)
+ * this function can NOT work in place since it might inflate the mask)
  * The printed mask is not identical to the one that was compiled to cmask,
- * infact it is 1) forced to all lowercase, 2) collapsed, both things
+ * in fact it is 1) forced to all lowercase, 2) collapsed, both things
  * are supposed to NOT change it's meaning.
  * It returns the number of chars actually written to *mask;
  */
 
+/** Decompile a compiled mask into printable form.
+ * See also @ref compiledmasks.
+ * @param[out] mask Output mask buffer.
+ * @param[in] cmask Compiled mask.
+ * @return Number of characters written to \a mask.
+ */
+static
 int matchdecomp(char *mask, const char *cmask)
 {
   char *rtb = mask;
   const char *rcm = cmask;
   const char *begtail, *endtail;
 
-  if (rtb == NULL)
+  if (rtb ==0)
     return (-1);
 
-  if (rcm == NULL)
+  if (rcm == 0)
     return (-2);
 
   for (; (*rcm != 'Z'); rcm++, rtb++)
@@ -616,7 +627,7 @@ int matchdecomp(char *mask, const char *cmask)
     if ((*rcm == '?') || (*rcm == '*'))
       *rtb++ = '\\';
 
-  *rtb = '\000';
+  *rtb = '\0';
   return (rtb - mask);
 }
 
@@ -628,13 +639,23 @@ int matchdecomp(char *mask, const char *cmask)
  * "the wider overrides the restrict" means that any string that matches
  * the restrict one _will_ also match the wider one, always. 
  * In this we behave differently from mmatch() because in example we return 
- * true for " a?*cd overrides a*bcd " for wich the override happens for how 
+ * true for " a?*cd overrides a*bcd " for which the override happens for how 
  * we literally defined it, here mmatch() would have returned false.
- * The original concepts and the base alghoritm are copied from mmatch() 
+ * The original concepts and the base algorithm are copied from mmatch() 
  * written by Run (Carlo Wood), this function is written by
  * Nemesi (Andrea Cocito)
  */
-
+/** Tests for a superset relationship between compiled masks.  This
+ * function does for compiled masks what mmatch() is does for normal
+ * masks.
+ * See also @ref compiledmasks.
+ * @param[in] wcm Compiled mask believed to be wider.
+ * @param[in] wminlen Minimum match length for \a wcm.
+ * @param[in] rcm Compiled mask believed to be restricted.
+ * @param[in] rminlen Minimum match length for \a rcm.
+ * @return Zero if \a wcm is a superset of \a rcm, non-zero if not.
+ */
+static
 int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
 {
   const char *w, *r, *br, *bw, *rx, *rz;
@@ -657,7 +678,7 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
     while (*w == 'A')           /* Eat extra '?' before '*' in wm if got '*' in rm */
       w++, eat++;
   if (*w != 'Z')                /* head1<any>.. can't match head2<any>.. */
-    return ((*w) || (*r)) ? 1 : 0;  /* and head<nul> matches only head<nul> */
+    return ((*w) || (*r)) ? 1 : 0;      /* and head<nul> matches only head<nul> */
   if (!*++w)
     return 0;                   /* headZ<nul> matches head<anything>    */
 
@@ -674,7 +695,7 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
       for (; r--, (*w) && ((*w == *r) || (*w == 'A')); w++);
       if (*w != 'Z')            /* headZliat1<any> fails on head<any>2tail  */
         return (*w) ? 1 : 0;    /* but headZliat<nul> matches head<any>tail */
-    };
+    }
 
     /* match the chunks */
     while (1)
@@ -687,7 +708,7 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
       if (!*w)                  /* Did last loop match the rest of chunk ? */
         return 0;               /* ... Yes, end of wm, matched !           */
       if (*w != 'Z')
-      {                         /* ... No, hitted non-star                 */
+      {                         /* ... No, hit non-star                    */
         w = bw;                 /* Rollback at beginning of chunk          */
         if (--trash < 0)        /* Trashed the char where this try started */
           return 1;             /* if we can't trash more chars fail       */
@@ -695,9 +716,9 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
       else
       {
         rx = r;                 /* Successfully matched a chunk, move rx   */
-      };                        /* and go on with the next one             */
-    };
-  };
+      }                 /* and go on with the next one             */
+    }
+  }
 
   /* rm has at least one '*' and thus is a 'real' mask */
   rz = r++;                     /* rx = unused of head, rz = beg-tail */
@@ -711,7 +732,7 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
         w++;
     if (*w != 'Z')              /* We aren't matching a chunk, can't rollback      */
       return (*w) ? 1 : 0;
-  };
+  }
 
   /* Match the chunks of wm against what remains of the head of rm */
   while (1)
@@ -735,7 +756,7 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
       if (!(br < rz))
       {                         /* If we failed because we got the end of head */
         trash -= (br - rx);     /* it makes no sense to rollback, just trash   */
-        if (--trash < 0)        /* all the rest of the head wich isn't long    */
+        if (--trash < 0)        /* all the rest of the head which isn't long   */
           return 1;             /* enough for this chunk and go out of this    */
         break;                  /* loop, then we try with the chunks of rm     */
       };
@@ -746,8 +767,8 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
     {
       w = bw;
       rx = br;
-    };
-  };
+    }
+  }
 
   /* Match the unused chunks of wm against the chunks of rm */
   rx = r;
@@ -758,8 +779,8 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
     while (*r)
     {
       bw = w;
-      while (eat && *r)         /* the '?' we had eated make us skip as many chars */
-        if (*r++ != 'Z')        /* here, but can't skip stars or trailing zero     */
+      while (eat && *r)         /* the '?' we ate makes us skip as many chars  */
+        if (*r++ != 'Z')        /* here, but can't skip stars or trailing zero */
           eat--;
       for (bw++; (*r) && (*bw != *r); r++)
         if ((*r != 'Z') && (--trash < 0))
@@ -784,7 +805,7 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
           if (!*br)             /* it was the end of rm                    */
             break;
           r = br;
-        };
+        }
         if (--trash < 0)
           return 1;
       }
@@ -792,12 +813,12 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
       {
         r = br;
         w = bw;
-      };
-    };
-  };
+      }
+    }
+  }
 
   /* match the remaining chunks of wm against what remains of the tail of rm */
-  r = rz - eat - 1;             /* can't have <nul> or 'Z'within the tail, so just move r */
+  r = rz - eat - 1;             /* can't have <nul> or 'Z' within the tail, so just move r */
   while (r >= rx)
   {
     bw = w;
@@ -821,203 +842,12 @@ int mmexec(const char *wcm, int wminlen, const char *rcm, int rminlen)
     {
       r = br;
       w = bw;
-    };
-  };
+    }
+  }
   return 1;                     /* Auch... something left out ? Fail */
 }
 
-/*
- * matchcompIP()
- * Compiles an IP mask into an in_mask structure
- * The given <mask> can either be:
- * - An usual irc type mask, containing * and or ?
- * - An ip number plus a /bitnumber part, that will only consider
- *   the first "bitnumber" bits of the IP (bitnumber must be in 0-31 range)
- * - An ip numer plus a /ip.bit.mask.values that will consider
- *   only the bits marked as 1 in the ip.bit.mask.values
- * In the last two cases both the ip number and the bitmask can specify
- * less than 4 bytes, the missing bytes then default to zero, note that
- * this is *different* from the way inet_aton() does and that this does
- * NOT happen for normal IPmasks (not containing '/')
- * If the returned value is zero the produced in_mask might match some IP,
- * if it's nonzero it will never match anything (and the imask struct is
- * set so that always fails).
- *
- * The returned structure contains 3 fields whose meaning is the following:
- * im.mask = The bits considered significative in the IP
- * im.bits = What these bits should look like to have a match
- * im.fall = If zero means that the above information used as 
- *           ((IP & im.mask) == im.bits) is enough to tell if the compiled
- *           mask matches the given IP, nonzero means that it is needed,
- *           in case they did match, to call also the usual text match
- *           functions, because the mask wasn't "completely compiled"
- *
- * They should be used like:
- * matchcompIP(&im, mask);
- * if ( ((IP & im.mask)!=im.bits)) || (im.fall&&match(mask,inet_ntoa(IP))) )
- *    { handle_non_match } else { handle_match };
- * instead of:
- * if ( match(mask, inet_ntoa(IP)) )
- *    { handle_non_match } else { handle_match };
- * 
- * Note: This function could be smarter when dealing with complex masks,
- *       this implementation is quite lazy and understands only very simple
- *       cases, whatever contains a ? anywhere or contains a '*' that isn't
- *       part of a trailing '.*' will fallback to text-match, this could be 
- *       avoided for masks like 12?3.5.6 12.*.3.4 1.*.*.2 72?72?72?72 and
- *       so on that "could" be completely compiled to IP masks.
- *       If you try to improve this be aware of the fact that ? and *
- *       could match both dots and digits and we _must_ always reject
- *       what doesn't match in textform (like leading zeros and so on),
- *       so it's a LOT more tricky than it might seem. By now most common
- *       cases are optimized.
- */
-
-int matchcompIP(struct in_mask *imask, const char *mask)
-{
-  const char *m = mask;
-  unsigned int bits = 0;
-  unsigned int filt = 0;
-  int unco = 0;
-  int digits = 0;
-  int shift = 24;
-  int tmp = 0;
-
-  do
-  {
-    switch (*m)
-    {
-      case '\\':
-        if ((m[1] == '\\') || (m[1] == '*') || (m[1] == '?')
-            || (m[1] == '\000'))
-          break;
-        continue;
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-        if (digits && !tmp)     /* Leading zeros */
-          break;
-        digits++;
-        tmp *= 10;
-        tmp += (*m - '0');      /* Can't overflow, INT_MAX > 2559 */
-        if (tmp > 255)
-          break;
-        continue;
-      case '\000':
-        filt = 0xFFFFFFFF;
-        /* Intentional fallthrough */
-      case '.':
-        if ((!shift) != (!*m))
-          break;
-        /* Intentional fallthrough */
-      case '/':
-        bits |= (tmp << shift);
-        shift -= 8;
-        digits = 0;
-        tmp = 0;
-        if (*m != '/')
-          continue;
-        shift = 24;
-        do
-        {
-          m++;
-          if (IsDigit(*m))
-          {
-            if (digits && !tmp) /* Leading zeros */
-              break;
-            digits++;
-            tmp *= 10;
-            tmp += (*m - '0');  /* Can't overflow, INT_MAX > 2559 */
-            if (tmp > 255)
-              break;
-          }
-          else
-          {
-            switch (*m)
-            {
-              case '.':
-              case '\000':
-                if ((!shift) && (*m))
-                  break;
-                filt |= (tmp << shift);
-                shift -= 8;
-                tmp = 0;
-                digits = 0;
-                continue;
-              default:
-                break;
-            }
-            break;
-          }
-        }
-        while (*m);
-        if (*m)
-          break;
-        if (filt && (!(shift < 16)) && (!(filt & 0xE0FFFFFF)))
-          filt = 0xFFFFFFFF << (32 - ((filt >> 24)));
-        bits &= filt;
-        continue;
-      case '?':
-        unco = 1;
-        /* Intentional fallthrough */
-      case '*':
-        if (digits)
-          unco = 1;
-        filt = (0xFFFFFFFF << (shift)) << 8;
-        while (*++m)
-        {
-          if (IsDigit(*m))
-            unco = 1;
-          else
-          {
-            switch (*m)
-            {
-              case '.':
-                if (m[1] != '*')
-                  unco = 1;
-                if (!shift)
-                  break;
-                shift -= 8;
-                continue;
-              case '?':
-                unco = 1;
-              case '*':
-                continue;
-              default:
-                break;
-            }
-            break;
-          }
-        }
-        if (*m)
-          break;
-        continue;
-      default:
-        break;
-    }
-
-    /* If we get here there is some error and this can't ever match */
-    filt = 0;
-    bits = ~0;
-    unco = 0;
-    break;                      /* This time break the loop :) */
-
-  }
-  while (*m++);
-
-  imask->bits.s_addr = htonl(bits);
-  imask->mask.s_addr = htonl(filt);
-  imask->fall = unco;
-  return ((bits & ~filt) ? -1 : 0);
-
-}
+#endif
 
 /** Test whether an address matches the most significant bits of a mask.
  * @param[in] addr Address to test.
@@ -1039,76 +869,4 @@ int ipmask_check(const struct irc_in_addr *addr, const struct irc_in_addr *mask,
       return 1;
   }
   return -1;
-}
-
-int match_pcre(pcre *re, char *subject)
-{
-  int rc,i;
-  int ovector[OVECCOUNT];
-  char *substring_start;
-  int substring_length;
-  int subject_length;
-  
-  if(re==NULL || subject==NULL)
-    return 1;
-  
-  if(rc = pcre_exec(re, NULL, subject, strlen(subject), 0, 0, ovector, OVECCOUNT)<0)
-    return 1;
-  
-  if (rc == 0)
-    rc = OVECCOUNT/3;
-  
-  
-  subject_length = strlen(subject);
-  for (i = 0; i < rc; i++)
-  {
-    substring_start = subject + ovector[2*i];
-    substring_length = ovector[2*i+1] - ovector[2*i];
-    // Alguna subcadena coincide del todo
-    if(subject_length == substring_length && !strncmp(substring_start, subject, substring_length))
-      return 0;
-  }
-
-  return 1;
-}
-
-int match_pcre_str(char *regexp, char *subject)
-{
-  pcre *re;
-  const char *error_str;
-  int erroffset;
-  int res;
-  
-  if(subject==NULL)
-    return 1;
-  
-  if((re=pcre_compile(regexp, 0, &error_str, &erroffset, NULL))==NULL)
-    return 1;
-  
-  res=match_pcre(re, subject);
-  MyFree(re);
- 
-  return res;
-}
-
-int match_pcre_ci(pcre *re, char *subject) {
-  char *low=NULL, *tmp=NULL;
-  int res;
-
-  DupString(low, subject);
-  
-  if(low==NULL)
-    return 0;
-  
-  tmp=low;
-  
-  while (*tmp) {
-    *tmp=ToLower(*tmp);
-    *tmp++;
-  }
-  
-  res = match_pcre(re, low);
-
-  MyFree(low);
-  return res;
 }

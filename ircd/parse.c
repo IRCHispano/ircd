@@ -184,7 +184,7 @@ static aMessage **do_msg_tree_tok(aMessageTree *mtree, char *prefix,
       return mptr + 1;
     }
     /* command in this prefix */
-    if (!strCasediff((*mptr)->tok, prefix))
+    if (!ircd_strcmp((*mptr)->tok, prefix))
     {
       mtree->final = "";
       mtree->msg = *mptr++;
@@ -242,7 +242,7 @@ static aMessage *do_msg_tree_cmd(aMessageTree *mtree, char *prefix,
       return mptr + 1;
     }
     /* command in this prefix */
-    if (!strCasediff(mptr->cmd, prefix))
+    if (!ircd_strcmp(mptr->cmd, prefix))
     {
       mtree->final = "";
       mtree->msg = mptr++;
@@ -351,7 +351,7 @@ static struct Message *msg_tree_parse_client(char *cmd,
   for (;;)
   {
     q = 0xdf & (unsigned char)*++cmd;
-    if (mtree->final && !strCasediff(mtree->final, cmd))
+    if (mtree->final && !ircd_strcmp(mtree->final, cmd))
       return mtree->msg;
     if ((q -= 'A') > 25 || !(mtree = mtree->pointers[q]))
       return NULL;
@@ -742,7 +742,7 @@ int parse_server(aClient *cptr, char *buffer, char *bufend)
 #if 1                           /* for 2.10.0/2.10.10 */
     /*
      * This code supports 2.9 and 2.10.0 sending long commands.
-     * It makes more calls to strCasediff() than the above
+     * It makes more calls to ircd_strcmp() than the above
      * so it will be somewhat slower.
      */
     if (!mptr)

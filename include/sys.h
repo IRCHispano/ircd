@@ -20,8 +20,8 @@
 #if !defined(__sys_include__)
 #define __sys_include__
 
-#include "../config/config.h"
-#include "../config/setup.h"
+#include "configold.h"
+#include "../config.h"
 
 #if defined(__osf__)
 #define _OSF_SOURCE
@@ -34,6 +34,10 @@
 #define SUNOS4
 #endif
 #endif
+
+#define TIME_T_FMT "%lu"
+#define STIME_T_FMT "%ld"
+#define SIZE_T_FMT "%u"
 
 /* Para Solaris 10 de algun nodo */
 #if defined(__sun__)

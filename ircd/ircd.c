@@ -18,6 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "config.h"
 #include "sys.h"
 #if HAVE_SYS_FILE_H
 #include <sys/file.h>

@@ -68,6 +68,7 @@
 #include "persistent_malloc.h"
 #endif
 #include "ircd_string.h"
+#include "pcre_match.h"
 
 RCSTAG_CC("$Id$");
 

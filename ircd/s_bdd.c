@@ -1033,7 +1033,7 @@ int db_es_miembro(unsigned char tabla, char *clave, char *subcadena)
   for (f = strtoken(&s, buf, ","); f != NULL; f = strtoken(&s, NULL, ","))
   {
     j++;
-    if (!strCasediff(f, subcadena))
+    if (!ircd_strcmp(f, subcadena))
     {
       i++;
       break;

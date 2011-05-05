@@ -80,6 +80,7 @@
 #include "aes.h"
 #include "ircd_string.h"
 #include "ircd_chattr.h"
+#include "pcre_match.h"
 
 RCSTAG_CC("$Id$");
 

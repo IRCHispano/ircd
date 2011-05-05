@@ -284,7 +284,7 @@ aClient *get_history(const char *nick, time_t timelimit)
   timelimit = now - timelimit;
 
   for (; temp; temp = temp->hnext)
-    if (!strCasediff(nick, temp->name) && temp->logoff > timelimit)
+    if (!ircd_strcmp(nick, temp->name) && temp->logoff > timelimit)
       return temp->online;
 
   return NULL;
@@ -356,7 +356,7 @@ int m_whowas(aClient *cptr, aClient *sptr, int parc, char *parv[])
     found = 0;
     for (temp = whowashash[hash_whowas_name(nick)]; temp; temp = temp->hnext)
     {
-      if (!strCasediff(nick, temp->name))
+      if (!ircd_strcmp(nick, temp->name))
       {
 #ifdef BDD_VIP
         sendto_one(sptr, rpl_str(RPL_WHOWASUSER),
