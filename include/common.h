@@ -36,8 +36,8 @@
   
 #define DelEvent(x,y)          do { \
                                  assert(MyConnect(x)); \
-                                 if((x)->y) \
-                                   event_del((x)->y); \
+                                 if((x)->cli_connect->y) \
+                                   event_del((x)->cli_connect->y); \
                                } while (0)
 #define DelReadEvent(x)        DelEvent(x, evread)
 #define DelWriteEvent(x)       DelEvent(x, evwrite)
@@ -61,52 +61,61 @@
                                } while (0)
 #define UpdateRead(x)          do { \
                                  assert(MyConnect(x)); \
-                                 assert(event_add((x)->evread, NULL)!=-1); \
+                                 assert(event_add((x)->cli_connect->evread, NULL)!=-1); \
                                } while (0)
 #define UpdateWrite(x)         do { \
                                  assert(MyConnect(x)); \
-                                 if((x)->evwrite) \
+                                 if((x)->cli_connect->evwrite) \
                                  { \
-                                   if(DBufLength(&(x)->sendQ) || (x)->listing) \
-                                     assert(event_add((x)->evwrite, NULL)!=-1); \
+                                   if(DBufLength(&(x)->cli_connect->sendQ) || cli_listing(x)) \
+                                     assert(event_add((x)->cli_connect->evwrite, NULL)!=-1); \
                                    else \
-                                     event_del((x)->evwrite); \
+                                     event_del((x)->cli_connect->evwrite); \
                                  } \
                                } while (0)
 #define UpdateGTimer(x,y,z,w)  do { \
                                   assert(MyConnect(x)); \
                                   assert(!IsListening(x)); \
-                                  assert((x)->z); \
-                                  assert((x)->w); \
-                                  evutil_timerclear((x)->w); \
-                                  (x)->w->tv_usec=0; \
-                                  (x)->w->tv_sec=(y); \
-                                  Debug((DEBUG_DEBUG, "timer on %s time %d", (x)->name, (x)->w->tv_sec)); \
-                                  assert(evtimer_add((x)->z, (x)->w)!=-1); \
+                                  assert((x)->cli_connect->z); \
+                                  assert((x)->cli_connect->w); \
+                                  evutil_timerclear((x)->cli_connect->w); \
+                                  (x)->cli_connect->w->tv_usec=0; \
+                                  (x)->cli_connect->w->tv_sec=(y); \
+                                  Debug((DEBUG_DEBUG, "timer on %s time %d", (x)->name, (x)->cli_connect->w->tv_sec)); \
+                                  assert(evtimer_add((x)->cli_connect->z, (x)->cli_connect->w)!=-1); \
                                } while (0)
 #define UpdateTimer(x,y)       UpdateGTimer(x,y,evtimer,tm_timer)
 #define UpdateCheckPing(x,y)   UpdateGTimer(x,y,evcheckping,tm_checkping)
 #define CreateGTimerEvent(x,y,z,w) \
                                do { \
                                   assert(MyConnect(x)); \
-                                  if((x)->z) \
-                                    event_del((x)->z); \
+                                  if((x)->cli_connect->z) \
+                                    event_del((x)->cli_connect->z); \
                                   else \
-                                    (x)->z=(struct event*)MyMalloc(sizeof(struct event)); \
-                                  if(!(x)->w) \
-                                    (x)->w=(struct timeval*)MyMalloc(sizeof(struct timeval)); \
-                                  evtimer_set((x)->z, (void *)(y), (void *)(x)); \
+                                    (x)->cli_connect->z=(struct event*)MyMalloc(sizeof(struct event)); \
+                                  if(!(x)->cli_connect->w) \
+                                    (x)->cli_connect->w=(struct timeval*)MyMalloc(sizeof(struct timeval)); \
+                                  evtimer_set((x)->cli_connect->z, (void *)(y), (void *)(x)); \
                                 } while (0)
 #define CreateTimerEvent(x,y)   CreateGTimerEvent(x,y,evtimer,tm_timer)
 #define CreateCheckPingEvent(x) CreateGTimerEvent(x,event_checkping_callback,evcheckping,tm_checkping)
 #define CreateEvent(x,y,z,w,v)  do { \
                                   assert(MyConnect(x) || (x) == &me); \
-                                  if((x)->z) \
-                                    event_del((x)->z); \
+                                  if((x)->cli_connect->z) \
+                                    event_del((x)->cli_connect->z); \
                                   else \
-                                    (x)->z=(struct event*)MyMalloc(sizeof(struct event)); \
-                                  event_set((x)->z, (x)->v, (w), (void *)y, (void *)x); \
-                                  assert(event_add((x)->z, NULL)!=-1); \
+                                    (x)->cli_connect->z=(struct event*)MyMalloc(sizeof(struct event)); \
+                                  event_set((x)->cli_connect->z, (x)->v, (w), (void *)y, (void *)x); \
+                                  assert(event_add((x)->cli_connect->z, NULL)!=-1); \
+                                } while (0)
+#define CreateEventAuth(x,y,z,w,v)  do { \
+                                  assert(MyConnect(x) || (x) == &me); \
+                                  if((x)->cli_connect->z) \
+                                    event_del((x)->cli_connect->z); \
+                                  else \
+                                    (x)->cli_connect->z=(struct event*)MyMalloc(sizeof(struct event)); \
+                                  event_set((x)->cli_connect->z, (x)->cli_connect->v, (w), (void *)y, (void *)x); \
+                                  assert(event_add((x)->cli_connect->z, NULL)!=-1); \
                                 } while (0)
 #define CreateREvent(x,y)       CreateEvent(x,y,evread,(EV_READ|EV_PERSIST),fd)
 #define CreateWEvent(x,y)       CreateEvent(x,y,evwrite,(EV_WRITE|EV_PERSIST),fd)
@@ -122,8 +131,8 @@
                                   CreateCheckPingEvent(x); \
                                   UpdateCheckPing(x, CONNECTTIMEOUT); \
                                 } while (0) 
-#define CreateRAuthEvent(x)     CreateEvent(x,event_auth_callback,evauthread,(EV_READ|EV_PERSIST),authfd)
-#define CreateWAuthEvent(x)     CreateEvent(x,event_auth_callback,evauthwrite,(EV_WRITE|EV_PERSIST),authfd)
+#define CreateRAuthEvent(x)     CreateEventAuth(x,event_auth_callback,evauthread,(EV_READ|EV_PERSIST),authfd)
+#define CreateWAuthEvent(x)     CreateEventAuth(x,event_auth_callback,evauthwrite,(EV_WRITE|EV_PERSIST),authfd)
 #define CreateRWAuthEvent(x)    do { \
                                   CreateRAuthEvent(x); \
                                   CreateWAuthEvent(x); \

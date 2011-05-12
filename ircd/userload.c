@@ -248,7 +248,7 @@ void calc_load(aClient *sptr)
 
   if (MyUser(sptr) 
 #if !defined(NO_PROTOCOL9)
-      || Protocol(sptr->from) < 10
+      || Protocol(cli_from(sptr)) < 10
 #endif
   )
   {

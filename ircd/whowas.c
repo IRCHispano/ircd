@@ -44,6 +44,7 @@
 
 #include "sys.h"
 #include <stdlib.h>
+#include "client.h"
 #include "common.h"
 #include "h.h"
 #include "s_debug.h"
@@ -163,7 +164,7 @@ typedef union {
  * If the entry used was already in use, then this entry is
  * freed (lost).
  */
-void add_history(aClient *cptr, int still_on)
+void add_history(struct Client *cptr, int still_on)
 {
   Current ww;
   ww.newww = whowas_next;
@@ -217,16 +218,16 @@ void add_history(aClient *cptr, int still_on)
   ww.newww->hashv = hash_whowas_name(cptr->name);
   ww.newww->logoff = now;
   DupString(ww.newww->name, cptr->name);
-  DupString(ww.newww->username, PunteroACadena(cptr->user->username));
-  DupString(ww.newww->hostname, cptr->user->host);
+  DupString(ww.newww->username, PunteroACadena(cptr->cli_user->username));
+  DupString(ww.newww->hostname, cptr->cli_user->host);
 #if defined(BDD_VIP)
   DupString(ww.newww->virtualhost, get_virtualhost(cptr));
 #endif
   /* Should be changed to server numeric */
-  DupString(ww.newww->servername, cptr->user->server->name);
+  DupString(ww.newww->servername, cptr->cli_user->server->name);
   DupString(ww.newww->realname, PunteroACadena(cptr->info));
-  if (cptr->user->away)
-    DupString(ww.newww->away, cptr->user->away);
+  if (cptr->cli_user->away)
+    DupString(ww.newww->away, cptr->cli_user->away);
   else
     ww.newww->away = NULL;
 
@@ -235,10 +236,10 @@ void add_history(aClient *cptr, int still_on)
   {
     ww.newww->online = cptr;
     /* Add aWhowas struct `newww' to start of 'online list': */
-    if ((ww.newww->cnext = cptr->whowas))
+    if ((ww.newww->cnext = cli_whowas(cptr)))
       ww.newww->cnext->cprevnextp = &ww.newww->cnext;
-    ww.newww->cprevnextp = &cptr->whowas;
-    cptr->whowas = ww.newww;
+    ww.newww->cprevnextp = &cli_whowas(cptr);
+    cli_whowas(cptr) = ww.newww;
   }
   else                          /* User quitting */
     ww.newww->online = NULL;
@@ -260,11 +261,11 @@ void add_history(aClient *cptr, int still_on)
  * Client `cptr' signed off: Set all `online' pointers
  * corresponding to this client to NULL.
  */
-void off_history(const aClient *cptr)
+void off_history(const struct Client *cptr)
 {
   aWhowas *temp;
 
-  for (temp = cptr->whowas; temp; temp = temp->cnext)
+  for (temp = cli_whowas(cptr); temp; temp = temp->cnext)
     temp->online = NULL;
 }
 
@@ -278,7 +279,7 @@ void off_history(const aClient *cptr)
  * nicks for "upstream" messages in ircu2.10, this is only used for
  * looking up non-existing nicks in client->server messages.
  */
-aClient *get_history(const char *nick, time_t timelimit)
+struct Client *get_history(const char *nick, time_t timelimit)
 {
   aWhowas *temp = whowashash[hash_whowas_name(nick)];
   timelimit = now - timelimit;
@@ -329,7 +330,7 @@ void count_whowas_memory(int *wwu, size_t *wwum, int *wwa, size_t *wwam)
  * parv[2] = maximum returned items (optional, default is unlimitted)
  * parv[3] = remote server target (Opers only, max returned items 20)
  */
-int m_whowas(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_whowas(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   aWhowas *temp;
   int cur = 0;

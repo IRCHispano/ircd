@@ -30,7 +30,7 @@ struct lusers_st {
 #define Count_newremoteclient(nrof,cptr) \
         do { \
                ++nrof.clients; \
-               ++cptr->user->server->serv->clients; \
+               ++cptr->cli_user->server->cli_serv->clients; \
                if (nrof.clients >= max_global_count) \
                { \
                  max_global_count = nrof.clients; \
@@ -42,7 +42,7 @@ struct lusers_st {
 	do { \
 		--nrof.clients; \
 		if (!IsServer(cptr)) \
-			--cptr->user->server->serv->clients; \
+			--cptr->cli_user->server->cli_serv->clients; \
 	} while(0)
 
 #define Count_remoteserverquits(nrof)		(--nrof.servers)
@@ -52,7 +52,7 @@ struct lusers_st {
 #define Count_unknownbecomesclient(cptr, nrof) \
   do { \
     --nrof.unknowns; ++nrof.local_clients; ++nrof.clients; \
-    if (match("*" DOMAINNAME, PunteroACadena(cptr->sockhost)) == 0) \
+    if (match("*" DOMAINNAME, PunteroACadena(cptr->cli_connect->sockhost)) == 0) \
       ++current_load.local_count; \
     if (nrof.local_clients > max_client_count) { \
       max_client_count = nrof.local_clients; \
@@ -73,7 +73,7 @@ struct lusers_st {
   do \
   { \
     --nrof.local_clients; --nrof.clients; \
-    if (match("*" DOMAINNAME, PunteroACadena(cptr->sockhost)) == 0) \
+    if (match("*" DOMAINNAME, PunteroACadena(cptr->cli_connect->sockhost)) == 0) \
       --current_load.local_count; \
   } while(0)
 #define Count_serverdisconnects(nrof)		do { --nrof.local_servers; --nrof.servers; } while(0)

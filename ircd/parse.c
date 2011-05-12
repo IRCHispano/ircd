@@ -449,7 +449,7 @@ int parse_client(aClient *cptr, char *buffer, char *bufend)
   i = bufend - ((s) ? s : ch);
   mptr->bytes += i;
   if ((mptr->flags & MFLG_SLOW))
-    cptr->since += (2 + i / 120);
+    cli_since(cptr) += (2 + i / 120);
   /*
    * Allow only 1 msg per 2 seconds
    * (on average) to prevent dumping.
@@ -516,7 +516,7 @@ int parse_client(aClient *cptr, char *buffer, char *bufend)
 #else
       ((mptr->func != m_ping) && (mptr->func != m_pong)))
 #endif
-      from->user->last = now;
+      from->cli_user->last = now;
 
   return (*mptr->func) (cptr, from, i, para);
 }
@@ -598,7 +598,7 @@ int parse_server(aClient *cptr, char *buffer, char *bufend)
       else
         return 0;
     }
-    else if (from->from != cptr)
+    else if (cli_from(from) != cptr)
     {
       ircstp->is_wrdi++;
       Debug((DEBUG_NOTICE, "Fake direction: Message (%s) coming from (%s)",
@@ -661,7 +661,7 @@ int parse_server(aClient *cptr, char *buffer, char *bufend)
         aClient *server;
         /* Kill the unknown numeric prefix upstream if
          * it's server still exists: */
-        if ((server = FindNServer(numeric_prefix)) && server->from == cptr)
+        if ((server = FindNServer(numeric_prefix)) && cli_from(server) == cptr)
           sendto_one(cptr, "%s KILL %s :%s (Unknown numeric nick)",
               NumServ(&me), numeric_prefix, me.name);
       }
@@ -679,7 +679,7 @@ int parse_server(aClient *cptr, char *buffer, char *bufend)
     /* Let para[0] point to the name of the sender */
     para[0] = PunteroACadena(from->name);
 
-    if (from->from != cptr)
+    if (cli_from(from) != cptr)
     {
       ircstp->is_wrdi++;
       Debug((DEBUG_NOTICE, "Fake direction: Message (%s) coming from (%s)",

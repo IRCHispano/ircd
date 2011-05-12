@@ -98,16 +98,16 @@
 #define SetWallops(x)		((x)->flags |= FLAGS_WALLOP)
 #define SetDebug(x)             ((x)->flags |= FLAGS_DEBUG)
 #define SetUnixSock(x)		((x)->flags |= FLAGS_UNIX)
-#define SetDNS(x)		(assert(MyConnect(x)),((x)->flags_local |= FLAGS_DOINGDNS))
-#define DoingDNS(x)		(assert(MyConnect(x)),((x)->flags_local & FLAGS_DOINGDNS))
-#define SetAuth(x)              (assert(MyConnect(x)),((x)->flags_local |= FLAGS_AUTH))
-#define SetWRAuth(x)            (assert(MyConnect(x)),((x)->flags_local |= FLAGS_WRAUTH))
+#define SetDNS(x)		((x)->cli_connect->flags_local |= FLAGS_DOINGDNS)
+#define DoingDNS(x)		((x)->cli_connect->flags_local & FLAGS_DOINGDNS)
+#define SetAuth(x)              ((x)->cli_connect->flags_local |= FLAGS_AUTH)
+#define SetWRAuth(x)            ((x)->cli_connect->flags_local |= FLAGS_WRAUTH)
 #define SetAccess(x)		do { \
                                   (x)->flags |= FLAGS_CHKACCESS; \
                                   UpdateTimer(x,0); \
                                 } while (0)
-#define DoingAuth(x)		(assert(MyConnect(x)),((x)->flags_local & FLAGS_AUTH))
-#define DoingWRAuth(x)		(assert(MyConnect(x)),((x)->flags_local & FLAGS_WRAUTH))
+#define DoingAuth(x)		((x)->flags & FLAGS_AUTH)
+#define DoingWRAuth(x)		((x)->flags & FLAGS_WRAUTH)
 #define NoNewLine(x)		((x)->flags & FLAGS_NONL)
 #define DoPing(x)		((x)->flags & FLAGS_PING)
 #define SetAskedPing(x)		((x)->flags |= FLAGS_ASKEDPING)
@@ -124,9 +124,9 @@
 #define ClearInvisible(x)	((x)->flags &= ~FLAGS_INVISIBLE)
 #define ClearWallops(x)		((x)->flags &= ~FLAGS_WALLOP)
 #define ClearDebug(x)           ((x)->flags &= ~FLAGS_DEBUG)
-#define ClearDNS(x)		(assert(MyConnect(x)),((x)->flags_local &= ~FLAGS_DOINGDNS))
-#define ClearAuth(x)		(assert(MyConnect(x)),((x)->flags_local &= ~FLAGS_AUTH))
-#define ClearWRAuth(x)          (assert(MyConnect(x)),((x)->flags_local &= ~FLAGS_WRAUTH))
+#define ClearDNS(x)		((x)->cli_connect->flags_local &= ~FLAGS_DOINGDNS)
+#define ClearAuth(x)		((x)->cli_connect->flags_local &= ~FLAGS_AUTH)
+#define ClearWRAuth(x)          ((x)->cli_connect->flags_local &= ~FLAGS_WRAUTH)
 #define ClearAccess(x)		((x)->flags &= ~FLAGS_CHKACCESS)
 #define ClearPing(x)		((x)->flags &= ~FLAGS_PING)
 #define ClearAskedPing(x)	((x)->flags &= ~FLAGS_ASKEDPING)
@@ -143,42 +143,7 @@
 #define ASYNC_CONF	3
 #define ASYNC_PING	4
 
-/* server notice stuff */
 
-#define SNO_ADD		1
-#define SNO_DEL		2
-#define SNO_SET		3
-        /* DON'T CHANGE THESE VALUES ! */
-        /* THE CLIENTS DEPEND ON IT  ! */
-#define SNO_OLDSNO	0x1         /* unsorted old messages */
-#define SNO_SERVKILL	0x2       /* server kills (nick collisions) */
-#define SNO_OPERKILL	0x4       /* oper kills */
-#define SNO_HACK2	0x8           /* desyncs */
-#define SNO_HACK3	0x10          /* temporary desyncs */
-#define SNO_UNAUTH	0x20        /* unauthorized connections */
-#define SNO_TCPCOMMON	0x40      /* common TCP or socket errors */
-#define SNO_TOOMANY	0x80        /* too many connections */
-#define SNO_HACK4	0x100         /* Uworld actions on channels */
-#define SNO_GLINE	0x200         /* glines */
-#define SNO_NETWORK	0x400       /* net join/break, etc */
-#define SNO_IPMISMATCH	0x800   /* IP mismatches */
-#define SNO_THROTTLE	0x1000    /* host throttle add/remove notices */
-#define SNO_OLDREALOP	0x2000    /* old oper-only messages */
-#define SNO_CONNEXIT	0x4000    /* client connect/exit (ugh) */
-
-#define SNO_SERVICE	0x8000      /* Informa de ejecucion de comandos de SVS* */
-
-#define SNO_ALL		0x1ffff       /* Don't make it larger then significant,
-                                 * that looks nicer */
-
-#define SNO_USER	(SNO_ALL & ~SNO_OPER)
-
-#define SNO_DEFAULT (SNO_NETWORK|SNO_OPERKILL|SNO_GLINE)
-#define SNO_OPERDEFAULT (SNO_DEFAULT|SNO_HACK2|SNO_HACK4|SNO_THROTTLE|SNO_OLDSNO)
-
-#define SNO_OPER (SNO_CONNEXIT|SNO_OLDREALOP|SNO_SERVICE)
-
-#define SNO_NOISY (SNO_SERVKILL|SNO_UNAUTH)
 
 /*
  * simple defines to differentiate between a tty and socket for
@@ -304,9 +269,9 @@ extern struct sockaddr_in vserv;
 
 #define BorraIpVirtual(x)      do { \
                                  assert(IsUser(x)); \
-                                 if((x)->user->virtualhost) \
-                                   SlabStringFree((x)->user->virtualhost); \
-                                 (x)->user->virtualhost=NULL; \
+                                 if((x)->cli_user->virtualhost) \
+                                   SlabStringFree((x)->cli_user->virtualhost); \
+                                 (x)->cli_user->virtualhost=NULL; \
                                  ClearIpVirtualPersonalizada(x); \
                                } while (0)
 

@@ -18,6 +18,7 @@
  */
 
 #include "sys.h"
+#include "client.h"
 #include "h.h"
 #include "s_debug.h"
 #include "common.h"
@@ -158,7 +159,7 @@ void completa_microburst(void)
 ** la "microrafaga".
 */
       if ((p->cptr != NULL) && MyConnect(p->cptr)
-          && (p->cptr->negociacion & ZLIB_ESNET_OUT) && (p->dyn != NULL))
+          && (p->cptr->cli_connect->negociacion & ZLIB_ESNET_OUT) && (p->dyn != NULL))
       {
         dbuf_put(p->cptr, p->dyn, NULL, 0);
         UpdateWrite(p->cptr);
@@ -310,24 +311,24 @@ int dbuf_put(struct Client *cptr, struct DBuf *dyn, const char *buf,
     if (!tmp)
       return dbuf_malloc_error(dyn);
   }
-  if ((cptr != NULL) && MyConnect(cptr) && (cptr->negociacion & ZLIB_ESNET_OUT))
+  if ((cptr != NULL) && MyConnect(cptr) && (cptr->cli_connect->negociacion & ZLIB_ESNET_OUT))
   {
     struct p_mburst *p = p_microburst;
-    long length_out = cptr->comp_out->total_out;
+    long length_out = cptr->cli_connect->comp_out->total_out;
 
     compresion = !0;
-    cptr->comp_out->next_in = (void *)buf;
-    cptr->comp_out->avail_in = length;
-    cptr->comp_out_total_in += length;
-    cptr->comp_out->next_out = tmp;
-    cptr->comp_out->avail_out = 512 * 3;  /* Ojo con esta cifra */
+    cptr->cli_connect->comp_out->next_in = (void *)buf;
+    cptr->cli_connect->comp_out->avail_in = length;
+    cptr->cli_connect->comp_out_total_in += length;
+    cptr->cli_connect->comp_out->next_out = tmp;
+    cptr->cli_connect->comp_out->avail_out = 512 * 3;  /* Ojo con esta cifra */
     if (microburst)
     {
-      estado = deflate(cptr->comp_out, Z_NO_FLUSH);
-      length_out -= cptr->comp_out->total_out;
+      estado = deflate(cptr->cli_connect->comp_out, Z_NO_FLUSH);
+      length_out -= cptr->cli_connect->comp_out->total_out;
       if (length_out < 0)
         length_out = -length_out;
-      cptr->comp_out_total_out += length_out;
+      cptr->cli_connect->comp_out_total_out += length_out;
       while (p && (cptr != p->cptr))
         p = p->next;
       if (p == NULL)
@@ -355,16 +356,16 @@ int dbuf_put(struct Client *cptr, struct DBuf *dyn, const char *buf,
     }
     else
     {
-      estado = deflate(cptr->comp_out, Z_PARTIAL_FLUSH);
+      estado = deflate(cptr->cli_connect->comp_out, Z_PARTIAL_FLUSH);
       flag = Z_PARTIAL_FLUSH;
-      length_out -= cptr->comp_out->total_out;
+      length_out -= cptr->cli_connect->comp_out->total_out;
       if (length_out < 0)
         length_out = -length_out;
-      cptr->comp_out_total_out += length_out;
+      cptr->cli_connect->comp_out_total_out += length_out;
     }
     assert(Z_OK == estado);
     buf = tmp;
-    length = (cptr->comp_out->next_out) - (Bytef *) tmp;
+    length = (cptr->cli_connect->comp_out->next_out) - (Bytef *) tmp;
     if (!length)
       return 1;
   }
@@ -374,22 +375,22 @@ int dbuf_put(struct Client *cptr, struct DBuf *dyn, const char *buf,
     long length_out;
 
     f = dbuf_put2(cptr, dyn, buf, length);
-    if (!compresion || (f < 0) || cptr->comp_out->avail_out)
+    if (!compresion || (f < 0) || cptr->cli_connect->comp_out->avail_out)
       return f;
 
     /* Queda mas */
     send_queued(cptr);
-    cptr->comp_out->next_out = tmp;
-    cptr->comp_out->avail_out = 512 * 3;  /* Ojo con esta cifra */
-    length_out = cptr->comp_out->total_out;
-    estado = deflate(cptr->comp_out, flag);
-    length_out -= cptr->comp_out->total_out;
+    cptr->cli_connect->comp_out->next_out = tmp;
+    cptr->cli_connect->comp_out->avail_out = 512 * 3;  /* Ojo con esta cifra */
+    length_out = cptr->cli_connect->comp_out->total_out;
+    estado = deflate(cptr->cli_connect->comp_out, flag);
+    length_out -= cptr->cli_connect->comp_out->total_out;
     if (length_out < 0)
       length_out = -length_out;
-    cptr->comp_out_total_out += length_out;
+    cptr->cli_connect->comp_out_total_out += length_out;
     assert(Z_OK == estado);
     buf = tmp;
-    length = (cptr->comp_out->next_out) - (Bytef *) tmp;
+    length = (cptr->cli_connect->comp_out->next_out) - (Bytef *) tmp;
     if (!length)
       return f;
   }

@@ -39,6 +39,7 @@
 # include <netinet/in.h>
 #endif
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "opercmds.h"
 #include "struct.h"
@@ -80,11 +81,11 @@ RCSTAG_CC("$Id$");
  *    parv[2] = timestamp
  *    parv[parc-1] = comment
  */
-int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_squit(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Reg1 aConfItem *aconf;
   char *server;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   char *comment = (parc > ((!IsServer(cptr)) ? 2 : 3) &&
       !BadPtr(parv[parc - 1])) ? parv[parc - 1] : cptr->name;
 
@@ -102,7 +103,7 @@ int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * name is expanded if the incoming mask is the same as
      * the server name for that link to the name of link.
      */
-    if ((*server == '*') && IsServer(cptr) && (aconf = cptr->serv->cline) &&
+    if ((*server == '*') && IsServer(cptr) && (aconf = cptr->cli_serv->cline) &&
         !strCasediff(server, my_name_for_link(me.name, aconf)))
     {
       server = cptr->name;
@@ -115,7 +116,7 @@ int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[])
        * when the command is issued by an oper.
        */
       for (acptr = client; (acptr = next_client(acptr, server));
-          acptr = acptr->next)
+          acptr = acptr->cli_next)
         if (IsServer(acptr) || IsMe(acptr))
           break;
 
@@ -126,7 +127,7 @@ int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[])
           if (IsServer(cptr))
           {
             acptr = cptr;
-            server = PunteroACadena(cptr->sockhost);
+            server = PunteroACadena(cptr->cli_connect->sockhost);
           }
           else
             acptr = NULL;
@@ -139,9 +140,9 @@ int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[])
            * servers like davis.* and davis-r.* when typing
            * /SQUIT davis*
            */
-          aClient *acptr2;
-          for (acptr2 = acptr->serv->up; acptr2 != &me;
-              acptr2 = acptr2->serv->up)
+          struct Client *acptr2;
+          for (acptr2 = acptr->cli_serv->up; acptr2 != &me;
+              acptr2 = acptr2->cli_serv->up)
             if (!match(server, acptr2->name))
               acptr = acptr2;
         }
@@ -151,7 +152,7 @@ int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * It wil be our neighbour.
      */
     if (acptr && IsServer(cptr) &&
-        atoi(parv[2]) && atoi(parv[2]) != acptr->serv->timestamp)
+        atoi(parv[2]) && atoi(parv[2]) != acptr->cli_serv->timestamp)
     {
       Debug((DEBUG_NOTICE, "Ignoring SQUIT with wrong timestamp"));
       return 0;
@@ -166,7 +167,7 @@ int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[])
        * This is actually protocol error. But, well, closing
        * the link is very proper answer to that...
        */
-      server = PunteroACadena(cptr->sockhost);
+      server = PunteroACadena(cptr->cli_connect->sockhost);
       acptr = cptr;
     }
     else
@@ -222,7 +223,7 @@ static unsigned int report_array[18][3] = {
   {0, 0}
 };
 
-static void report_configured_links(aClient *sptr, int mask)
+static void report_configured_links(struct Client *sptr, int mask)
 {
   static char null[] = "<NULL>";
   aConfItem *tmp;
@@ -303,14 +304,14 @@ static void report_configured_links(aClient *sptr, int mask)
  *
  * This function is getting really ugly. -Ghostwolf
  */
-int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_stats(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   static char Sformat[] =
       ":%s %d %s Connection SendQ SendM SendKBytes SendComp "
       "RcveM RcveKBytes RcveComp :Open since";
   static char Lformat[] = ":%s %d %s %s %u %u %u %u%% %u %u %u%% :" TIME_T_FMT;
   aMessage *mptr;
-  aClient *acptr;
+  struct Client *acptr;
   aGline *agline, *a2gline;
   aConfItem *aconf;
   unsigned char stat = parc > 1 ? parv[1][0] : '\0';
@@ -460,24 +461,24 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
           continue;
         sendto_one(sptr, Lformat, me.name, RPL_STATSLINKINFO, parv[0],
             acptr->name ? acptr->name : "*",
-            (int)DBufLength(&acptr->sendQ), (int)acptr->sendM,
-            (int)acptr->sendK,
+            (int)DBufLength(&acptr->cli_connect->sendQ), (int)acptr->cli_connect->sendM,
+            (int)acptr->cli_connect->sendK,
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-            (IsServer(acptr) && (acptr->negociacion & ZLIB_ESNET_OUT)) ?
-            (int)((acptr->comp_out_total_out * 100.0 /
-            acptr->comp_out_total_in) + 0.5) : 100,
+            (IsServer(acptr) && (acptr->cli_connect->negociacion & ZLIB_ESNET_OUT)) ?
+            (int)((acptr->cli_connect->comp_out_total_out * 100.0 /
+            acptr->cli_connect->comp_out_total_in) + 0.5) : 100,
 #else
             100,
 #endif
-            (int)acptr->receiveM, (int)acptr->receiveK,
+            (int)acptr->cli_connect->receiveM, (int)acptr->cli_connect->receiveK,
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-            (IsServer(acptr) && (acptr->negociacion & ZLIB_ESNET_IN)) ?
-            (int)((acptr->comp_in_total_in * 100.0 /
-            acptr->comp_in_total_out) + 0.5) : 100,
+            (IsServer(acptr) && (acptr->cli_connect->negociacion & ZLIB_ESNET_IN)) ?
+            (int)((acptr->cli_connect->comp_in_total_in * 100.0 /
+            acptr->cli_connect->comp_in_total_out) + 0.5) : 100,
 #else
             100,
 #endif
-            time(NULL) - acptr->firsttime);
+            time(NULL) - cli_firsttime(acptr));
       }
       break;
     }
@@ -806,7 +807,7 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       time_t nowr;
 
-      nowr = now - me.since;
+      nowr = now - cli_since(&me);
       sendto_one(sptr, rpl_str(RPL_STATSUPTIME), me.name, parv[0],
           nowr / 86400, (nowr / 3600) % 24, (nowr / 60) % 60, nowr % 60);
       sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],
@@ -902,12 +903,12 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
  *    parv[2] = port number
  *    parv[3] = remote server
  */
-int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_connect(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   int retval;
   unsigned short int port, tmpport;
   aConfItem *aconf, *cconf;
-  aClient *acptr;
+  struct Client *acptr;
 
   if (!IsPrivileged(sptr))
   {
@@ -920,7 +921,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (parc > 3 && MyUser(sptr))
   {
-    aClient *acptr2, *acptr3;
+    struct Client *acptr2, *acptr3;
     if (!(acptr3 = find_match_server(parv[3])))
     {
       sendto_one(sptr, err_str(ERR_NOSUCHSERVER), me.name, parv[0], parv[3]);
@@ -928,7 +929,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
 
     /* Look for closest matching server */
-    for (acptr2 = acptr3; acptr2 != &me; acptr2 = acptr2->serv->up)
+    for (acptr2 = acptr3; acptr2 != &me; acptr2 = acptr2->cli_serv->up)
       if (!match(parv[3], acptr2->name))
         acptr3 = acptr2;
 
@@ -953,11 +954,11 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
     )
       sendto_one(sptr, ":%s NOTICE %s :Connect: Server %s %s %s.",
-          me.name, parv[0], parv[1], "already exists from", acptr->from->name);
+          me.name, parv[0], parv[1], "already exists from", cli_from(acptr)->name);
     else
       sendto_one(sptr, "%s " TOK_NOTICE " %s%s :Connect: Server %s %s %s.",
           NumServ(&me), NumNick(sptr), parv[1], "already exists from",
-          acptr->from->name);
+          cli_from(acptr)->name);
     return 0;
   }
 
@@ -1122,7 +1123,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[0] = sender prefix
  * parv[1] = message text
  */
-int m_wallops(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_wallops(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   char *message;
 
@@ -1151,7 +1152,7 @@ int m_wallops(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[0] = sender prefix
  * parv[1] = servername
  */
-int m_time(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_time(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   if (hunt_server(0, cptr, sptr, MSG_TIME, TOK_TIME, ":%s", 1, parc, parv) == HUNTED_ISME)
     sendto_one(sptr, rpl_str(RPL_TIME), me.name,
@@ -1171,12 +1172,12 @@ int m_time(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[1] = new time
  * parv[2] = servername (Only used when sptr is an Oper).
  */
-int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_settime(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   time_t t;
   long int dt;
   static char tbuf[11];
-  Dlink *lp;
+  struct DLink *lp;
 
   if (!IsPrivileged(sptr))
     return 0;
@@ -1205,8 +1206,8 @@ int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sprintf_irc(tbuf, TIME_T_FMT, TStime());
     parv[1] = tbuf;
 #endif
-    for (lp = me.serv->down; lp; lp = lp->next)
-      if (cptr != lp->value.cptr && DBufLength(&lp->value.cptr->sendQ) < 8000)
+    for (lp = cli_serv(&me)->down; lp; lp = lp->next)
+      if (cptr != lp->value.cptr && DBufLength(&lp->value.cptr->cli_connect->sendQ) < 8000)
       {
 #if !defined(NO_PROTOCOL9)
         if (Protocol(lp->value.cptr) < 10)
@@ -1313,9 +1314,9 @@ static char *militime(char *sec, char *usec)
  *    parv[4] = start time in us
  *    parv[5] = the optional remark
  */
-int m_rping(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_rping(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  aClient *acptr;
+  struct Client *acptr;
 
   if (!IsPrivileged(sptr))
     return 0;
@@ -1352,7 +1353,7 @@ int m_rping(aClient *cptr, aClient *sptr, int parc, char *parv[])
       return 0;
     }
 #if !defined(NO_PROTOCOL9)
-    if (Protocol(acptr->from) < 10)
+    if (Protocol(cli_from(acptr)) < 10)
       sendto_one(acptr, ":%s RPING %s %s %s :%s",
           me.name, acptr->name, sptr->name, militime(NULL, NULL), parv[3]);
     else
@@ -1380,9 +1381,9 @@ int m_rping(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[3] = pingtime in ms
  * parv[4] = client info (for instance start time)
  */
-int m_rpong(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+int m_rpong(struct Client *UNUSED(cptr), struct Client *sptr, int parc, char *parv[])
 {
-  aClient *acptr;
+  struct Client *acptr;
 
   if (!IsServer(sptr))
     return 0;
@@ -1425,7 +1426,7 @@ int m_rpong(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 /*
  * m_rehash
  */
-static int m_rehash_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
+static int m_rehash_local(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
 #if !defined(LOCOP_REHASH)
   if (!MyUser(sptr) || !IsOper(sptr))
@@ -1450,7 +1451,7 @@ static int m_rehash_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 #endif
 
-static int m_rehash_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
+static int m_rehash_remoto(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   int flag = 0;
   const char *target;
@@ -1496,7 +1497,7 @@ static int m_rehash_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 }
 
-int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_rehash(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   if (MyUser(sptr))
 #if defined(OPER_REHASH) || defined(LOCOP_REHASH)
@@ -1512,7 +1513,7 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 /*
  * m_restart
  */
-static int m_restart_local(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc),
+static int m_restart_local(struct Client *UNUSED(cptr), struct Client *sptr, int UNUSED(parc),
     char *parv[])
 {
 #if !defined(LOCOP_RESTART)
@@ -1536,7 +1537,7 @@ static int m_restart_local(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc
 }
 #endif
 
-static int m_restart_remoto(aClient *cptr, aClient *sptr, int parc,
+static int m_restart_remoto(struct Client *cptr, struct Client *sptr, int parc,
     char *parv[])
 {
   const char *target, *when, *reason;
@@ -1575,7 +1576,7 @@ static int m_restart_remoto(aClient *cptr, aClient *sptr, int parc,
 
 }
 
-int m_restart(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_restart(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   if (MyUser(sptr))
 #if defined(OPER_RESTART) || defined(LOCOP_RESTART)
@@ -1594,10 +1595,10 @@ int m_restart(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[1] = nick or servername
  * parv[2] = 'target' servername
  */
-int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_trace(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Reg1 int i;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   aConfClass *cltmp;
   char *tname;
   int doall, link_s[MAXCONNECTIONS], link_u[MAXCONNECTIONS];
@@ -1628,7 +1629,7 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
         ((acptr = FindClient(parv[1])) && !MyUser(acptr)))
     {
       if (IsUser(acptr))
-        parv[2] = PunteroACadena(acptr->user->server->name);
+        parv[2] = PunteroACadena(acptr->cli_user->server->name);
       else
         parv[2] = PunteroACadena(acptr->name);
       parc = 3;
@@ -1666,15 +1667,15 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!acptr)
       acptr = next_client(client, tname);
     else
-      acptr = acptr->from;
+      acptr = cli_from(acptr);
     sendto_one(sptr, rpl_str(RPL_TRACELINK), me.name, parv[0],
 #if !defined(GODMODE)
         version, debugmode, tname,
-        acptr ? PunteroACadena(acptr->from->name) : "<No_match>");
+        acptr ? PunteroACadena(cli_from(acptr)->name) : "<No_match>");
 #else /* GODMODE */
         version, debugmode, tname,
-        acptr ? PunteroACadena(acptr->from->name) : "<No_match>", (acptr
-        && acptr->from->serv) ? acptr->from->serv->timestamp : 0);
+        acptr ? PunteroACadena(cli_from(acptr)->name) : "<No_match>", (acptr
+        && cli_from(acptr)->serv) ? cli_from(acptr)->cli_serv->timestamp : 0);
 #endif /* GODMODE */
     return 0;
   }
@@ -1692,11 +1693,11 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (doall)
   {
-    for (acptr = client; acptr; acptr = acptr->next)
+    for (acptr = client; acptr; acptr = acptr->cli_next)
       if (IsUser(acptr))
-        link_u[acptr->from->fd]++;
+        link_u[cli_from(acptr)->fd]++;
       else if (IsServer(acptr))
-        link_s[acptr->from->fd]++;
+        link_s[cli_from(acptr)->fd]++;
   }
 
   /* report all direct connections */
@@ -1716,7 +1717,7 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
       continue;
     conClass = get_client_class(acptr);
 
-    switch (acptr->status)
+    switch (acptr->cli_status)
     {
       case STAT_CONNECTING:
         sendto_one(sptr, rpl_str(RPL_TRACECONNECTING),
@@ -1759,7 +1760,7 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #else
                 get_client_name(acptr, FALSE),
 #endif
-                now - acptr->lasttime);
+                now - cli_lasttime(acptr));
           else
             sendto_one(sptr, rpl_str(RPL_TRACEUSER), me.name, parv[0], conClass,
 #if defined (BDD_VIP)
@@ -1767,7 +1768,7 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #else
                 get_client_name(acptr, FALSE),
 #endif
-                now - acptr->lasttime);
+                now - cli_lasttime(acptr));
           cnt++;
         }
         break;
@@ -1788,22 +1789,23 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
          */
 
       case STAT_SERVER:
-        if (acptr->serv->user)
+        if (acptr->cli_serv->user)
           sendto_one(sptr, rpl_str(RPL_TRACESERVER),
               me.name, parv[0], conClass, link_s[i],
               link_u[i], PunteroACadena(acptr->name),
-              PunteroACadena(acptr->serv->by),
-              PunteroACadena(acptr->serv->user->username),
-              PunteroACadena(acptr->serv->user->host), now - acptr->lasttime,
-              now - acptr->serv->timestamp);
+              PunteroACadena(cli_serv(acptr)->by),
+              PunteroACadena(cli_serv(acptr)->user->username),
+              PunteroACadena(cli_serv(acptr)->user->host), now - cli_lasttime(acptr),
+              now - cli_serv(acptr)->timestamp);
         else
           sendto_one(sptr, rpl_str(RPL_TRACESERVER),
               me.name, parv[0], conClass, link_s[i],
-              link_u[i], PunteroACadena(acptr->name), acptr->serv->by ?
-              acptr->serv->by : "*", "*", me.name,
-              now - acptr->lasttime, now - acptr->serv->timestamp);
+              link_u[i], PunteroACadena(acptr->name), acptr->cli_serv->by ?
+              acptr->cli_serv->by : "*", "*", me.name,
+              now - cli_lasttime(acptr), now - acptr->cli_serv->timestamp);
         cnt++;
         break;
+#if 0
       case STAT_LOG:
         sendto_one(sptr, rpl_str(RPL_TRACELOG),
             me.name, parv[0], LOGFILE, acptr->port);
@@ -1812,8 +1814,9 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
       case STAT_PING:
         sendto_one(sptr, rpl_str(RPL_TRACEPING), me.name,
             parv[0], PunteroACadena(acptr->name),
-            (acptr->acpt) ? PunteroACadena(acptr->acpt->name) : "<null>");
+            (acptr->cli_connect->acpt) ? PunteroACadena(acptr->cli_connect->acpt->name) : "<null>");
         break;
+#endif
       default:                 /* We actually shouldn't come here, -msa */
         sendto_one(sptr, rpl_str(RPL_TRACENEWTYPE), me.name, parv[0],
             PunteroACadena(acptr->name));
@@ -1831,8 +1834,8 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
       /* let the user have some idea that its at the end of the trace */
       sendto_one(sptr, rpl_str(RPL_TRACESERVER),
           me.name, parv[0], 0, link_s[me.fd],
-          link_u[me.fd], "<No_match>", me.serv->by ?
-          me.serv->by : "*", "*", me.name, 0, 0);
+          link_u[me.fd], "<No_match>", cli_serv(&me)->by ?
+          cli_serv(&me)->by : "*", "*", me.name, 0, 0);
     return 0;
   }
   for (cltmp = FirstClass(); doall && cltmp; cltmp = NextClass(cltmp))
@@ -1845,9 +1848,9 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
 /*
  *  m_close                              - added by Darren Reed Jul 13 1992.
  */
-int m_close(aClient *cptr, aClient *sptr, int UNUSED(parc), char *parv[])
+int m_close(struct Client *cptr, struct Client *sptr, int UNUSED(parc), char *parv[])
 {
-  Reg1 aClient *acptr;
+  Reg1 struct Client *acptr;
   Reg2 int i;
   int closed = 0;
 
@@ -1864,7 +1867,7 @@ int m_close(aClient *cptr, aClient *sptr, int UNUSED(parc), char *parv[])
     if (!IsUnknown(acptr) && !IsConnecting(acptr) && !IsHandshake(acptr))
       continue;
     sendto_one(sptr, rpl_str(RPL_CLOSING), me.name, parv[0],
-        get_client_name(acptr, FALSE), acptr->status);
+        get_client_name(acptr, FALSE), cli_status(acptr));
     exit_client(cptr, acptr, &me, "Oper Closing");
     closed++;
   }
@@ -1876,9 +1879,9 @@ int m_close(aClient *cptr, aClient *sptr, int UNUSED(parc), char *parv[])
 /*
  * m_die
  */
-static int m_die_local(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), char *parv[])
+static int m_die_local(struct Client *UNUSED(cptr), struct Client *sptr, int UNUSED(parc), char *parv[])
 {
-  Reg1 aClient *acptr;
+  Reg1 struct Client *acptr;
   Reg2 int i;
 
 #if !defined(LOCOP_DIE)
@@ -1922,9 +1925,9 @@ static int m_die_local(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), c
 }
 #endif
 
-static int m_die_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
+static int m_die_remoto(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  Reg1 aClient *acptr;
+  Reg1 struct Client *acptr;
   Reg2 int i;
   const char *target, *when, *reason;
 
@@ -1980,7 +1983,7 @@ static int m_die_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
   return 0;
 }
 
-int m_die(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_die(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   if (MyUser(sptr))
 #if defined(OPER_DIE) || defined(LOCOP_DIE)
@@ -1992,11 +1995,11 @@ int m_die(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return m_die_remoto(cptr, sptr, parc, parv);
 }
 
-static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, char *comment,
+static void add_gline(struct Client *cptr, struct Client *sptr, int ip_mask, char *host, char *comment,
     char *user, time_t expire, time_t lastmod, time_t lifetime, int local)
 {
 
-  aClient *acptr;
+  struct Client *acptr;
   aGline *agline;
   int fd, gtype = 0;
   char cptr_info_low[REALLEN+1];
@@ -2010,7 +2013,7 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
   if (!lifetime) /* si no me ponen tiempo de vida uso el tiempo de expiracion */
     lifetime = expire;
 
-  if((!IsHub(sptr) || !buscar_uline(cptr->confs, sptr->name)) && !lastmod) /* Si no es hub y no tiene uline y me pasan ultima mod 0 salgo */
+  if((!IsHub(sptr) || !buscar_uline(cli_confs(cptr), sptr->name)) && !lastmod) /* Si no es hub y no tiene uline y me pasan ultima mod 0 salgo */
     return;
 
   /* Inform ops */
@@ -2050,9 +2053,9 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
     if ((acptr = loc_clients[fd]) && !IsMe(acptr))
     {
 
-      if (!acptr->user || (acptr->sockhost
-          && strlen(acptr->sockhost) > (size_t)HOSTLEN)
-          || (acptr->user->username ? strlen(acptr->user->username) : 0) >
+      if (!acptr->cli_user || (acptr->cli_connect->sockhost
+          && strlen(acptr->cli_connect->sockhost) > (size_t)HOSTLEN)
+          || (acptr->cli_user->username ? strlen(acptr->cli_user->username) : 0) >
           (size_t)HOSTLEN)
         continue;               /* these tests right out of
                                    find_kill for safety's sake */
@@ -2078,8 +2081,8 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
 
       if ((GlineIsIpMask(agline) ? match(agline->host, ircd_ntoa(client_addr(acptr))) :
           (GlineIsRealName(agline) ? match_pcre(agline->re, tmp) :
-            match(agline->host, PunteroACadena(acptr->sockhost)))) == 0 &&
-            match(agline->name, PunteroACadena(acptr->user->username)) == 0)
+            match(agline->host, PunteroACadena(acptr->cli_connect->sockhost)))) == 0 &&
+            match(agline->name, PunteroACadena(acptr->cli_user->username)) == 0)
       {
         int longitud;
         char buf[MAXLEN * 2];
@@ -2112,7 +2115,7 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
 
         /* and get rid of him */
         if (sptr != acptr)
-          exit_client_msg(sptr->from, acptr, &me, "G-lined (%s)",
+          exit_client_msg(cli_form(sptr), acptr, &me, "G-lined (%s)",
               agline->reason);
       }
     }
@@ -2139,9 +2142,9 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
  * parv[3] = Comment
  *
  */
-int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_gline(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  aClient *acptr = NULL;        /* Init. to avoid compiler warning. */
+  struct Client *acptr = NULL;        /* Init. to avoid compiler warning. */
 
   aGline *agline, *a2gline;
   char *user, *host;
@@ -2201,7 +2204,7 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[parc - 1] = Comment
  *
  */
-int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
+int ms_gline(struct Client *cptr, struct Client *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
 {
   char *user, *host;
   int active, ip_mask, gtype = 0;
@@ -2229,7 +2232,7 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
   if (*parv[2] == '+' || *parv[2] == '-')
     parv[2]++;              /* step past mode indicator */
 
-  tiene_uline=buscar_uline(cptr->confs, sptr->name);
+  tiene_uline=buscar_uline(cli_confs(cptr), sptr->name);
   
   if(!tiene_uline) /* Si no tiene uline */
   {
@@ -2242,7 +2245,7 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
     {
       if (!((strchr(parv[2], '@')) || (strchr(parv[2], '.')) || (strchr(parv[2], ':'))))
       {
-        aClient *acptr;
+        struct Client *acptr;
 
         acptr = FindClient(parv[2]);
         /* Encontrado, ahora a cambiar por IP */
@@ -2336,7 +2339,7 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
  * parv[3] = Comment
  *
  */
-int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
+int mo_gline(struct Client *cptr, struct Client *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
 {
   char *user, *host;
   int active, ip_mask, gtype = 0;
@@ -2525,8 +2528,8 @@ int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
 #if defined(GPATH)
         write_log(GPATH, "# " TIME_T_FMT
             " %s!%s@%s removed local %s for %s@%s\n",
-            TStime(), parv[0], PunteroACadena(cptr->user->username),
-            cptr->user->host, gtype ? "BADCHAN" : "GLINE", agline->name,
+            TStime(), parv[0], PunteroACadena(cptr->cli_user->username),
+            cptr->cli_user->host, gtype ? "BADCHAN" : "GLINE", agline->name,
             agline->host);
 #endif /* GPATH */
         free_gline(agline, a2gline);  /* remove the gline */
@@ -2554,8 +2557,8 @@ int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
       write_log(GPATH, !expire ? "# " TIME_T_FMT " %s!%s@%s %sactivating "
           "%s for %s@%s\n" : "# " TIME_T_FMT " %s!%s@%s %sactivating %s "
           "for %s@%s and resetting expiration time to " TIME_T_FMT "\n",
-          TStime(), parv[0], PunteroACadena(cptr->user->username),
-          cptr->user->host, active ? "re" : "de", gtype ? "BADCHAN" : "GLINE",
+          TStime(), parv[0], PunteroACadena(cptr->cli_user->username),
+          cptr->cli_user->host, active ? "re" : "de", gtype ? "BADCHAN" : "GLINE",
           agline->name, agline->host, agline->expire);
 #endif /* GPATH */
 
@@ -2569,7 +2572,7 @@ int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
 #if defined(GPATH)
       write_log(GPATH, "# " TIME_T_FMT " %s!%s@%s resetting expiration "
           "time on %s for %s@%s to " TIME_T_FMT "\n", TStime(), parv[0],
-          PunteroACadena(cptr->user->username), cptr->user->host,
+          PunteroACadena(cptr->cli_user->username), cptr->cli_user->host,
           gtype ? "BADCHAN" : "GLINE", agline->name, agline->host,
           agline->expire);
 #endif /* GPATH */
@@ -2582,8 +2585,8 @@ int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
  /*
   * Funcion para propagar una gline a otros servidores
   */
-int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_t lastmod, time_t lifetime, int parc, char **parv) {
-  aClient *acptr = NULL;
+int propaga_gline(struct Client *cptr, struct Client *sptr, int active, time_t expire, time_t lastmod, time_t lifetime, int parc, char **parv) {
+  struct Client *acptr = NULL;
 
   /* forward the message appropriately */
   if (!strCasediff(parv[1], "*")) /* global! */
@@ -2644,7 +2647,7 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
 #endif
   {
 #if !defined(NO_PROTOCOL9)
-    if (Protocol(acptr->from) < 10)
+    if (Protocol(cli_from(acptr)) < 10)
     {
       if(parc>6)
         sendto_one(acptr, active ? ":%s GLINE %s +%s %s %s %s :%s" : ":%s GLINE %s -%s", parv[0], parv[1], parv[2], parv[3], parv[4], parv[5], parv[parc - 1]);  /* single destination */
@@ -2687,9 +2690,9 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
   return 1;
 }
 
-int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtype, time_t expire, time_t lastmod, time_t lifetime, char *who) {
+int modifica_gline(struct Client *cptr, struct Client *sptr, aGline *agline, int gtype, time_t expire, time_t lastmod, time_t lifetime, char *who) {
 
-  if(!buscar_uline(cptr->confs, sptr->name) && /* Si el que la envia no tiene uline Y*/
+  if(!buscar_uline(cli_confs(cptr), sptr->name) && /* Si el que la envia no tiene uline Y*/
       (agline->lastmod >= lastmod))            /* tenemos una version igual o mayor salimos */
     return 0;
 

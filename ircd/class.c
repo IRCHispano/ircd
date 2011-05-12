@@ -18,6 +18,7 @@
  */
 
 #include "sys.h"
+#include "client.h"
 #include "h.h"
 #include "s_debug.h"
 #include "struct.h"
@@ -58,14 +59,14 @@ static unsigned int get_conf_ping(aConfItem *aconf)
   return (BAD_PING);
 }
 
-unsigned int get_client_class(aClient *acptr)
+unsigned int get_client_class(struct Client *acptr)
 {
   Reg1 Link *tmp;
   Reg2 aConfClass *cl;
   unsigned int retc = BAD_CLIENT_CLASS;
 
-  if (acptr && !IsMe(acptr) && !IsPing(acptr) && (acptr->confs))
-    for (tmp = acptr->confs; tmp; tmp = tmp->next)
+  if (acptr && !IsMe(acptr) && !IsPing(acptr) && (cli_confs(acptr)))
+    for (tmp = cli_confs(acptr); tmp; tmp = tmp->next)
     {
       if (!tmp->value.aconf || !(cl = tmp->value.aconf->confClass) ||
           !(tmp->value.aconf->status & (CONF_CLIENT | CONF_CONNECT_SERVER)))
@@ -79,13 +80,13 @@ unsigned int get_client_class(aClient *acptr)
   return (retc);
 }
 
-int unsigned get_client_ping(aClient *acptr)
+int unsigned get_client_ping(struct Client *acptr)
 {
   unsigned int ping = 0, ping2;
   aConfItem *aconf;
   Link *link;
 
-  link = acptr->confs;
+  link = cli_confs(acptr);
 
   if (link)
     while (link)
@@ -196,7 +197,7 @@ void initclass(void)
   NextClass(FirstClass()) = NULL;
 }
 
-void report_classes(aClient *sptr)
+void report_classes(struct Client *sptr)
 {
   aConfClass *cltmp;
 
@@ -208,14 +209,14 @@ void report_classes(aClient *sptr)
   }
 }
 
-size_t get_sendq(aClient *cptr)
+size_t get_sendq(struct Client *cptr)
 {
   size_t sendq = DEFAULTMAXSENDQLENGTH;
   Link *tmp;
   aConfClass *cl;
 
-  if (cptr && !IsMe(cptr) && (cptr->confs))
-    for (tmp = cptr->confs; tmp; tmp = tmp->next)
+  if (cptr && !IsMe(cptr) && cli_confs(cptr))
+    for (tmp = cli_confs(cptr); tmp; tmp = tmp->next)
     {
       if (!tmp->value.aconf || !(cl = tmp->value.aconf->confClass) ||
           !(tmp->value.aconf->status & (CONF_CLIENT | CONF_CONNECT_SERVER)))

@@ -176,7 +176,7 @@ int m_info(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_one(sptr, ":%s %d %s :Birth Date: %s, compile # %s",
         me.name, RPL_INFO, parv[0], creation, generation);
     sendto_one(sptr, ":%s %d %s :On-line since %s",
-        me.name, RPL_INFO, parv[0], myctime(me.firsttime));
+        me.name, RPL_INFO, parv[0], myctime(cli_firsttime(&me)));
     sendto_one(sptr, rpl_str(RPL_ENDOFINFO), me.name, parv[0]);
   }
   return 0;
@@ -217,16 +217,16 @@ int m_links(aClient *cptr, aClient *sptr, int parc, char *parv[])
   else
     mask = parc < 2 ? NULL : parv[1];
 
-  for (acptr = client, collapse(mask); acptr; acptr = acptr->next)
+  for (acptr = client, collapse(mask); acptr; acptr = acptr->cli_next)
   {
     if (!IsServer(acptr) && !IsMe(acptr))
       continue;
     if (!BadPtr(mask) && match(mask, acptr->name))
       continue;
     sendto_one(sptr, rpl_str(RPL_LINKS),
-        me.name, parv[0], acptr->name, acptr->serv->up->name,
+        me.name, parv[0], acptr->name, acptr->cli_serv->up->name,
 #if !defined(GODMODE)
-        acptr->hopcount, acptr->serv->prot,
+        acptr->cli_hopcount, acptr->cli_serv->prot,
 #else /* GODMODE */
         acptr->hopcount, acptr->serv->prot, acptr->serv->timestamp,
         NumServ(acptr),
@@ -275,7 +275,7 @@ void init_counters(void)
  */
 int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  Reg1 struct tm *since_t = localtime(&me.since);
+  Reg1 struct tm *since_t = localtime(&cli_since(&me));
   char since[15];
 
   /* Solo ircops y opers tienen acceso a users remotos */
@@ -430,7 +430,7 @@ int m_motd(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     for (ptr = tdata; ptr; ptr = ptr->next)
     {
-      if (!match(ptr->hostmask, PunteroACadena(cptr->sockhost)))
+      if (!match(ptr->hostmask, PunteroACadena(cptr->cli_connect->sockhost)))
         break;
     }
     if (ptr)

@@ -1,11 +1,13 @@
 /*
- * IRC - Internet Relay Chat, ircd/channel.c
- * Copyright (C) 1996 Carlo Wood (I wish this was C++ - this sucks :/)
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/numnicks.c
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1996 Carlo Wood
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,94 +16,106 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * $Id$
  */
+/** @file
+ * @brief Implementation of numeric nickname operations.
+ * @version $Id$
+ */
+#include "config.h"
 
 #include "numnicks.h"
-#include "sys.h"
-#include "h.h"
-#include "s_debug.h"
-#include "s_serv.h"
-#include "struct.h"
-#include "common.h"
+#include "client.h"
 #include "ircd.h"
-#include "s_misc.h"
+#include "ircd_alloc.h"
+//#include "ircd_log.h"
+#include "ircd_string.h"
 #include "match.h"
 #include "s_bsd.h"
 #include "s_debug.h"
-#include "s_bdd.h"
-#include "channel.h"
-#include "res.h"
-#include "ircd_alloc.h"
+#include "s_misc.h"
+#include "struct.h"
 
+/* #include <assert.h> -- Now using assert in ircd_log.h */
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
-RCSTAG_CC("$Id$");
 
-/*
- * Numeric nicks are new as of version ircu2.10.00beta1.
+/** @page numnicks Numeric Nicks
+ * %Numeric nicks (numnicks) are new as of version ircu2.10.00beta1.
  *
  * The idea is as follows:
  * In most messages (for protocol 10+) the original nick will be
- * replaced by a 3 character string: YXX
- * Where 'Y' represents the server, and 'XX' the nick on that server.
+ * replaced by a 5 character string: YYXXX
+ * Where 'YY' represents the server, and 'XXX' the nick on that server.
  *
- * 'YXX' should not interfer with the input parser, and therefore is
+ * 'YYXXX' should not interfere with the input parser, and therefore is
  * not allowed to contain spaces or a ':'.
- * Also, 'Y' can't start with a '+' because of m_server().
+ * Also, 'YY' can't start with a '+' because of m_server().
  *
  * We keep the characters printable for debugging reasons too.
  *
- * The 'XX' value can be larger then the maximum number of clients
- * per server, we use a mask (struct Server::nn_mask) to get the real
+ * The 'XXX' value can be larger then the maximum number of clients
+ * per server, we use a mask (Server::nn_mask) to get the real
  * client numeric. The overhead is used to have some redundancy so
  * just-disconnected-client aren't confused with just-connected ones.
  */
 
-/*
- * when n2k comes, define this for more capacity
- */
-#undef  EXTENDED_NUMERICS
-
-static int numerics_extendidos = 0;
 
 /* These must be the same on ALL servers ! Do not change ! */
 
+/** Number of bits encoded in one numnick character. */
 #define NUMNICKLOG 6
-#define NUMNICKMAXCHAR 'z'      /* See convert2n[] */
+/** Number of base numnicks. */
 #define NUMNICKBASE 64          /* (2 << NUMNICKLOG) */
+/** Bitmask to select value of next numnick character. */
 #define NUMNICKMASK 63          /* (NUMNICKBASE-1) */
+/** Number of servers representable in a numnick. */
 #define NN_MAX_SERVER 4096      /* (NUMNICKBASE * NUMNICKBASE) */
-#define NN_MAX_CLIENT_SHORT	4096  /* (NUMNICKBASE * NUMNICKBASE) */
-#define NN_MAX_CLIENT_EXT	262144  /* NUMNICKBASE ^ 3 */
+/** Number of clients representable in a numnick. */
+#define NN_MAX_CLIENT_SHORT 4096  /* (NUMNICKBASE * NUMNICKBASE) */
+/** Number of clients extendeds representable in a numnick. */
+#define NN_MAX_CLIENT_EXT 262144    /* NUMNICKBASE ^ 3 */
+#if defined(WEBCHAT)
+/** Number of channels representable in a numchannel. */
+#define NN_MAX_CHANNELS     262144  /* NUMNICKBASE ^ 3 */
+#endif
 
 /*
  * The internal counter for the 'XX' of local clients
  */
+/** If uses extended numerics. */
+static int ext_numerics = 0;
+/** Maximum used server numnick, plus one. */
 static unsigned int lastNNServer = 0;
-static struct Client *server_list[NN_MAX_SERVER];
-
-#ifdef ESNET_NEG
-#define NN_MAX_CHANNELS		262144  /* NUMNICKBASE ^ 3 */
+/** Array of servers indexed by numnick. */
+static struct Client* server_list[NN_MAX_SERVER];
+#if defined(WEBCHAT)
+/** Array of channels indexed by numchannel. */
 static struct Channel *channel_list[NN_MAX_CHANNELS];
 #endif
 
 /* *INDENT-OFF* */
 
-/*
- * convert2y[] converts a numeric to the corresponding character.
+/**
+ * Converts a numeric to the corresponding character.
  * The following characters are currently known to be forbidden:
  *
- * '\0' : Because we use '\0' as end of line.
+ * '\\0' : Because we use '\\0' as end of line.
  *
- * ' '  : Because parse_*() uses this as parameter seperator.
+ * ' '  : Because parse_*() uses this as parameter separator.
+ *
  * ':'  : Because parse_server() uses this to detect if a prefix is a
  *        numeric or a name.
+ *
  * '+'  : Because m_nick() uses this to determine if parv[6] is a
  *        umode or not.
- * '&', '#', '+', '$', '@' and '%' :
+ *
+ * '&', '#', '$', '@' and '%' :
  *        Because m_message() matches these characters to detect special cases.
  */
 static const char convert2y[] = {
@@ -111,6 +125,7 @@ static const char convert2y[] = {
   'w','x','y','z','0','1','2','3','4','5','6','7','8','9','[',']'
 };
 
+/** Converts a character to its (base64) numnick value. */
 static const unsigned int convert2n[] = {
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -133,30 +148,41 @@ static const unsigned int convert2n[] = {
 
 /* *INDENT-ON* */
 
-
-unsigned int base64toint(const char *s)
+/** Convert a string to its value as a numnick.
+ * @param[in] s Numnick string to decode.
+ * @return %Numeric nickname value.
+ */
+unsigned int base64toint(const char* s)
 {
-  unsigned int i = convert2n[(unsigned char)*s++];
-  while (*s)
-  {
+  unsigned int i = convert2n[(unsigned char) *s++];
+  while (*s) {
     i <<= NUMNICKLOG;
-    i += convert2n[(unsigned char)*s++];
+    i += convert2n[(unsigned char) *s++];
   }
   return i;
 }
 
-const char *inttobase64(char *buf, unsigned int v, unsigned int count)
+/** Encode a number as a numnick.
+ * @param[out] buf Output buffer.
+ * @param[in] v Value to encode.
+ * @param[in] count Number of numnick digits to write to \a buf.
+ */
+const char* inttobase64(char* buf, unsigned int v, unsigned int count)
 {
   buf[count] = '\0';
-  while (count > 0)
-  {
+  while (count > 0) {
     buf[--count] = convert2y[(v & NUMNICKMASK)];
     v >>= NUMNICKLOG;
   }
   return buf;
 }
 
-static struct Client *FindXNServer(const char *numeric)
+/** Look up a server by numnick string.
+ * See @ref numnicks for more details.
+ * @param[in] numeric %Numeric nickname of server (may contain trailing junk).
+ * @return %Server with that numnick (or NULL).
+ */
+static struct Client* FindXNServer(const char* numeric)
 {
   char buf[3];
   buf[0] = *numeric++;
@@ -166,90 +192,93 @@ static struct Client *FindXNServer(const char *numeric)
   return server_list[base64toint(buf)];
 }
 
-struct Client *FindNServer(const char *numeric)
+/** Look up a server by numnick string.
+ * See @ref numnicks for more details.
+ * @param[in] numeric %Numeric nickname of server.
+ * @return %Server with that numnick (or NULL).
+ */
+struct Client* FindNServer(const char* numeric)
 {
   unsigned int len = strlen(numeric);
-  
-  /* Si llega un numeric vacio retorno NULL */
-  if (len == 0)
-    return NULL;
 
-  if (len < 3)
-  {
+  if (len < 3) {
     Debug((DEBUG_DEBUG, "FindNServer: %s(%d)", numeric, base64toint(numeric)));
     return server_list[base64toint(numeric)];
   }
-  else if (len == 3)
-  {
+  else if (len == 3) {
     Debug((DEBUG_DEBUG, "FindNServer: %c(%d)", *numeric,
-        convert2n[(unsigned char)*numeric]));
-    return server_list[convert2n[(unsigned char)*numeric]];
+           convert2n[(unsigned char) *numeric]));
+    return server_list[convert2n[(unsigned char) *numeric]];
   }
   return FindXNServer(numeric);
 }
 
-struct Client *findNUser(const char *yxx)
+/** Look up a user by numnick string.
+ * See @ref numnicks for more details.
+ * @param[in] yxx %Numeric nickname of user.
+ * @return %User with that numnick (or NULL).
+ */
+struct Client* findNUser(const char* yxx)
 {
-  struct Client *server = 0;
-  unsigned int len = strlen(yxx);
-  
-  /* Si llega un numeric vacio retorno NULL */
-  if (len == 0)
-    return NULL;
-  
-  if (len == 5)
-  {
-    if (0 != (server = FindXNServer(yxx)))
-    {
+  struct Client* server = 0;
+  if (5 == strlen(yxx)) {
+    if (0 != (server = FindXNServer(yxx))) {
       Debug((DEBUG_DEBUG, "findNUser: %s(%d)", yxx,
-          base64toint(yxx + 2) & server->serv->nn_mask));
-      return server->serv->client_list[base64toint(yxx +
-          2) & server->serv->nn_mask];
+             base64toint(yxx + 2) & cli_serv(server)->nn_mask));
+      return cli_serv(server)->client_list[base64toint(yxx + 2) & cli_serv(server)->nn_mask];
     }
   }
-  else if (0 != (server = FindNServer(yxx)))
-  {
+  else if (0 != (server = FindNServer(yxx))) {
     Debug((DEBUG_DEBUG, "findNUser: %s(%d)",
-        yxx, base64toint(yxx + 1) & server->serv->nn_mask));
-    return server->serv->client_list[base64toint(yxx +
-        1) & server->serv->nn_mask];
+           yxx, base64toint(yxx + 1) & cli_serv(server)->nn_mask));
+    return cli_serv(server)->client_list[base64toint(yxx + 1) & cli_serv(server)->nn_mask];
   }
   return 0;
 }
 
-void RemoveYXXClient(struct Client *server, const char *yxx)
+/** Remove a client from a server's user array.
+ * @param[in] server %Server that owns the user to remove.
+ * @param[in] yxx Numnick of client to remove.
+ */
+void RemoveYXXClient(struct Client* server, const char* yxx)
 {
   assert(0 != server);
   assert(0 != yxx);
-  if (*yxx)
-  {
+  if (*yxx) {
     Debug((DEBUG_DEBUG, "RemoveYXXClient: %s(%d)", yxx,
-        base64toint(yxx) & server->serv->nn_mask));
-    server->serv->client_list[base64toint(yxx) & server->serv->nn_mask] = 0;
+           base64toint(yxx) & cli_serv(server)->nn_mask));
+    cli_serv(server)->client_list[base64toint(yxx) & cli_serv(server)->nn_mask] = 0;
   }
 }
 
-void SetServerYXX(struct Client *cptr, struct Client *server, const char *yxx)
+/** Set a server's numeric nick.
+ * @param[in] cptr %Client that announced the server (ignored).
+ * @param[in,out] server %Server that is being assigned a numnick.
+ * @param[in] yxx %Numeric nickname for server.
+ */
+void SetServerYXX(struct Client* cptr, struct Client* server, const char* yxx)
 {
   unsigned int index;
-  if (Protocol(cptr) > 9)
-  {
-    if (5 == strlen(yxx))
-    {
-      strncpy(server->yxx, yxx, 2);
-      strncpy(server->serv->nn_capacity, yxx + 2, 3);
-    }
-    else
-    {
-      server->yxx[0] = yxx[0];
-      server->serv->nn_capacity[0] = yxx[1];
-      server->serv->nn_capacity[1] = yxx[2];
-    }
-    server->serv->nn_mask = base64toint(server->serv->nn_capacity);
+
+#if defined(P09_SUPPORT)
+  if (Protocol(cptr) > 9) {
+#endif
+  if (5 == strlen(yxx)) {
+    ircd_strncpy(cli_yxx(server), yxx, 2);
+    ircd_strncpy(cli_serv(server)->nn_capacity, yxx + 2, 3);
   }
-  else
-  {
+  else {
+    (cli_yxx(server))[0]               = yxx[0];
+    cli_serv(server)->nn_capacity[0] = yxx[1];
+    cli_serv(server)->nn_capacity[1] = yxx[2];
+  }
+  cli_serv(server)->nn_mask = base64toint(cli_serv(server)->nn_capacity);
+
+#if defined(P09_SUPPORT)
+  }
+  else {
     char buffer[1024];
+#if defined(DDB)
     struct db_reg *reg;
 
     strcpy(buffer, "p09:");
@@ -262,8 +291,17 @@ void SetServerYXX(struct Client *cptr, struct Client *server, const char *yxx)
       inttobase64(server->serv->nn_capacity, 63, 2);
       server->serv->nn_mask = 63;
     }
+#else
+    if (!ircd_strcmp(server->name, "services.irc-dev.net")) {
+      *server->yxx = convert2y[60];
+      inttobase64(server->serv->nn_capacity, 63, 2);
+      server->serv->nn_mask = 63;
+    } 
+#endif
   }
-  index = base64toint(server->yxx);
+#endif
+
+  index = base64toint(cli_yxx(server));
   if (index >= lastNNServer)
     lastNNServer = index + 1;
   server_list[index] = server;
@@ -271,192 +309,179 @@ void SetServerYXX(struct Client *cptr, struct Client *server, const char *yxx)
   /* Note, exit_one_client uses the fact that `client_list' != NULL to
    * determine that SetServerYXX has been called - and then calls
    * ClearServerYXX. However, freeing the allocation happens in free_client() */
-  server->serv->client_list =
-      (struct Client **)MyCalloc(server->serv->nn_mask + 1,
-      sizeof(struct Client *));
+  cli_serv(server)->client_list =
+      (struct Client**) MyCalloc(cli_serv(server)->nn_mask + 1, sizeof(struct Client*));
 }
 
-void SetYXXCapacity(struct Client *c, unsigned int capacity)
+/** Set a server's capacity.
+ * @param[in] c %Server whose capacity is being set.
+ * @param[in] capacity Maximum number of clients the server supports.
+ */
+void SetYXXCapacity(struct Client* c, unsigned int capacity)
 {
-  unsigned int max_clients = 16;
+  unsigned int max_clients   = 16;
   unsigned int nn_max_client = NN_MAX_CLIENT_SHORT;
-
-  /* 
+  /*
    * Calculate mask to be used for the maximum number of clients
    */
   while (max_clients < capacity)
     max_clients <<= 1;
 
-  numerics_extendidos = 0;
-  if (base64toint(c->yxx) >= NUMNICKBASE)
-  {
+  ext_numerics = 0;
+  if (base64toint(cli_yxx(c)) >= NUMNICKBASE) {
     nn_max_client = NN_MAX_CLIENT_EXT;
-    numerics_extendidos = !0;
+    ext_numerics = 1;
   }
 
   /*
    * Sanity checks
    */
-  if (max_clients > nn_max_client)
-  {
-    fprintf(stderr, "MAXCLIENTS (or MAXCONNECTIONS) is (at least) %d "
-        "too large ! Please decrease this value.\n",
-        max_clients - nn_max_client);
-    exit(-1);
+  if (max_clients > nn_max_client) {
+    fprintf(stderr, "maxclients (or maxconnections) is %d too large,"
+            " please decrease this value.\n",
+            capacity - nn_max_client);
+    max_clients = nn_max_client;
   }
   --max_clients;
-  if (numerics_extendidos)
-  {
-    inttobase64(c->serv->nn_capacity, max_clients, 3);
-  }
+  if (ext_numerics)
+    inttobase64(cli_serv(c)->nn_capacity, max_clients, 3);
   else
-  {
-    inttobase64(c->serv->nn_capacity, max_clients, 2);
-  }
-  c->serv->nn_mask = max_clients; /* Our Numeric Nick mask */
-  c->serv->client_list = (struct Client **)MyCalloc(max_clients + 1,
-      sizeof(struct Client *));
-  server_list[base64toint(c->yxx)] = c;
+    inttobase64(cli_serv(c)->nn_capacity, max_clients, 2);
+  cli_serv(c)->nn_mask = max_clients;       /* Our Numeric Nick mask */
+  cli_serv(c)->client_list = (struct Client**) MyCalloc(max_clients + 1,
+                                                     sizeof(struct Client*));
+  server_list[base64toint(cli_yxx(c))] = c;
 }
 
-void SetYXXServerName(struct Client *c, unsigned int numeric)
+/** Set a server's numeric nick.
+ * See @ref numnicks for more details.
+ * @param[in] c %Server that is being assigned a numnick.
+ * @param[in] numeric Numnick value for server.
+ */
+void SetYXXServerName(struct Client* c, unsigned int numeric)
 {
   assert(0 != c);
   assert(numeric < NN_MAX_SERVER);
 
   if (numeric >= NUMNICKBASE)
-  {
-    inttobase64(c->yxx, numeric, 2);
-  }
+    inttobase64(cli_yxx(c), numeric, 2);
   else
-  {
-    c->yxx[0] = convert2y[numeric];
-  }
+    cli_yxx(c)[0] = convert2y[numeric];
+
   if (numeric >= lastNNServer)
     lastNNServer = numeric + 1;
   server_list[numeric] = c;
 }
 
+/** Unassign a server's numnick.
+ * @param[in] server %Server that should be removed from the numnick table.
+ */
 void ClearServerYXX(const struct Client *server)
 {
-  unsigned int index = base64toint(server->yxx);
-  if (server_list[index] == server) /* Sanity check */
+  unsigned int index = base64toint(cli_yxx(server));
+  if (server_list[index] == server)     /* Sanity check */
     server_list[index] = 0;
 }
 
-/*
- * SetRemoteNumNick()
- *
- * Register numeric of new, remote, client.
+/** Register numeric of new (remote) client.
+ * See @ref numnicks for more details.
  * Add it to the appropriate client_list.
+ * @param[in] acptr %User being registered.
+ * @param[in] yxx User's numnick.
  */
-void SetRemoteNumNick(struct Client *acptr, const char *yxx)
+void SetRemoteNumNick(struct Client* acptr, const char *yxx)
 {
-  struct Client **acptrp;
-  struct Client *server = acptr->user->server;
+  struct Client** acptrp;
+  struct Client*  server = cli_user(acptr)->server;
 
-  if (5 == strlen(yxx))
-  {
-    strcpy(acptr->yxx, yxx + 2);
+  if (5 == strlen(yxx)) {
+    strcpy(cli_yxx(acptr), yxx + 2);
   }
-  else
-  {
-    acptr->yxx[0] = *++yxx;
-    acptr->yxx[1] = *++yxx;
-    acptr->yxx[2] = 0;
+  else {
+    (cli_yxx(acptr))[0] = *++yxx;
+    (cli_yxx(acptr))[1] = *++yxx;
+    (cli_yxx(acptr))[2] = 0;
   }
-  Debug((DEBUG_DEBUG, "SetRemoteNumNick: %s(%d)", acptr->yxx,
-      base64toint(acptr->yxx) & server->serv->nn_mask));
+  Debug((DEBUG_DEBUG, "SetRemoteNumNick: %s(%d)", cli_yxx(acptr),
+         base64toint(cli_yxx(acptr)) & cli_serv(server)->nn_mask));
 
-  acptrp =
-      &server->serv->client_list[base64toint(acptr->yxx) & server->
-      serv->nn_mask];
-  if (*acptrp)
-  {
+  acptrp = &(cli_serv(server))->client_list[base64toint(cli_yxx(acptr)) & cli_serv(server)->nn_mask];
+  if (*acptrp) {
     /*
      * this exits the old client in the array, not the client
      * that is being set
      */
-    exit_client(acptr->from, *acptrp, server, "Numeric nick collision (Ghost)");
+    exit_client(cli_from(acptr), *acptrp, server, "Numeric nick collision (Ghost)");
   }
   *acptrp = acptr;
 }
 
 
-/*
- * SetLocalNumNick()
- *
- * Register numeric of new, local, client. Add it to our client_list.
- * Muxtex needed if threaded
+/** Register numeric of new (local) client.
+ * See @ref numnicks for more details.
+ * Assign a numnick and add it to our client_list.
+ * @param[in] cptr %User being registered.
  */
 int SetLocalNumNick(struct Client *cptr)
 {
-  static unsigned int last_nn = 0;
-  static int last_numerics_extendidos = 0;
-  struct Client **client_list = me.serv->client_list;
-  unsigned int mask = me.serv->nn_mask;
-  unsigned int count = 0;
-  int max_client = NN_MAX_CLIENT_SHORT;
+  static unsigned int last_nn     = 0;
+  static int last_ext_numerics    = 0;
+  struct Client**     client_list = cli_serv(&me)->client_list;
+  unsigned int        mask        = cli_serv(&me)->nn_mask;
+  unsigned int        count       = 0;
+  int max_client                  = NN_MAX_CLIENT_SHORT;
 
-  assert(cptr->user->server == &me);
+  assert(cli_user(cptr)->server == &me);
 
-  if (numerics_extendidos)
+  if (ext_numerics)
     max_client = NN_MAX_CLIENT_EXT;
 
-/*
-** Esto es por si se produce un cambio de "numeric"
-** con un "rehash" o similar.
-*/
-  if (numerics_extendidos != last_numerics_extendidos)
-  {
-    last_numerics_extendidos = numerics_extendidos;
+  /* If changes for a rehash */
+  if (ext_numerics != last_ext_numerics) {
+    last_ext_numerics = ext_numerics;
     last_nn = 0;
   }
 
-  while (client_list[last_nn & mask])
-  {
-    if (++count == max_client)
-    {
+  while (client_list[last_nn & mask]) {
+    if (++count == max_client) {
       assert(count < max_client);
       return 0;
     }
     if (++last_nn == max_client)
       last_nn = 0;
   }
-  client_list[last_nn & mask] = cptr; /* Reserve the numeric ! */
+  client_list[last_nn & mask] = cptr;  /* Reserve the numeric ! */
 
-  if (numerics_extendidos)
-  {
-    inttobase64(cptr->yxx, last_nn, 3);
-  }
+  if (ext_numerics)
+    inttobase64(cli_yxx(cptr), last_nn, 3);
   else
-  {
-    inttobase64(cptr->yxx, last_nn, 2);
-  }
+    inttobase64(cli_yxx(cptr), last_nn, 2);
   if (++last_nn == max_client)
     last_nn = 0;
   return 1;
 }
 
-/* 
- * markMatchexServer()
- * Mark all servers whose name matches the given (compiled) mask
- * and return their count, abusing FLAGS_MAP for this :)
+/** Mark servers whose name matches the given (compiled) mask by
+ * setting their FLAG_MAP flag.
+ * @param[in] cmask Compiled mask for server names.
+ * @param[in] minlen Minimum match length for \a cmask.
+ * @return Number of servers marked.
  */
 int markMatchexServer(const char *cmask, int minlen)
 {
   int cnt = 0;
-  int i;
+  unsigned int i;
   struct Client *acptr;
 
-  for (i = 0; i < lastNNServer; i++)
-  {
+  for (i = 0; i < lastNNServer; i++) {
     if ((acptr = server_list[i]))
     {
-      if (matchexec(acptr->name, cmask, minlen))
+      if (matchexec(cli_name(acptr), cmask, minlen))
+        //ClrFlag(acptr, FLAG_MAP);
         acptr->flags &= ~FLAGS_MAP;
       else
       {
+        //SetFlag(acptr, FLAG_MAP);
         acptr->flags |= FLAGS_MAP;
         cnt++;
       }
@@ -465,17 +490,19 @@ int markMatchexServer(const char *cmask, int minlen)
   return cnt;
 }
 
-struct Client *find_match_server(char *mask)
+/** Find first server whose name matches the given mask.
+ * @param[in,out] mask %Server name mask (collapse()d in-place).
+ * @return Matching server with lowest numnick value (or NULL).
+ */
+struct Client* find_match_server(char *mask)
 {
   struct Client *acptr;
-  int i;
+  unsigned int i;
 
-  if (!(BadPtr(mask)))
-  {
+  if (!(BadPtr(mask))) {
     collapse(mask);
-    for (i = 0; i < lastNNServer; i++)
-    {
-      if ((acptr = server_list[i]) && (!match(mask, acptr->name)))
+    for (i = 0; i < lastNNServer; i++) {
+      if ((acptr = server_list[i]) && (!match(mask, cli_name(acptr))))
         return acptr;
     }
   }
@@ -580,6 +607,7 @@ void base64toip(const char* input, struct irc_in_addr* addr)
   }
 }
 
+#if defined(P09_SUPPORT)
 /*
  * CreateNNforProtocol9server
  *
@@ -613,17 +641,21 @@ const char *CreateNNforProtocol9server(const struct Client *server)
     serv->nn_last = 0;
   return YXX;
 }
+#endif
 
-#ifdef ESNET_NEG
+#if defined(WEBCHAT)
+/** Register numeric of new channel.
+ * See @ref numnicks for more details.
+ * Assign a numnick and add it to our channel_list.
+ * @param[in] chptr %Channel being created.
+ *
 int SetXXXChannel(struct Channel *chptr)
 {
   static unsigned int last_cn = 0;
-  unsigned int count = 0;
+  unsigned int count          = 0;
 
-  while (channel_list[last_cn & (NN_MAX_CHANNELS-1)])
-  {
-    if (++count == NN_MAX_CHANNELS)
-    {
+  while (channel_list[last_cn & (NN_MAX_CHANNELS-1)]) {
+    if (++count == NN_MAX_CHANNELS) {
       assert(count < NN_MAX_CHANNELS);
       return 0;
     }
@@ -639,22 +671,21 @@ int SetXXXChannel(struct Channel *chptr)
   return 1;
 }
 
+/** Remove a channel from a channel array.
+ * @param[in] xxx Numnick of channel to remove.
+ */
 void RemoveXXXChannel(const char *xxx)
 {
+  assert(0 != xxx);
   if (*xxx)
-  {
     channel_list[base64toint(xxx) & (NN_MAX_CHANNELS-1)] = 0;
-  }
 }
-
-#endif
 
 void buf_to_base64_r(unsigned char *out, const unsigned char *buf, size_t buf_len)
 {
         size_t i, j;
         uint32_t limb;
 
-/*        out = (unsigned char*) malloc(((buf_len * 8 + 5) / 6) + 5); */
 
         for (i = 0, j = 0, limb = 0; i + 2 < buf_len; i += 3, j += 4) {
                 limb =
@@ -745,3 +776,4 @@ size_t base64_to_buf_r(unsigned char *buf, unsigned char *str)
         return buf_len;
 }
 
+#endif /* WEBCHAT */

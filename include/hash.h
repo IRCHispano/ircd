@@ -42,11 +42,14 @@
  */
 
 /* Raw calls, expect a core if you pass a NULL or zero-length name */
-#define SeekChannel(name)	hSeekChannel((name))
-#define SeekClient(name)	hSeekClient((name), ~StatusMask(STAT_PING))
-#define SeekUser(name)   	hSeekClient((name), StatusMask(STAT_USER))
-#define SeekServer(name)	hSeekClient((name), StatusMask(STAT_ME) | \
-                                                    StatusMask(STAT_SERVER) )
+/** Search for a channel by name. */
+#define SeekChannel(name)       hSeekChannel((name))
+/** Search for any client by name. */
+#define SeekClient(name)        hSeekClient((name), ~0)
+/** Search for a registered user by name. */
+#define SeekUser(name)          hSeekClient((name), (STAT_USER))
+/** Search for a server by name. */
+#define SeekServer(name)        hSeekClient((name), (STAT_ME | STAT_SERVER))
 
 /* Safer macros with sanity check on name, WARNING: these are _macros_,
    no side effects allowed on <name> ! */

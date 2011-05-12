@@ -20,6 +20,7 @@
 
 #include "sys.h"
 #include <stdio.h>
+#include "client.h"
 #include "h.h"
 #include "s_debug.h"
 #include "struct.h"
@@ -70,7 +71,7 @@ int sdbflag;
  * like Persons and yet unknown connections...
  */
 
-static void dead_link(aClient *to, char *notice)
+static void dead_link(struct Client *to, char *notice)
 {
   to->flags |= FLAGS_DEADSOCKET;
   
@@ -78,8 +79,8 @@ static void dead_link(aClient *to, char *notice)
    * If because of BUFFERPOOL problem then clean dbuf's now so that
    * notices don't hurt operators below.
    */
-  DBufClear(&to->recvQ);
-  DBufClear(&to->sendQ);
+  DBufClear(&cli_recvQ(to));
+  DBufClear(&to->cli_connect->sendQ);
 
   /* Keep a copy of the last comment, for later use... */
   SlabStringAllocDup(&(to->info), notice, REALLEN);
@@ -102,15 +103,15 @@ static void dead_link(aClient *to, char *notice)
 void flush_connections(int fd)
 {
   Reg1 int i;
-  Reg2 aClient *cptr;
+  Reg2 struct Client *cptr;
 
   if (fd == me.fd)
   {
     for (i = highest_fd; i >= 0; i--)
-      if ((cptr = loc_clients[i]) && DBufLength(&cptr->sendQ) > 0)
+      if ((cptr = loc_clients[i]) && DBufLength(&cptr->cli_connect->sendQ) > 0)
         send_queued(cptr);
   }
-  else if (fd >= 0 && (cptr = loc_clients[fd]) && DBufLength(&cptr->sendQ) > 0)
+  else if (fd >= 0 && (cptr = loc_clients[fd]) && DBufLength(&cptr->cli_connect->sendQ) > 0)
     send_queued(cptr);
 }
 
@@ -127,7 +128,7 @@ void flush_sendq_except(const struct DBuf *one)
   struct Client *cptr;
   for (i = highest_fd; i >= 0; i--)
   {
-    if ((cptr = loc_clients[i]) && one != &cptr->sendQ)
+    if ((cptr = loc_clients[i]) && one != &cptr->cli_connect->sendQ)
       send_queued(cptr);
   }
 }
@@ -139,7 +140,7 @@ void flush_sendq_except(const struct DBuf *one)
  * when there is a chance that some output would be possible. This
  * attempts to empty the send queue as far as possible...
  */
-void send_queued(aClient *to)
+void send_queued(struct Client *to)
 {
 #if !defined(pyr)
   if (to->flags & FLAGS_BLOCKED) {
@@ -167,13 +168,13 @@ void send_queued(aClient *to)
      */
     return;
   }
-  while (DBufLength(&to->sendQ) > 0)
+  while (DBufLength(&to->cli_connect->sendQ) > 0)
   {
     const char *msg;
     size_t len, rlen;
     int tmp;
 
-    msg = dbuf_map(&to->sendQ, &len);
+    msg = dbuf_map(&to->cli_connect->sendQ, &len);
     /* Returns always len > 0 */
     if ((tmp = deliver_it(to, msg, len)) < 0)
     {
@@ -181,8 +182,8 @@ void send_queued(aClient *to)
       return;
     }
     rlen = tmp;
-    dbuf_delete(&to->sendQ, rlen);
-    to->lastsq = DBufLength(&to->sendQ) / 1024;
+    dbuf_delete(&to->cli_connect->sendQ, rlen);
+    cli_lastsq(to) = DBufLength(&to->cli_connect->sendQ) / 1024;
     if (rlen < len)
     {
       to->flags |= FLAGS_BLOCKED; /* Wait till select() says
@@ -199,7 +200,7 @@ void send_queued(aClient *to)
 /*
  *  send message to single client
  */
-void sendto_one(aClient *to, char *pattern, ...)
+void sendto_one(struct Client *to, char *pattern, ...)
 {
   va_list vl;
   va_start(vl, pattern);
@@ -207,12 +208,12 @@ void sendto_one(aClient *to, char *pattern, ...)
   va_end(vl);
 }
 
-void sendto_one_hunt(aClient *to, aClient *from, char *cmd, char *token, const char *pattern, ...)
+void sendto_one_hunt(struct Client *to, struct Client *from, char *cmd, char *token, const char *pattern, ...)
 {
   va_list vl;
 
 #if !defined(NO_PROTOCOL9)
-  if (Protocol(to->from) > 9)
+  if (Protocol(cli_from(to)) > 9)
   {
 #endif
     if (IsUser(from))
@@ -234,16 +235,16 @@ void sendto_one_hunt(aClient *to, aClient *from, char *cmd, char *token, const c
 /*
  * Envio un comando a otro servidor o usuario
  */
-void sendcmdto_one(aClient *to, aClient *from, char *cmd, char *token, const char *pattern, ...)
+void sendcmdto_one(struct Client *to, struct Client *from, char *cmd, char *token, const char *pattern, ...)
 {
   va_list vl;
   
   /* Evito que el mensaje vuelva al origen */
-  if(from->from==to->from)
+  if(cli_from(from)==cli_from(to))
     return;
   
 #if !defined(NO_PROTOCOL9)
-  if (Protocol(to->from) > 9)
+  if (Protocol(cli_from(to)) > 9)
   {
 #endif
     if (IsUser(from)) {
@@ -274,7 +275,7 @@ void sendcmdto_one(aClient *to, aClient *from, char *cmd, char *token, const cha
   sendbufto_one(to);
 }
 
-void vsendto_one(aClient *to, char *pattern, va_list vl)
+void vsendto_one(struct Client *to, char *pattern, va_list vl)
 {
   va_list vlcopy;
   va_copy(vlcopy,vl);
@@ -282,14 +283,14 @@ void vsendto_one(aClient *to, char *pattern, va_list vl)
   sendbufto_one(to);
 }
 
-void sendbufto_one(aClient *to)
+void sendbufto_one(struct Client *to)
 {
   int len;
 
   Debug((DEBUG_SEND, "Sending [%s] to %s", sendbuf, to->name));
 
-  if (to->from)
-    to = to->from;
+  if (cli_from(to))
+    to = cli_from(to);
   if (IsDead(to)) {
     return;                     /* This socket has already
                                    been marked as dead */
@@ -324,17 +325,17 @@ void sendbufto_one(aClient *to)
     return;
   }
 
-  if (DBufLength(&to->sendQ) > get_sendq(to))
+  if (DBufLength(&to->cli_connect->sendQ) > get_sendq(to))
   {
     if (IsServer(to))
       sendto_ops("Max SendQ limit exceeded for %s: "
           SIZE_T_FMT " > " SIZE_T_FMT, to->name,
-          DBufLength(&to->sendQ), get_sendq(to));
+          DBufLength(&to->cli_connect->sendQ), get_sendq(to));
     dead_link(to, "Max sendQ exceeded");
     return;
   }
 
-  else if (!dbuf_put(to, &to->sendQ, sendbuf, len))
+  else if (!dbuf_put(to, &to->cli_connect->sendQ, sendbuf, len))
   {
     dead_link(to, "Buffer allocation error");
     return;
@@ -368,10 +369,10 @@ void sendbufto_one(aClient *to)
    * because it counts messages even if queued, but bytes
    * only really sent. Queued bytes get updated in SendQueued.
    */
-  to->sendM += 1;
-  me.sendM += 1;
-  if (to->acpt != &me)
-    to->acpt->sendM += 1;
+  to->cli_connect->sendM += 1;
+  me.cli_connect->sendM += 1;
+  if (to->cli_connect->acpt != &me)
+    to->cli_connect->acpt->cli_connect->sendM += 1;
   /*
    * This little bit is to stop the sendQ from growing too large when
    * there is no need for it to. Thus we call send_queued() every time
@@ -380,13 +381,13 @@ void sendbufto_one(aClient *to)
    * trying to flood that link with data (possible during the net
    * relinking done by servers with a large load).
    */
-  if (DBufLength(&to->sendQ) / 1024 > to->lastsq)
+  if (DBufLength(&to->cli_connect->sendQ) / 1024 > cli_lastsq(to))
     send_queued(to);
   else
     UpdateWrite(to);
 }
 
-static void vsendto_prefix_one(aClient *to, aClient *from,
+static void vsendto_prefix_one(struct Client *to, struct Client *from,
     char *pattern, va_list vlorig)
 {
   va_list vl;
@@ -396,13 +397,13 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
     static char sender[HOSTLEN + NICKLEN + USERLEN + 5];
     char *par;
     int flag = 0;
-    Reg3 anUser *user = from->user;
+    Reg3 anUser *user = from->cli_user;
 
     par = va_arg(vl, char *);
     strcpy(sender, from->name);
 
 #if defined(ESNET_NEG)
-    if (user && !(to->negociacion & USER_TOK))
+    if (user && !(to->cli_connect->negociacion & USER_TOK))
 #else
     if (user)
 #endif
@@ -428,7 +429,7 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
      * also since username/nick may have had a '@' in them. -avalon
      */
 #if defined(ESNET_NEG)
-    if (!flag && MyConnect(from) && user->host && !(to->negociacion & USER_TOK))
+    if (!flag && MyConnect(from) && user->host && !(to->cli_connect->negociacion & USER_TOK))
 #else
     if (!flag && MyConnect(from) && user->host)
 #endif
@@ -453,12 +454,12 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
   sendbufto_one(to);
 }
 
-void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
+void sendto_channel_butone(struct Client *one, struct Client *from, aChannel *chptr,
     char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   Reg3 int i;
 
   va_start(vl, pattern);
@@ -467,17 +468,17 @@ void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
   for (lp = chptr->members; lp; lp = lp->next)
   {
     acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
+    if (cli_from(acptr) == one ||   /* ...was the one I should skip */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
     if (MyConnect(acptr))       /* (It is always a client) */
       vsendto_prefix_one(acptr, from, pattern, vl);
-    else if (sentalong[(i = acptr->from->fd)] != sentalong_marker)
+    else if (sentalong[(i = cli_from(acptr)->fd)] != sentalong_marker)
     {
       sentalong[i] = sentalong_marker;
       /* Don't send channel messages to links that are still eating
          the net.burst: -- Run 2/1/1997 */
-      if (!IsBurstOrBurstAck(acptr->from))
+      if (!IsBurstOrBurstAck(cli_from(acptr)))
         vsendto_prefix_one(acptr, from, pattern, vl);
     }
   }
@@ -486,12 +487,12 @@ void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
 }
 
 #if defined(ESNET_NEG)
-void sendto_channel_tok_butone(aClient *one, aClient *from, aChannel *chptr,
+void sendto_channel_tok_butone(struct Client *one, struct Client *from, aChannel *chptr,
     char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   Reg3 int i;
 
   va_start(vl, pattern);
@@ -500,11 +501,11 @@ void sendto_channel_tok_butone(aClient *one, aClient *from, aChannel *chptr,
   for (lp = chptr->members; lp; lp = lp->next)
   {
     acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
+    if (cli_from(acptr) == one ||   /* ...was the one I should skip */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
     if (MyConnect(acptr)) {       /* (It is always a client) */
-      if((acptr->negociacion & USER_TOK))
+      if((acptr->cli_connect->negociacion & USER_TOK))
         vsendto_prefix_one(acptr, from, pattern, vl);
     }
   }
@@ -512,12 +513,12 @@ void sendto_channel_tok_butone(aClient *one, aClient *from, aChannel *chptr,
   return;
 }
 
-void sendto_channel_notok_butone(aClient *one, aClient *from, aChannel *chptr,
+void sendto_channel_notok_butone(struct Client *one, struct Client *from, aChannel *chptr,
     char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   Reg3 int i;
 
   va_start(vl, pattern);
@@ -526,19 +527,19 @@ void sendto_channel_notok_butone(aClient *one, aClient *from, aChannel *chptr,
   for (lp = chptr->members; lp; lp = lp->next)
   {
     acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
+    if (cli_from(acptr) == one ||   /* ...was the one I should skip */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
     if (MyConnect(acptr)) {      /* (It is always a client) */
-      if(!(acptr->negociacion & USER_TOK))
+      if(!(acptr->cli_connect->negociacion & USER_TOK))
         vsendto_prefix_one(acptr, from, pattern, vl);
     }
-    else if (sentalong[(i = acptr->from->fd)] != sentalong_marker)
+    else if (sentalong[(i = cli_from(acptr)->fd)] != sentalong_marker)
     {
       sentalong[i] = sentalong_marker;
       /* Don't send channel messages to links that are still eating
          the net.burst: -- Run 2/1/1997 */
-      if (!IsBurstOrBurstAck(acptr->from))
+      if (!IsBurstOrBurstAck(cli_from(acptr)))
         vsendto_prefix_one(acptr, from, pattern, vl);
     }
   }
@@ -547,12 +548,12 @@ void sendto_channel_notok_butone(aClient *one, aClient *from, aChannel *chptr,
 }
 #endif
 
-void sendto_channel_color_butone(aClient *one, aClient *from, aChannel *chptr,
+void sendto_channel_color_butone(struct Client *one, struct Client *from, aChannel *chptr,
     char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   Reg3 int i;
 
   va_start(vl, pattern);
@@ -561,19 +562,19 @@ void sendto_channel_color_butone(aClient *one, aClient *from, aChannel *chptr,
   for (lp = chptr->members; lp; lp = lp->next)
   {
     acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
+    if (cli_from(acptr) == one ||   /* ...was the one I should skip */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
     if (MyConnect(acptr)) {       /* (It is always a client) */
       if(!IsStripColor(acptr))
         vsendto_prefix_one(acptr, from, pattern, vl);
     }
-    else if (sentalong[(i = acptr->from->fd)] != sentalong_marker)
+    else if (sentalong[(i = cli_from(acptr)->fd)] != sentalong_marker)
     {
       sentalong[i] = sentalong_marker;
       /* Don't send channel messages to links that are still eating
          the net.burst: -- Run 2/1/1997 */
-      if (!IsBurstOrBurstAck(acptr->from))
+      if (!IsBurstOrBurstAck(cli_from(acptr)))
         vsendto_prefix_one(acptr, from, pattern, vl);
     }
   }
@@ -582,12 +583,12 @@ void sendto_channel_color_butone(aClient *one, aClient *from, aChannel *chptr,
 }
 
 #if defined(ESNET_NEG)
-void sendto_channel_tok_color_butone(aClient *one, aClient *from, aChannel *chptr,
+void sendto_channel_tok_color_butone(struct Client *one, struct Client *from, aChannel *chptr,
     char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   Reg3 int i;
 
   va_start(vl, pattern);
@@ -596,11 +597,11 @@ void sendto_channel_tok_color_butone(aClient *one, aClient *from, aChannel *chpt
   for (lp = chptr->members; lp; lp = lp->next)
   {
     acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
+    if (cli_from(acptr) == one ||   /* ...was the one I should skip */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
     if (MyConnect(acptr)) {       /* (It is always a client) */
-      if(!IsStripColor(acptr) && (acptr->negociacion & USER_TOK))
+      if(!IsStripColor(acptr) && (acptr->cli_connect->negociacion & USER_TOK))
         vsendto_prefix_one(acptr, from, pattern, vl);
     }
   }
@@ -608,12 +609,12 @@ void sendto_channel_tok_color_butone(aClient *one, aClient *from, aChannel *chpt
   return;
 }
 
-void sendto_channel_notok_color_butone(aClient *one, aClient *from, aChannel *chptr,
+void sendto_channel_notok_color_butone(struct Client *one, struct Client *from, aChannel *chptr,
     char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   Reg3 int i;
 
   va_start(vl, pattern);
@@ -622,19 +623,19 @@ void sendto_channel_notok_color_butone(aClient *one, aClient *from, aChannel *ch
   for (lp = chptr->members; lp; lp = lp->next)
   {
     acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
+    if (cli_from(acptr) == one ||   /* ...was the one I should skip */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
     if (MyConnect(acptr)) {       /* (It is always a client) */
-      if(!IsStripColor(acptr) && !(acptr->negociacion & USER_TOK))
+      if(!IsStripColor(acptr) && !(acptr->cli_connect->negociacion & USER_TOK))
         vsendto_prefix_one(acptr, from, pattern, vl);
     }
-    else if (sentalong[(i = acptr->from->fd)] != sentalong_marker)
+    else if (sentalong[(i = cli_from(acptr)->fd)] != sentalong_marker)
     {
       sentalong[i] = sentalong_marker;
       /* Don't send channel messages to links that are still eating
          the net.burst: -- Run 2/1/1997 */
-      if (!IsBurstOrBurstAck(acptr->from))
+      if (!IsBurstOrBurstAck(cli_from(acptr)))
         vsendto_prefix_one(acptr, from, pattern, vl);
     }
   }
@@ -643,12 +644,12 @@ void sendto_channel_notok_color_butone(aClient *one, aClient *from, aChannel *ch
 }
 #endif
 
-void sendto_channel_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
+void sendto_channel_nocolor_butone(struct Client *one, struct Client *from, aChannel *chptr,
     char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   Reg3 int i;
 
   va_start(vl, pattern);
@@ -657,7 +658,7 @@ void sendto_channel_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
   for (lp = chptr->members; lp; lp = lp->next)
   {
     acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
+    if (cli_from(acptr) == one ||   /* ...was the one I should skip */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
     if (MyConnect(acptr) && IsStripColor(acptr))       /* (It is always a client) */
@@ -668,12 +669,12 @@ void sendto_channel_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
 }
 
 #if defined(ESNET_NEG)
-void sendto_channel_tok_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
+void sendto_channel_tok_nocolor_butone(struct Client *one, struct Client *from, aChannel *chptr,
     char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   Reg3 int i;
 
   va_start(vl, pattern);
@@ -682,22 +683,22 @@ void sendto_channel_tok_nocolor_butone(aClient *one, aClient *from, aChannel *ch
   for (lp = chptr->members; lp; lp = lp->next)
   {
     acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
+    if (cli_from(acptr) == one ||   /* ...was the one I should skip */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
-    if (MyConnect(acptr) && IsStripColor(acptr) && (acptr->negociacion & USER_TOK))       /* (It is always a client) */
+    if (MyConnect(acptr) && IsStripColor(acptr) && (acptr->cli_connect->negociacion & USER_TOK))       /* (It is always a client) */
       vsendto_prefix_one(acptr, from, pattern, vl);
   }
   va_end(vl);
   return;
 }
 
-void sendto_channel_notok_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
+void sendto_channel_notok_nocolor_butone(struct Client *one, struct Client *from, aChannel *chptr,
     char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   Reg3 int i;
 
   va_start(vl, pattern);
@@ -706,10 +707,10 @@ void sendto_channel_notok_nocolor_butone(aClient *one, aClient *from, aChannel *
   for (lp = chptr->members; lp; lp = lp->next)
   {
     acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
+    if (cli_from(acptr) == one ||   /* ...was the one I should skip */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
-    if (MyConnect(acptr) && IsStripColor(acptr) && !(acptr->negociacion & USER_TOK))       /* (It is always a client) */
+    if (MyConnect(acptr) && IsStripColor(acptr) && !(acptr->cli_connect->negociacion & USER_TOK))       /* (It is always a client) */
       vsendto_prefix_one(acptr, from, pattern, vl);
   }
   va_end(vl);
@@ -717,12 +718,12 @@ void sendto_channel_notok_nocolor_butone(aClient *one, aClient *from, aChannel *
 }
 #endif
 
-void sendto_lchanops_butone(aClient *one, aClient *from, aChannel *chptr,
+void sendto_lchanops_butone(struct Client *one, struct Client *from, aChannel *chptr,
     char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
 
   va_start(vl, pattern);
 
@@ -740,12 +741,12 @@ void sendto_lchanops_butone(aClient *one, aClient *from, aChannel *chptr,
   return;
 }
 
-void sendto_chanopsserv_butone(aClient *one, aClient *from, aChannel *chptr,
+void sendto_chanopsserv_butone(struct Client *one, struct Client *from, aChannel *chptr,
     char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
   Reg3 int i;
 #if !defined(NO_PROTOCOL9)
   char target[128];
@@ -758,20 +759,20 @@ void sendto_chanopsserv_butone(aClient *one, aClient *from, aChannel *chptr,
   for (lp = chptr->members; lp; lp = lp->next)
   {
     acptr = lp->value.cptr;
-    if (acptr->from == acptr || /* Skip local clients */
+    if (cli_from(acptr) == acptr || /* Skip local clients */
 #if !defined(NO_PROTOCOL9)
-        Protocol(acptr->from) < 10 || /* Skip P09 links */
+        Protocol(cli_from(acptr)) < 10 || /* Skip P09 links */
 #endif
-        acptr->from == one ||   /* ...was the one I should skip */
+        cli_from(acptr) == one ||   /* ...was the one I should skip */
         !(lp->flags & CHFL_CHANOP) || /* Skip non chanops */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
-    if (sentalong[(i = acptr->from->fd)] != sentalong_marker)
+    if (sentalong[(i = cli_from(acptr)->fd)] != sentalong_marker)
     {
       sentalong[i] = sentalong_marker;
       /* Don't send channel messages to links that are
          still eating the net.burst: -- Run 2/1/1997 */
-      if (!IsBurstOrBurstAck(acptr->from))
+      if (!IsBurstOrBurstAck(cli_from(acptr)))
         vsendto_prefix_one(acptr, from, pattern, vl);
     }
   }
@@ -785,28 +786,28 @@ void sendto_chanopsserv_butone(aClient *one, aClient *from, aChannel *chptr,
   for (lp = chptr->members; lp; lp = lp->next)
   {
     acptr = lp->value.cptr;
-    if (acptr->from == acptr || /* Skip local clients */
-        Protocol(acptr->from) > 9 ||  /* Skip P10 servers */
-        acptr->from == one ||   /* ...was the one I should skip */
+    if (cli_from(acptr) == acptr || /* Skip local clients */
+        Protocol(cli_from(acptr)) > 9 ||  /* Skip P10 servers */
+        cli_from(acptr) == one ||   /* ...was the one I should skip */
         !(lp->flags & CHFL_CHANOP) || /* Skip non chanops */
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
-    if (sentalong[(i = acptr->from->fd)] != sentalong_marker)
+    if (sentalong[(i = cli_from(acptr)->fd)] != sentalong_marker)
     {
       sentalong[i] = sentalong_marker;
       /* Don't send channel messages to links that are
          still eating the net.burst: -- Run 2/1/1997 */
-      if (!IsBurstOrBurstAck(acptr->from))
+      if (!IsBurstOrBurstAck(cli_from(acptr)))
       {
         Link *lp2;
-        aClient *acptr2;
+        struct Client *acptr2;
         tp = target;
         *tp = 0;
         /* Find all chanops in this direction: */
         for (lp2 = chptr->members; lp2; lp2 = lp2->next)
         {
           acptr2 = lp2->value.cptr;
-          if (acptr2->from == acptr->from && acptr2->from != one &&
+          if (cli_from(acptr2) == cli_from(acptr) && cli_from(acptr2) != one &&
               (lp2->flags & CHFL_CHANOP) && !(lp2->flags & CHFL_ZOMBIE) &&
               !IsDeaf(acptr2))
           {
@@ -840,18 +841,18 @@ void sendto_chanopsserv_butone(aClient *one, aClient *from, aChannel *chptr,
  *
  * Send a message to all connected servers except the client 'one'.
  */
-void sendto_serv_butone(aClient *one, char *pattern, ...)
+void sendto_serv_butone(struct Client *one, char *pattern, ...)
 {
   va_list vl;
-  Reg1 Dlink *lp;
+  Reg1 struct DLink *lp;
 
   va_start(vl, pattern);
   vsprintf_irc(sendbuf, pattern, vl);
   va_end(vl);
 
-  for (lp = me.serv->down; lp; lp = lp->next)
+  for (lp = cli_serv(&me)->down; lp; lp = lp->next)
   {
-    if (one && lp->value.cptr == one->from)
+    if (one && lp->value.cptr == cli_from(one))
       continue;
     sendbufto_one(lp->value.cptr);
   }
@@ -864,13 +865,13 @@ void sendto_serv_butone(aClient *one, char *pattern, ...)
  * Send prepared sendbuf to all connected servers except the client 'one'
  *  -Ghostwolf 18-May-97
  */
-void sendbufto_serv_butone(aClient *one)
+void sendbufto_serv_butone(struct Client *one)
 {
-  Reg1 Dlink *lp;
+  Reg1 struct DLink *lp;
 
-  for (lp = me.serv->down; lp; lp = lp->next)
+  for (lp = cli_serv(&me)->down; lp; lp = lp->next)
   {
-    if (one && lp->value.cptr == one->from)
+    if (one && lp->value.cptr == cli_from(one))
       continue;
     sendbufto_one(lp->value.cptr);
   }
@@ -882,11 +883,11 @@ void sendbufto_serv_butone(aClient *one)
  * Sends a message to all people (inclusing `acptr') on local server
  * who are in same channel with client `acptr'.
  */
-void sendto_common_channels(aClient *acptr, char *pattern, ...)
+void sendto_common_channels(struct Client *acptr, char *pattern, ...)
 {
   va_list vl;
-  Reg1 Link *chan;
-  Reg2 Link *member;
+  Reg1 struct SLink *chan;
+  Reg2 struct SLink *member;
 
   va_start(vl, pattern);
 
@@ -894,11 +895,11 @@ void sendto_common_channels(aClient *acptr, char *pattern, ...)
   if (acptr->fd >= 0)
     sentalong[acptr->fd] = sentalong_marker;
   /* loop through acptr's channels, and the members on their channels */
-  if (acptr->user)
-    for (chan = acptr->user->channel; chan; chan = chan->next)
+  if (cli_user(acptr))
+    for (chan = cli_user(acptr)->channel; chan; chan = chan->next)
       for (member = chan->value.chptr->members; member; member = member->next)
       {
-        Reg3 aClient *cptr = member->value.cptr;
+        Reg3 struct Client *cptr = member->value.cptr;
         if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker)
         {
           sentalong[cptr->fd] = sentalong_marker;
@@ -912,11 +913,11 @@ void sendto_common_channels(aClient *acptr, char *pattern, ...)
 }
 
 #if defined(ESNET_NEG)
-void sendto_common_tok_channels(aClient *acptr, char *pattern, ...)
+void sendto_common_tok_channels(struct Client *acptr, char *pattern, ...)
 {
   va_list vl;
-  Reg1 Link *chan;
-  Reg2 Link *member;
+  Reg1 struct SLink *chan;
+  Reg2 struct SLink *member;
 
   va_start(vl, pattern);
 
@@ -924,12 +925,12 @@ void sendto_common_tok_channels(aClient *acptr, char *pattern, ...)
   if (acptr->fd >= 0)
     sentalong[acptr->fd] = sentalong_marker;
   /* loop through acptr's channels, and the members on their channels */
-  if (acptr->user)
-    for (chan = acptr->user->channel; chan; chan = chan->next)
+  if (cli_user(acptr))
+    for (chan = cli_user(acptr)->channel; chan; chan = chan->next)
       for (member = chan->value.chptr->members; member; member = member->next)
       {
-        Reg3 aClient *cptr = member->value.cptr;
-        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && (cptr->negociacion & USER_TOK))
+        Reg3 struct Client *cptr = member->value.cptr;
+        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && (cptr->cli_connect->negociacion & USER_TOK))
         {
           sentalong[cptr->fd] = sentalong_marker;
           vsendto_prefix_one(cptr, acptr, pattern, vl);
@@ -939,11 +940,11 @@ void sendto_common_tok_channels(aClient *acptr, char *pattern, ...)
   return;
 }
 
-void sendto_common_notok_channels(aClient *acptr, char *pattern, ...)
+void sendto_common_notok_channels(struct Client *acptr, char *pattern, ...)
 {
   va_list vl;
-  Reg1 Link *chan;
-  Reg2 Link *member;
+  Reg1 struct SLink *chan;
+  Reg2 struct SLink *member;
 
   va_start(vl, pattern);
 
@@ -951,12 +952,12 @@ void sendto_common_notok_channels(aClient *acptr, char *pattern, ...)
   if (acptr->fd >= 0)
     sentalong[acptr->fd] = sentalong_marker;
   /* loop through acptr's channels, and the members on their channels */
-  if (acptr->user)
-    for (chan = acptr->user->channel; chan; chan = chan->next)
+  if (cli_user(acptr))
+    for (chan = cli_user(acptr)->channel; chan; chan = chan->next)
       for (member = chan->value.chptr->members; member; member = member->next)
       {
-        Reg3 aClient *cptr = member->value.cptr;
-        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && !(cptr->negociacion & USER_TOK))
+        Reg3 struct Client *cptr = member->value.cptr;
+        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && !(cptr->cli_connect->negociacion & USER_TOK))
         {
           sentalong[cptr->fd] = sentalong_marker;
           vsendto_prefix_one(cptr, acptr, pattern, vl);
@@ -975,11 +976,11 @@ void sendto_common_notok_channels(aClient *acptr, char *pattern, ...)
  * Send a message to all members of a channel that
  * are connected to this server.
  */
-void sendto_channel_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
+void sendto_channel_butserv(aChannel *chptr, struct Client *from, char *pattern, ...)
 {
   va_list vl;
-  Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg1 struct SLink *lp;
+  Reg2 struct Client *acptr;
 
   for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
     if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE))
@@ -989,27 +990,27 @@ void sendto_channel_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
 }
 
 #if defined(ESNET_NEG)
-void sendto_channel_tok_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
+void sendto_channel_tok_butserv(aChannel *chptr, struct Client *from, char *pattern, ...)
 {
   va_list vl;
-  Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg1 struct SLink *lp;
+  Reg2 struct Client *acptr;
 
   for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
-    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && (acptr->negociacion & USER_TOK))
+    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && (acptr->cli_connect->negociacion & USER_TOK))
       vsendto_prefix_one(acptr, from, pattern, vl);
   va_end(vl);
   return;
 }
 
-void sendto_channel_notok_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
+void sendto_channel_notok_butserv(aChannel *chptr, struct Client *from, char *pattern, ...)
 {
   va_list vl;
-  Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg1 struct SLink *lp;
+  Reg2 struct Client *acptr;
 
   for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
-    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && !(acptr->negociacion & USER_TOK))
+    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && !(acptr->cli_connect->negociacion & USER_TOK))
       vsendto_prefix_one(acptr, from, pattern, vl);
   va_end(vl);
   return;
@@ -1024,19 +1025,19 @@ void sendto_channel_notok_butserv(aChannel *chptr, aClient *from, char *pattern,
  *  addition -- Armin, 8jun90 (gruner@informatik.tu-muenchen.de)
  */
 
-static int match_it(aClient *one, char *mask, int what)
+static int match_it(struct Client *one, char *mask, int what)
 {
   switch (what)
   {
     case MATCH_HOST:
-      return (match(mask, PunteroACadena(one->user->host)) == 0);
+      return (match(mask, PunteroACadena(cli_user(one)->host)) == 0);
     case MATCH_SERVER:
     default:
-      return (match(mask, one->user->server->name) == 0);
+      return (match(mask, cli_user(one)->server->name) == 0);
   }
 }
 
-static void vsendto_prefix_one2(aClient *to, aClient *from,
+static void vsendto_prefix_one2(struct Client *to, struct Client *from,
     char *pattern, ...)
 {
   va_list vl;
@@ -1057,11 +1058,11 @@ static void vsendto_prefix_one2(aClient *to, aClient *from,
  *
  * OJO: PATRON A "PIN~ON FIJO"
  */
-void sendto_match_butone(aClient *one, aClient *from, char *mask, int what, ...)
+void sendto_match_butone(struct Client *one, struct Client *from, char *mask, int what, ...)
 {
   va_list vl;
   Reg1 int i;
-  Reg2 aClient *cptr, *acptr;
+  Reg2 struct Client *cptr, *acptr;
 
   char *fuente;
   char *comando;
@@ -1087,8 +1088,8 @@ void sendto_match_butone(aClient *one, aClient *from, char *mask, int what, ...)
       continue;
     if (IsServer(cptr))
     {
-      for (acptr = client; acptr; acptr = acptr->next)
-        if (IsUser(acptr) && match_it(acptr, mask, what) && acptr->from == cptr)
+      for (acptr = client; acptr; acptr = acptr->cli_next)
+        if (IsUser(acptr) && match_it(acptr, mask, what) && cli_from(acptr) == cptr)
           break;
       /* a person on that server matches the mask, so we
        *  send *one* msg to that server ...
@@ -1123,11 +1124,11 @@ void sendto_match_butone(aClient *one, aClient *from, char *mask, int what, ...)
  *
  * Send to *local* ops but one.
  */
-void sendto_lops_butone(aClient *one, char *pattern, ...)
+void sendto_lops_butone(struct Client *one, char *pattern, ...)
 {
   va_list vl;
-  Reg1 aClient *cptr;
-  aClient **cptrp;
+  Reg1 struct Client *cptr;
+  struct Client **cptrp;
   int i;
   char nbuf[1024];
 
@@ -1135,7 +1136,7 @@ void sendto_lops_butone(aClient *one, char *pattern, ...)
   va_start(vl, pattern);
   vsprintf_irc(nbuf + strlen(nbuf), pattern, vl);
   va_end(vl);
-  for (cptrp = me.serv->client_list, i = 0; i <= me.serv->nn_mask; ++cptrp, ++i)
+  for (cptrp = cli_serv(&me)->client_list, i = 0; i <= cli_serv(&me)->nn_mask; ++cptrp, ++i)
     if ((cptr = *cptrp) && cptr != one && SendServNotice(cptr))
     {
       sprintf_irc(sendbuf, nbuf, PunteroACadena(cptr->name));
@@ -1156,7 +1157,7 @@ void vsendto_op_mask(snomask_t mask, const char *pattern, va_list vlorig)
   static char fmt[1024];
   char *fmt_target;
   int i = 0;           /* so that 1 points to opsarray[0] */
-  Link *opslist;
+  struct SLink *opslist;
   va_list vl;
 
   va_copy(vl,vlorig);
@@ -1187,7 +1188,7 @@ void vsendto_op_mask(snomask_t mask, const char *pattern, va_list vlorig)
 void sendbufto_op_mask(snomask_t mask)
 {
   int i = 0;           /* so that 1 points to opsarray[0] */
-  Link *opslist;
+  struct SLink *opslist;
   while ((mask >>= 1))
     i++;
   if (!(opslist = opsarray[i]))
@@ -1208,7 +1209,7 @@ void sendbufto_op_mask(snomask_t mask)
  */
 void vsendto_ops(const char *pattern, va_list vlorig)
 {
-  Reg1 aClient *cptr;
+  Reg1 struct Client *cptr;
   Reg2 int i;
   char fmt[1024];
   char *fmt_target;
@@ -1254,26 +1255,26 @@ void sendto_ops(const char *pattern, ...)
  * one - client not to send message to
  * from- client which message is from *NEVER* NULL!!
  */
-void sendto_ops_butone(aClient *one, aClient *from, char *pattern, ...)
+void sendto_ops_butone(struct Client *one, struct Client *from, char *pattern, ...)
 {
   va_list vl;
   Reg1 int i;
-  Reg2 aClient *cptr;
+  Reg2 struct Client *cptr;
 
   va_start(vl, pattern);
   ++sentalong_marker;
-  for (cptr = client; cptr; cptr = cptr->next)
+  for (cptr = client; cptr; cptr = cptr->cli_next)
   {
     /*if (!IsAnOper(cptr)) */
     if (!(SendWallops(cptr) && (IsAnOper(cptr) || IsHelpOp(cptr))))
       continue;
-    i = cptr->from->fd;         /* find connection oper is on */
+    i = cli_from(cptr)->fd;         /* find connection oper is on */
     if (sentalong[i] == sentalong_marker) /* sent message along it already ? */
       continue;
-    if (cptr->from == one)
+    if (cli_from(cptr) == one)
       continue;                 /* ...was the one I should skip */
     sentalong[i] = sentalong_marker;
-    vsendto_prefix_one(cptr->from, from, pattern, vl);
+    vsendto_prefix_one(cli_from(cptr), from, pattern, vl);
   }
   va_end(vl);
 
@@ -1287,26 +1288,26 @@ void sendto_ops_butone(aClient *one, aClient *from, char *pattern, ...)
  *
  * one - server not to send message to.
  */
-void sendto_g_serv_butone(aClient *one, char *pattern, ...)
+void sendto_g_serv_butone(struct Client *one, char *pattern, ...)
 {
   va_list vl;
-  aClient *cptr;
+  struct Client *cptr;
   int i;
 
   va_start(vl, pattern);
   ++sentalong_marker;
   vsprintf_irc(sendbuf, pattern, vl);
-  for (cptr = client; cptr; cptr = cptr->next)
+  for (cptr = client; cptr; cptr = cptr->cli_next)
   {
     if (!SendDebug(cptr))
       continue;
-    i = cptr->from->fd;         /* find connection user is on */
+    i = cli_from(cptr)->fd;         /* find connection user is on */
     if (sentalong[i] == sentalong_marker) /* sent message along it already ? */
       continue;
     if (MyConnect(cptr))
       continue;
     sentalong[i] = sentalong_marker;
-    if (cptr->from == one)
+    if (cli_from(cptr) == one)
       continue;
     sendbufto_one(cptr);
   }
@@ -1324,7 +1325,7 @@ void sendto_g_serv_butone(aClient *one, char *pattern, ...)
  * NOTE: NEITHER OF THESE SHOULD *EVER* BE NULL!!
  * -avalon
  */
-void sendto_prefix_one(Reg1 aClient *to, Reg2 aClient *from, char *pattern, ...)
+void sendto_prefix_one(Reg1 struct Client *to, Reg2 struct Client *from, char *pattern, ...)
 {
   va_list vl;
   va_start(vl, pattern);
@@ -1351,12 +1352,12 @@ void sendto_realops(const char *pattern, ...)
 /*
  * Send message to all servers of protocol 'p' and lower.
  */
-void sendto_lowprot_butone(aClient *cptr, int p, char *pattern, ...)
+void sendto_lowprot_butone(struct Client *cptr, int p, char *pattern, ...)
 {
   va_list vl;
-  Dlink *lp;
+  struct DLink *lp;
   va_start(vl, pattern);
-  for (lp = me.serv->down; lp; lp = lp->next)
+  for (lp = cli_serv(&me)->down; lp; lp = lp->next)
     if (lp->value.cptr != cptr && Protocol(lp->value.cptr) <= p)
       vsendto_one(lp->value.cptr, pattern, vl);
   va_end(vl);
@@ -1365,12 +1366,12 @@ void sendto_lowprot_butone(aClient *cptr, int p, char *pattern, ...)
 /*
  * Send message to all servers of protocol 'p' and higher.
  */
-void sendto_highprot_butone(aClient *cptr, int p, char *pattern, ...)
+void sendto_highprot_butone(struct Client *cptr, int p, char *pattern, ...)
 {
   va_list vl;
-  Dlink *lp;
+  struct DLink *lp;
   va_start(vl, pattern);
-  for (lp = me.serv->down; lp; lp = lp->next)
+  for (lp = cli_serv(&me)->down; lp; lp = lp->next)
     if (lp->value.cptr != cptr && Protocol(lp->value.cptr) >= p)
       vsendto_one(lp->value.cptr, pattern, vl);
   va_end(vl);

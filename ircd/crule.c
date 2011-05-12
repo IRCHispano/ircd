@@ -34,6 +34,7 @@
 #if !defined(CR_DEBUG)
 
 /* ircd functions and types we need */
+#include "client.h"
 #include "sys.h"
 #include "h.h"
 #include "s_debug.h"
@@ -177,7 +178,7 @@ static int crule_connected(int UNUSED(numargs), void *crulearg[])
   aClient *acptr;
 
   /* taken from m_links */
-  for (acptr = client; acptr; acptr = acptr->next)
+  for (acptr = client; acptr; acptr = acptr->cli_next)
   {
     if (!IsServer(acptr) && !IsMe(acptr))
       continue;
@@ -228,13 +229,13 @@ static int crule_via(int UNUSED(numargs), void *crulearg[])
   aClient *acptr;
 
   /* adapted from m_links */
-  for (acptr = client; acptr; acptr = acptr->next)
+  for (acptr = client; acptr; acptr = acptr->cli_next)
   {
     if (!IsServer(acptr) && !IsMe(acptr))
       continue;
     if (match((char *)crulearg[1], acptr->name))
       continue;
-    if (match((char *)crulearg[0], (loc_clients[acptr->from->fd])->name))
+    if (match((char *)crulearg[0], (loc_clients[cli_from(acptr)->fd])->name))
       continue;
     return (1);
   }

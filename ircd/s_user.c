@@ -44,6 +44,7 @@
 #include <netinet/in.h>
 
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "struct.h"
 #include "common.h"
@@ -94,7 +95,7 @@ __END_DECLS
 /* *INDENT-ON* */
 
 static char buf[BUFSIZE], buf2[BUFSIZE];
-static char *nuevo_nick_aleatorio(aClient *cptr);
+static char *nuevo_nick_aleatorio(struct Client *cptr);
 
 /*
  * m_functions execute protocol messages on this server:
@@ -164,20 +165,20 @@ static char *nuevo_nick_aleatorio(aClient *cptr);
  *     HandleMatchingClient;
  *
  */
-aClient *next_client(aClient *next, char *ch)
+struct Client *next_client(struct Client *next, char *ch)
 {
-  Reg3 aClient *tmp = next;
+  Reg3 struct Client *tmp = next;
 
   if (!tmp)
     return NULL;
 
   next = FindClient(ch);
   next = next ? next : tmp;
-  if (tmp->prev == next)
+  if (tmp->cli_prev == next)
     return NULL;
   if (next != tmp)
     return next;
-  for (; next; next = next->next)
+  for (; next; next = next->cli_next)
     if ((next->name) && (!match(ch, next->name)))
       break;
   return next;
@@ -297,10 +298,10 @@ void descifra_cookie(char *out, char *cookie)
  *
  *    returns: (see #defines)
  */
-int hunt_server(int MustBeOper, aClient *cptr, aClient *sptr, char *command,
+int hunt_server(int MustBeOper, struct Client *cptr, struct Client *sptr, char *command,
     char *token, const char *pattern, int server, int parc, char *parv[])
 {
-  aClient *acptr;
+  struct Client *acptr;
   char y[8];
 
   /* Assume it's me, if no server or an unregistered client */
@@ -319,8 +320,8 @@ int hunt_server(int MustBeOper, aClient *cptr, aClient *sptr, char *command,
     {
       if (0 == (acptr = FindClient(parv[server])))
         return HUNTED_NOSUCH;
-      if (acptr->user)
-        acptr = acptr->user->server;
+      if (acptr->cli_user)
+        acptr = cli_user(acptr)->server;
     }
     else if (!(acptr = find_match_server(parv[server])))
     {
@@ -341,9 +342,9 @@ int hunt_server(int MustBeOper, aClient *cptr, aClient *sptr, char *command,
     return HUNTED_NOSUCH;
   }
 
-  if (Protocol(acptr->from) > 9)
+  if (Protocol(cli_from(acptr)) > 9)
   {
-    strcpy(y, acptr->yxx);
+    strcpy(y, cli_yxx(acptr));
     parv[server] = y;
   }
 #if !defined(NO_PROTOCOL9)
@@ -456,7 +457,7 @@ static char *clean_user_id(char **dest, char *source, int tilde)
  *    nick from local user or kill him/her...
  */
 
-static int register_user(aClient *cptr, aClient *sptr,
+static int register_user(struct Client *cptr, struct Client *sptr,
     char *nick, char *username)
 {
   Reg1 aConfItem *aconf;
@@ -466,8 +467,8 @@ static int register_user(aClient *cptr, aClient *sptr,
   short lower = 0;
   short pos = 0, leadcaps = 0, other = 0, digits = 0, badid = 0;
   short digitgroups = 0;
-  anUser *user = sptr->user;
-  Dlink *lp;
+  anUser *user = sptr->cli_user;
+  struct DLink *lp;
   char ip_base64[25];
   char sendbuf4[2048];
   int found_g;
@@ -487,7 +488,7 @@ static int register_user(aClient *cptr, aClient *sptr,
         break;
       case ACR_NO_AUTHORIZATION:
         sendto_op_mask(SNO_UNAUTH, "Unauthorized connection from %s.",
-            PunteroACadena(sptr->sockhost));
+            PunteroACadena(sptr->cli_connect->sockhost));
         ircstp->is_ref++;
         return exit_client(cptr, sptr, &me,
             "No Authorization - use another server");
@@ -496,7 +497,7 @@ static int register_user(aClient *cptr, aClient *sptr,
         {
           last_too_many1 = now;
           sendto_op_mask(SNO_TOOMANY, "Too many connections in class for %s.",
-              PunteroACadena(sptr->sockhost));
+              PunteroACadena(sptr->cli_connect->sockhost));
         }
         IPcheck_connect_fail(sptr);
         ircstp->is_ref++;
@@ -522,7 +523,7 @@ static int register_user(aClient *cptr, aClient *sptr,
           last_too_many2 = now;
           sendto_op_mask(SNO_TOOMANY,
               "Too many connections from same IP for %s.",
-              PunteroACadena(sptr->sockhost));
+              PunteroACadena(sptr->cli_connect->sockhost));
         }
         ircstp->is_ref++;
         return exit_client(cptr, sptr, &me,
@@ -537,10 +538,10 @@ static int register_user(aClient *cptr, aClient *sptr,
       SlabStringAllocDup(&(user->host), me.name, HOSTLEN);
 #ifndef HISPANO_WEBCHAT
     else
-      SlabStringAllocDup(&(user->host), PunteroACadena(sptr->sockhost),
+      SlabStringAllocDup(&(user->host), PunteroACadena(sptr->cli_connect->sockhost),
           HOSTLEN);
 #endif
-    aconf = sptr->confs->value.aconf;
+    aconf = cli_confs(sptr)->value.aconf;
 
     if (!activar_ident)
       sptr->flags &= ~FLAGS_DOID;
@@ -561,7 +562,7 @@ static int register_user(aClient *cptr, aClient *sptr,
 #if defined(USEONE)
         && strcmp("ONE", aconf->passwd)
 #endif
-        && strcmp(PunteroACadena(sptr->passwd), aconf->passwd))
+        && strcmp(PunteroACadena(sptr->cli_connect->passwd), aconf->passwd))
     {
       ircstp->is_ref++;
       sendto_one(sptr, err_str(ERR_PASSWDMISMATCH), me.name, parv[0]);
@@ -711,8 +712,8 @@ static int register_user(aClient *cptr, aClient *sptr,
 
     UpdateCheckPing(sptr, get_client_ping(sptr));
     //nextping = now;
-    if (sptr->snomask & SNO_NOISY)
-      set_snomask(sptr, sptr->snomask & SNO_NOISY, SNO_ADD);
+    if (cli_snomask(sptr) & SNO_NOISY)
+      set_snomask(sptr, cli_snomask(sptr) & SNO_NOISY, SNO_ADD);
 #if defined(ALLOW_SNO_CONNEXIT)
 #if defined(SNO_CONNEXIT_IP)
     sprintf_irc(sendbuf,
@@ -733,21 +734,21 @@ static int register_user(aClient *cptr, aClient *sptr,
   else
     /* if (IsServer(cptr)) */
   {
-    aClient *acptr;
+    struct Client *acptr;
 
     acptr = user->server;
-    if (acptr->from != sptr->from)
+    if (cli_from(acptr) != cli_from(sptr))
     {
 #if !defined(NO_PROTOCOL9)
       if (Protocol(cptr) < 10)
         sendto_one(cptr, ":%s KILL %s :%s (%s != %s[%s])",
-            me.name, sptr->name, me.name, user->server->name, acptr->from->name,
-            PunteroACadena(acptr->from->sockhost));
+            me.name, sptr->name, me.name, user->server->name, cli_from(acptr)->name,
+            PunteroACadena(cli_from(acptr)->cli_connect->sockhost));
       else
 #endif
         sendto_one(cptr, "%s " TOK_KILL " %s%s :%s (%s != %s[%s])",
             NumServ(&me), NumNick(sptr), me.name, user->server->name,
-            acptr->from->name, PunteroACadena(acptr->from->sockhost));
+            cli_from(acptr)->name, PunteroACadena(cli_from(acptr)->cli_connect->sockhost));
       sptr->flags |= FLAGS_KILLED;
       return exit_client(cptr, sptr, &me, "NICK server wrong direction");
     }
@@ -760,7 +761,7 @@ static int register_user(aClient *cptr, aClient *sptr,
      * FIXME: This can be speeded up - its stupid to check it for
      * every NICK message in a burst again  --Run.
      */
-    for (acptr = user->server; acptr != &me; acptr = acptr->serv->up)
+    for (acptr = user->server; acptr != &me; acptr = acptr->cli_serv->up)
       if (IsBurst(acptr) || Protocol(acptr) < 10)
         break;
     if (IPcheck_remote_connect(sptr, PunteroACadena(user->host),
@@ -775,12 +776,12 @@ static int register_user(aClient *cptr, aClient *sptr,
   sendto_serv_butone(cptr, *tmpstr ?
       "%s " TOK_NICK " %s %d %d %s %s +%s %s %s%s :%s" :
       "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
-      NumServ(user->server), nick, sptr->hopcount + 1, sptr->lastnick,
+      NumServ(user->server), nick, sptr->cli_hopcount + 1, sptr->cli_lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
 #ifdef HISPANO_WEBCHAT
-      iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), IsIPv6(cptr)),
+      iptobase64(ip_base64, MyUser(sptr) ? &cli_ip(sptr)_real : &cli_ip(sptr), sizeof(ip_base64), IsIPv6(cptr)),
 #else
-      iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), IsIPv6(cptr)),
+      iptobase64(ip_base64, &cli_ip(sptr), sizeof(ip_base64), IsIPv6(cptr)),
 #endif
       NumNick(sptr), PunteroACadena(sptr->info));
 
@@ -789,17 +790,17 @@ static int register_user(aClient *cptr, aClient *sptr,
   /* First send message to all 2.9 servers */
 #ifdef MIGRACION_DEEPSPACE_P10
   sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s :%s",
-      user->server->name, nick, sptr->hopcount + 1, sptr->lastnick,
+      user->server->name, nick, sptr->cli_hopcount + 1, sptr->cli_lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host),
-      user->server->name, iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), IsIPv6(cptr)),
+      user->server->name, iptobase64(ip_base64, &cli_ip(sptr), sizeof(ip_base64), IsIPv6(cptr)),
       PunteroACadena(sptr->info));
 #else
   sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
-      user->server->name, nick, sptr->hopcount + 1, sptr->lastnick,
+      user->server->name, nick, sptr->cli_hopcount + 1, sptr->cli_lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host),
       user->server->name, PunteroACadena(sptr->info));
 #endif
-  for (lp = me.serv->down; lp; lp = lp->next)
+  for (lp = cli_serv(&me)->down; lp; lp = lp->next)
   {
     if (lp->value.cptr == cptr)
       continue;
@@ -812,7 +813,7 @@ static int register_user(aClient *cptr, aClient *sptr,
       || Protocol(cptr) > 9))
     /* Is it necessary to generate an user MODE message ? */
   {
-    for (lp = me.serv->down; lp; lp = lp->next)
+    for (lp = cli_serv(&me)->down; lp; lp = lp->next)
     {
       if (lp->value.cptr == cptr)
         continue;
@@ -826,28 +827,28 @@ static int register_user(aClient *cptr, aClient *sptr,
   sprintf_irc(sendbuf, *tmpstr ?
       "%s " TOK_NICK " %s %d %d %s %s +%s %s %s%s :%s" :
       "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
-      NumServ(user->server), nick, sptr->hopcount + 1, (int)(sptr->lastnick),
+      NumServ(user->server), nick, sptr->cli_hopcount + 1, (int)(sptr->cli_lastnick),
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
 #ifdef HISPANO_WEBCHAT
-      iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), 1),
+      iptobase64(ip_base64, MyUser(sptr) ? &cli_ip(sptr)_real : &cli_ip(sptr), sizeof(ip_base64), 1),
 #else
-      iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 1),
+      iptobase64(ip_base64, &cli_ip(sptr), sizeof(ip_base64), 1),
 #endif
       NumNick(sptr), PunteroACadena(sptr->info));
 
   sprintf_irc(sendbuf4, *tmpstr ?
       "%s " TOK_NICK " %s %d %d %s %s +%s %s %s%s :%s" :
       "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
-      NumServ(user->server), nick, sptr->hopcount + 1, (int)(sptr->lastnick),
+      NumServ(user->server), nick, sptr->cli_hopcount + 1, (int)(sptr->cli_lastnick),
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
 #ifdef HISPANO_WEBCHAT
-      iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), 0),
+      iptobase64(ip_base64, MyUser(sptr) ? &cli_ip(sptr)_real : &cli_ip(sptr), sizeof(ip_base64), 0),
 #else
-      iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 0),
+      iptobase64(ip_base64, &cli_ip(sptr), sizeof(ip_base64), 0),
 #endif
       NumNick(sptr), PunteroACadena(sptr->info));
 
-  for (lp = me.serv->down; lp; lp = lp->next)
+  for (lp = cli_serv(&me)->down; lp; lp = lp->next)
   {
     if (lp->value.cptr == cptr || Protocol(lp->value.cptr) < 10)
       continue;
@@ -863,9 +864,9 @@ static int register_user(aClient *cptr, aClient *sptr,
   if (MyUser(sptr))
   {
     send_umode(cptr, sptr, 0, ALL_UMODES, 0, ALL_HMODES);
-    if (sptr->snomask != SNO_DEFAULT && (sptr->flags & FLAGS_SERVNOTICE))
+    if (cli_snomask(sptr) != SNO_DEFAULT && (sptr->flags & FLAGS_SERVNOTICE))
       sendto_one(sptr, rpl_str(RPL_SNOMASK), me.name, sptr->name,
-          sptr->snomask, sptr->snomask);
+          cli_snomask(sptr), cli_snomask(sptr));
   }
 
 #if defined(WATCH)
@@ -882,7 +883,7 @@ static int register_user(aClient *cptr, aClient *sptr,
 }
 
 /* Envia RAW 005 (RPL_ISUPPORT) */
-void send_features(aClient *sptr, char *nick)
+void send_features(struct Client *sptr, char *nick)
 {
   char buf[500];
 
@@ -1007,21 +1008,21 @@ static int verifica_clave_nick(char *nick, char *hash, char *clave)
  *
  * Cannonifies target for client `sptr'.
  */
-void add_target(aClient *sptr, void *target)
+void add_target(struct Client *sptr, void *target)
 {
   unsigned char *p;
   unsigned int tmp = ((size_t)target & 0xffff00) >> 8;
   unsigned char hash = (tmp * tmp) >> 12;
-  if (sptr->targets[0] == hash) /* Last person that we messaged ourself? */
+  if (cli_targets(sptr)[0] == hash) /* Last person that we messaged ourself? */
     return;
-  for (p = sptr->targets; p < &sptr->targets[MAXTARGETS - 1];)
+  for (p = cli_targets(sptr); p < &cli_targets(sptr)[MAXTARGETS - 1];)
     if (*++p == hash)
       return;                   /* Already in table */
 
   /* New target */
-  memmove(&sptr->targets[RESERVEDTARGETS + 1],
-      &sptr->targets[RESERVEDTARGETS], MAXTARGETS - RESERVEDTARGETS - 1);
-  sptr->targets[RESERVEDTARGETS] = hash;
+  memmove(&cli_targets(sptr)[RESERVEDTARGETS + 1],
+      &cli_targets(sptr)[RESERVEDTARGETS], MAXTARGETS - RESERVEDTARGETS - 1);
+  cli_targets(sptr)[RESERVEDTARGETS] = hash;
   return;
 }
 
@@ -1033,7 +1034,7 @@ void add_target(aClient *sptr, void *target)
  * Returns 'true' (1) when too many targets are addressed.
  * Returns 'false' (0) when it's ok to send to this target.
  */
-int check_target_limit(aClient *sptr, void *target, const char *name,
+int check_target_limit(struct Client *sptr, void *target, const char *name,
     int created)
 {
   unsigned char *p;
@@ -1043,26 +1044,26 @@ int check_target_limit(aClient *sptr, void *target, const char *name,
   if (IsChannelService(sptr))
     return 0;
 
-  if (sptr->targets[0] == hash) /* Same target as last time ? */
+  if (cli_targets(sptr)[0] == hash) /* Same target as last time ? */
     return 0;
-  for (p = sptr->targets; p < &sptr->targets[MAXTARGETS - 1];)
+  for (p = cli_targets(sptr); p < &cli_targets(sptr)[MAXTARGETS - 1];)
     if (*++p == hash)
     {
-      memmove(&sptr->targets[1], &sptr->targets[0], p - sptr->targets);
-      sptr->targets[0] = hash;
+      memmove(&cli_targets(sptr)[1], &cli_targets(sptr)[0], p - cli_targets(sptr));
+      cli_targets(sptr)[0] = hash;
       return 0;
     }
 
   /* New target */
   if (!created)
   {
-    if (now < sptr->nexttarget)
+    if (now < cli_nexttarget(sptr))
     {
-      if (sptr->nexttarget - now < TARGET_DELAY + 8)  /* No server flooding */
+      if (cli_nexttarget(sptr) - now < TARGET_DELAY + 8)  /* No server flooding */
       {
-        sptr->nexttarget += 2;
+        cli_nexttarget(sptr) += 2;
         sendto_one(sptr, err_str(ERR_TARGETTOOFAST),
-            me.name, sptr->name, name, sptr->nexttarget - now);
+            me.name, sptr->name, name, cli_nexttarget(sptr) - now);
       }
       return 1;
     }
@@ -1070,15 +1071,15 @@ int check_target_limit(aClient *sptr, void *target, const char *name,
     {
 #if defined(GODMODE)
       sendto_one(sptr, ":%s NOTICE %s :New target: %s; ft " TIME_T_FMT,
-          me.name, sptr->name, name, (now - sptr->nexttarget) / TARGET_DELAY);
+          me.name, sptr->name, name, (now - cli_nexttarget(sptr)) / TARGET_DELAY);
 #endif
-      sptr->nexttarget += TARGET_DELAY;
-      if (sptr->nexttarget < now - (TARGET_DELAY * (MAXTARGETS - 1)))
-        sptr->nexttarget = now - (TARGET_DELAY * (MAXTARGETS - 1));
+      cli_nexttarget(sptr) += TARGET_DELAY;
+      if (cli_nexttarget(sptr) < now - (TARGET_DELAY * (MAXTARGETS - 1)))
+        cli_nexttarget(sptr) = now - (TARGET_DELAY * (MAXTARGETS - 1));
     }
   }
-  memmove(&sptr->targets[1], &sptr->targets[0], MAXTARGETS - 1);
-  sptr->targets[0] = hash;
+  memmove(&cli_targets(sptr)[1], &cli_targets(sptr)[0], MAXTARGETS - 1);
+  cli_targets(sptr)[0] = hash;
   return 0;
 }
 
@@ -1143,10 +1144,10 @@ void strip_color (const char *src, int maxlength, char *dst)
  * massive cleanup
  * rev argv 6/91
  */
-static int m_message(aClient *cptr, aClient *sptr,
+static int m_message(struct Client *cptr, struct Client *sptr,
     int parc, char *parv[], int notice)
 {
-  Reg1 aClient *acptr;
+  Reg1 struct Client *acptr;
   Reg2 char *s;
   aChannel *chptr;
   char *nick, *server, *p, *cmd, *host;
@@ -1262,7 +1263,7 @@ static int m_message(aClient *cptr, aClient *sptr,
         if (MyUser(sptr) && check_target_limit(sptr, acptr, acptr->name, 0))
           continue;
         
-        if(MyUser(sptr) && !IsOper(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip)
+        if(MyUser(sptr) && !IsOper(sptr) && irc_in_addr_cmp(&cli_ip(sptr), &cli_ip(acptr))
             && IsUserDeaf(acptr))
           continue;
         
@@ -1275,10 +1276,10 @@ static int m_message(aClient *cptr, aClient *sptr,
         }
         if (!is_silenced(sptr, acptr))
         {
-          if (!notice && MyConnect(sptr) && acptr->user && acptr->user->away)
+          if (!notice && MyConnect(sptr) && acptr->cli_user && cli_user(acptr)->away)
             sendto_one(sptr, rpl_str(RPL_AWAY),
-                me.name, parv[0], acptr->name, acptr->user->away);
-          if (MyUser(acptr) || Protocol(acptr->from) < 10)
+                me.name, parv[0], acptr->name, cli_user(acptr)->away);
+          if (MyUser(acptr) || Protocol(cli_from(acptr)) < 10)
           {
             if (MyUser(acptr))
               add_target(acptr, sptr);
@@ -1374,7 +1375,7 @@ static int m_message(aClient *cptr, aClient *sptr,
 
       if ((!(acptr = FindUser(nick))) ||
           (!(MyUser(acptr))) ||
-          ((!(BadPtr(host))) && match(host, PunteroACadena(acptr->user->host))))
+          ((!(BadPtr(host))) && match(host, PunteroACadena(cli_user(acptr)->host))))
         acptr = NULL;
 
       *server = '@';
@@ -1404,7 +1405,7 @@ static int m_message(aClient *cptr, aClient *sptr,
  * parv[1] = receiver list
  * parv[parc-1] = message text
  */
-int m_private(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_private(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   return m_message(cptr, sptr, parc, parv, 0);
 }
@@ -1416,7 +1417,7 @@ int m_private(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[1] = receiver list
  * parv[parc-1] = notice text
  */
-int m_notice(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_notice(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   if (MyUser(sptr) && parv[1] && parv[1][0] == '@' &&
       IsChannelName(&parv[1][1]))
@@ -1444,10 +1445,10 @@ int m_notice(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * Note that we can't allow non-chan ops to use this command, it would be
  *   abused by mass advertisers.
  */
-int whisper(aClient *sptr, int parc, char *parv[], int notice)
+int whisper(struct Client *sptr, int parc, char *parv[], int notice)
 {
   int s_is_member = 0, s_is_voiced = 0, t_is_member = 0;
-  aClient *tcptr;
+  struct Client *tcptr;
   aChannel *chptr;
   Link *lp;
 
@@ -1471,7 +1472,7 @@ int whisper(aClient *sptr, int parc, char *parv[], int notice)
   }
   for (lp = chptr->members; lp; lp = lp->next)
   {
-    aClient *mcptr = lp->value.cptr;
+    struct Client *mcptr = lp->value.cptr;
     if (mcptr == sptr)
     {
       s_is_member = 1;
@@ -1515,10 +1516,10 @@ int whisper(aClient *sptr, int parc, char *parv[], int notice)
     return 0;
   }
 
-  if (tcptr->user && tcptr->user->away)
+  if (tcptr->cli_user && cli_user(tcptr)->away)
     sendto_one(sptr, rpl_str(RPL_AWAY),
-        me.name, parv[0], tcptr->name, tcptr->user->away);
-  if (MyUser(tcptr) || Protocol(tcptr->from) < 10)
+        me.name, parv[0], tcptr->name, cli_user(tcptr)->away);
+  if (MyUser(tcptr) || Protocol(cli_from(tcptr)) < 10)
     sendto_prefix_one(tcptr, sptr, ":%s %s %s :%s",
         parv[0], notice ? "NOTICE" : "PRIVMSG", tcptr->name, parv[3]);
   else
@@ -1527,12 +1528,12 @@ int whisper(aClient *sptr, int parc, char *parv[], int notice)
   return 0;
 }
 
-int m_cnotice(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+int m_cnotice(struct Client *UNUSED(cptr), struct Client *sptr, int parc, char *parv[])
 {
   return whisper(sptr, parc, parv, 1);
 }
 
-int m_cprivmsg(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+int m_cprivmsg(struct Client *UNUSED(cptr), struct Client *sptr, int parc, char *parv[])
 {
   return whisper(sptr, parc, parv, 0);
 }
@@ -1544,7 +1545,7 @@ int m_cprivmsg(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
  * parv[1] = target channel
  * parv[parc - 1] = wallchops text
  */
-int m_wallchops(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_wallchops(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   aChannel *chptr;
 
@@ -1613,7 +1614,7 @@ int m_wallchops(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[3] = server notice mask
  * parv[4] = users real name info
  */
-int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_user(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
 #define UFLAGS	(FLAGS_INVISIBLE|FLAGS_WALLOP|FLAGS_SERVNOTICE)
   char *username, *host, *server, *realname;
@@ -1662,7 +1663,7 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return register_user(cptr, sptr, sptr->name, username);
   else
   {
-    SlabStringAllocDup(&(sptr->user->username), username, USERLEN);
+    SlabStringAllocDup(&(cli_user(sptr)->username), username, USERLEN);
     SlabStringAllocDup(&(user->host), host, HOSTLEN);
   }
   return 0;
@@ -1677,7 +1678,7 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[0] = sender prefix
  * parv[parc-1] = comment
  */
-int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_quit(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   char *comment = (parc > 1 && !BadPtr(parv[parc - 1])) ? parv[parc - 1] : NULL;
 
@@ -1692,10 +1693,10 @@ int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if(IsRegistered(sptr) && mensaje_quit_personalizado)
       return exit_client(cptr, sptr, &me, mensaje_quit_personalizado);
 
-    if (sptr->user)
+    if (sptr->cli_user)
     {
-      Link *lp;
-      for (lp = sptr->user->channel; lp; lp = lp->next)
+      struct SLink *lp;
+      for (lp = cli_user(sptr)->channel; lp; lp = lp->next)
         if ((can_send(sptr, lp->value.chptr) != 0) || (lp->value.chptr->mode.mode & MODE_NOQUITPARTS))
           return exit_client(cptr, sptr, &me, "Signed off");
     }
@@ -1721,9 +1722,9 @@ int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[1] = kill victim
  * parv[parc-1] = kill path
  */
-int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_kill(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  aClient *acptr;
+  struct Client *acptr;
   char *inpath = ocultar_servidores ? his.name : cptr->name;
   char *user, *path, *killer;
   int chasing = 0;
@@ -1823,13 +1824,13 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * ...!operhost!oper (comment)
      */
     if (IsUnixSocket(cptr))     /* Don't use get_client_name syntax */
-      inpath = PunteroACadena(me.sockhost);
+      inpath = PunteroACadena(me.cli_connect->sockhost);
     else
     {
 #if defined(BDD_VIP)
       inpath = get_visiblehost(cptr, NULL);
 #else
-      inpath = PunteroACadena(cptr->user->host);
+      inpath = PunteroACadena(cli_user(cptr)->host);
 #endif
     }
     if (!BadPtr(path))
@@ -1866,15 +1867,15 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (IsServer(sptr))
       syslog(LOG_DEBUG,
           "A local client %s!%s@%s KILLED from %s [%s] Path: %s!%s)",
-          acptr->name, PunteroACadena(acptr->user->username),
-          PunteroACadena(acptr->user->host), parv[0], sptr->name, inpath, path);
+          acptr->name, PunteroACadena(cli_user(acptr)->username),
+          PunteroACadena(cli_user(acptr)->host), parv[0], sptr->name, inpath, path);
     else
       syslog(LOG_DEBUG,
           "A local client %s!%s@%s KILLED by %s [%s!%s@%s] (%s!%s)",
-          acptr->name, PunteroACadena(acptr->user->username),
-          PunteroACadena(acptr->user->host), parv[0], sptr->name,
-          PunteroACadena(sptr->user->username),
-          PunteroACadena(sptr->user->host), inpath, path);
+          acptr->name, PunteroACadena(cli_user(acptr)->username),
+          PunteroACadena(cli_user(acptr)->host), parv[0], sptr->name,
+          PunteroACadena(cli_user(sptr)->username),
+          PunteroACadena(cli_user(sptr)->host), inpath, path);
   }
   else if (IsOper(sptr))
     syslog(LOG_DEBUG, "KILL From %s For %s Path %s!%s",
@@ -1957,11 +1958,11 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[0] = sender prefix
  * parv[1] = away message
  */
-int m_away(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_away(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Reg1 char *away, *awy2 = parv[1];
 
-  away = sptr->user->away;
+  away = cli_user(sptr)->away;
 
   if (parc < 2 || !*awy2)
   {
@@ -1969,7 +1970,7 @@ int m_away(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (away)
     {
       MyFree(away);
-      sptr->user->away = NULL;
+      cli_user(sptr)->away = NULL;
     }
 #if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9, ":%s AWAY", parv[0]);
@@ -1994,7 +1995,7 @@ int m_away(aClient *cptr, aClient *sptr, int parc, char *parv[])
   else
     away = (char *)MyMalloc(strlen(awy2) + 1);
 
-  sptr->user->away = away;
+  cli_user(sptr)->away = away;
   strcpy(away, awy2);
   if (MyConnect(sptr))
     sendto_one(sptr, rpl_str(RPL_NOWAWAY), me.name, parv[0]);
@@ -2008,9 +2009,9 @@ int m_away(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[1] = origin
  * parv[2] = destination
  */
-int m_ping(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_ping(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  aClient *acptr;
+  struct Client *acptr;
   char *origin, *destination;
 
   if (parc < 2 || *parv[1] == '\0')
@@ -2057,9 +2058,9 @@ int m_ping(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[1] = origin
  * parv[2] = destination
  */
-int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_pong(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  aClient *acptr;
+  struct Client *acptr;
   char *origin, *destination;
 
   if (MyUser(sptr))
@@ -2068,7 +2069,7 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
   /* Check to see if this is a PONG :cookie reply from an
    * unregistered user.  If so, process it. -record       */
 
-  if ((!IsRegistered(sptr)) && (sptr->cookie != NULL) &&
+  if ((!IsRegistered(sptr)) && (sptr->cli_connect->cookie != NULL) &&
       (!IsCookieVerified(sptr)) && (parc > 1))
   {
     char tmp[COOKIELEN+COOKIECRYPTLEN+1];
@@ -2080,7 +2081,7 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
 
 
-    if (!strncmp(tmp,sptr->cookie, COOKIELEN))
+    if (!strncmp(tmp,sptr->cli_connect->cookie, COOKIELEN))
     {
 /*
 ** Si el usuario tiene pendiente de verificar la cookie es porque ya ha mandado su nick,
@@ -2089,9 +2090,9 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
       assert(sptr->name);
 
       SetCookieVerified(sptr);
-      if (sptr->user && sptr->user->host) /* NICK and USER OK */
+      if (sptr->cli_user && cli_user(sptr)->host) /* NICK and USER OK */
         return register_user(cptr, sptr, sptr->name,
-            PunteroACadena(sptr->user->username));
+            PunteroACadena(cli_user(sptr)->username));
     }
     else
     {
@@ -2099,7 +2100,7 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
         return exit_client(cptr, sptr, &me, "Invalid PONG message");
       else
         sendto_one(sptr, ":%s %d %s :To connect, type /QUOTE PONG %s",
-            me.name, ERR_BADPING, PunteroACadena(sptr->name), sptr->cookie);
+            me.name, ERR_BADPING, PunteroACadena(sptr->name), sptr->cli_connect->cookie);
 
     }
 
@@ -2148,11 +2149,11 @@ static char umode_buf[2 * (sizeof(user_modes) +
  * Ampliacion de modos de usuario (sptr->hmodes)
  *                                      1999/07/06 savage@apostols.org
  */
-void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh,
+void send_umode_out(struct Client *cptr, struct Client *sptr, int old, int oldh,
     int registrado)
 {
   Reg1 int i;
-  Reg2 aClient *acptr;
+  Reg2 struct Client *acptr;
 
   send_umode(NULL, sptr, old, SEND_UMODES, oldh, SEND_HMODES);
 
@@ -2182,7 +2183,7 @@ void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh,
  *    parv[2] = oper password
  *    parv[3] = connection class (optional)
  */
-int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_oper(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   aConfItem *aconf;
   char *name, *password, *encr, *class;
@@ -2224,14 +2225,14 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
   if (!(aconf =
       find_conf_exact(name, PunteroACadena(sptr->username),
-      PunteroACadena(sptr->sockhost), CONF_OPS))
+      PunteroACadena(sptr->cli_connect->sockhost), CONF_OPS))
       && !(aconf =
-      find_conf_exact(name, sptr->username, (char *)ircd_ntoa(&cptr->ip), CONF_OPS)))
+      find_conf_exact(name, sptr->username, (char *)ircd_ntoa(&cli_ip(cptr)), CONF_OPS)))
   {
     sendto_one(sptr, err_str(ERR_NOOPERHOST), me.name, parv[0]);
     sendto_realops("Failed OPER attempt by %s (%s@%s)",
-        parv[0], PunteroACadena(sptr->user->username),
-        PunteroACadena(sptr->sockhost));
+        parv[0], PunteroACadena(cli_user(sptr)->username),
+        PunteroACadena(sptr->cli_connect->sockhost));
     return 0;
   }
 
@@ -2331,11 +2332,11 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
     *--s = '@';
 
     sendto_ops("%s (%s@%s) is now operator (%c)", parv[0],
-        PunteroACadena(sptr->user->username),
+        PunteroACadena(cli_user(sptr)->username),
 #if defined(BDD_VIP)
         get_visiblehost(sptr, NULL),
 #else
-        PunteroACadena(sptr->sockhost),
+        PunteroACadena(sptr->cli_connect->sockhost),
 #endif
         IsOper(sptr) ? 'O' : 'o');
 
@@ -2354,7 +2355,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
       /*
        * Desligamos las clases que tiene el usuario
        */
-      for (tmp = sptr->confs; tmp; tmp = tmp2)
+      for (tmp = cli_confs(sptr); tmp; tmp = tmp2)
       {
         tmp2 = tmp->next;
         if ((tmp->value.aconf->status & CONF_CLIENT) != 0)
@@ -2369,10 +2370,10 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
       aconf2 = make_conf();
       aconf2->confClass = make_class();
       DupString(aconf2->name, sptr->name);
-      DupString(aconf2->host, PunteroACadena(sptr->sockhost));
+      DupString(aconf2->host, PunteroACadena(sptr->cli_connect->sockhost));
 
       /* Pasamos de irc_in_addr a in_addr */
-      addr4.s_addr = (sptr->ip.in6_16[6] | sptr->ip.in6_16[7] << 16);
+      addr4.s_addr = (cli_ip(sptr).in6_16[6] | cli_ip(sptr).in6_16[7] << 16);
       aconf2->ipnum = addr4;
 
       aconf2->status = CONF_CLIENT;
@@ -2402,23 +2403,23 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 #if defined(USE_SYSLOG) && defined(SYSLOG_OPER)
     syslog(LOG_INFO, "OPER (%s) (%s) by (%s!%s@%s)",
-        name, encr, parv[0], PunteroACadena(sptr->user->username),
-        PunteroACadena(sptr->sockhost));
+        name, encr, parv[0], PunteroACadena(cli_user(sptr)->username),
+        PunteroACadena(sptr->cli_connect->sockhost));
 #endif
 #if defined(FNAME_OPERLOG)
     if (IsUser(sptr))
       write_log(FNAME_OPERLOG,
           "%s OPER (%s) (%s) by (%s!%s@%s)\n", myctime(now), name,
-          encr, parv[0], PunteroACadena(sptr->user->username),
-          PunteroACadena(sptr->sockhost));
+          encr, parv[0], PunteroACadena(cli_user(sptr)->username),
+          PunteroACadena(sptr->cli_connect->sockhost));
 #endif
   }
   else
   {
     sendto_one(sptr, err_str(ERR_PASSWDMISMATCH), me.name, parv[0]);
     sendto_realops("Failed OPER attempt by %s (%s@%s)",
-        parv[0], PunteroACadena(sptr->user->username),
-        PunteroACadena(sptr->sockhost));
+        parv[0], PunteroACadena(cli_user(sptr)->username),
+        PunteroACadena(sptr->cli_connect->sockhost));
   }
   return 0;
 }
@@ -2429,7 +2430,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[0] = sender prefix
  * parv[1] = password
  */
-int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_pass(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   char *password = parc > 1 ? parv[1] : NULL;
   int len;
@@ -2460,11 +2461,11 @@ int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[])
      *
      * CASOS:
      * a) PASS clave_a:clave_b
-     *    - Se copia clave_a a cptr->passwd
-     *    - Se copia clave_b a cptr->passbdd
+     *    - Se copia clave_a a cptr->cli_connect->passwd
+     *    - Se copia clave_b a cptr->cli_connect->passbdd
      *
      * b) PASS clave_a
-     *    - Se copia clave_a a cptr->passwd y a cptr->passbdd
+     *    - Se copia clave_a a cptr->cli_connect->passwd y a cptr->cli_connect->passbdd
      *
      * --zoltan
      */
@@ -2478,9 +2479,9 @@ int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       clave_bdd = password;
     }
-    if (cptr->passbdd)
-      MyFree(cptr->passbdd);
-    DupString(cptr->passbdd, clave_bdd);
+    if (cptr->cli_connect->passbdd)
+      MyFree(cptr->cli_connect->passbdd);
+    DupString(cptr->cli_connect->passbdd, clave_bdd);
   }
   len = strlen(password);
   if (len > PASSWDLEN)
@@ -2488,12 +2489,12 @@ int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[])
     len = PASSWDLEN;
     password[len] = '\0';
   }
-  if (cptr->passwd)
-    MyFree(cptr->passwd);
+  if (cptr->cli_connect->passwd)
+    MyFree(cptr->cli_connect->passwd);
 
-  cptr->passwd = MyMalloc(len + 1);
-  assert(cptr->passwd);
-  strcpy(cptr->passwd, password);
+  cptr->cli_connect->passwd = MyMalloc(len + 1);
+  assert(cptr->cli_connect->passwd);
+  strcpy(cptr->cli_connect->passwd, password);
 
   return 0;
 }
@@ -2508,12 +2509,12 @@ int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[])
  *
  * Rewritten to speed it up by Carlo Wood 3/8/97.
  */
-int m_userhost(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+int m_userhost(struct Client *UNUSED(cptr), struct Client *sptr, int parc, char *parv[])
 {
   Reg1 char *s;
   Reg2 int i, j = 5;
   char *p = NULL, *sbuf;
-  aClient *acptr;
+  struct Client *acptr;
 
   if (parc < 2)
   {
@@ -2531,13 +2532,13 @@ int m_userhost(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 #if defined(BDD_VIP)
       sbuf = sprintf_irc(sbuf, "%s%s=%c%s@%s", acptr->name,
           (IsAnOper(acptr)
-          || IsHelpOp(acptr)) ? "*" : "", (acptr->user->away) ? '-' : '+',
-          PunteroACadena(acptr->user->username), get_visiblehost(acptr, sptr));
+          || IsHelpOp(acptr)) ? "*" : "", (cli_user(acptr)->away) ? '-' : '+',
+          PunteroACadena(cli_user(acptr)->username), get_visiblehost(acptr, sptr));
 #else
       sbuf = sprintf_irc(sbuf, "%s%s=%c%s@%s", acptr->name,
-          IsAnOper(acptr) ? "*" : "", (acptr->user->away) ? '-' : '+',
-          PunteroACadena(acptr->user->username),
-          PunteroACadena(acptr->user->host));
+          IsAnOper(acptr) ? "*" : "", (cli_user(acptr)->away) ? '-' : '+',
+          PunteroACadena(cli_user(acptr)->username),
+          PunteroACadena(cli_user(acptr)->host));
 #endif
     }
     else
@@ -2558,12 +2559,12 @@ int m_userhost(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
  *
  * The same as USERHOST, but with the IP-number instead of the hostname.
  */
-int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+int m_userip(struct Client *UNUSED(cptr), struct Client *sptr, int parc, char *parv[])
 {
   Reg1 char *s;
   Reg3 int i, j = 5;
   char *p = NULL, *sbuf;
-  aClient *acptr;
+  struct Client *acptr;
 
   if (parc < 2)
   {
@@ -2580,8 +2581,8 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
         *sbuf++ = ' ';
       sbuf = sprintf_irc(sbuf, "%s%s=%c%s@%s", acptr->name,
           (IsAnOper(acptr)
-          || IsHelpOp(acptr)) ? "*" : "", (acptr->user->away) ? '-' : '+',
-          PunteroACadena(acptr->user->username), (sptr == acptr
+          || IsHelpOp(acptr)) ? "*" : "", (cli_user(acptr)->away) ? '-' : '+',
+          PunteroACadena(cli_user(acptr)->username), (sptr == acptr
 #ifdef HISPANO_WEBCHAT
           || IsChannelService(sptr)
 #endif
@@ -2613,9 +2614,9 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
  * ISON :nicklist
  */
 
-int m_ison(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+int m_ison(struct Client *UNUSED(cptr), struct Client *sptr, int parc, char *parv[])
 {
-  Reg1 aClient *acptr;
+  Reg1 struct Client *acptr;
   Reg2 char *s, **pav = parv;
   Reg3 size_t len;
   char *p = NULL;
@@ -2651,12 +2652,12 @@ int m_ison(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
  * parv[1] - username to change mode for
  * parv[2] - modes to change
  */
-int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_umode(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Reg1 int flag;
   Reg2 int *s;
   Reg3 char **p, *m;
-  aClient *acptr;
+  struct Client *acptr;
   int what, setflags;
   snomask_t tmpmask = 0;
   int snomask_given = 0;
@@ -2700,10 +2701,10 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     *m = '\0';
     sendto_one(sptr, rpl_str(RPL_UMODEIS), me.name, parv[0], buf);
     if ((sptr->flags & FLAGS_SERVNOTICE) && MyConnect(sptr)
-        && sptr->snomask !=
+        && cli_snomask(sptr) !=
         (unsigned int)(IsOper(sptr) ? SNO_OPERDEFAULT : SNO_DEFAULT))
-      sendto_one(sptr, rpl_str(RPL_SNOMASK), me.name, parv[0], sptr->snomask,
-          sptr->snomask);
+      sendto_one(sptr, rpl_str(RPL_SNOMASK), me.name, parv[0], cli_snomask(sptr),
+          cli_snomask(sptr));
     return 0;
   }
 
@@ -2718,7 +2719,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sethmodes |= flag;
 
   if (MyConnect(sptr))
-    tmpmask = sptr->snomask;
+    tmpmask = cli_snomask(sptr);
 
   /*
    * parse mode change string(s)
@@ -2766,7 +2767,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
               {
                 sptr->flags &= ~(FLAGS_OPER | FLAGS_LOCOP);
                 if (MyConnect(sptr))
-                  tmpmask = sptr->snomask & ~SNO_OPER;
+                  tmpmask = cli_snomask(sptr) & ~SNO_OPER;
               }
               /* allow either -o or -O to reset all operator status's... */
               else
@@ -2922,7 +2923,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 
   if (!(sethmodes & HMODE_SERVICESBOT) && !IsServer(cptr)
-      && !IsOper(sptr) && !buscar_uline(cptr->confs, sptr->name))
+      && !IsOper(sptr) && !buscar_uline(cli_confs(cptr), sptr->name))
   {
     sptr->hmodes &= ~HMODE_SERVICESBOT;
   }
@@ -2976,11 +2977,11 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   send_umode_out(cptr, sptr, setflags, sethmodes, IsRegistered(sptr));
   if (MyConnect(sptr))
   {
-    if (tmpmask != sptr->snomask)
+    if (tmpmask != cli_snomask(sptr))
       set_snomask(sptr, tmpmask, SNO_SET);
-    if (sptr->snomask && snomask_given)
+    if (cli_snomask(sptr) && snomask_given)
       sendto_one(sptr, rpl_str(RPL_SNOMASK), me.name, sptr->name,
-          sptr->snomask, sptr->snomask);
+          cli_snomask(sptr), cli_snomask(sptr));
   }
 
 #if defined(WATCH)
@@ -3001,9 +3002,9 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[1] - username to change mode for
  * parv[2] - modes to change
 */
-int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_svsumode(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  aClient *acptr;
+  struct Client *acptr;
   Reg1 int flag;
   Reg2 int *s;
   Reg3 char **p, *m;
@@ -3062,7 +3063,7 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
               {
                 acptr->flags &= ~(FLAGS_OPER | FLAGS_LOCOP);
                 if (MyConnect(acptr))
-                  tmpmask = acptr->snomask & ~SNO_OPER;
+                  tmpmask = cli_snomask(acptr) & ~SNO_OPER;
               }
               /* allow either -o or -O to reset all operator status's... */
               else
@@ -3107,7 +3108,7 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (MyUser(acptr))
   {
-    if (tmpmask != acptr->snomask)
+    if (tmpmask != cli_snomask(acptr))
       set_snomask(acptr, tmpmask, SNO_SET);
   }
   
@@ -3139,7 +3140,7 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parametro.
  * --NiKoLaS
  */
-char *umode_str(aClient *cptr, aClient *acptr)
+char *umode_str(struct Client *cptr, struct Client *acptr)
 {
   char *m = umode_buf;          /* Maximum string size: "owidg\0" */
   int *s, flag, c_flags;
@@ -3193,7 +3194,7 @@ char *umode_str(aClient *cptr, aClient *acptr)
  * Send the MODE string for user (user) to connection cptr
  * -avalon
  */
-void send_umode(aClient *cptr, aClient *sptr, int old, int sendmask, int oldh,
+void send_umode(struct Client *cptr, struct Client *sptr, int old, int sendmask, int oldh,
     int sendhmask)
 {
   Reg1 int *s, flag;
@@ -3327,14 +3328,14 @@ snomask_t umode_make_snomask(snomask_t oldmask, char *arg, int what)
  * the parameter 'what'.  This could be even faster, but the code
  * gets mighty hard to read :)
  */
-void delfrom_list(aClient *, Link **);
-void set_snomask(aClient *cptr, snomask_t newmask, int what)
+void delfrom_list(struct Client *, Link **);
+void set_snomask(struct Client *cptr, snomask_t newmask, int what)
 {
   snomask_t oldmask, diffmask;  /* unsigned please */
   int i;
   Link *tmp;
 
-  oldmask = cptr->snomask;
+  oldmask = cli_snomask(cptr);
 
   if (what == SNO_ADD)
     newmask |= oldmask;
@@ -3364,10 +3365,10 @@ void set_snomask(aClient *cptr, snomask_t newmask, int what)
         /* not real portable :( */
         delfrom_list(cptr, &opsarray[i]);
     }
-  cptr->snomask = newmask;
+  cli_snomask(cptr) = newmask;
 }
 
-void delfrom_list(aClient *cptr, Link **list)
+void delfrom_list(struct Client *cptr, Link **list)
 {
   Link *tmp, *prv = NULL;
   for (tmp = *list; tmp; tmp = tmp->next)
@@ -3393,7 +3394,7 @@ void delfrom_list(aClient *cptr, Link **list)
  * but more over, if this is detected on a server not local to sptr
  * the SILENCE mask is sent upstream.
  */
-int is_silenced(aClient *sptr, aClient *acptr)
+int is_silenced(struct Client *sptr, struct Client *acptr)
 {
   Reg1 Link *lp;
   Reg2 anUser *user;
@@ -3403,7 +3404,7 @@ int is_silenced(aClient *sptr, aClient *acptr)
   static char sendervirtual[100 + HOSTLEN + NICKLEN + USERLEN + 5];
 #endif
 
-  if (!(acptr->user) || !(lp = acptr->user->silence) || !(user = sptr->user))
+  if (!(acptr->cli_user) || !(lp = cli_user(acptr)->silence) || !(user = sptr->cli_user))
     return 0;
   sprintf_irc(sender, "%s!%s@%s", sptr->name, PunteroACadena(user->username),
       PunteroACadena(user->host));
@@ -3425,11 +3426,11 @@ int is_silenced(aClient *sptr, aClient *acptr)
     {
       if (!MyConnect(sptr))
       {
-        if (Protocol(sptr->from) < 10)
-          sendto_one(sptr->from, ":%s SILENCE %s %s", acptr->name,
+        if (Protocol(cli_from(sptr)) < 10)
+          sendto_one(cli_from(sptr), ":%s SILENCE %s %s", acptr->name,
               sptr->name, lp->value.cp);
         else
-          sendto_one(sptr->from, "%s%s " TOK_SILENCE " %s%s %s", NumNick(acptr),
+          sendto_one(cli_from(sptr), "%s%s " TOK_SILENCE " %s%s %s", NumNick(acptr),
               NumNick(sptr), lp->value.cp);
       }
       return 1;
@@ -3444,13 +3445,13 @@ int is_silenced(aClient *sptr, aClient *acptr)
  * Removes all silence masks from the list of sptr that fall within `mask'
  * Returns -1 if none where found, 0 otherwise.
  */
-int del_silence(aClient *sptr, char *mask)
+int del_silence(struct Client *sptr, char *mask)
 {
   Reg1 Link **lp;
   Reg2 Link *tmp;
   int ret = -1;
 
-  for (lp = &sptr->user->silence; *lp;)
+  for (lp = &cli_user(sptr)->silence; *lp;)
     if (!mmatch(mask, (*lp)->value.cp))
     {
       tmp = *lp;
@@ -3465,13 +3466,13 @@ int del_silence(aClient *sptr, char *mask)
   return ret;
 }
 
-static int add_silence(aClient *sptr, char *mask)
+static int add_silence(struct Client *sptr, char *mask)
 {
   Reg1 Link *lp, **lpp;
   Reg3 int cnt = 0, len = strlen(mask);
   char *ip_start;
 
-  for (lpp = &sptr->user->silence, lp = *lpp; lp;)
+  for (lpp = &cli_user(sptr)->silence, lp = *lpp; lp;)
   {
     if (!strCasediff(mask, lp->value.cp))
       return -1;
@@ -3499,12 +3500,12 @@ static int add_silence(aClient *sptr, char *mask)
   }
   lp = make_link();
   memset(lp, 0, sizeof(Link));
-  lp->next = sptr->user->silence;
+  lp->next = cli_user(sptr)->silence;
   lp->value.cp = (char *)MyMalloc(strlen(mask) + 1);
   strcpy(lp->value.cp, mask);
   if ((ip_start = strrchr(mask, '@')) && check_if_ipmask(ip_start + 1))
     lp->flags = CHFL_SILENCE_IPMASK;
-  sptr->user->silence = lp;
+  cli_user(sptr)->silence = lp;
   return 0;
 }
 
@@ -3518,10 +3519,10 @@ static int add_silence(aClient *sptr, char *mask)
  *   parv[1] = Numeric nick that must be silenced
  *   parv[2] = mask
  */
-int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_silence(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Link *lp;
-  aClient *acptr;
+  struct Client *acptr;
   char c, *cp;
 
   if (MyUser(sptr))
@@ -3529,9 +3530,9 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
     acptr = sptr;
     if (parc < 2 || *parv[1] == '\0' || !ircd_strcmp(sptr->name, parv[1]))
     {
-      if (!(acptr->user))
+      if (!(acptr->cli_user))
         return 0;
-      for (lp = acptr->user->silence; lp; lp = lp->next)
+      for (lp = cli_user(acptr)->silence; lp; lp = lp->next)
         sendto_one(sptr, rpl_str(RPL_SILELIST), me.name,
             sptr->name, acptr->name, lp->value.cp);
       sendto_one(sptr, rpl_str(RPL_ENDOFSILELIST), me.name, sptr->name,
@@ -3554,7 +3555,7 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if ((c == '-' && !del_silence(sptr, cp)) ||
         (c != '-' && !add_silence(sptr, cp)))
     {
-      if (MyUser(sptr) || Protocol(sptr->from) < 10)
+      if (MyUser(sptr) || Protocol(cli_from(sptr)) < 10)
         sendto_prefix_one(sptr, sptr, ":%s SILENCE %c%s", parv[0], c, cp);
       else
         sendto_prefix_one(sptr, sptr, "%s%s " TOK_SILENCE " %c%s", NumNick(sptr), c, cp);
@@ -3594,9 +3595,9 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else
     {
       add_silence(sptr, parv[2]);
-      if (acptr && IsServer(acptr->from))
+      if (acptr && IsServer(cli_from(acptr)))
       {
-        if (Protocol(acptr->from) < 10)
+        if (Protocol(cli_from(acptr)) < 10)
           sendto_one(acptr, ":%s SILENCE %s %s", parv[0], acptr->name, parv[2]);
         else if (IsServer(acptr))
           sendto_one(acptr, "%s%s " TOK_SILENCE " %s %s",
@@ -3617,14 +3618,14 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * Nos da la virtual de una conexion, aunque no tenga flag +x.
  *
  */
-char *get_virtualhost(aClient *sptr)
+char *get_virtualhost(struct Client *sptr)
 {
   if (!IsUser(sptr))
     return "<Que_Pasa?>";       /* esto no deberia salir nunca */
 
-  if (sptr->user->virtualhost == NULL)
+  if (cli_user(sptr)->virtualhost == NULL)
     make_virtualhost(sptr, 0);
-  return sptr->user->virtualhost;
+  return cli_user(sptr)->virtualhost;
 }
 
 /*
@@ -3636,18 +3637,18 @@ char *get_virtualhost(aClient *sptr)
  * Si acptr es NULL, se considera un usuario "anonimo".
  *
  */
-char *get_visiblehost(aClient *sptr, aClient *acptr)
+char *get_visiblehost(struct Client *sptr, struct Client *acptr)
 {
   if (!IsUser(sptr) || (acptr && !IsUser(acptr)))
     return "*";                 /* Si el usuario no está registrado se manda un * como host visible */
 
   if (!IsHidden(sptr) || (acptr && IsHiddenViewer(acptr)) || sptr == acptr)
-    return PunteroACadena(sptr->user->host);
+    return PunteroACadena(cli_user(sptr)->host);
   else
   {
-    if (sptr->user->virtualhost == NULL)
+    if (cli_user(sptr)->virtualhost == NULL)
       make_virtualhost(sptr, 0);
-    return sptr->user->virtualhost;
+    return cli_user(sptr)->virtualhost;
   }
 }
 
@@ -3657,7 +3658,7 @@ char *get_visiblehost(aClient *sptr, aClient *acptr)
  * crea la ip virtual
  *
  */
-void make_virtualhost(aClient *acptr, int mostrar)
+void make_virtualhost(struct Client *acptr, int mostrar)
 {
   struct db_reg *reg = NULL;
   unsigned int v[2], x[2];
@@ -3684,7 +3685,7 @@ void make_virtualhost(aClient *acptr, int mostrar)
 ** la IP virtual generica (la IP cifrada), no hace falta recalcular.
 */
   if ((!encontramos_nueva_ip_virtual_personalizada)
-      && (acptr->user->virtualhost != NULL)
+      && (cli_user(acptr)->virtualhost != NULL)
       && !TieneIpVirtualPersonalizada(acptr))
   {
     return;                     /* No es necesario recalcular la IP virtual */
@@ -3694,28 +3695,28 @@ void make_virtualhost(aClient *acptr, int mostrar)
   /* Si esta suspendido, no hay vhost personalizado */
   if (encontramos_nueva_ip_virtual_personalizada)
   {
-    SlabStringAllocDup(&(acptr->user->virtualhost), reg->valor, HOSTLEN);
+    SlabStringAllocDup(&(cli_user(acptr)->virtualhost), reg->valor, HOSTLEN);
     SetIpVirtualPersonalizada(acptr);
     if (mostrar)
       sendto_one(acptr, rpl_str(RPL_HOSTHIDDEN), me.name, acptr->name,
-          acptr->user->virtualhost);
+          cli_user(acptr)->virtualhost);
     return;
   }
 
-  SlabStringAllocDup(&(acptr->user->virtualhost),
-      PunteroACadena(acptr->user->host), 0);
+  SlabStringAllocDup(&(cli_user(acptr)->virtualhost),
+      PunteroACadena(cli_user(acptr)->host), 0);
   ClearIpVirtualPersonalizada(acptr);
 
   if (!clave_de_cifrado_de_ips)
   {
     SetIpVirtualPersonalizada(acptr);
-    SlabStringAllocDup(&(acptr->user->virtualhost), "no.hay.clave.de.cifrado",
+    SlabStringAllocDup(&(cli_user(acptr)->virtualhost), "no.hay.clave.de.cifrado",
         0);
     return;
   }
 
   /* IPv4 */
-  if (irc_in_addr_is_ipv4(&acptr->ip))
+  if (irc_in_addr_is_ipv4(&cli_ip(acptr)))
   {
     while (1)
     {
@@ -3725,10 +3726,10 @@ void make_virtualhost(aClient *acptr, int mostrar)
       v[0] = (clave_de_cifrado_binaria[0] & 0xffff0000) + ts;
 #ifdef HISPANO_WEBCHAT
       v[1] = MyUser(acptr) ? 
-                  (ntohl((unsigned long)acptr->ip_real.in6_16[6]) << 16 | ntohl((unsigned long)acptr->ip_real.in6_16[7])) : 
-                 : (ntohl((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohl((unsigned long)acptr->ip..in6_16[7]))
+                  (ntohl((unsigned long)cli_ip(acptr)_real.in6_16[6]) << 16 | ntohl((unsigned long)cli_ip(acptr)_real.in6_16[7])) : 
+                 : (ntohl((unsigned long)cli_ip(acptr).in6_16[6]) << 16 | ntohl((unsigned long)cli_ip(acptr)..in6_16[7]))
 #else
-      v[1] = ntohl((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohl((unsigned long)acptr->ip.in6_16[7]);
+      v[1] = ntohl((unsigned long)cli_ip(acptr).in6_16[6]) << 16 | ntohl((unsigned long)cli_ip(acptr).in6_16[7]);
 #endif
 
       tea(v, clave_de_cifrado_binaria, x);
@@ -3747,7 +3748,7 @@ void make_virtualhost(aClient *acptr, int mostrar)
       {
       if (++ts == 65536)
         {                         /* No deberia ocurrir nunca */
-          strcpy(ip_virtual_temporal, PunteroACadena(acptr->user->host));
+          strcpy(ip_virtual_temporal, PunteroACadena(cli_user(acptr)->host));
           break;
         }
       }
@@ -3758,14 +3759,14 @@ void make_virtualhost(aClient *acptr, int mostrar)
 
 #ifdef HISPANO_WEBCHAT
     v[0] = MyUser(acptr) ?
-                (ntohl((unsigned long)acptr->ip_real.in6_16[0]) << 16 | ntohl((unsigned long)acptr->ip_real.in6_16[1]))
-              : (ntohl((unsigned long)acptr->ip.in6_16[0]) << 16 | ntohl((unsigned long)acptr->ip.in6_16[1]));
+                (ntohl((unsigned long)cli_ip(acptr)_real.in6_16[0]) << 16 | ntohl((unsigned long)cli_ip(acptr)_real.in6_16[1]))
+              : (ntohl((unsigned long)cli_ip(acptr).in6_16[0]) << 16 | ntohl((unsigned long)cli_ip(acptr).in6_16[1]));
     v[1] = MyUser(acptr) ?
-                (ntohl((unsigned long)acptr->ip_real.in6_16[2]) << 16 | ntohl((unsigned long)acptr->ip_real.in6_16[3]))
-              : (ntohl((unsigned long)acptr->ip.in6_16[2]) << 16 | ntohl((unsigned long)acptr->ip.in6_16[3]));
+                (ntohl((unsigned long)cli_ip(acptr)_real.in6_16[2]) << 16 | ntohl((unsigned long)cli_ip(acptr)_real.in6_16[3]))
+              : (ntohl((unsigned long)cli_ip(acptr).in6_16[2]) << 16 | ntohl((unsigned long)cli_ip(acptr).in6_16[3]));
 #else
-    v[0] = ntohl((unsigned long)acptr->ip.in6_16[0]) << 16 | ntohl((unsigned long)acptr->ip.in6_16[1]);
-    v[1] = ntohl((unsigned long)acptr->ip.in6_16[2]) << 16 | ntohl((unsigned long)acptr->ip.in6_16[3]);
+    v[0] = ntohl((unsigned long)cli_ip(acptr).in6_16[0]) << 16 | ntohl((unsigned long)cli_ip(acptr).in6_16[1]);
+    v[1] = ntohl((unsigned long)cli_ip(acptr).in6_16[2]) << 16 | ntohl((unsigned long)cli_ip(acptr).in6_16[3]);
 #endif
 
     tea(v, clave_de_cifrado_binaria, x);
@@ -3780,15 +3781,15 @@ void make_virtualhost(aClient *acptr, int mostrar)
 #if defined(BDD_VIP3)
   if (MyConnect(acptr))
   {
-    strcpy(ip_virtual_temporal, PunteroACadena(acptr->user->host));
+    strcpy(ip_virtual_temporal, PunteroACadena(cli_user(acptr)->host));
   }
 #endif
-  SlabStringAllocDup(&(acptr->user->virtualhost), ip_virtual_temporal, HOSTLEN);
+  SlabStringAllocDup(&(cli_user(acptr)->virtualhost), ip_virtual_temporal, HOSTLEN);
 
   if (mostrar)
   {
     sendto_one(acptr, rpl_str(RPL_HOSTHIDDEN), me.name, acptr->name,
-        acptr->user->virtualhost);
+        cli_user(acptr)->virtualhost);
   }
 }
 
@@ -3803,13 +3804,13 @@ void make_virtualhost(aClient *acptr, int mostrar)
  * Si el nick dado es NULL, genera un nick del estilo de "invitado-XXXXXX".
  *
  */
-void rename_user(aClient *sptr, char *nick_nuevo)
+void rename_user(struct Client *sptr, char *nick_nuevo)
 {
   assert(MyConnect(sptr));
 
   if (!nick_nuevo)
   {
-    aClient *acptr;
+    struct Client *acptr;
 
     {
       unsigned int v[2], k[2], x[2];
@@ -3817,8 +3818,8 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 
       k[0] = k[1] = x[0] = x[1] = 0;
 
-      v[0] = base64toint(sptr->yxx);
-      v[1] = base64toint(me.yxx);
+      v[0] = base64toint(cli_yxx(sptr));
+      v[1] = base64toint(cli_yxx(&me));
 
       acptr = sptr;
 
@@ -3886,7 +3887,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
   sendto_op_mask(SNO_SERVICE,
       "Cambiamos el nick '%s' a '%s'", sptr->name, nick_nuevo);
 
-  sptr->lastnick = now;
+  sptr->cli_lastnick = now;
 
   /* Esto manda una copia al propio usuario */
   sendto_common_channels(sptr, ":%s NICK :%s", sptr->name, nick_nuevo);
@@ -3899,10 +3900,10 @@ void rename_user(aClient *sptr, char *nick_nuevo)
   add_history(sptr, 1);
 #if !defined(NO_PROTOCOL9)
   sendto_lowprot_butone(NULL, 9,
-      ":%s NICK %s " TIME_T_FMT, sptr->name, nick_nuevo, sptr->lastnick);
+      ":%s NICK %s " TIME_T_FMT, sptr->name, nick_nuevo, sptr->cli_lastnick);
 #endif
   sendto_highprot_butone(NULL, 10,
-      "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick_nuevo, sptr->lastnick);
+      "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick_nuevo, sptr->cli_lastnick);
 
   if (sptr->name)
   {
@@ -4024,9 +4025,9 @@ void rename_user(aClient *sptr, char *nick_nuevo)
  * JCEA: la clave es opcional si se ha introducido una como clave de conexion.
  */
 
-int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_ghost(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  aClient *acptr;
+  struct Client *acptr;
   struct db_reg *reg;
   char *botname;
   int clave_ok = 0;
@@ -4058,9 +4059,9 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       *clave++ = '\0';
     }
-    else if (cptr->passbdd)
+    else if (cptr->cli_connect->passbdd)
     {
-      clave = cptr->passbdd;
+      clave = cptr->cli_connect->passbdd;
     }
   }
   else
@@ -4139,9 +4140,9 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 #if !0
 /* Esto hay que quitarlo en algun momento... */
-int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_rename(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  aClient *acptr;
+  struct Client *acptr;
 
 #ifdef HISPANO_WEBCHAT
   /* Permitimos que pueda solicitar un rename
@@ -4155,7 +4156,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!IsServer(cptr) || !IsServer(sptr) || parc < 2)
     return 0;
 
-  if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
+  if (!buscar_uline(cli_confs(cptr), sptr->name) || (cli_from(sptr) != cptr))
   {
     sendto_serv_butone(cptr,
         ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
@@ -4252,7 +4253,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
  *   parv[parc-1] = info
  *   parv[0] = server
  */
-int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_nick_local(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   struct db_reg *reg, *regj;
   char hflag = '-';
@@ -4263,10 +4264,10 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   int nick_equivalentes = 0;
   int nick_autentificado_en_bdd = 0;
   int nick_aleatorio = 0;
-  aClient *acptr;
-  aClient *server = NULL;
+  struct Client *acptr;
+  struct Client *server = NULL;
   char nick[NICKLEN + 2];
-  Link *lp;
+  struct SLink *lp;
   time_t lastnick = (time_t) 0;
   int differ = 1;
   char *regexp;
@@ -4278,24 +4279,24 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   assert(MyConnect(sptr));
 
-  if (IsUser(sptr) && (sptr->user->host))
+  if (IsUser(sptr) && (cli_user(sptr)->host))
   {
 #if defined(BDD_VIP)
-    strcpy(ip_override_SeeHidden, sptr->user->host);
+    strcpy(ip_override_SeeHidden, cli_user(sptr)->host);
     if (IsHidden(sptr))
     {
-      if (sptr->user->virtualhost == NULL)
+      if (cli_user(sptr)->virtualhost == NULL)
       {
         make_virtualhost(sptr, 0);
       }
-      strcpy(ip_override, sptr->user->virtualhost);
+      strcpy(ip_override, cli_user(sptr)->virtualhost);
     }
     else
     {
-      strcpy(ip_override, sptr->user->host);
+      strcpy(ip_override, cli_user(sptr)->host);
     }
 #else
-    strcpy(ip_override, sptr->user->host);
+    strcpy(ip_override, cli_user(sptr)->host);
 #endif
   }
 
@@ -4306,7 +4307,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 ** No dejamos que un usuario cambie de nick varias veces ANTES
 ** de haber completado su entrada en la red.
 */
-  if (!IsRegistered(sptr) && (sptr->cookie != NULL) &&
+  if (!IsRegistered(sptr) && (sptr->cli_connect->cookie != NULL) &&
       !IsCookieVerified(sptr))
   {
     return 0;
@@ -4365,13 +4366,13 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9, ":%s KILL %s :%s (%s <- %s!%s@%s)",
             me.name, parv[0], me.name, cptr->name, parv[0],
-            sptr->user ? PunteroACadena(sptr->username) : "",
-            sptr->user ? sptr->user->server->name : cptr->name);
+            sptr->cli_user ? PunteroACadena(sptr->username) : "",
+            sptr->cli_user ? cli_user(sptr)->server->name : cptr->name);
 #endif
         sendto_highprot_butone(cptr, 10, "%s " TOK_KILL " %s :%s (%s <- %s!%s@%s)",
             NumServ(&me), parv[0], me.name, cptr->name,
-            parv[0], sptr->user ? PunteroACadena(sptr->username) : "",
-            sptr->user ? sptr->user->server->name : cptr->name);
+            parv[0], sptr->cli_user ? PunteroACadena(sptr->username) : "",
+            sptr->cli_user ? cli_user(sptr)->server->name : cptr->name);
         sptr->flags |= FLAGS_KILLED;
         return exit_client(cptr, sptr, &me, "BadNick");
       }
@@ -4538,12 +4539,12 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * --zoltan
      */
 
-    if (hacer_ghost && reg && (now >= cptr->nextnick))
+    if (hacer_ghost && reg && (now >= cli_nextnick(cptr)))
     {
       if (parc >= 3)
         clave_ok = verifica_clave_nick(reg->clave, reg->valor, parv[2]);
-      else if (cptr->passbdd)
-        clave_ok = verifica_clave_nick(reg->clave, reg->valor, cptr->passbdd);
+      else if (cptr->cli_connect->passbdd)
+        clave_ok = verifica_clave_nick(reg->clave, reg->valor, cptr->cli_connect->passbdd);
     }
 
     if (clave_ok)
@@ -4638,10 +4639,10 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * server (e.g. message type ":server NICK new ..." received)
      */
     lastnick = atoi(parv[3]);
-    differ = (strCasediff(PunteroACadena(acptr->user->username), parv[4]) ||
-        strCasediff(PunteroACadena(acptr->user->host), parv[5]));
+    differ = (strCasediff(PunteroACadena(cli_user(acptr)->username), parv[4]) ||
+        strCasediff(PunteroACadena(cli_user(acptr)->host), parv[5]));
     sendto_ops("Nick collision on %s (%s " TIME_T_FMT " <- %s " TIME_T_FMT
-        " (%s user@host))", acptr->name, acptr->from->name, acptr->lastnick,
+        " (%s user@host))", acptr->name, cli_from(acptr)->name, acptr->cli_lastnick,
         cptr->name, lastnick, differ ? "Different" : "Same");
   }
   else
@@ -4651,25 +4652,25 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
      */
     lastnick = atoi(parv[2]);
     differ =
-        (strCasediff(PunteroACadena(acptr->user->username),
-        PunteroACadena(sptr->user->username))
-        || strCasediff(PunteroACadena(acptr->user->host),
-        PunteroACadena(sptr->user->host)));
+        (strCasediff(PunteroACadena(cli_user(acptr)->username),
+        PunteroACadena(cli_user(sptr)->username))
+        || strCasediff(PunteroACadena(cli_user(acptr)->host),
+        PunteroACadena(cli_user(sptr)->host)));
     sendto_ops("Nick change collision from %s to %s (%s " TIME_T_FMT " <- %s "
-        TIME_T_FMT ")", sptr->name, acptr->name, acptr->from->name,
-        acptr->lastnick, cptr->name, lastnick);
+        TIME_T_FMT ")", sptr->name, acptr->name, cli_from(acptr)->name,
+        acptr->cli_lastnick, cptr->name, lastnick);
   }
   /*
    * Now remove (kill) the nick on our side if it is the youngest.
    * If no timestamp was received, we ignore the incoming nick
    * (and expect a KILL for our legit nick soon ):
    * When the timestamps are equal we kill both nicks. --Run
-   * acptr->from != cptr should *always* be true (?).
+   * cli_from(acptr) != cptr should *always* be true (?).
    */
-  if (acptr->from != cptr)
+  if (cli_from(acptr) != cptr)
   {
-    if ((differ && lastnick >= acptr->lastnick) ||
-        (!differ && lastnick <= acptr->lastnick))
+    if ((differ && lastnick >= acptr->cli_lastnick) ||
+        (!differ && lastnick <= acptr->cli_lastnick))
     {
       if (!IsServer(sptr))
       {
@@ -4677,11 +4678,11 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9,  /* Kill old from outgoing servers */
             ":%s KILL %s :%s (%s <- %s (Nick collision))",
-            me.name, sptr->name, me.name, acptr->from->name, cptr->name);
+            me.name, sptr->name, me.name, cli_from(acptr)->name, cptr->name);
 #endif
         sendto_highprot_butone(cptr, 10,  /* Kill old from outgoing servers */
             "%s " TOK_KILL " %s%s :%s (%s <- %s (Nick collision))",
-            NumServ(&me), NumNick(sptr), me.name, acptr->from->name,
+            NumServ(&me), NumNick(sptr), me.name, cli_from(acptr)->name,
             cptr->name);
         if (IsServer(cptr) && Protocol(cptr) > 9)
           sendto_one(cptr, "%s " TOK_KILL " %s%s :%s (Ghost2)",
@@ -4690,7 +4691,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
         exit_client(cptr, sptr, &me, "Nick collision (you're a ghost)");
         sptr=NULL;
       }
-      if (lastnick != acptr->lastnick)
+      if (lastnick != acptr->cli_lastnick)
         return 0;               /* Ignore the NICK */
     }
     sendto_one(acptr, err_str(ERR_NICKCOLLISION), me.name, acptr->name, nick);
@@ -4702,11 +4703,11 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9,  /* Kill our old from outgoing servers */
         ":%s KILL %s :%s (%s <- %s (older nick overruled))",
-        me.name, acptr->name, me.name, acptr->from->name, cptr->name);
+        me.name, acptr->name, me.name, cli_from(acptr)->name, cptr->name);
 #endif
     sendto_highprot_butone(cptr, 10,  /* Kill our old from outgoing servers */
         "%s " TOK_KILL " %s%s :%s (%s <- %s (older nick overruled))",
-        NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);
+        NumServ(&me), NumNick(acptr), me.name, cli_from(acptr)->name, cptr->name);
     if (MyConnect(acptr) && IsServer(cptr) && Protocol(cptr) > 9)
       sendto_one(cptr, "%s%s " TOK_QUIT " :Local kill by %s (Ghost)",
           NumNick(acptr), me.name);
@@ -4717,18 +4718,18 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9,  /* Kill our old from outgoing servers */
         ":%s KILL %s :%s (%s <- %s (nick collision from same user@host))",
-        me.name, acptr->name, me.name, acptr->from->name, cptr->name);
+        me.name, acptr->name, me.name, cli_from(acptr)->name, cptr->name);
 #endif
     sendto_highprot_butone(cptr, 10,  /* Kill our old from outgoing servers */
         "%s " TOK_KILL " %s%s :%s (%s <- %s (nick collision from same user@host))",
-        NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);
+        NumServ(&me), NumNick(acptr), me.name, cli_from(acptr)->name, cptr->name);
     if (MyConnect(acptr) && IsServer(cptr) && Protocol(cptr) > 9)
       sendto_one(cptr,
           "%s%s " TOK_QUIT " :Local kill by %s (Ghost: switched servers too fast)",
           NumNick(acptr), me.name);
     exit_client(cptr, acptr, &me, "Nick collision (You collided yourself)");
   }
-  if (lastnick == acptr->lastnick)
+  if (lastnick == acptr->cli_lastnick)
     return 0;
 
   if (!sptr)
@@ -4743,7 +4744,7 @@ nickkilldone:
    * Esta comprobacion solo se va a hacer si
    * el usuario es local y no esta haciendo nick flood.
    */
-  if (reg && (now >= cptr->nextnick))
+  if (reg && (now >= cli_nextnick(cptr)))
   {
     char *nombre;
     int usa_clave = 0;
@@ -4785,9 +4786,9 @@ nickkilldone:
           clave_ok = verifica_clave_nick(reg->clave, reg->valor, parv[2]);
           usa_clave = 1;
         }
-        else if (cptr->passbdd)
+        else if (cptr->cli_connect->passbdd)
         {
-          clave_ok = verifica_clave_nick(reg->clave, reg->valor, cptr->passbdd);
+          clave_ok = verifica_clave_nick(reg->clave, reg->valor, cptr->cli_connect->passbdd);
         }
       }
     }
@@ -4894,8 +4895,8 @@ nickkilldone:
           "Too many clients (> %d) from P09 server (%s)", 64, server->name);
 #endif
     sptr = make_client(cptr, STAT_UNKNOWN);
-    sptr->hopcount = atoi(parv[2]);
-    sptr->lastnick = atoi(parv[3]);
+    sptr->cli_hopcount = atoi(parv[2]);
+    sptr->cli_lastnick = atoi(parv[3]);
     if (Protocol(cptr) > 9 && parc > 7 && *parv[6] == '+')
       for (p = parv[6] + 1; *p; p++)
       {
@@ -4916,19 +4917,19 @@ nickkilldone:
      * Set new nick name.
      */
     SlabStringAllocDup(&(sptr->name), nick, 0);
-    sptr->user = make_user(sptr);
-    sptr->user->server = server;
+    sptr->cli_user = make_user(sptr);
+    cli_user(sptr)->server = server;
 #if !defined(NO_PROTOCOL9)
     if (Protocol(cptr) < 10)
     {
       SetRemoteNumNick(sptr, nnp9);
-      memset(&sptr->ip, 0, sizeof(struct irc_in_addr));
+      memset(&cli_ip(sptr), 0, sizeof(struct irc_in_addr));
     }
     else
     {
 #endif
       SetRemoteNumNick(sptr, parv[parc - 2]);
-      base64toip(parv[parc - 3], &sptr->ip);
+      base64toip(parv[parc - 3], &cli_ip(sptr));
       /* IP# of remote client */
 #if !defined(NO_PROTOCOL9)
     }
@@ -4944,9 +4945,9 @@ nickkilldone:
     if (IsUser(sptr))
       BorraIpVirtual(sptr);
 #endif
-    server->serv->ghost = 0;    /* :server NICK means end of net.burst */
+    server->cli_serv->ghost = 0;    /* :server NICK means end of net.burst */
     SlabStringAllocDup(&(sptr->info), parv[parc - 1], REALLEN);
-    SlabStringAllocDup(&(sptr->user->host), parv[5], HOSTLEN);
+    SlabStringAllocDup(&(cli_user(sptr)->host), parv[5], HOSTLEN);
     return register_user(cptr, sptr, sptr->name, parv[4]);
 
 #if defined(WATCH)
@@ -4973,7 +4974,7 @@ nickkilldone:
     {
       int cansend;
 
-      for (lp = cptr->user->channel; lp; lp = lp->next)
+      for (lp = cli_user(cptr)->channel; lp; lp = lp->next)
         if (can_send(cptr, lp->value.chptr) == MODE_BAN)
         {
           sendto_one(cptr, err_str(ERR_BANNICKCHANGE), me.name, parv[0],
@@ -4990,12 +4991,12 @@ nickkilldone:
        * Un +k puede cambiarse de nick todas las veces seguidas que
        * quiera sin limitaciones. -NiKoLaS
        */
-      if ((now < cptr->nextnick) && !(IsChannelService(cptr)))
+      if ((now < cli_nextnick(cptr)) && !(IsChannelService(cptr)))
       {
-        cptr->nextnick += 2;
+        cli_nextnick(cptr) += 2;
         /* Send error message */
         sendto_one(cptr, err_str(ERR_NICKTOOFAST),
-            me.name, parv[0], parv[1], cptr->nextnick - now);
+            me.name, parv[0], parv[1], cli_nextnick(cptr) - now);
         /*
          * La siguiente linea, informaba solamente al cliente
          * del cambio de nick, aun cuando este no se permite
@@ -5008,15 +5009,15 @@ nickkilldone:
       }
       else if (IsChannelService(cptr))
       {
-        cptr->nextnick = now;
+        cli_nextnick(cptr) = now;
       }
       else
       {
         /* Limit total to 1 change per NICK_DELAY seconds: */
-        cptr->nextnick += NICK_DELAY;
+        cli_nextnick(cptr) += NICK_DELAY;
         /* However allow _maximal_ 1 extra consecutive nick change: */
-        if (cptr->nextnick < now)
-          cptr->nextnick = now;
+        if (cli_nextnick(cptr) < now)
+          cli_nextnick(cptr) = now;
       }
 
       /*
@@ -5045,7 +5046,7 @@ nickkilldone:
      * Also set 'lastnick' to current time, if changed.
      */
     if (strCasediff(parv[0], nick))
-      sptr->lastnick = (sptr == cptr) ? TStime() : atoi(parv[2]);
+      sptr->cli_lastnick = (sptr == cptr) ? TStime() : atoi(parv[2]);
 
     /*
      * Client just changing his/her nick. If he/she is
@@ -5097,12 +5098,12 @@ nickkilldone:
       add_history(sptr, 1);
 #if defined(NO_PROTOCOL9)
       sendto_serv_butone(cptr,
-          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->cli_lastnick);
 #else
       sendto_lowprot_butone(cptr, 9,
-          ":%s NICK %s " TIME_T_FMT, parv[0], nick, sptr->lastnick);
+          ":%s NICK %s " TIME_T_FMT, parv[0], nick, sptr->cli_lastnick);
       sendto_highprot_butone(cptr, 10,
-          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->cli_lastnick);
 #endif
     }
     else
@@ -5123,10 +5124,10 @@ nickkilldone:
     /* Local client setting NICK the first time */
 
     SlabStringAllocDup(&(sptr->name), nick, 0);
-    if (!sptr->user)
+    if (!sptr->cli_user)
     {
-      sptr->user = make_user(sptr);
-      sptr->user->server = &me;
+      sptr->cli_user = make_user(sptr);
+      cli_user(sptr)->server = &me;
     }
     SetLocalNumNick(sptr);
     hAddClient(sptr);
@@ -5135,19 +5136,19 @@ nickkilldone:
      * If the client hasn't gotten a cookie-ping yet,
      * choose a cookie and send it. -record!jegelhof@cloud9.net
      */
-    if (!sptr->cookie)
+    if (!sptr->cli_connect->cookie)
     {
       char tmp[COOKIECRYPTLEN+COOKIELEN+1];
       do
       {
-        sptr->cookie = SlabStringAlloc(COOKIELEN+1);
-        genera_cookie(sptr->cookie, COOKIELEN);
+        sptr->cli_connect->cookie = SlabStringAlloc(COOKIELEN+1);
+        genera_cookie(sptr->cli_connect->cookie, COOKIELEN);
       }
-      while ((!sptr->cookie) || IsCookieVerified(sptr));
+      while ((!sptr->cli_connect->cookie) || IsCookieVerified(sptr));
 
       if(find_port_cookie_encrypted(sptr) && cifrado_cookies) {
-        char *tmp2=sptr->cookie;
-        cifra_cookie(tmp, sptr->cookie);
+        char *tmp2=sptr->cli_connect->cookie;
+        cifra_cookie(tmp, sptr->cli_connect->cookie);
         SetCookieEncrypted(sptr);
 
         while(*tmp2) {
@@ -5156,20 +5157,20 @@ nickkilldone:
         }
 
       } else
-        strncpy(tmp, sptr->cookie, COOKIELEN+1);
+        strncpy(tmp, sptr->cli_connect->cookie, COOKIELEN+1);
 
       sendto_one(cptr, "PING :%s", tmp);
     }
-    else if (sptr->user->host && IsCookieVerified(sptr))
+    else if (cli_user(sptr)->host && IsCookieVerified(sptr))
     {
       /*
        * USER and PONG already received, now we have NICK.
        * register_user may reject the client and call exit_client
        * for it - must test this and exit m_nick too !
        */
-      sptr->lastnick = TStime();  /* Always local client */
+      sptr->cli_lastnick = TStime();  /* Always local client */
       if (register_user(cptr, sptr, nick,
-          PunteroACadena(sptr->user->username)) == CPTR_KILLED)
+          PunteroACadena(cli_user(sptr)->username)) == CPTR_KILLED)
         return CPTR_KILLED;
     }
 /*
@@ -5317,12 +5318,12 @@ nickkilldone:
  *   parv[parc-1] = info
  *   parv[0] = server
  */
-int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_nick_remoto(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   int nick_equivalentes = 0;
   int nick_autentificado_en_bdd = 0;
-  aClient *acptr;
-  aClient *server = NULL;
+  struct Client *acptr;
+  struct Client *server = NULL;
   char nick[NICKLEN + 2];
   time_t lastnick = (time_t) 0;
   int differ = 1;
@@ -5333,24 +5334,24 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
   assert(!MyConnect(sptr));
   assert(IsServer(cptr));
 
-  if (IsUser(sptr) && (sptr->user->host))
+  if (IsUser(sptr) && (cli_user(sptr)->host))
   {
 #if defined(BDD_VIP)
-    strcpy(ip_override_SeeHidden, sptr->user->host);
+    strcpy(ip_override_SeeHidden, cli_user(sptr)->host);
     if (IsHidden(sptr))
     {
-      if (sptr->user->virtualhost == NULL)
+      if (cli_user(sptr)->virtualhost == NULL)
       {
         make_virtualhost(sptr, 0);
       }
-      strcpy(ip_override, sptr->user->virtualhost);
+      strcpy(ip_override, cli_user(sptr)->virtualhost);
     }
     else
     {
-      strcpy(ip_override, sptr->user->host);
+      strcpy(ip_override, cli_user(sptr)->host);
     }
 #else
-    strcpy(ip_override, sptr->user->host);
+    strcpy(ip_override, cli_user(sptr)->host);
 #endif
   }
 
@@ -5396,13 +5397,13 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if !defined(NO_PROTOCOL9)
       sendto_lowprot_butone(cptr, 9, ":%s KILL %s :%s (%s <- %s!%s@%s)",
           me.name, parv[0], me.name, cptr->name, parv[0],
-          sptr->user ? PunteroACadena(sptr->username) : "",
-          sptr->user ? sptr->user->server->name : cptr->name);
+          sptr->cli_user ? PunteroACadena(sptr->username) : "",
+          sptr->cli_user ? cli_user(sptr)->server->name : cptr->name);
 #endif
       sendto_highprot_butone(cptr, 10, "%s " TOK_KILL " %s :%s (%s <- %s!%s@%s)",
           NumServ(&me), parv[0], me.name, cptr->name,
-          parv[0], sptr->user ? PunteroACadena(sptr->username) : "",
-          sptr->user ? sptr->user->server->name : cptr->name);
+          parv[0], sptr->cli_user ? PunteroACadena(sptr->username) : "",
+          sptr->cli_user ? cli_user(sptr)->server->name : cptr->name);
       sptr->flags |= FLAGS_KILLED;
       return exit_client(cptr, sptr, &me, "BadNick");
     }
@@ -5427,14 +5428,14 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * Ultimate way to jupiter a nick ? >;-). -avalon
      */
     sendto_ops("Nick collision on %s(%s <- %s)",
-        sptr->name, acptr->from->name, cptr->name);
+        sptr->name, cli_from(acptr)->name, cptr->name);
     ircstp->is_kill++;
     if (Protocol(cptr) < 10)
       sendto_one(cptr, ":%s KILL %s :%s (%s <- %s)",
-          me.name, sptr->name, me.name, acptr->from->name, cptr->name);
+          me.name, sptr->name, me.name, cli_from(acptr)->name, cptr->name);
     else
       sendto_one(cptr, "%s " TOK_KILL " %s%s :%s (%s <- %s)",
-          NumServ(&me), NumNick(sptr), me.name, acptr->from->name,
+          NumServ(&me), NumNick(sptr), me.name, cli_from(acptr)->name,
           /*
            * NOTE: Cannot use get_client_name twice here, it returns static
            *       string pointer--the other info would be lost.
@@ -5519,10 +5520,10 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * server (e.g. message type ":server NICK new ..." received)
      */
     lastnick = atoi(parv[3]);
-    differ = (strCasediff(PunteroACadena(acptr->user->username), parv[4]) ||
-        strCasediff(PunteroACadena(acptr->user->host), parv[5]));
+    differ = (strCasediff(PunteroACadena(cli_user(acptr)->username), parv[4]) ||
+        strCasediff(PunteroACadena(cli_user(acptr)->host), parv[5]));
     sendto_ops("Nick collision on %s (%s " TIME_T_FMT " <- %s " TIME_T_FMT
-        " (%s user@host))", acptr->name, acptr->from->name, acptr->lastnick,
+        " (%s user@host))", acptr->name, cli_from(acptr)->name, acptr->cli_lastnick,
         cptr->name, lastnick, differ ? "Different" : "Same");
   }
   else
@@ -5532,25 +5533,25 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
      */
     lastnick = atoi(parv[2]);
     differ =
-        (strCasediff(PunteroACadena(acptr->user->username),
-        PunteroACadena(sptr->user->username))
-        || strCasediff(PunteroACadena(acptr->user->host),
-        PunteroACadena(sptr->user->host)));
+        (strCasediff(PunteroACadena(cli_user(acptr)->username),
+        PunteroACadena(cli_user(sptr)->username))
+        || strCasediff(PunteroACadena(cli_user(acptr)->host),
+        PunteroACadena(cli_user(sptr)->host)));
     sendto_ops("Nick change collision from %s to %s (%s " TIME_T_FMT " <- %s "
-        TIME_T_FMT ")", sptr->name, acptr->name, acptr->from->name,
-        acptr->lastnick, cptr->name, lastnick);
+        TIME_T_FMT ")", sptr->name, acptr->name, cli_from(acptr)->name,
+        acptr->cli_lastnick, cptr->name, lastnick);
   }
   /*
    * Now remove (kill) the nick on our side if it is the youngest.
    * If no timestamp was received, we ignore the incoming nick
    * (and expect a KILL for our legit nick soon ):
    * When the timestamps are equal we kill both nicks. --Run
-   * acptr->from != cptr should *always* be true (?).
+   * cli_from(acptr) != cptr should *always* be true (?).
    */
-  if (acptr->from != cptr)
+  if (cli_from(acptr) != cptr)
   {
-    if ((differ && lastnick >= acptr->lastnick) ||
-        (!differ && lastnick <= acptr->lastnick))
+    if ((differ && lastnick >= acptr->cli_lastnick) ||
+        (!differ && lastnick <= acptr->cli_lastnick))
     {
       if (!IsServer(sptr))
       {
@@ -5558,17 +5559,17 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if !defined(NO_PROTOCOL9)
         sendto_lowprot_butone(cptr, 9,  /* Kill old from outgoing servers */
             ":%s KILL %s :%s (%s <- %s (Nick collision))",
-            me.name, sptr->name, me.name, acptr->from->name, cptr->name);
+            me.name, sptr->name, me.name, cli_from(acptr)->name, cptr->name);
 #endif
         sendto_highprot_butone(cptr, 10,  /* Kill old from outgoing servers */
             "%s " TOK_KILL " %s%s :%s (%s <- %s (Nick collision))",
-            NumServ(&me), NumNick(sptr), me.name, acptr->from->name,
+            NumServ(&me), NumNick(sptr), me.name, cli_from(acptr)->name,
             cptr->name);
         sptr->flags |= FLAGS_KILLED;
         exit_client(cptr, sptr, &me, "Nick collision (you're a ghost)");
         sptr=NULL;
       }
-      if (lastnick != acptr->lastnick)
+      if (lastnick != acptr->cli_lastnick)
         return 0;               /* Ignore the NICK */
     }
     sendto_one(acptr, err_str(ERR_NICKCOLLISION), me.name, acptr->name, nick);
@@ -5580,11 +5581,11 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9,  /* Kill our old from outgoing servers */
         ":%s KILL %s :%s (%s <- %s (older nick overruled))",
-        me.name, acptr->name, me.name, acptr->from->name, cptr->name);
+        me.name, acptr->name, me.name, cli_from(acptr)->name, cptr->name);
 #endif
     sendto_highprot_butone(cptr, 10,  /* Kill our old from outgoing servers */
         "%s " TOK_KILL " %s%s :%s (%s <- %s (older nick overruled))",
-        NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);
+        NumServ(&me), NumNick(acptr), me.name, cli_from(acptr)->name, cptr->name);
     if (MyConnect(acptr) && Protocol(cptr) > 9)
       sendto_one(cptr, "%s%s " TOK_QUIT " :Local kill by %s (Ghost)",
           NumNick(acptr), me.name);
@@ -5595,18 +5596,18 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(cptr, 9,  /* Kill our old from outgoing servers */
         ":%s KILL %s :%s (%s <- %s (nick collision from same user@host))",
-        me.name, acptr->name, me.name, acptr->from->name, cptr->name);
+        me.name, acptr->name, me.name, cli_from(acptr)->name, cptr->name);
 #endif
     sendto_highprot_butone(cptr, 10,  /* Kill our old from outgoing servers */
         "%s " TOK_KILL " %s%s :%s (%s <- %s (nick collision from same user@host))",
-        NumServ(&me), NumNick(acptr), me.name, acptr->from->name, cptr->name);
+        NumServ(&me), NumNick(acptr), me.name, cli_from(acptr)->name, cptr->name);
     if (MyConnect(acptr) && Protocol(cptr) > 9)
       sendto_one(cptr,
           "%s%s " TOK_QUIT " :Local kill by %s (Ghost: switched servers too fast)",
           NumNick(acptr), me.name);
     exit_client(cptr, acptr, &me, "Nick collision (You collided yourself)");
   }
-  if (lastnick == acptr->lastnick)
+  if (lastnick == acptr->cli_lastnick)
     return 0;
 
   if (!sptr)
@@ -5641,8 +5642,8 @@ nickkilldone:
           "Too many clients (> %d) from P09 server (%s)", 64, server->name);
 #endif
     sptr = make_client(cptr, STAT_UNKNOWN);
-    sptr->hopcount = atoi(parv[2]);
-    sptr->lastnick = atoi(parv[3]);
+    sptr->cli_hopcount = atoi(parv[2]);
+    sptr->cli_lastnick = atoi(parv[3]);
     if (Protocol(cptr) > 9 && parc > 7 && *parv[6] == '+')
       for (p = parv[6] + 1; *p; p++)
       {
@@ -5663,19 +5664,19 @@ nickkilldone:
      * Set new nick name.
      */
     SlabStringAllocDup(&(sptr->name), nick, 0);
-    sptr->user = make_user(sptr);
-    sptr->user->server = server;
+    sptr->cli_user = make_user(sptr);
+    cli_user(sptr)->server = server;
 #if !defined(NO_PROTOCOL9)
     if (Protocol(cptr) < 10)
     {
       SetRemoteNumNick(sptr, nnp9);
-      memset(&sptr->ip, 0, sizeof(struct irc_in_addr));
+      memset(&cli_ip(sptr), 0, sizeof(struct irc_in_addr));
     }
     else
     {
 #endif
       SetRemoteNumNick(sptr, parv[parc - 2]);
-      base64toip(parv[parc - 3], &sptr->ip);
+      base64toip(parv[parc - 3], &cli_ip(sptr));
       /* IP# of remote client */
 #if !defined(NO_PROTOCOL9)
     }
@@ -5693,9 +5694,9 @@ nickkilldone:
       BorraIpVirtual(sptr);
 #endif
 
-    server->serv->ghost = 0;    /* :server NICK means end of net.burst */
+    server->cli_serv->ghost = 0;    /* :server NICK means end of net.burst */
     SlabStringAllocDup(&(sptr->info), parv[parc - 1], REALLEN);
-    SlabStringAllocDup(&(sptr->user->host), parv[5], HOSTLEN);
+    SlabStringAllocDup(&(cli_user(sptr)->host), parv[5], HOSTLEN);
     return register_user(cptr, sptr, sptr->name, parv[4]);
 
 #if defined(WATCH)
@@ -5715,7 +5716,7 @@ nickkilldone:
      * Also set 'lastnick' to current time, if changed.
      */
     if (strCasediff(parv[0], nick))
-      sptr->lastnick = (sptr == cptr) ? TStime() : atoi(parv[2]);
+      sptr->cli_lastnick = (sptr == cptr) ? TStime() : atoi(parv[2]);
 
     /*
      * Client just changing his/her nick. If he/she is
@@ -5762,12 +5763,12 @@ nickkilldone:
       add_history(sptr, 1);
 #if defined(NO_PROTOCOL9)
       sendto_serv_butone(cptr,
-          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->cli_lastnick);
 #else
       sendto_lowprot_butone(cptr, 9,
-          ":%s NICK %s " TIME_T_FMT, parv[0], nick, sptr->lastnick);
+          ":%s NICK %s " TIME_T_FMT, parv[0], nick, sptr->cli_lastnick);
       sendto_highprot_butone(cptr, 10,
-          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->cli_lastnick);
 #endif
     }
     else
@@ -5841,7 +5842,7 @@ nickkilldone:
  *   parv[parc-1] = info
  *   parv[0] = server
  */
-int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_nick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   if (MyConnect(sptr))
     return m_nick_local(cptr, sptr, parc, parv);
@@ -5850,17 +5851,17 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 }
 
 
-static char *nuevo_nick_aleatorio(aClient *cptr)
+static char *nuevo_nick_aleatorio(struct Client *cptr)
 {
-  aClient *acptr;
+  struct Client *acptr;
   char *nick_nuevo;
   unsigned int v[2], k[2], x[2];
   char resultado[NICKLEN + 1];
 
   k[0] = k[1] = x[0] = x[1] = 0;
 
-  v[0] = base64toint(cptr->yxx);
-  v[1] = base64toint(me.yxx);
+  v[0] = base64toint(cli_yxx(cptr));
+  v[1] = base64toint(cli_yxx(&me));
 
   acptr = cptr;
 

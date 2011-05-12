@@ -34,6 +34,7 @@
 #include "numnicks.h"
 #endif
 #include "send.h"
+#include "client.h"
 
 #if defined(BDD_CLONES)
 #include "s_bdd.h"
@@ -43,7 +44,7 @@
 
 RCSTAG_CC("$Id$");
 
-extern aClient me;
+extern struct Client me;
 extern time_t now;
 
 /*
@@ -325,10 +326,10 @@ static void reset_connect_time(struct IPregistry *entry)
  * When the client is accepted, then the number of Free Targets
  * of the cptr is set to the value stored in the found IPregistry
  * structure, or left at STARTTARGETS.  This can be done by changing
- * cptr->nexttarget to be `now - (TARGET_DELAY * (FREE_TARGETS - 1))',
+ * cli_nexttarget(cptr) to be `now - (TARGET_DELAY * (FREE_TARGETS - 1))',
  * where FREE_TARGETS may range from 0 till STARTTARGETS.
  */
-int IPcheck_local_connect(aClient *cptr)
+int IPcheck_local_connect(struct Client *cptr)
 {
 #if defined(BDD_CLONES)
   int clones = 0;
@@ -336,7 +337,7 @@ int IPcheck_local_connect(aClient *cptr)
   struct IPregistry *entry;
   struct irc_in_addr canon;
 
-  IPregistry_canonicalize(&canon, &cptr->ip);
+  IPregistry_canonicalize(&canon, &cli_ip(cptr));
   CALCULATE_HASH(canon);
   SetIPChecked(cptr);           /* Mark that we did add/update an IPregistry entry */
 #if defined(BDD_CLONES)
@@ -378,11 +379,11 @@ int IPcheck_local_connect(aClient *cptr)
   if (entry->connect_attempts <= IPCHECK_CLONE_LIMIT)
 #if defined(BDD_CLONES)
     if (clones)
-      cptr->nexttarget = now - (TARGET_DELAY * (STARTTARGETS - 1));
+      cli_nexttarget(cptr) = now - (TARGET_DELAY * (STARTTARGETS - 1));
     else
-      cptr->nexttarget = now - (TARGET_DELAY * (FREE_TARGETS(entry) - 1));
+      cli_nexttarget(cptr) = now - (TARGET_DELAY * (FREE_TARGETS(entry) - 1));
 #else
-    cptr->nexttarget = now - (TARGET_DELAY * (FREE_TARGETS(entry) - 1));
+    cli_nexttarget(cptr) = now - (TARGET_DELAY * (FREE_TARGETS(entry) - 1));
 #endif
   else
   {
@@ -416,13 +417,13 @@ int IPcheck_local_connect(aClient *cptr)
  *   Update the IPcheck registry.
  *   Return -1 on failure, 0 on success.
  */
-int IPcheck_remote_connect(aClient *cptr, const char *UNUSED(hostname),
+int IPcheck_remote_connect(struct Client *cptr, const char *UNUSED(hostname),
     int is_burst)
 {
   struct IPregistry *entry;
   struct irc_in_addr canon;
 
-  IPregistry_canonicalize(&canon, &cptr->ip);
+  IPregistry_canonicalize(&canon, &cli_ip(cptr));
   CALCULATE_HASH(canon);
   SetIPChecked(cptr);           /* Mark that we did add/update an IPregistry entry */
   if (!(entry = IPregistry_find(hash, canon)))
@@ -467,12 +468,12 @@ int IPcheck_remote_connect(aClient *cptr, const char *UNUSED(hostname),
  *   a way that the client won't be penalized when trying to reconnect
  *   again.
  */
-void IPcheck_connect_fail(aClient *cptr)
+void IPcheck_connect_fail(struct Client *cptr)
 {
   struct IPregistry *entry;
   struct irc_in_addr canon;
 
-  IPregistry_canonicalize(&canon, &cptr->ip);
+  IPregistry_canonicalize(&canon, &cli_ip(cptr));
   CALCULATE_HASH(canon);
   entry = IPregistry_find(hash, canon);
   entry->connect_attempts--;
@@ -486,18 +487,18 @@ void IPcheck_connect_fail(aClient *cptr)
  *
  * Finish IPcheck registration of a successfully, locally connected client.
  */
-void IPcheck_connect_succeeded(aClient *cptr)
+void IPcheck_connect_succeeded(struct Client *cptr)
 {
   struct IPregistry *entry;
   struct irc_in_addr canon;
   const char *tr = "";
 
-  IPregistry_canonicalize(&canon, &cptr->ip);
+  IPregistry_canonicalize(&canon, &cli_ip(cptr));
   CALCULATE_HASH(canon);
   entry = IPregistry_find(hash, canon);
   if (HAS_TARGETS(entry))
   {
-    memcpy(cptr->targets, entry->ip_targets.ptr->targets, MAXTARGETS);
+    memcpy(cli_targets(cptr), entry->ip_targets.ptr->targets, MAXTARGETS);
     tr = " tr";
   }
   sendto_one(cptr, ":%s NOTICE %s :on %u ca %u(%u) ft %u(%u)%s",
@@ -516,12 +517,12 @@ void IPcheck_connect_succeeded(aClient *cptr)
  *   Remove all expired IPregistry structures from the hash bucket
  *     that belongs to this clients IP number.
  */
-void IPcheck_disconnect(aClient *cptr)
+void IPcheck_disconnect(struct Client *cptr)
 {
   struct IPregistry *entry;
   struct irc_in_addr canon;
 
-  IPregistry_canonicalize(&canon, &cptr->ip);
+  IPregistry_canonicalize(&canon, &cli_ip(cptr));
   CALCULATE_HASH(canon);
   entry = IPregistry_find_with_expire(hash, canon);
   if (--(entry->connected) == 0)  /* If this was the last one, set `last_connect' to disconnect time (used for expiration) */
@@ -544,7 +545,7 @@ void IPcheck_disconnect(aClient *cptr)
     entry->ip_targets.ptr->ip = canon;
     entry->ip_targets.ptr->free_targets = entry->free_targets;
     entry->free_targets = HAS_TARGETS_MAGIC;
-    memcpy(entry->ip_targets.ptr->targets, cptr->targets, MAXTARGETS);
+    memcpy(entry->ip_targets.ptr->targets, cli_targets(cptr), MAXTARGETS);
     /*
      * This calculation can be pretty unfair towards large multi-user hosts, but
      * there is "nothing" we can do without also allowing spam bots to send more
@@ -558,13 +559,13 @@ void IPcheck_disconnect(aClient *cptr)
      * ALL should get no free targets when reconnecting.  We'd need to store an entry
      * per client (instead of per IP number) to avoid this.
      */
-    if (cptr->nexttarget <= now)
-      inheritance = (now - cptr->nexttarget) / TARGET_DELAY + 1;  /* Number of free targets */
+    if (cli_nexttarget(cptr) <= now)
+      inheritance = (now - cli_nexttarget(cptr)) / TARGET_DELAY + 1;  /* Number of free targets */
     else
       inheritance = 0;
     /* Add bonus, this is pretty fuzzy, but it will help in some cases. */
-    if (now - cptr->firsttime > 600)  /* Was longer then 10 minutes online? */
-      inheritance += (now - cptr->firsttime - 600) / TARGET_DELAY;
+    if (now - cli_firsttime(cptr) > 600)  /* Was longer then 10 minutes online? */
+      inheritance += (now - cli_firsttime(cptr) - 600) / TARGET_DELAY;
     /* Finally, store smallest value for Judgement Day */
     if (inheritance < entry->ip_targets.ptr->free_targets)
       entry->ip_targets.ptr->free_targets = inheritance;
@@ -576,12 +577,12 @@ void IPcheck_disconnect(aClient *cptr)
  *
  * Returns number of clients with the same IP number
  */
-unsigned short IPcheck_nr(aClient *cptr)
+unsigned short IPcheck_nr(struct Client *cptr)
 {
   struct IPregistry *entry;
   struct irc_in_addr canon;
 
-  IPregistry_canonicalize(&canon, &cptr->ip);
+  IPregistry_canonicalize(&canon, &cli_ip(cptr));
   CALCULATE_HASH(canon);
   entry = IPregistry_find(hash, canon);
   return (entry ? entry->connected : 0);
@@ -598,7 +599,7 @@ int IPbusca_clones(char *host)
   return atoi(reg->valor);
 }
 
-int IPbusca_clones_cptr(aClient *cptr)
+int IPbusca_clones_cptr(struct Client *cptr)
 {
   char host_buf[HOSTLEN + 1];
   struct hostent *hp;
@@ -608,7 +609,7 @@ int IPbusca_clones_cptr(aClient *cptr)
   {
     int i;
 
-    strcpy(host_buf, ircd_ntoa(&cptr->ip));
+    strcpy(host_buf, ircd_ntoa(&cli_ip(cptr)));
     if (IPbusca_clones(host_buf) != -1) /* HIT! */
       return 0;
   }

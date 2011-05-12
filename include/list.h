@@ -3,6 +3,10 @@
 
 #include "h.h"
 
+struct Client;
+struct Connection;
+
+
 /*=============================================================================
  * General defines
  */
@@ -18,11 +22,11 @@
 struct SLink {
   struct SLink *next;
   union {
-    aClient *cptr;
+    struct Client *cptr;
     struct Channel *chptr;
     struct ConfItem *aconf;
 #if defined(WATCH)
-    aWatch *wptr;
+    struct Watch *wptr;
 #endif
     char *cp;
     struct {
@@ -34,11 +38,11 @@ struct SLink {
   unsigned int flags;
 };
 
-struct DSlink {
-  struct DSlink *next;
-  struct DSlink *prev;
+struct DLink {
+  struct DLink *next;
+  struct DLink *prev;
   union {
-    aClient *cptr;
+    struct Client *cptr;
     struct Channel *chptr;
     struct ConfItem *aconf;
     char *cp;
@@ -60,19 +64,19 @@ struct Watch {
  */
 
 extern void free_link(Link *lp);
-extern Link *make_link(void);
-extern Link *find_user_link(Link *lp, aClient *ptr);
+extern struct SLink *make_link(void);
+extern struct SLink *find_user_link(struct SLink *lp, aClient *ptr);
+extern void init_list(int maxconn);
 extern void initlists(void);
 extern void outofmemory(void);
-extern aClient *make_client(aClient *from, int status);
-extern void free_client(aClient *cptr);
-extern struct User *make_user(aClient *cptr);
-extern struct Server *make_server(aClient *cptr);
-extern void free_user(struct User *user);
-extern void remove_client_from_list(aClient *cptr);
-extern void add_client_to_list(aClient *cptr);
-extern Dlink *add_dlink(Dlink **lpp, aClient *cp);
-extern void remove_dlink(Dlink **lpp, Dlink *lp);
+extern struct Client *make_client(struct Client *from, int status);
+extern void free_connection(struct Connection *con);
+extern void free_client(struct Client *cptr);
+extern struct Server *make_server(struct Client *cptr);
+extern void remove_client_from_list(struct Client *cptr);
+extern void add_client_to_list(struct Client *cptr);
+extern struct DLink *add_dlink(struct DLink **lpp, struct Client *cp);
+extern void remove_dlink(struct DLink **lpp, struct DLink *lp);
 extern struct ConfItem *make_conf(void);
 extern void delist_conf(struct ConfItem *aconf);
 extern void free_conf(struct ConfItem *aconf);

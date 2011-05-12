@@ -23,6 +23,7 @@
 #if defined(ESNET_NEG)
 
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "common.h"
 #include "ircd.h"
@@ -83,7 +84,7 @@ static char *mira_conf_negociacion(char *nombre, tipo_config tipo_config)
   return p->passwd;
 }
 
-void config_resolve_speculative(aClient *cptr)
+void config_resolve_speculative(struct Client *cptr)
 {
   char *p;
   int estado;
@@ -93,7 +94,7 @@ void config_resolve_speculative(aClient *cptr)
   if (IsServer(cptr) || (IsCookieEncrypted(cptr) && compresion_zlib_cliente))
   {
 #if defined(ZLIB_ESNET)
-    if (!strchr(p, 'z') && (cptr->negociacion & ZLIB_ESNET_OUT_SPECULATIVE))
+    if (!strchr(p, 'z') && (cptr->cli_connect->negociacion & ZLIB_ESNET_OUT_SPECULATIVE))
     {
 #if !defined(NO_PROTOCOL9)
       if (!IsServer(cptr) || Protocol(cptr) < 10)
@@ -101,24 +102,24 @@ void config_resolve_speculative(aClient *cptr)
       else
 #endif
         sendto_one(cptr, "%s " TOK_CONFIG " ACK :zlib", NumServ(&me));
-      cptr->negociacion &= ~ZLIB_ESNET_OUT_SPECULATIVE;
-      cptr->negociacion |= ZLIB_ESNET_OUT;
-      cptr->comp_out = MyMalloc(sizeof(z_stream));
-      if (!cptr->comp_out)
+      cptr->cli_connect->negociacion &= ~ZLIB_ESNET_OUT_SPECULATIVE;
+      cptr->cli_connect->negociacion |= ZLIB_ESNET_OUT;
+      cptr->cli_connect->comp_out = MyMalloc(sizeof(z_stream));
+      if (!cptr->cli_connect->comp_out)
         outofmemory();
-      cptr->comp_out->zalloc = z_alloc;
-      cptr->comp_out->zfree = z_free;
-      cptr->comp_out->opaque = 0;
-      estado = deflateInit(cptr->comp_out, IsServer(cptr) ? 9 : compresion_zlib_cliente);
+      cptr->cli_connect->comp_out->zalloc = z_alloc;
+      cptr->cli_connect->comp_out->zfree = z_free;
+      cptr->cli_connect->comp_out->opaque = 0;
+      estado = deflateInit(cptr->cli_connect->comp_out, IsServer(cptr) ? 9 : compresion_zlib_cliente);
       assert(estado == Z_OK);
-      cptr->comp_out_total_in = 0;
-      cptr->comp_out_total_out = 0;
+      cptr->cli_connect->comp_out_total_in = 0;
+      cptr->cli_connect->comp_out_total_out = 0;
     }
 #endif
   }                             /* No es server */
 }
 
-int config_ack(aClient *cptr, aClient *sptr, char *fuente, char *valor,
+int config_ack(struct Client *cptr, struct Client *sptr, char *fuente, char *valor,
     opcion opcion)
 {
   int estado;
@@ -129,19 +130,19 @@ int config_ack(aClient *cptr, aClient *sptr, char *fuente, char *valor,
     {
 #if defined(ZLIB_ESNET)
       case ZLIB:
-        cptr->negociacion |= ZLIB_ESNET_IN;
-        cptr->comp_in = MyMalloc(sizeof(z_stream));
-        if (!cptr->comp_in)
+        cptr->cli_connect->negociacion |= ZLIB_ESNET_IN;
+        cptr->cli_connect->comp_in = MyMalloc(sizeof(z_stream));
+        if (!cptr->cli_connect->comp_in)
           outofmemory();
-        cptr->comp_in->next_in = Z_NULL;
-        cptr->comp_in->avail_in = 0;
-        cptr->comp_in->zalloc = z_alloc;
-        cptr->comp_in->zfree = z_free;
-        cptr->comp_in->opaque = 0;
-        estado = inflateInit(cptr->comp_in);
+        cptr->cli_connect->comp_in->next_in = Z_NULL;
+        cptr->cli_connect->comp_in->avail_in = 0;
+        cptr->cli_connect->comp_in->zalloc = z_alloc;
+        cptr->cli_connect->comp_in->zfree = z_free;
+        cptr->cli_connect->comp_in->opaque = 0;
+        estado = inflateInit(cptr->cli_connect->comp_in);
         assert(estado == Z_OK);
-        cptr->comp_in_total_in = 0;
-        cptr->comp_in_total_out = 0;
+        cptr->cli_connect->comp_in_total_in = 0;
+        cptr->cli_connect->comp_in_total_out = 0;
         break;
 #endif
       default:                 /* No deberia ocurrir nunca */
@@ -151,7 +152,7 @@ int config_ack(aClient *cptr, aClient *sptr, char *fuente, char *valor,
   return 0;
 }
 
-int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
+int config_req(struct Client *cptr, struct Client *sptr, char *fuente, char *valor,
     opcion opcion)
 {
   char *p;
@@ -172,7 +173,7 @@ int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
           else
 #endif
             sendto_one(sptr, "%s " TOK_CONFIG " ACK :zlib", NumServ(&me));
-          cptr->negociacion |= ZLIB_ESNET_OUT;
+          cptr->cli_connect->negociacion |= ZLIB_ESNET_OUT;
         }
         break;
 #endif
@@ -186,13 +187,13 @@ int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
     {
 #if defined(ZLIB_ESNET)
       case ZLIB:
-        cptr->negociacion |= ZLIB_ESNET_OUT_SPECULATIVE;
+        cptr->cli_connect->negociacion |= ZLIB_ESNET_OUT_SPECULATIVE;
         break;
 #endif
       case TOK:
           if(IsCookieEncrypted(cptr)) {
             sendto_one(sptr, ":%s " MSG_CONFIG " ACK :tok", me.name);
-            cptr->negociacion |= USER_TOK;
+            cptr->cli_connect->negociacion |= USER_TOK;
           }
           break;
       case FIN:
@@ -202,7 +203,7 @@ int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
   return 0;
 }
 
-int m_config(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_config(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   int i;
 
@@ -237,7 +238,7 @@ int m_config(aClient *cptr, aClient *sptr, int parc, char *parv[])
   return 0;
 }
 
-void envia_config_req(aClient *cptr)
+void envia_config_req(struct Client *cptr)
 {
   char *p;
 

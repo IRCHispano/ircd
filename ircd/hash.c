@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "struct.h"
 #include "common.h"
@@ -173,7 +174,7 @@ static HASHMEMS hash_weight_table[CHAR_MAX - CHAR_MIN + 1];
    size tables could be supported but the rehash routine should also
    rebuild the transformation maps, I kept the tables of equal size 
    so that I can use one hash function and one transformation map */
-static aClient *clientTable[HASHSIZE];
+static struct Client *clientTable[HASHSIZE];
 static aChannel *channelTable[HASHSIZE];
 #if defined(WATCH)
 static aWatch *watchTable[HASHSIZE];
@@ -195,7 +196,7 @@ void hash_init(void)
   for (l = 0; l < HASHSIZE; l++)
   {
     channelTable[l] = (aChannel *)NULL;
-    clientTable[l] = (aClient *)NULL;
+    clientTable[l] = (struct Client *)NULL;
 #if defined(WATCH)
     watchTable[l] = (aWatch *) NULL;
 #endif
@@ -284,11 +285,11 @@ static HASHREGS strhash(char *n)
  * cptr must have a non-null name or expect a coredump, the name is
  * infact taken from cptr->name
  */
-int hAddClient(aClient *cptr)
+int hAddClient(struct Client *cptr)
 {
   HASHREGS hashv = strhash(cptr->name);
 
-  cptr->hnext = clientTable[hashv];
+  cptr->cli_hnext = clientTable[hashv];
   clientTable[hashv] = cptr;
 
   return 0;
@@ -315,24 +316,24 @@ int hAddChannel(aChannel *chptr)
  * hRemClient
  * Removes a Client's name from the hash linked list
  */
-int hRemClient(aClient *cptr)
+int hRemClient(struct Client *cptr)
 {
   HASHREGS hashv = strhash(PunteroACadena(cptr->name));
-  aClient *tmp = clientTable[hashv];
+  struct Client *tmp = clientTable[hashv];
 
   if (tmp == cptr)
   {
-    clientTable[hashv] = cptr->hnext;
+    clientTable[hashv] = cptr->cli_hnext;
     return 0;
   }
   while (tmp)
   {
-    if (tmp->hnext == cptr)
+    if (tmp->cli_hnext == cptr)
     {
-      tmp->hnext = tmp->hnext->hnext;
+      tmp->cli_hnext = tmp->cli_hnext->cli_hnext;
       return 0;
     }
-    tmp = tmp->hnext;
+    tmp = tmp->cli_hnext;
   }
   return -1;
 }
@@ -353,13 +354,13 @@ int hRemClient(aClient *cptr)
  * There isn't an equivalent function for channels since they
  * don't change name.
  */
-int hChangeClient(aClient *cptr, char *newname)
+int hChangeClient(struct Client *cptr, char *newname)
 {
   HASHREGS newhash = strhash(newname);
 
   hRemClient(cptr);
 
-  cptr->hnext = clientTable[newhash];
+  cptr->cli_hnext = clientTable[newhash];
   clientTable[newhash] = cptr;
   return 0;
 }
@@ -399,19 +400,19 @@ int hRemChannel(aChannel *chptr)
  * returns NULL. If it finds one moves it to the top of the list
  * and returns it.
  */
-aClient *hSeekClient(char *name, int TMask)
+struct Client *hSeekClient(char *name, int TMask)
 {
   HASHREGS hashv = strhash(name);
-  aClient *cptr = clientTable[hashv];
-  aClient *prv;
+  struct Client *cptr = clientTable[hashv];
+  struct Client *prv;
 
   if (cptr)
     if ((!IsStatMask(cptr, TMask)) || ircd_strcmp(name, cptr->name))
-      while (prv = cptr, cptr = cptr->hnext)
+      while (prv = cptr, cptr = cptr->cli_hnext)
         if (IsStatMask(cptr, TMask) && (!ircd_strcmp(name, cptr->name)))
         {
-          prv->hnext = cptr->hnext;
-          cptr->hnext = clientTable[hashv];
+          prv->cli_hnext = cptr->cli_hnext;
+          cptr->cli_hnext = clientTable[hashv];
           clientTable[hashv] = cptr;
           break;
         };
@@ -452,7 +453,7 @@ aChannel *hSeekChannel(char *name)
    coders are able to SIGCORE the server and look into what goes
    on themselves :-) */
 
-int m_hash(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), char *parv[])
+int m_hash(struct Client *UNUSED(cptr), struct Client *sptr, int UNUSED(parc), char *parv[])
 {
   sendto_one(sptr, "NOTICE %s :[04283    71] [61380   152]", parv[0]);
   sendto_one(sptr, "NOTICE %s :[22394    38] [37722    25]", parv[0]);
@@ -553,13 +554,13 @@ aWatch *hSeekWatch(char *nick)
 
 #endif /* WATCH */
 
-void list_next_channels(aClient *cptr)
+void list_next_channels(struct Client *cptr)
 {
   aListingArgs *args;
   aChannel *chptr;
 
   /* Walk consecutive buckets until we hit the end. */
-  for (args = cptr->listing; args->bucket < HASHSIZE; args->bucket++)
+  for (args = cli_listing(cptr); args->bucket < HASHSIZE; args->bucket++)
   {
     /* Send all the matching channels in the bucket. */
     for (chptr = channelTable[args->bucket]; chptr; chptr = chptr->hnextch)
@@ -597,15 +598,15 @@ void list_next_channels(aClient *cptr)
     }
     /* If, at the end of the bucket, client sendq is more than half
      * full, stop. */
-    if (DBufLength(&cptr->sendQ) > get_sendq(cptr) / 2)
+    if (DBufLength(&cptr->cli_connect->sendQ) > get_sendq(cptr) / 2)
       break;
   }
 
   /* If we did all buckets, clean the client and send RPL_LISTEND. */
   if (args->bucket >= HASHSIZE)
   {
-    MyFree(cptr->listing);
-    cptr->listing = NULL;
+    MyFree(cli_listing(cptr));
+    cli_listing(cptr) = NULL;
     sendto_one(cptr, rpl_str(RPL_LISTEND), me.name, cptr->name);
   }
 }

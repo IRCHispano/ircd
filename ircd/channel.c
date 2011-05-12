@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "struct.h"
 #include "channel.h"
@@ -57,24 +58,24 @@ RCSTAG_CC("$Id$");
 
 aChannel *channel = NullChn;
 
-static void sendmodeto_one(aClient *cptr, char *from, char *name,
+static void sendmodeto_one(struct Client *cptr, char *from, char *name,
     char *mode, char *param, time_t creationtime);
-static void add_invite(aClient *, aChannel *);
-static int add_banid(aClient *, aChannel *, char *, int, int);
-static Link *next_overlapped_ban(void);
-static Link *next_removed_overlapped_ban(void);
-static int can_join(aClient *, aChannel *, char *);
+static void add_invite(struct Client *, aChannel *);
+static int add_banid(struct Client *, aChannel *, char *, int, int);
+static struct SLink *next_overlapped_ban(void);
+static struct SLink *next_removed_overlapped_ban(void);
+static int can_join(struct Client *, aChannel *, char *);
 static int del_banid(aChannel *, char *, int);
-static int is_banned(aClient *, aChannel *, Link *);
-static int is_invited(aClient *, aChannel *);
+static int is_banned(struct Client *, aChannel *, struct SLink *);
+static int is_invited(struct Client *, aChannel *);
 static int number_of_zombies(aChannel *);
-static int is_deopped(aClient *, aChannel *);
-static int set_mode(aClient *, aClient *, aChannel *, int, int,
+static int is_deopped(struct Client *, aChannel *);
+static int set_mode(struct Client *, struct Client *, aChannel *, int, int,
     char **, char *, char *, char *, int *);
-static void send_hack_notice(aClient *, aClient *, int, char *[], int, int);
+static void send_hack_notice(struct Client *, struct Client *, int, char *[], int, int);
 static void clean_channelname(char *);
 
-void del_invite(aClient *, aChannel *);
+void del_invite(struct Client *, aChannel *);
 
 static char *PartFmt1 = ":%s PART %s";
 static char *PartFmt1Serv = "%s%s " TOK_PART " %s";
@@ -117,7 +118,7 @@ int LocalChanOperMode = 0;
 /*
  * return the length (>=0) of a chain of links.
  */
-static int list_length(Link *lp)
+static int list_length(struct SLink *lp)
 {
   Reg2 int count = 0;
 
@@ -134,9 +135,9 @@ static int list_length(Link *lp)
  * message (NO SUCH NICK) is generated. If the client was found
  * through the history, chasing will be 1 and otherwise 0.
  */
-static aClient *find_chasing(aClient *sptr, char *user, int *chasing)
+static struct Client *find_chasing(struct Client *sptr, char *user, int *chasing)
 {
-  Reg2 aClient *who = FindClient(user);
+  Reg2 struct Client *who = FindClient(user);
 
   if (chasing)
     *chasing = 0;
@@ -219,12 +220,12 @@ static char *make_nick_user_ip(char *nick, char *name, struct irc_in_addr *ip)
  *
  * --Run
  */
-static Link *next_ban, *prev_ban, *removed_bans_list;
+static struct SLink *next_ban, *prev_ban, *removed_bans_list;
 
-static int add_banid(aClient *cptr, aChannel *chptr, char *banid,
+static int add_banid(struct Client *cptr, aChannel *chptr, char *banid,
     int change, int firsttime)
 {
-  Reg1 Link *ban, **banp;
+  Reg1 struct SLink *ban, **banp;
   Reg2 int cnt = 0, removed_bans = 0, len = strlen(banid);
 
   if (firsttime)
@@ -255,7 +256,7 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid,
       return -1;
     if (!mmatch(banid, (*banp)->value.ban.banstr))
     {
-      Link *tmp = *banp;
+      struct SLink *tmp = *banp;
       if (change)
       {
         if (MyUser(cptr))
@@ -320,12 +321,12 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid,
   return 0;
 }
 
-static Link *next_overlapped_ban(void)
+static struct SLink *next_overlapped_ban(void)
 {
-  Reg1 Link *tmp = next_ban;
+  Reg1 struct SLink *tmp = next_ban;
   if (tmp)
   {
-    Reg2 Link *ban;
+    Reg2 struct SLink *ban;
     for (ban = tmp->next; ban; ban = ban->next)
       if ((ban->flags & CHFL_BAN_OVERLAPPED))
         break;
@@ -334,9 +335,9 @@ static Link *next_overlapped_ban(void)
   return tmp;
 }
 
-static Link *next_removed_overlapped_ban(void)
+static struct SLink *next_removed_overlapped_ban(void)
 {
-  Reg1 Link *tmp = removed_bans_list;
+  Reg1 struct SLink *tmp = removed_bans_list;
   if (prev_ban)
   {
     if (prev_ban->value.ban.banstr) /* Can be set to NULL in set_mode() */
@@ -358,8 +359,8 @@ static Link *next_removed_overlapped_ban(void)
  */
 static int del_banid(aChannel *chptr, char *banid, int change)
 {
-  Reg1 Link **ban;
-  Reg2 Link *tmp;
+  Reg1 struct SLink **ban;
+  Reg2 struct SLink *tmp;
 
   if (!banid)
     return -1;
@@ -387,9 +388,9 @@ static int del_banid(aChannel *chptr, char *banid, int change)
 /*
  * IsMember - returns Link * if a person is joined and not a zombie
  */
-Link *IsMember(aClient *cptr, aChannel *chptr)
+struct SLink *IsMember(struct Client *cptr, aChannel *chptr)
 {
-  Link *lp;
+  struct SLink *lp;
   return (((lp = find_user_link(chptr->members, cptr)) &&
       !(lp->flags & CHFL_ZOMBIE)) ? lp : NULL);
 }
@@ -397,9 +398,9 @@ Link *IsMember(aClient *cptr, aChannel *chptr)
 /*
  * is_banned - a non-zero value if banned else 0.
  */
-static int is_banned(aClient *cptr, aChannel *chptr, Link *member)
+static int is_banned(struct Client *cptr, aChannel *chptr, struct SLink *member)
 {
-  Reg1 Link *tmp;
+  Reg1 struct SLink *tmp;
   char *s, *ip_s = NULL;
 
   if (!IsUser(cptr))
@@ -412,8 +413,8 @@ static int is_banned(aClient *cptr, aChannel *chptr, Link *member)
   }
 
 #if !defined(BDD_VIP)
-  s = make_nick_user_host(cptr->name, PunteroACadena(cptr->user->username),
-      PunteroACadena(cptr->user->host));
+  s = make_nick_user_host(cptr->name, PunteroACadena(cptr->cli_user->username),
+      PunteroACadena(cptr->cli_user->host));
 #endif
 
   for (tmp = chptr->banlist; tmp; tmp = tmp->next)
@@ -422,11 +423,11 @@ static int is_banned(aClient *cptr, aChannel *chptr, Link *member)
     {
       if (!ip_s)
         ip_s =
-            make_nick_user_ip(cptr->name, PunteroACadena(cptr->user->username),
+            make_nick_user_ip(cptr->name, PunteroACadena(cptr->cli_user->username),
 #ifdef HISPANO_WEBCHAT
-            MyUser(cptr) ? &cptr->ip_real : &cptr->ip);
+            MyUser(cptr) ? &cptr->cli_ip_real : &cptr->cli_ip);
 #else
-            &cptr->ip);
+            &cptr->cli_ip);
 #endif
       if (match(tmp->value.ban.banstr, ip_s) == 0)
         break;
@@ -434,13 +435,13 @@ static int is_banned(aClient *cptr, aChannel *chptr, Link *member)
     else
 #if defined(BDD_VIP)
     {
-      s = make_nick_user_host(cptr->name, PunteroACadena(cptr->user->username),
-          PunteroACadena(cptr->user->host));
+      s = make_nick_user_host(cptr->name, PunteroACadena(cptr->cli_user->username),
+          PunteroACadena(cptr->cli_user->host));
 #endif
       if (match(tmp->value.ban.banstr, s) == 0)
         break;
 #if defined(BDD_VIP)
-      s = make_nick_user_host(cptr->name, PunteroACadena(cptr->user->username),
+      s = make_nick_user_host(cptr->name, PunteroACadena(cptr->cli_user->username),
           get_virtualhost(cptr));
       if (match(tmp->value.ban.banstr, s) == 0)
         break;
@@ -470,11 +471,11 @@ static int is_banned(aClient *cptr, aChannel *chptr, Link *member)
  * adds a user to a channel by adding another link to the channels member
  * chain.
  */
-static void add_user_to_channel(aChannel *chptr, aClient *who, int flags)
+static void add_user_to_channel(aChannel *chptr, struct Client *who, int flags)
 {
-  Reg1 Link *ptr;
+  Reg1 struct SLink *ptr;
 
-  if (who->user)
+  if (who->cli_user)
   {
     ptr = make_link();
     ptr->value.cptr = who;
@@ -485,17 +486,17 @@ static void add_user_to_channel(aChannel *chptr, aClient *who, int flags)
 
     ptr = make_link();
     ptr->value.chptr = chptr;
-    ptr->next = who->user->channel;
-    who->user->channel = ptr;
-    who->user->joined++;
+    ptr->next = who->cli_user->channel;
+    who->cli_user->channel = ptr;
+    who->cli_user->joined++;
   }
 }
 
-void remove_user_from_channel(aClient *sptr, aChannel *chptr)
+void remove_user_from_channel(struct Client *sptr, aChannel *chptr)
 {
-  Reg1 Link **curr;
-  Reg2 Link *tmp;
-  Reg3 Link *lp = chptr->members;
+  Reg1 struct SLink **curr;
+  Reg2 struct SLink *tmp;
+  Reg3 struct SLink *lp = chptr->members;
 
   for (; lp && (lp->flags & CHFL_ZOMBIE || lp->value.cptr == sptr);
       lp = lp->next);
@@ -508,14 +509,14 @@ void remove_user_from_channel(aClient *sptr, aChannel *chptr)
         free_link(tmp);
         break;
       }
-    for (curr = &sptr->user->channel; (tmp = *curr); curr = &tmp->next)
+    for (curr = &sptr->cli_user->channel; (tmp = *curr); curr = &tmp->next)
       if (tmp->value.chptr == chptr)
       {
         *curr = tmp->next;
         free_link(tmp);
         break;
       }
-    sptr->user->joined--;
+    sptr->cli_user->joined--;
     if (lp)
       break;
     if (chptr->members)
@@ -527,9 +528,9 @@ void remove_user_from_channel(aClient *sptr, aChannel *chptr)
   sub1_from_channel(chptr);
 }
 
-int is_chan_op(aClient *cptr, aChannel *chptr)
+int is_chan_op(struct Client *cptr, aChannel *chptr)
 {
-  Reg1 Link *lp;
+  Reg1 struct SLink *lp;
 
   if (chptr)
     if ((lp = find_user_link(chptr->members, cptr)) &&
@@ -539,9 +540,9 @@ int is_chan_op(aClient *cptr, aChannel *chptr)
   return 0;
 }
 
-static int is_deopped(aClient *cptr, aChannel *chptr)
+static int is_deopped(struct Client *cptr, aChannel *chptr)
 {
-  Reg1 Link *lp;
+  Reg1 struct SLink *lp;
 
   if (chptr)
     if ((lp = find_user_link(chptr->members, cptr)))
@@ -550,9 +551,9 @@ static int is_deopped(aClient *cptr, aChannel *chptr)
   return (IsUser(cptr) ? 1 : 0);
 }
 
-int is_zombie(aClient *cptr, aChannel *chptr)
+int is_zombie(struct Client *cptr, aChannel *chptr)
 {
-  Reg1 Link *lp;
+  Reg1 struct SLink *lp;
 
   if (chptr)
     if ((lp = find_user_link(chptr->members, cptr)))
@@ -561,9 +562,9 @@ int is_zombie(aClient *cptr, aChannel *chptr)
   return 0;
 }
 
-int has_voice(aClient *cptr, aChannel *chptr)
+int has_voice(struct Client *cptr, aChannel *chptr)
 {
-  Reg1 Link *lp;
+  Reg1 struct SLink *lp;
 
   if (chptr)
     if ((lp = find_user_link(chptr->members, cptr)) &&
@@ -573,9 +574,9 @@ int has_voice(aClient *cptr, aChannel *chptr)
   return 0;
 }
 
-int can_send(aClient *cptr, aChannel *chptr)
+int can_send(struct Client *cptr, aChannel *chptr)
 {
-  Reg1 Link *lp;
+  Reg1 struct SLink *lp;
   int flag;
 
   if (IsChannelService(cptr) || IsServer(cptr) || (IsServicesBot(cptr)))
@@ -612,7 +613,7 @@ int can_send(aClient *cptr, aChannel *chptr)
  * write the "simple" list of channel modes for channel chptr onto buffer mbuf
  * with the parameters in pbuf.
  */
-void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
+void channel_modes(struct Client *cptr, char *mbuf, char *pbuf,
     aChannel *chptr)
 {
   *mbuf++ = '+';
@@ -668,10 +669,10 @@ void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
   return;
 }
 
-static int send_mode_list(aClient *cptr, char *chname, time_t creationtime,
-    Link *top, int mask, char flag)
+static int send_mode_list(struct Client *cptr, char *chname, time_t creationtime,
+    struct SLink *top, int mask, char flag)
 {
-  Reg1 Link *lp;
+  Reg1 struct SLink *lp;
   Reg2 char *cp, *name;
   int count = 0, send = 0, sent = 0;
 
@@ -722,7 +723,7 @@ static int send_mode_list(aClient *cptr, char *chname, time_t creationtime,
 /*
  * send "cptr" a full list of the modes for channel chptr.
  */
-void send_channel_modes(aClient *cptr, aChannel *chptr)
+void send_channel_modes(struct Client *cptr, aChannel *chptr)
 {
   int sent;
   if (IsLocalChannel(chptr->chname))
@@ -768,8 +769,8 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
         { 0, CHFL_CHANOP | CHFL_VOICE, CHFL_VOICE, CHFL_CHANOP };
     int first = 1, full = 1, flag_cnt = 0, new_mode = 0;
     size_t len, sblen;
-    Link *lp1 = chptr->members;
-    Link *lp2 = chptr->banlist;
+    struct SLink *lp1 = chptr->members;
+    struct SLink *lp2 = chptr->banlist;
     for (first = 1; full; first = 0)  /* Loop for multiple messages */
     {
       full = 0;                 /* Assume by default we get it
@@ -896,7 +897,7 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
  * burda imitacion de m_mode
  */
 
-int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_botmode(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   int badop, sendts;
   aChannel *chptr;
@@ -970,13 +971,13 @@ int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[2] - modes
  */
 
-int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_svsmode(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
 
   if (!IsServer(cptr) || !IsServer(sptr) || parc < 3)
       return 0;
 
-  if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
+  if (!buscar_uline(cli_confs(cptr), sptr->name) || (cli_from(sptr) != cptr))
   {
     sendto_serv_butone(cptr,
         ":%s DESYNC :HACK(2): El nodo '%s' dice que '%s' solicita "
@@ -1002,7 +1003,7 @@ int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[1] - channel
  */
 
-int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_mode(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   int badop, sendts;
   aChannel *chptr;
@@ -1130,7 +1131,7 @@ static int DoesOp(char *modebuf)
 }
 
 /* This function should be removed when all servers are 2.10 */
-static void sendmodeto_one(aClient *cptr, char *from, char *name,
+static void sendmodeto_one(struct Client *cptr, char *from, char *name,
     char *mode, char *param, time_t creationtime)
 {
   if (IsServer(cptr) && DoesOp(mode) && creationtime)
@@ -1380,17 +1381,17 @@ out:
  * the client ccptr to channel chptr.  The resultant changes are printed
  * into mbuf and pbuf (if any) and applied to the channel.
  */
-static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
+static int set_mode_local(struct Client *cptr, struct Client *sptr, aChannel *chptr,
     int botmode,
     int parc, char *parv[], char *mbuf, char *pbuf, char *npbuf, int *badop)
 {
-  static Link chops[MAXPARA - 2]; /* This size is only needed when a broken
+  static struct SLink chops[MAXPARA - 2]; /* This size is only needed when a broken
                                      server sends more then MAXMODEPARAMS
                                      parameters */
-  Reg1 Link *lp;
+  Reg1 struct SLink *lp;
   Reg2 char *curr = parv[0], *cp = NULL;
   Reg3 int *ip;
-  Link *member, *tmp = NULL;
+  struct SLink *member, *tmp = NULL;
   unsigned int whatt = MODE_ADD, bwhatt = 0;
   int limitset = 0, limit_wrong = 0, bounce, add_banid_called = 0;
   size_t len, nlen, blen, nblen;
@@ -1398,7 +1399,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
   unsigned int nusers = 0, newmode;
   int opcnt = 0, banlsent = 0;
   int doesdeop = 0, doesop = 0, hacknotice = 0, change, gotts = 0;
-  aClient *who;
+  struct Client *who;
   Mode *mode, oldm;
   static char numeric[16];
   char *bmbuf = bmodebuf, *bpbuf = bparambuf, *nbpbuf = nbparambuf;
@@ -1769,7 +1770,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
     return (opcnt || newmode != mode->mode || limitset || keychange) ? 0 : -1;
   }
 
-  if (*badop >= 2 && buscar_uline(cptr->confs, sptr->name))
+  if (*badop >= 2 && buscar_uline(cli_confs(cptr), sptr->name))
     *badop = 4;
 
 #if defined(OPER_MODE_LCHAN)
@@ -2291,7 +2292,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
   /* If there are possibly bans to re-add, bounce them now */
   if (add_banid_called && bounce)
   {
-    Link *ban[6];               /* Max 6 bans at a time */
+    struct SLink *ban[6];               /* Max 6 bans at a time */
     size_t len[6], sblen, total_len;
     int cnt, delayed = 0;
     while (delayed || (ban[0] = next_overlapped_ban()))
@@ -2328,22 +2329,22 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
   /* Send -b's of overlapped bans to clients to keep them synchronized */
   if (add_banid_called && !bounce)
   {
-    Link *ban;
+    struct SLink *ban;
     char *banstr[6];            /* Max 6 bans at a time */
     size_t len[6], sblen, psblen, total_len;
     int cnt, delayed = 0;
-    Link *lp;
-    aClient *acptr;
+    struct SLink *lp;
+    struct Client *acptr;
 
 #if defined(BDD_VIP)
     /* We rely on IsRegistered(sptr) being true for MODE */
     psblen = sprintf_irc(sendbuf, ":%s!%s@%s MODE %s -b", sptr->name,
-        PunteroACadena(sptr->user->username), get_visiblehost(sptr, NULL),
+        PunteroACadena(sptr->cli_user->username), get_visiblehost(sptr, NULL),
         chptr->chname) - sendbuf;
 #else
     /* We rely on IsRegistered(sptr) being true for MODE */
     psblen = sprintf_irc(sendbuf, ":%s!%s@%s MODE %s -b", sptr->name,
-        PunteroACadena(sptr->user->username), sptr->user->host,
+        PunteroACadena(sptr->cli_user->username), sptr->cli_user->host,
         chptr->chname) - sendbuf;
 #endif
 
@@ -2391,17 +2392,17 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
   return gotts ? 1 : -1;
 }
 
-static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
+static int set_mode_remoto(struct Client *cptr, struct Client *sptr, aChannel *chptr,
     int botmode,
     int parc, char *parv[], char *mbuf, char *pbuf, char *npbuf, int *badop)
 {
-  static Link chops[MAXPARA - 2]; /* This size is only needed when a broken
+  static struct SLink chops[MAXPARA - 2]; /* This size is only needed when a broken
                                      server sends more then MAXMODEPARAMS
                                      parameters */
-  Reg1 Link *lp;
+  Reg1 struct SLink *lp;
   Reg2 char *curr = parv[0], *cp = NULL;
   Reg3 int *ip;
-  Link *member, *tmp = NULL;
+  struct SLink *member, *tmp = NULL;
   unsigned int whatt = MODE_ADD, bwhatt = 0;
   int limitset = 0, limit_wrong = 0, bounce, add_banid_called = 0;
   size_t len, nlen, blen, nblen;
@@ -2409,7 +2410,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
   unsigned int nusers = 0, newmode;
   int opcnt = 0, banlsent = 0;
   int doesdeop = 0, doesop = 0, hacknotice = 0, change, gotts = 0;
-  aClient *who;
+  struct Client *who;
   Mode *mode, oldm;
   static char numeric[16];
   char *bmbuf = bmodebuf, *bpbuf = bparambuf, *nbpbuf = nbparambuf;
@@ -2480,8 +2481,8 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
           if (!(who = findNUser(parv[0])))
             break;
         }
-        if (whatt == MODE_ADD && IsServer(sptr) && who->from != sptr->from &&
-            !buscar_uline(cptr->confs, sptr->name))
+        if (whatt == MODE_ADD && IsServer(sptr) && cli_from(who) != cli_from(sptr) &&
+            !buscar_uline(cli_confs(cptr), sptr->name))
           break;
         if (!(member = find_user_link(chptr->members, who)))
         {
@@ -2768,7 +2769,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
   if (doesop && newtime == 0 && IsServer(sptr))
     *badop = 2;
 
-  if (*badop >= 2 && buscar_uline(cptr->confs, sptr->name))
+  if (*badop >= 2 && buscar_uline(cli_confs(cptr), sptr->name))
     *badop = 4;
 
 #if defined(OPER_MODE_LCHAN)
@@ -3293,7 +3294,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
   /* If there are possibly bans to re-add, bounce them now */
   if (add_banid_called && bounce)
   {
-    Link *ban[6];               /* Max 6 bans at a time */
+    struct SLink *ban[6];               /* Max 6 bans at a time */
     size_t len[6], sblen, total_len;
     int cnt, delayed = 0;
     while (delayed || (ban[0] = next_overlapped_ban()))
@@ -3330,12 +3331,12 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
   /* Send -b's of overlapped bans to clients to keep them synchronized */
   if (add_banid_called && !bounce)
   {
-    Link *ban;
+    struct SLink *ban;
     char *banstr[6];            /* Max 6 bans at a time */
     size_t len[6], sblen, psblen, total_len;
     int cnt, delayed = 0;
     Link *lp;
-    aClient *acptr;
+    struct Client *acptr;
     if (IsServer(sptr))
       psblen = sprintf_irc(sendbuf, ":%s MODE %s -b",
           sptr->name, chptr->chname) - sendbuf;
@@ -3344,12 +3345,12 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
 #if defined(BDD_VIP)
       /* We rely on IsRegistered(sptr) being true for MODE */
       psblen = sprintf_irc(sendbuf, ":%s!%s@%s MODE %s -b", sptr->name,
-          PunteroACadena(sptr->user->username), get_visiblehost(sptr, NULL),
+          PunteroACadena(sptr->cli_user->username), get_visiblehost(sptr, NULL),
           chptr->chname) - sendbuf;
 #else
       /* We rely on IsRegistered(sptr) being true for MODE */
       psblen = sprintf_irc(sendbuf, ":%s!%s@%s MODE %s -b", sptr->name,
-          PunteroACadena(sptr->user->username), sptr->user->host,
+          PunteroACadena(sptr->cli_user->username), sptr->cli_user->host,
           chptr->chname) - sendbuf;
 #endif
     }
@@ -3397,7 +3398,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
   return gotts ? 1 : -1;
 }
 
-static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
+static int set_mode(struct Client *cptr, struct Client *sptr, aChannel *chptr,
     int botmode,
     int parc, char *parv[], char *mbuf, char *pbuf, char *npbuf, int *badop)
 {
@@ -3451,7 +3452,7 @@ top:
   goto top;                     /* and check it against the key */
 }
 
-static int can_join(aClient *sptr, aChannel *chptr, char *key)
+static int can_join(struct Client *sptr, aChannel *chptr, char *key)
 {
   int overrideJoin = 0;
 
@@ -3655,7 +3656,7 @@ static void clean_channelname(char *cn)
  *  Get Channel block for i (and allocate a new channel
  *  block, if it didn't exists before).
  */
-aChannel *get_channel(aClient *sptr, char *chname, int flag)
+aChannel *get_channel(struct Client *sptr, char *chname, int flag)
 {
   Reg1 aChannel *chptr;
   int len;
@@ -3707,16 +3708,16 @@ aChannel *get_channel(aClient *sptr, char *chname, int flag)
   return chptr;
 }
 
-static void add_invite(aClient *cptr, aChannel *chptr)
+static void add_invite(struct Client *cptr, aChannel *chptr)
 {
-  Reg1 Link *inv, **tmp;
+  Reg1 struct SLink *inv, **tmp;
 
   del_invite(cptr, chptr);
   /*
    * Delete last link in chain if the list is max length
    */
-  if (list_length(cptr->invited) >= MAXCHANNELSPERUSER)
-    del_invite(cptr, cptr->invited->value.chptr);
+  if (list_length(cptr->cli_connect->invited) >= MAXCHANNELSPERUSER)
+    del_invite(cptr, cptr->cli_connect->invited->value.chptr);
   /*
    * Add client to channel invite list
    */
@@ -3727,7 +3728,7 @@ static void add_invite(aClient *cptr, aChannel *chptr)
   /*
    * Add channel to the end of the client invite list
    */
-  for (tmp = &(cptr->invited); *tmp; tmp = &((*tmp)->next));
+  for (tmp = &(cptr->cli_connect->invited); *tmp; tmp = &((*tmp)->next));
   inv = make_link();
   inv->value.chptr = chptr;
   inv->next = NULL;
@@ -3737,9 +3738,9 @@ static void add_invite(aClient *cptr, aChannel *chptr)
 /*
  * Delete Invite block from channel invite list and client invite list
  */
-void del_invite(aClient *cptr, aChannel *chptr)
+void del_invite(struct Client *cptr, aChannel *chptr)
 {
-  Reg1 Link **inv, *tmp;
+  Reg1 struct SLink **inv, *tmp;
 
   for (inv = &(chptr->invites); (tmp = *inv); inv = &tmp->next)
     if (tmp->value.cptr == cptr)
@@ -3749,7 +3750,7 @@ void del_invite(aClient *cptr, aChannel *chptr)
       break;
     }
 
-  for (inv = &(cptr->invited); (tmp = *inv); inv = &tmp->next)
+  for (inv = &(cptr->cli_connect->invited); (tmp = *inv); inv = &tmp->next)
     if (tmp->value.chptr == chptr)
     {
       *inv = tmp->next;
@@ -3764,11 +3765,11 @@ void del_invite(aClient *cptr, aChannel *chptr)
  *
  * 03-09-2003 zoltan@irc-dev.net
  */
-static int is_invited(aClient *cptr, aChannel *chptr)
+static int is_invited(struct Client *cptr, aChannel *chptr)
 {
-  Reg1 Link *tmp;
+  Reg1 struct SLink *tmp;
 
-  for (tmp = cptr->invited; tmp; tmp = tmp->next)
+  for (tmp = cptr->cli_connect->invited; tmp; tmp = tmp->next)
     if (tmp->value.chptr == chptr)
       return 1;
 
@@ -3784,8 +3785,8 @@ static int is_invited(aClient *cptr, aChannel *chptr)
  */
 void sub1_from_channel(aChannel *chptr)
 {
-  Reg2 Link *tmp;
-  Link *obtmp;
+  Reg2 struct SLink *tmp;
+  struct SLink *obtmp;
 
   if (chptr->users)             /* Can be 0, called for an empty channel too */
     --chptr->users;
@@ -3803,9 +3804,9 @@ void sub1_from_channel(aChannel *chptr)
     int i;
     for (i = 0; i <= highest_fd; i++)
     {
-      aClient *acptr;
-      if ((acptr = loc_clients[i]) && acptr->listing &&
-          acptr->listing->chptr == chptr)
+      struct Client *acptr;
+      if ((acptr = loc_clients[i]) && cli_listing(acptr) &&
+          cli_listing(acptr)->chptr == chptr)
       {
         list_next_channels(acptr, 1);
         break;                  /* Only one client can list a channel */
@@ -3861,10 +3862,10 @@ void sub1_from_channel(aChannel *chptr)
  * parv[1] = channel
  * parv[2] = channel keys (client), or channel TS (server)
  */
-int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_join(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   static char jbuf[BUFSIZE], mbuf[BUFSIZE];
-  Reg1 Link *lp;
+  Reg1 struct SLink *lp;
   Reg3 aChannel *chptr;
   Reg4 char *name, *keysOrTS = NULL;
   int i = 0, zombie = 0, sendcreate = 0;
@@ -3947,7 +3948,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (*name == '0' && *(name + 1) == '\0')
     {
       /* Remove the user from all his channels -Kev */
-      while ((lp = sptr->user->channel))
+      while ((lp = sptr->cli_user->channel))
       {
         chptr = lp->value.chptr;
         if (!is_zombie(sptr, chptr))
@@ -4039,7 +4040,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
 
         if (!IsChannelService(sptr)
-            && (sptr->user->joined >= MAXCHANNELSPERUSER)
+            && (sptr->cli_user->joined >= MAXCHANNELSPERUSER)
 #if defined(OPER_NO_CHAN_LIMIT)
             && !IsAnOper(sptr)
 #endif
@@ -4144,7 +4145,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
        * Notify all other users on the new channel
        */
 #if defined(ESNET_NEG)
-      if (MyUser(sptr) && sptr->negociacion & USER_TOK)
+      if (MyUser(sptr) && sptr->cli_connect->negociacion & USER_TOK)
         sendto_one(sptr, ":%s JOIN :%s", parv[0], name);
       sendto_channel_notok_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
       sendto_channel_tok_butserv(chptr, sptr, ":%s J :%s", parv[0], chptr->numeric);
@@ -4283,10 +4284,10 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[2] = channel
  * parv[3] = (opcional) C (hacer que compruebe si el usuario puede entrar)
  */
-int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_svsjoin(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  Reg1 Link *lp;
-  Reg2 aClient *acptr;
+  Reg1 struct SLink *lp;
+  Reg2 struct Client *acptr;
   Reg3 aChannel *chptr;
   Reg4 char *name;
   int i = 0, zombie = 0, sendcreate = 0;
@@ -4297,7 +4298,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!IsServer(cptr) || !IsServer(sptr) || parc < 3)
     return 0;
 
-  if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
+  if (!buscar_uline(cli_confs(cptr), sptr->name) || (cli_from(sptr) != cptr))
   {
     sendto_serv_butone(cptr,
         ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
@@ -4459,7 +4460,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * In the future we will start to use this message.
  *
  */
-int m_destruct(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_destruct(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   time_t chanTS;                /* Creation time of the channel */
 
@@ -4497,7 +4498,7 @@ int m_destruct(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[1] = channel names
  * parv[2] = channel time stamp
  */
-int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_create(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   char cbuf[BUFSIZE];           /* Buffer for list with channels
                                    that `sptr' really creates */
@@ -4517,7 +4518,7 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
    * the current time.  Use it for lag calculations.
    */
   if (!IsBurstOrBurstAck(sptr) && 0 != chanTS && MAGIC_REMOTE_JOIN_TS != chanTS)
-    sptr->user->server->serv->lag = TStime() - chanTS;
+    sptr->cli_user->server->cli_serv->lag = TStime() - chanTS;
 
   *cbuf = '\0';                 /* Start with empty buffer */
 
@@ -4589,7 +4590,7 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
          (if any; extremely unlikely, but it CAN happen) */
       if (!IsModelessChannel(name))
         sendto_channel_butserv(chptr, sptr, ":%s MODE %s +o %s",
-            sptr->user->server->name, name, parv[0]);
+            sptr->cli_user->server->name, name, parv[0]);
 
       /* Set/correct TS and add the channel to the
          buffer for accepted channels: */
@@ -4617,7 +4618,7 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
     p = NULL;
     for (name = strtoken(&p, cbuf, ","); name; name = strtoken(&p, NULL, ","))
       sendto_lowprot_butone(cptr, 9, ":%s MODE %s +o %s " TIME_T_FMT,
-          sptr->user->server->name, name, parv[0], chanTS);
+          sptr->cli_user->server->name, name, parv[0], chanTS);
 #endif
 #endif
   }
@@ -4676,7 +4677,7 @@ static void add_token_to_sendbuf(char *token, size_t *sblenp, int *firstp,
   }
 }
 
-static void cancel_mode(aClient *sptr, aChannel *chptr, char m,
+static void cancel_mode(struct Client *sptr, aChannel *chptr, char m,
     const char *param, int *count)
 {
   static char *pb, *sbp, *sbpi;
@@ -4713,10 +4714,10 @@ static void cancel_mode(aClient *sptr, aChannel *chptr, char m,
   if (*count == 6 || !m || paramdoesntfit)
   {
 #if !defined(NO_PROTOCOL9)
-    Dlink *lp;
+    struct DLink *lp;
     char *sbe;
 #endif
-    Link *member;
+    struct SLink *member;
     strcpy(sbp, parabuf);
 #if !defined(NO_PROTOCOL9)
     sbe = sbp + strlen(parabuf);
@@ -4727,7 +4728,7 @@ static void cancel_mode(aClient *sptr, aChannel *chptr, char m,
 #if !defined(NO_PROTOCOL9)
     sprintf_irc(sbe, " " TIME_T_FMT, chptr->creationtime);
     /* Send 'sendbuf' to all 2.9 downlinks: */
-    for (lp = me.serv->down; lp; lp = lp->next)
+    for (lp = me.cli_serv->down; lp; lp = lp->next)
       if (Protocol(lp->value.cptr) < 10)
         sendbufto_one(lp->value.cptr);
 #endif
@@ -4773,7 +4774,7 @@ static void cancel_mode(aClient *sptr, aChannel *chptr, char m,
  * If its is smaller then the received BURST message is ignored.
  * If it's equal, then the received modes are just added.
  */
-int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_burst(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Reg1 aChannel *chptr;
   time_t timestamp;
@@ -4784,7 +4785,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
   int mblen2, pblen2, cnt;
   int prev_mode;
   char prev_key[KEYLEN + 1];
-  Link *lp;
+  struct SLink *lp;
 #if !defined(NO_PROTOCOL9)
   int ts_sent = 0;
 #endif
@@ -4797,7 +4798,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     int i;
     char *p;
-    if (buscar_uline(cptr->confs, sptr->name))
+    if (buscar_uline(cli_confs(cptr), sptr->name))
     {
       p = sprintf_irc(sendbuf,
           ":%s NOTICE * :*** Notice -- HACK(4): %s BURST %s %s", me.name,
@@ -5246,7 +5247,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
         /* Run over all nicks */
         for (pv = parv[n]; (nick = strtoken(&p, pv, ",")); pv = NULL)
         {
-          aClient *acptr;
+          struct Client *acptr;
           if ((ptr = strchr(nick, ':')))  /* New default mode ? */
           {
             *ptr = '\0';        /* Fix 'nick' */
@@ -5291,7 +5292,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
            * remove the channel again when it is empty and don't propagate
            * the BURST message.
            */
-          if (acptr && acptr->from == cptr)
+          if (acptr && cli_from(acptr) == cptr)
           {
             /*
              * The following should do the following:
@@ -5327,11 +5328,11 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
   /* The last (possibly only) message is always send here */
   if (send_it)                  /* Anything (left) to send ? */
   {
-    Dlink *lp;
-    Link *member;
+    struct DLink *lp;
+    struct SLink *member;
 
     /* send 'sendbuf' to all downlinks */
-    for (lp = me.serv->down; lp; lp = lp->next)
+    for (lp = me.cli_serv->down; lp; lp = lp->next)
     {
       if (lp->value.cptr == cptr)
         continue;
@@ -5429,8 +5430,8 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (wipeout)
   {
-    Link *lp;
-    Link **ban;
+    struct SLink *lp;
+    struct SLink **ban;
     int mode;
     char m;
     int count = -1;
@@ -5509,7 +5510,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /* And finally wipeout all bans that are left */
     for (ban = &chptr->banlist; *ban;)
     {
-      Link *tmp = *ban;
+      struct SLink *tmp = *ban;
       if ((tmp->flags & CHFL_BURST_BAN_WIPEOUT))
       {
         cancel_mode(sptr, chptr, 'b', tmp->value.ban.banstr, &count);
@@ -5530,7 +5531,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /* Also wipeout overlapped bans */
     if (!add_banid_not_called)
     {
-      Link *ban;
+      struct SLink *ban;
       while ((ban = next_removed_overlapped_ban()))
         cancel_mode(sptr, chptr, 'b', ban->value.ban.banstr, &count);
     }
@@ -5539,7 +5540,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (send_it && !netride)
   {
-    Link *bl;
+    struct SLink *bl;
     int deban;
 
     if (add_banid_not_called || !(bl = next_removed_overlapped_ban()))
@@ -5633,10 +5634,10 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[1] = channel
  * parv[parc - 1] = comment
  */
-int m_part(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_part(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Reg1 aChannel *chptr;
-  Reg2 Link *lp;
+  Reg2 struct SLink *lp;
   char *p = NULL, *name, pbuf[BUFSIZE];
   char *comment = (parc > 2 && !BadPtr(parv[parc - 1])) ? parv[parc - 1] : NULL;
 
@@ -5731,18 +5732,18 @@ int m_part(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[2] = channel
  * parv[parc - 1] = comment
  */
-int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_svspart(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Reg1 aChannel *chptr;
-  Reg2 Link *lp;
-  Reg3 aClient *acptr;
+  Reg2 struct SLink *lp;
+  Reg3 struct Client *acptr;
   char *name;
   char *comment = (parc > 3 && !BadPtr(parv[parc - 1])) ? parv[parc - 1] : NULL;
 
   if (!IsServer(cptr) || !IsServer(sptr) || parc < 3)
       return 0;
 
-  if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
+  if (!buscar_uline(cli_confs(cptr), sptr->name) || (cli_from(sptr) != cptr))
   {
     sendto_serv_butone(cptr,
         ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
@@ -5831,12 +5832,12 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[2] = client to kick
  * parv[parc-1] = kick comment
  */
-int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_kick(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  aClient *who;
+  struct Client *who;
   aChannel *chptr;
   char *comment;
-  Link *lp, *lp2;
+  struct SLink *lp, *lp2;
 
   sptr->flags &= ~FLAGS_TS8;
 
@@ -5911,7 +5912,7 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
       return 0;
     }
 
-    if (who->from != cptr &&
+    if (cli_from(who) != cptr &&
         !IsServicesBot(sptr) &&
         ((lp2 && (lp2->flags & CHFL_DEOPPED)) || (!lp2 && IsUser(sptr))))
     {
@@ -6047,11 +6048,11 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
           remove_user_from_channel(who, chptr);
           return 0;
         }
-        if (who->from == cptr)  /* True on servers 1, 5 and 6 */
+        if (cli_from(who) == cptr)  /* True on servers 1, 5 and 6 */
         {
-          aClient *acptr = IsServer(sptr) ? sptr : sptr->user->server;
-          for (; acptr != &me; acptr = acptr->serv->up)
-            if (acptr == who->user->server) /* Case d) (server 5) */
+          struct Client *acptr = IsServer(sptr) ? sptr : sptr->cli_user->server;
+          for (; acptr != &me; acptr = acptr->cli_serv->up)
+            if (acptr == who->cli_user->server) /* Case d) (server 5) */
             {
               remove_user_from_channel(who, chptr);
               return 0;
@@ -6087,7 +6088,7 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[3]        = topic's timestap (optional)
  * parv[parc - 1] = topic
  */
-int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_topic(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   aChannel *chptr;
   char *topic = NULL, *name, *p = NULL;
@@ -6152,7 +6153,7 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
         !(b = is_banned(sptr, chptr, NULL))) || is_chan_op(sptr, chptr)
         || IsServicesBot(sptr) || IsServer(sptr)) && topic)
     {
-      aClient *from;
+      struct Client *from;
       /* Note if this is just a refresh of an old topic, and don't
        * send it to all the clients to save bandwidth.  We still send
        * it to other servers as they may have split and lost the topic.
@@ -6274,9 +6275,9 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
  *   leaving room for other enhancements like inviting banned ppl.  -- Nemesi
  *
  */
-int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_invite(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  aClient *acptr;
+  struct Client *acptr;
   aChannel *chptr;
 
   if (parc < 2)
@@ -6289,7 +6290,7 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     assert(MyUser(sptr));
 
-    for (lp = sptr->invited; lp; lp = lp->next)
+    for (lp = sptr->cli_connect->invited; lp; lp = lp->next)
       sendto_one(sptr, rpl_str(RPL_INVITELIST), me.name, sptr->name,
           lp->value.chptr->chname);
     sendto_one(sptr, rpl_str(RPL_ENDOFINVITELIST), me.name, sptr->name);
@@ -6360,9 +6361,9 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(sptr, rpl_str(RPL_INVITING), me.name, parv[0],
           acptr->name, parv[2]);
 
-      if (acptr->user->away)
+      if (acptr->cli_user->away)
         sendto_one(sptr, rpl_str(RPL_AWAY), me.name, parv[0],
-            acptr->name, acptr->user->away);
+            acptr->name, acptr->cli_user->away);
     }
 
     sendto_prefix_one(acptr, sptr, ":%s INVITE %s :%s", parv[0],
@@ -6422,9 +6423,9 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_one(sptr, rpl_str(RPL_INVITING), me.name, parv[0],
         acptr->name, chptr->chname);
 
-    if (acptr->user->away)
+    if (acptr->cli_user->away)
       sendto_one(sptr, rpl_str(RPL_AWAY), me.name, parv[0],
-          acptr->name, acptr->user->away);
+          acptr->name, acptr->cli_user->away);
   }
 
   if (MyConnect(acptr))
@@ -6447,7 +6448,7 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 static int number_of_zombies(aChannel *chptr)
 {
-  Reg1 Link *lp;
+  Reg1 struct SLink *lp;
   Reg2 int count = 0;
   for (lp = chptr->members; lp; lp = lp->next)
     if (lp->flags & CHFL_ZOMBIE)
@@ -6486,7 +6487,7 @@ static struct ListingArgs la_default = {
 
 
 static int
-show_usage(aClient *sptr)
+show_usage(struct Client *sptr)
 {
   if (!sptr) { /* configuration file error... */
     return LPARAM_ERROR;
@@ -6539,7 +6540,7 @@ show_usage(aClient *sptr)
 }
 
 static int
-param_parse(aClient *sptr, const char *param, aListingArgs *args,
+param_parse(struct Client *sptr, const char *param, aListingArgs *args,
             int permit_chan)
 {
   int is_time = 0;
@@ -6706,17 +6707,17 @@ param_parse(aClient *sptr, const char *param, aListingArgs *args,
  * parv[1] = channel list or user/time limit
  * parv[2...] = more user/time limits
  */
-int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+int m_list(struct Client *UNUSED(cptr), struct Client *sptr, int parc, char *parv[])
 {
   aChannel *chptr;
   char *name, *p = NULL;
   int show_channels = 0, param;
   struct ListingArgs args;
 
-  if (sptr->listing)            /* Already listing ? */
+  if (cli_listing(sptr))            /* Already listing ? */
   {
-    MyFree(sptr->listing);
-    sptr->listing = NULL;
+    MyFree(cli_listing(sptr));
+    cli_listing(sptr) = NULL;
     sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, sptr->name);
     UpdateWrite(sptr);
     if (parc < 2 || !strcmp("STOP", parv[1]))
@@ -6759,9 +6760,9 @@ int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
     if (args.max_users > args.min_users + 1 && args.max_time > args.min_time &&
         args.max_topic_time > args.min_topic_time)      /* Sanity check */
     {
-      sptr->listing = (aListingArgs *)MyMalloc(sizeof(aListingArgs));
-      assert(0 != sptr->listing);
-      memcpy(sptr->listing, &args, sizeof(aListingArgs));
+      cli_listing(sptr) = (aListingArgs *)MyMalloc(sizeof(aListingArgs));
+      assert(0 != cli_listing(sptr));
+      memcpy(cli_listing(sptr), &args, sizeof(aListingArgs));
       list_next_channels(sptr);
       return 0;
     }
@@ -6790,11 +6791,11 @@ int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
  * parv[0] = sender prefix
  * parv[1] = channel
  */
-int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_names(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Reg1 aChannel *chptr;
-  Reg2 aClient *c2ptr;
-  Reg3 Link *lp;
+  Reg2 struct Client *c2ptr;
+  Reg3 struct SLink *lp;
   aChannel *ch2ptr = NULL;
   int idx, flag, len, mlen;
   char *s, *para = parc > 1 ? parv[1] : NULL;
@@ -6922,7 +6923,7 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!BadPtr(para))
   {
 #ifdef ESNET_NEG
-    if (sptr->negociacion & USER_TOK)
+    if (sptr->cli_connect->negociacion & USER_TOK)
       sendto_one(sptr, ":%s %d %s %s %s :End of /NAMES list", me.name, RPL_ENDOFNAMES, parv[0],
            ch2ptr ? ch2ptr->chname : para, ch2ptr ? ch2ptr->numeric : "*");
     else
@@ -6937,7 +6938,7 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
   strcpy(buf, "* * :");
   idx = 5;
   flag = 0;
-  for (c2ptr = client; c2ptr; c2ptr = c2ptr->next)
+  for (c2ptr = client; c2ptr; c2ptr = c2ptr->cli_next)
   {
     aChannel *ch3ptr;
     int showflag = 0, secret = 0;
@@ -6948,7 +6949,7 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!IsUser(c2ptr))
 #endif
       continue;
-    lp = c2ptr->user->channel;
+    lp = c2ptr->cli_user->channel;
     /*
      * Don't show a client if they are on a secret channel or when
      * they are on a channel sptr is on since they have already
@@ -7003,9 +7004,9 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
   return (1);
 }
 
-void send_user_joins(aClient *cptr, aClient *user)
+void send_user_joins(struct Client *cptr, struct Client *user)
 {
-  Reg1 Link *lp;
+  Reg1 struct SLink *lp;
   Reg2 aChannel *chptr;
   Reg3 int cnt = 0, len = 0, clen;
   char *mask;
@@ -7015,7 +7016,7 @@ void send_user_joins(aClient *cptr, aClient *user)
   strcat(buf, " JOIN ");
   len = strlen(user->name) + 7;
 
-  for (lp = user->user->channel; lp; lp = lp->next)
+  for (lp = user->cli_user->channel; lp; lp = lp->next)
   {
     chptr = lp->value.chptr;
     if ((mask = strchr(chptr->chname, ':')))
@@ -7064,7 +7065,7 @@ void send_user_joins(aClient *cptr, aClient *user)
  *   to be sent for all hacks.  -Ghostwolf 18-May-97
  */
 
-static void send_hack_notice(aClient *cptr, aClient *sptr, int parc,
+static void send_hack_notice(struct Client *cptr, struct Client *sptr, int parc,
     char *parv[], int badop, int mtype)
 {
   aChannel *chptr;
@@ -7121,7 +7122,7 @@ static void send_hack_notice(aClient *cptr, aClient *sptr, int parc,
           strcat(params, " ");
           if (*mode == 'o' || *mode == 'v')
           {
-            aClient *acptr;
+            struct Client *acptr;
             if ((acptr = findNUser(parv[i])) != NULL) /* Convert nicks here */
               strcat(params, acptr->name);
             else
@@ -7160,7 +7161,7 @@ static void send_hack_notice(aClient *cptr, aClient *sptr, int parc,
       }
       case 3:                  /* Convert nick in KICK message */
       {
-        aClient *acptr;
+        struct Client *acptr;
         if ((acptr = findNUser(parv[2])) != NULL) /* attempt to convert nick */
           sprintf_irc(sendbuf,
               ":%s NOTICE * :*** Notice -- HACK: %s KICK %s %s :%s",

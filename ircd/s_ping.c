@@ -42,6 +42,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "struct.h"
 #include "send.h"
@@ -101,40 +102,40 @@ RCSTAG_CC("$Id$");
  *   sendM    : average in ms
  *   receiveM : maximum in ms
  */
-int start_ping(aClient *cptr)
+int start_ping(struct Client *cptr)
 {
   struct sockaddr_in remote_addr;
 
-  Debug((DEBUG_NOTICE, "start_ping(%p) status %d", cptr, cptr->status));
+  Debug((DEBUG_NOTICE, "start_ping(%p) status %d", cptr, cli_status(cptr)));
 
-  if (!(cptr->acpt))
+  if (!(cptr->cli_connect->acpt))
     return -1;
 
-  memcpy(&remote_addr.sin_addr, &cptr->ip, sizeof(struct in_addr));
-  remote_addr.sin_port = htons(cptr->port);
+  memcpy(&remote_addr.sin_addr, &cli_ip(cptr), sizeof(struct in_addr));
+  remote_addr.sin_port = htons(cptr->cli_connect->port);
   remote_addr.sin_family = AF_INET;
 
-  if (MyUser(cptr->acpt) 
+  if (MyUser(cptr->cli_connect->acpt) 
 #if !defined(NO_PROTOCOL9)
-      || Protocol(cptr->acpt->from) < 10
+      || Protocol(cptr->cli_connect->acpt->cli_connect->con_client) < 10
 #endif
   )
   {
-    sendto_one(cptr->acpt,
+    sendto_one(cptr->cli_connect->acpt,
         ":%s NOTICE %s :Sending %d ping%s to %s",
-        me.name, cptr->acpt->name, cptr->hopcount,
-        (cptr->hopcount == 1) ? "" : "s", cptr->name);
+        me.name, cptr->cli_connect->acpt->name, cli_hopcount(cptr),
+        (cli_hopcount(cptr) == 1) ? "" : "s", cptr->name);
   }
   else
   {
-    sendto_one(cptr->acpt,
+    sendto_one(cptr->cli_connect->acpt,
         "%s " TOK_NOTICE " %s%s :Sending %d ping%s to %s",
-        NumServ(&me), NumNick(cptr->acpt), cptr->hopcount,
-        (cptr->hopcount == 1) ? "" : "s", cptr->name);
+        NumServ(&me), NumNick(cptr->cli_connect->acpt), cli_hopcount(cptr),
+        (cli_hopcount(cptr) == 1) ? "" : "s", cptr->name);
   }
 
-  cptr->firsttime = now + UPINGTIMEOUT;
-  cptr->since = UPINGTIMEOUT;
+  cli_firsttime(cptr) = now + UPINGTIMEOUT;
+  cli_since(cptr) = UPINGTIMEOUT;
   cptr->flags |= (FLAGS_PING);
 
   UpdateTimer(cptr, 0);
@@ -146,53 +147,53 @@ int start_ping(aClient *cptr)
  * send_ping
  *
  */
-void send_ping(aClient *cptr)
+void send_ping(struct Client *cptr)
 {
   struct sockaddr_in remote_addr;
   struct timeval tv;
 
-  memcpy(&remote_addr.sin_addr, &cptr->ip, sizeof(struct in_addr));
-  remote_addr.sin_port = htons(cptr->port);
+  memcpy(&remote_addr.sin_addr, &cli_ip(cptr), sizeof(struct in_addr));
+  remote_addr.sin_port = htons(cptr->cli_connect->port);
   remote_addr.sin_family = AF_INET;
 
   gettimeofday(&tv, NULL);
 #if defined(__sun__) || (__GLIBC__ >= 2) || defined(__NetBSD__)
-  sprintf((char *)cptr->confs, " %10lu%c%6lu", tv.tv_sec, '\0', tv.tv_usec);
+  sprintf((char *)cli_confs(cptr), " %10lu%c%6lu", tv.tv_sec, '\0', tv.tv_usec);
 #else
-  sprintf((char *)cptr->confs, " %10u%c%6u", tv.tv_sec, '\0', tv.tv_usec);
+  sprintf((char *)cli_confs(cptr), " %10u%c%6u", tv.tv_sec, '\0', tv.tv_usec);
 #endif
 
   Debug((DEBUG_SEND, "send_ping: sending [%s %s] to %s.%d on %d",
-      (char *)cptr->confs, (char *)cptr->confs + 12,
+      (char *)cli_confs(cptr), (char *)cli_confs(cptr) + 12,
       inetntoa(remote_addr.sin_addr), ntohs(remote_addr.sin_port), cptr->fd));
 
-  if (sendto(cptr->fd, (char *)cptr->confs, 1024, 0,
+  if (sendto(cptr->fd, (char *)cli_confs(cptr), 1024, 0,
       (struct sockaddr *)&remote_addr, sizeof(struct sockaddr_in)) != 1024)
   {
 #if defined(DEBUGMODE)
     int err = errno;
 #endif
-    if (cptr->acpt)
+    if (cptr->cli_connect->acpt)
     {
-      if (MyUser(cptr->acpt)
+      if (MyUser(cptr->cli_connect->acpt)
 #if !defined(NO_PROTOCOL9)
-          || (IsServer(cptr->acpt->from) && Protocol(cptr->acpt->from) < 10)
+          || (IsServer(cptr->cli_connect->acpt->cli_connect->con_client) && Protocol(cptr->cli_connect->acpt->cli_connect->con_client) < 10)
 #endif
           )
-        sendto_one(cptr->acpt, ":%s NOTICE %s :UPING: sendto() failed: %s",
-            me.name, cptr->acpt->name, strerror(get_sockerr(cptr)));
+        sendto_one(cptr->cli_connect->acpt, ":%s NOTICE %s :UPING: sendto() failed: %s",
+            me.name, cptr->cli_connect->acpt->name, strerror(get_sockerr(cptr)));
       else
-        sendto_one(cptr->acpt, "%s " TOK_NOTICE " %s%s :UPING: sendto() failed: %s",
-            NumServ(&me), NumNick(cptr->acpt), strerror(get_sockerr(cptr)));
+        sendto_one(cptr->cli_connect->acpt, "%s " TOK_NOTICE " %s%s :UPING: sendto() failed: %s",
+            NumServ(&me), NumNick(cptr->cli_connect->acpt), strerror(get_sockerr(cptr)));
     }
     Debug((DEBUG_SEND, "send_ping: sendto failed on %d (%d)", cptr->fd, err));
     end_ping(cptr);
     return;
   }
-  else if (--(cptr->sendB) <= 0)
+  else if (--(cptr->cli_connect->sendB) <= 0)
   {
     ClearPing(cptr);
-    if (cptr->receiveB <= 0) {
+    if (cptr->cli_connect->receiveB <= 0) {
       end_ping(cptr);
       return;
     }
@@ -206,7 +207,7 @@ void send_ping(aClient *cptr)
 /*
  * read_ping
  */
-void read_ping(aClient *cptr)
+void read_ping(struct Client *cptr)
 {
   socklen_t addr_len = sizeof(struct sockaddr_in);
   struct sockaddr_in remote_addr;
@@ -215,26 +216,26 @@ void read_ping(aClient *cptr)
   unsigned long int pingtime;
   char *s;
 
-  memcpy(&remote_addr.sin_addr, &cptr->ip, sizeof(struct in_addr));
-  remote_addr.sin_port = htons(cptr->port);
+  memcpy(&remote_addr.sin_addr, &cli_ip(cptr), sizeof(struct in_addr));
+  remote_addr.sin_port = htons(cptr->cli_connect->port);
   remote_addr.sin_family = AF_INET;
 
   gettimeofday(&tv, NULL);
 
-  if ((len = recvfrom(cptr->fd, (char *)cptr->confs, UPINGBUFSIZE, 0,
+  if ((len = recvfrom(cptr->fd, (char *)cli_confs(cptr), UPINGBUFSIZE, 0,
       (struct sockaddr *)&remote_addr, &addr_len)) == -1)
   {
     int err = errno;
-    if (MyUser(cptr->acpt)
+    if (MyUser(cptr->cli_connect->acpt)
 #if !defined(NO_PROTOCOL9)
-        || (IsServer(cptr->acpt->from) && Protocol(cptr->acpt->from) < 10)
+        || (IsServer(cptr->cli_connect->acpt->cli_connect->con_client) && Protocol(cptr->cli_connect->acpt->cli_connect->con_client) < 10)
 #endif
         )
-      sendto_one(cptr->acpt, ":%s NOTICE %s :UPING: recvfrom: %s",
-          me.name, cptr->acpt->name, strerror(get_sockerr(cptr)));
+      sendto_one(cptr->cli_connect->acpt, ":%s NOTICE %s :UPING: recvfrom: %s",
+          me.name, cptr->cli_connect->acpt->name, strerror(get_sockerr(cptr)));
     else
-      sendto_one(cptr->acpt, "%s " TOK_NOTICE " %s%s :UPING: recvfrom: %s",
-          NumServ(&me), NumNick(cptr->acpt), strerror(get_sockerr(cptr)));
+      sendto_one(cptr->cli_connect->acpt, "%s " TOK_NOTICE " %s%s :UPING: recvfrom: %s",
+          NumServ(&me), NumNick(cptr->cli_connect->acpt), strerror(get_sockerr(cptr)));
     Debug((DEBUG_SEND, "read_ping: recvfrom: %d", err));
     if (err != EAGAIN)
       end_ping(cptr);
@@ -244,44 +245,44 @@ void read_ping(aClient *cptr)
   if (len < 19)
     return;                     /* Broken packet */
 
-  pingtime = (tv.tv_sec - atoi((char *)cptr->confs + 1)) * 1000 +
-      (tv.tv_usec - atoi((char *)cptr->confs + strlen((char *)cptr->confs) +
+  pingtime = (tv.tv_sec - atoi((char *)cli_confs(cptr) + 1)) * 1000 +
+      (tv.tv_usec - atoi((char *)cli_confs(cptr) + strlen((char *)cli_confs(cptr)) +
       1)) / 1000;
-  cptr->sendM += pingtime;
-  if (!(cptr->receiveK) || (cptr->receiveK > pingtime))
-    cptr->receiveK = pingtime;
-  if (pingtime > cptr->receiveM)
-    cptr->receiveM = pingtime;
+  cptr->cli_connect->sendM += pingtime;
+  if (!(cptr->cli_connect->receiveK) || (cptr->cli_connect->receiveK > pingtime))
+    cptr->cli_connect->receiveK = pingtime;
+  if (pingtime > cptr->cli_connect->receiveM)
+    cptr->cli_connect->receiveM = pingtime;
   /* Wait at most 10 times the average pingtime for the next one: */
-  if ((cptr->since =
-      cptr->sendM / (100 * (cptr->hopcount - cptr->receiveB + 1))) < 2)
-    cptr->since = 2;
-  cptr->firsttime = tv.tv_sec + cptr->since;
+  if ((cli_since(cptr) =
+      cptr->cli_connect->sendM / (100 * (cli_hopcount(cptr) - cptr->cli_connect->receiveB + 1))) < 2)
+    cli_since(cptr) = 2;
+  cli_firsttime(cptr) = tv.tv_sec + cli_since(cptr);
 
   Debug((DEBUG_SEND, "read_ping: %d bytes, ti " TIME_T_FMT ": [%s %s] %lu ms",
-      len, cptr->since, (char *)cptr->confs,
-      (char *)cptr->confs + strlen((char *)cptr->confs) + 1, pingtime));
+      len, cli_since(cptr), (char *)cli_confs(cptr),
+      (char *)cli_confs(cptr) + strlen((char *)cli_confs(cptr)) + 1, pingtime));
 
-  s = cptr->buffer + strlen(cptr->buffer);
+  s = cptr->cli_connect->buffer + strlen(cptr->cli_connect->buffer);
   sprintf(s, " %lu", pingtime);
 
-  if ((--(cptr->receiveB) <= 0 && !DoPing(cptr)) || !(cptr->acpt))
+  if ((--(cptr->cli_connect->receiveB) <= 0 && !DoPing(cptr)) || !(cptr->cli_connect->acpt))
     end_ping(cptr);
 
   return;
 }
 
-int ping_server(aClient *cptr)
+int ping_server(struct Client *cptr)
 {
   struct in_addr addr4;
 
   /* Pasamos de irc_in_addr a in_addr */
-  addr4.s_addr = (cptr->ip.in6_16[6] | cptr->ip.in6_16[7] << 16);
+  addr4.s_addr = (cli_ip(cptr).in6_16[6] | cli_ip(cptr).in6_16[7] << 16);
 
   if ((!addr4.s_addr)
 #if defined(UNIXPORT)
-      && (cptr->sockhost && (strlen(cptr->sockhost) > 2)
-      && (cptr->sockhost[2]) != '/')
+      && (cptr->cli_connect->sockhost && (strlen(cptr->cli_connect->sockhost) > 2)
+      && (cptr->cli_connect->sockhost[2]) != '/')
 #endif
       )
   {
@@ -289,16 +290,16 @@ int ping_server(aClient *cptr)
     char *s;
     Link lin;
 
-    if (!(cptr->acpt))
+    if (!(cptr->cli_connect->acpt))
       return -1;                /* Oper left already */
 
     lin.flags = ASYNC_PING;
     lin.value.cptr = cptr;
     update_nextdnscheck(0);
     //nextdnscheck = 1;
-    s = strchr(PunteroACadena(cptr->sockhost), '@');
+    s = strchr(PunteroACadena(cptr->cli_connect->sockhost), '@');
     s++;                        /* should never be NULL;
-                                   cptr->sockhost is actually a conf->host */
+                                   cptr->cli_connect->sockhost is actually a conf->host */
     if ((addr4.s_addr = inet_addr(s)) == INADDR_NONE)
     {
       addr4.s_addr = INADDR_ANY;
@@ -310,7 +311,7 @@ int ping_server(aClient *cptr)
     }
   }
 
-  /* TODO: Pasar de addr4 a cptr->ip */
+  /* TODO: Pasar de addr4 a cli_ip(cptr) */
   return start_ping(cptr);
 }
 
@@ -323,7 +324,7 @@ int ping_server(aClient *cptr)
  * parv[3] = hunted server
  * parv[4] = number of requested pings
  */
-int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_uping(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   aConfItem *aconf;
   unsigned short int port;
@@ -518,17 +519,17 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (fd > highest_fd)
     highest_fd = fd;
-  loc_clients[fd] = cptr = make_client(NULL, STAT_PING);
-  cptr->confs = (Link *)MyMalloc(UPINGBUFSIZE);  /* Really a (char *) */
+//  loc_clients[fd] = cptr = make_client(NULL, STAT_PING);
+  cli_confs(cptr) = (Link *)MyMalloc(UPINGBUFSIZE);  /* Really a (char *) */
   cptr->fd = fd;
-  cptr->port = port;
-  cptr->hopcount = cptr->receiveB = cptr->sendB = MIN(20, atoi(parv[4]));
-  SlabStringAllocDup(&(cptr->sockhost), aconf->host, HOSTLEN);
-  cptr->acpt = sptr;
+  cptr->cli_connect->port = port;
+  cli_hopcount(cptr) = cptr->cli_connect->receiveB = cptr->cli_connect->sendB = MIN(20, atoi(parv[4]));
+  SlabStringAllocDup(&(cptr->cli_connect->sockhost), aconf->host, HOSTLEN);
+  cptr->cli_connect->acpt = sptr;
   SetAskedPing(sptr);
-  memcpy(&cptr->ip, &aconf->ipnum, sizeof(struct in_addr));
+  memcpy(&cli_ip(cptr), &aconf->ipnum, sizeof(struct in_addr));
   SlabStringAllocDup(&(cptr->name), aconf->name, 0);
-  cptr->firsttime = 0;
+  cli_firsttime(cptr) = 0;
 
   CreateREvent(cptr, event_ping_callback);
   CreateTimerEvent(cptr, event_ping_callback);
@@ -546,88 +547,88 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   return 0;
 }
 
-void end_ping(aClient *cptr)
+void end_ping(struct Client *cptr)
 {
   Debug((DEBUG_DEBUG, "end_ping: %p", cptr));
-  if (cptr->acpt)
+  if (cptr->cli_connect->acpt)
   {
-    if (MyUser(cptr->acpt)
+    if (MyUser(cptr->cli_connect->acpt)
 #if !defined(NO_PROTOCOL9)
-        || (IsServer(cptr->acpt->from) && Protocol(cptr->acpt->from) < 10)
+        || (IsServer(cptr->cli_connect->acpt->cli_connect->con_client) && Protocol(cptr->cli_connect->acpt->cli_connect->con_client) < 10)
 #endif
     )
     {
-      if (cptr->firsttime)      /* Started at all ? */
+      if (cli_firsttime(cptr))      /* Started at all ? */
       {
-        if (cptr->receiveB != cptr->hopcount) /* Received any pings at all? */
+        if (cptr->cli_connect->receiveB != cli_hopcount(cptr)) /* Received any pings at all? */
         {
-          sendto_one(cptr->acpt, ":%s NOTICE %s :UPING %s%s",
-              me.name, cptr->acpt->name, cptr->name, cptr->buffer);
-          sendto_one(cptr->acpt,
+          sendto_one(cptr->cli_connect->acpt, ":%s NOTICE %s :UPING %s%s",
+              me.name, cptr->cli_connect->acpt->name, cptr->name, cptr->cli_connect->buffer);
+          sendto_one(cptr->cli_connect->acpt,
               ":%s NOTICE %s :UPING Stats: sent %d recvd %d ; "
               "min/avg/max = %u/%u/%u ms",
-              me.name, cptr->acpt->name, cptr->hopcount - cptr->sendB,
-              cptr->hopcount - cptr->receiveB, cptr->receiveK,
-              (2 * cptr->sendM + cptr->hopcount - cptr->receiveB) /
-              (2 * (cptr->hopcount - cptr->receiveB)), cptr->receiveM);
+              me.name, cptr->cli_connect->acpt->name, cli_hopcount(cptr) - cptr->cli_connect->sendB,
+              cli_hopcount(cptr) - cptr->cli_connect->receiveB, cptr->cli_connect->receiveK,
+              (2 * cptr->cli_connect->sendM + cli_hopcount(cptr) - cptr->cli_connect->receiveB) /
+              (2 * (cli_hopcount(cptr) - cptr->cli_connect->receiveB)), cptr->cli_connect->receiveM);
         }
         else
-          sendto_one(cptr->acpt,
+          sendto_one(cptr->cli_connect->acpt,
               ":%s NOTICE %s :UPING: no response from %s within %d seconds",
-              me.name, cptr->acpt->name, cptr->name,
-              (int)(now + cptr->since - cptr->firsttime));
+              me.name, cptr->cli_connect->acpt->name, cptr->name,
+              (int)(now + cli_since(cptr) - cli_firsttime(cptr)));
       }
       else
-        sendto_one(cptr->acpt,
+        sendto_one(cptr->cli_connect->acpt,
             ":%s NOTICE %s :UPING: Could not start ping to %s %u",
-            me.name, cptr->acpt->name, cptr->name, cptr->port);
+            me.name, cptr->cli_connect->acpt->name, cptr->name, cptr->cli_connect->port);
     }
     else
     {
-      if (cptr->firsttime)      /* Started at all ? */
+      if (cli_firsttime(cptr))      /* Started at all ? */
       {
-        if (cptr->receiveB != cptr->hopcount) /* Received any pings at all? */
+        if (cptr->cli_connect->receiveB != cli_hopcount(cptr)) /* Received any pings at all? */
         {
-          sendto_one(cptr->acpt, "%s " TOK_NOTICE " %s%s :UPING %s%s",
-              NumServ(&me), NumNick(cptr->acpt), cptr->name, cptr->buffer);
-          sendto_one(cptr->acpt,
+          sendto_one(cptr->cli_connect->acpt, "%s " TOK_NOTICE " %s%s :UPING %s%s",
+              NumServ(&me), NumNick(cptr->cli_connect->acpt), cptr->name, cptr->cli_connect->buffer);
+          sendto_one(cptr->cli_connect->acpt,
               "%s " TOK_NOTICE " %s%s :UPING Stats: sent %d recvd %d ; "
               "min/avg/max = %u/%u/%u ms",
-              NumServ(&me), NumNick(cptr->acpt), cptr->hopcount - cptr->sendB,
-              cptr->hopcount - cptr->receiveB, cptr->receiveK,
-              (2 * cptr->sendM + cptr->hopcount - cptr->receiveB) /
-              (2 * (cptr->hopcount - cptr->receiveB)), cptr->receiveM);
+              NumServ(&me), NumNick(cptr->cli_connect->acpt), cli_hopcount(cptr) - cptr->cli_connect->sendB,
+              cli_hopcount(cptr) - cptr->cli_connect->receiveB, cptr->cli_connect->receiveK,
+              (2 * cptr->cli_connect->sendM + cli_hopcount(cptr) - cptr->cli_connect->receiveB) /
+              (2 * (cli_hopcount(cptr) - cptr->cli_connect->receiveB)), cptr->cli_connect->receiveM);
         }
         else
-          sendto_one(cptr->acpt,
+          sendto_one(cptr->cli_connect->acpt,
               "%s " TOK_NOTICE " %s%s :UPING: no response from %s within %d seconds",
-              NumServ(&me), NumNick(cptr->acpt), cptr->name,
-              (int)(now + cptr->since - cptr->firsttime));
+              NumServ(&me), NumNick(cptr->cli_connect->acpt), cptr->name,
+              (int)(now + cli_since(cptr) - cli_firsttime(cptr)));
       }
       else
-        sendto_one(cptr->acpt,
+        sendto_one(cptr->cli_connect->acpt,
             "%s " TOK_NOTICE " %s%s :UPING: Could not start ping to %s %d",
-            NumServ(&me), NumNick(cptr->acpt), cptr->name, cptr->port);
+            NumServ(&me), NumNick(cptr->cli_connect->acpt), cptr->name, cptr->cli_connect->port);
     }
   }
   close(cptr->fd);
   loc_clients[cptr->fd] = NULL;
-  if (cptr->acpt)
-    ClearAskedPing(cptr->acpt);
-  MyFree(cptr->confs);
+  if (cptr->cli_connect->acpt)
+    ClearAskedPing(cptr->cli_connect->acpt);
+  MyFree(cli_confs(cptr));
   free_client(cptr);
 }
 
-void cancel_ping(aClient *sptr, aClient *acptr)
+void cancel_ping(struct Client *sptr, struct Client *acptr)
 {
   int i;
-  aClient *cptr;
+  struct Client *cptr;
 
   Debug((DEBUG_DEBUG, "Cancelling uping for %p (%s)", sptr, sptr->name));
   for (i = highest_fd; i >= 0; i--)
-    if ((cptr = loc_clients[i]) && IsPing(cptr) && cptr->acpt == sptr)
+    if ((cptr = loc_clients[i]) && IsPing(cptr) && cptr->cli_connect->acpt == sptr)
       {
-        cptr->acpt = acptr;
+        cptr->cli_connect->acpt = acptr;
         del_queries((char *)cptr);
         end_ping(cptr);   
         break;

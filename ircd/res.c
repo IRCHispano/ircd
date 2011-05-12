@@ -29,6 +29,7 @@ extern int dn_skipname(const unsigned char *, const unsigned char *);
 #include <assert.h>
 
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "res.h"
 #include "struct.h"
@@ -1523,8 +1524,8 @@ static void rem_cache(aCache *ocp)
    */
   for (hashv = highest_fd; hashv >= 0; --hashv)
   {
-    if ((cptr = loc_clients[hashv]) && (cptr->hostp == hp))
-      cptr->hostp = NULL;
+    if ((cptr = loc_clients[hashv]) && (cptr->cli_connect->hostp == hp))
+      cptr->cli_connect->hostp = NULL;
   }
   /*
    * Remove cache entry from linked list.

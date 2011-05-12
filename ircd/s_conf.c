@@ -49,6 +49,7 @@
 #include <syslog.h>
 #endif
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "struct.h"
 #include "s_serv.h"
@@ -82,7 +83,7 @@ RCSTAG_CC("$Id$");
 static int check_time_interval(char *, char *);
 static int lookup_confhost(aConfItem *);
 static int is_comment(char *);
-static void killcomment(aClient *sptr, char *parv, char *filename);
+static void killcomment(struct Client *sptr, char *parv, char *filename);
 
 aConfItem *conf = NULL;
 #if defined(ESNET_NEG)
@@ -150,11 +151,11 @@ char *getfield(char *newline, char fs)
  * Remove all conf entries from the client except those which match
  * the status field mask.
  */
-void det_confs_butmask(aClient *cptr, int mask)
+void det_confs_butmask(struct Client *cptr, int mask)
 {
   Reg1 Link *tmp, *tmp2;
 
-  for (tmp = cptr->confs; tmp; tmp = tmp2)
+  for (tmp = cli_confs(cptr); tmp; tmp = tmp2)
   {
     tmp2 = tmp->next;
     if ((tmp->value.aconf->status & mask) == 0)
@@ -165,7 +166,7 @@ void det_confs_butmask(aClient *cptr, int mask)
 /*
  * Find the first (best) I line to attach.
  */
-enum AuthorizationCheckResult attach_Iline(aClient *cptr, struct hostent *hp,
+enum AuthorizationCheckResult attach_Iline(struct Client *cptr, struct hostent *hp,
     char *sockhost)
 {
   Reg1 aConfItem *aconf;
@@ -178,7 +179,7 @@ enum AuthorizationCheckResult attach_Iline(aClient *cptr, struct hostent *hp,
   {
     if (aconf->status != CONF_CLIENT)
       continue;
-    if (aconf->port && aconf->port != cptr->acpt->port)
+    if (aconf->port && aconf->port != cptr->cli_connect->acpt->cli_connect->port)
       continue;
     if (!aconf->host || !aconf->name)
       continue;
@@ -332,11 +333,11 @@ aConfItem *count_clines(Link *lp)
  *
  * Disassociate configuration from the client.
  */
-int detach_conf(aClient *cptr, aConfItem *aconf)
+int detach_conf(struct Client *cptr, aConfItem *aconf)
 {
   Reg1 Link **lp, *tmp;
 
-  lp = &(cptr->confs);
+  lp = &(cli_confs(cptr));
 
   while (*lp)
   {
@@ -358,11 +359,11 @@ int detach_conf(aClient *cptr, aConfItem *aconf)
   return -1;
 }
 
-static int is_attached(aConfItem *aconf, aClient *cptr)
+static int is_attached(aConfItem *aconf, struct Client *cptr)
 {
   Reg1 Link *lp;
 
-  for (lp = cptr->confs; lp; lp = lp->next)
+  for (lp = cli_confs(cptr); lp; lp = lp->next)
     if (lp->value.aconf == aconf)
       break;
 
@@ -377,7 +378,7 @@ static int is_attached(aConfItem *aconf, aClient *cptr)
  * connection). Note, that this automaticly changes the
  * attachment if there was an old one...
  */
-enum AuthorizationCheckResult attach_conf(aClient *cptr, aConfItem *aconf)
+enum AuthorizationCheckResult attach_conf(struct Client *cptr, aConfItem *aconf)
 {
   Reg1 Link *lp;
 
@@ -389,9 +390,9 @@ enum AuthorizationCheckResult attach_conf(aClient *cptr, aConfItem *aconf)
       ConfLinks(aconf) >= ConfMaxLinks(aconf) && ConfMaxLinks(aconf) > 0)
     return ACR_TOO_MANY_IN_CLASS; /* Use this for printing error message */
   lp = make_link();
-  lp->next = cptr->confs;
+  lp->next = cli_confs(cptr);
   lp->value.aconf = aconf;
-  cptr->confs = lp;
+  cli_confs(cptr) = lp;
   aconf->clients++;
   if (aconf->status & CONF_CLIENT_MASK)
     ConfLinks(aconf)++;
@@ -426,7 +427,7 @@ aConfItem *find_me(void)
  * the conf file (for non-C lines) or is an exact match (C lines
  * only).  The difference in behaviour is to stop C:*::*. 
  */
-aConfItem *attach_confs(aClient *cptr, const char *name, int statmask)
+aConfItem *attach_confs(struct Client *cptr, const char *name, int statmask)
 {
   Reg1 aConfItem *tmp;
   aConfItem *first = NULL;
@@ -457,7 +458,7 @@ aConfItem *attach_confs(aClient *cptr, const char *name, int statmask)
 /*
  * Added for new access check    meLazy
  */
-aConfItem *attach_confs_host(aClient *cptr, char *host, int statmask)
+aConfItem *attach_confs_host(struct Client *cptr, char *host, int statmask)
 {
   Reg1 aConfItem *tmp;
   aConfItem *first = NULL;
@@ -709,11 +710,11 @@ static void prepara_negociaciones(void)
  * as a result of an operator issuing this command, else assume it has been
  * called as a result of the server receiving a HUP signal.
  */
-int rehash(aClient *cptr, int sig)
+int rehash(struct Client *cptr, int sig)
 {
   Reg1 aConfItem **tmp = &conf, *tmp2;
   Reg2 aConfClass *cltmp;
-  Reg1 aClient *acptr;
+  Reg1 struct Client *acptr;
   Reg2 aMotdItem *temp;
   Reg2 int i;
   int ret = 0, found_g;
@@ -736,7 +737,7 @@ int rehash(aClient *cptr, int sig)
        * Could always keep reference counts instead of
        * this....-avalon
        */
-      acptr->hostp = NULL;
+      acptr->cli_connect->hostp = NULL;
     }
 
   while ((tmp2 = *tmp))
@@ -1280,7 +1281,7 @@ void read_tlines()
     }
 }
 
-int find_port_cookie_encrypted(aClient *cptr) {
+int find_port_cookie_encrypted(struct Client *cptr) {
   aConfItem *tmp;
 
   for (tmp = conf; tmp; tmp = tmp->next)
@@ -1288,7 +1289,7 @@ int find_port_cookie_encrypted(aClient *cptr) {
     if (!IsConfListenPort(tmp) || !IsConfCookieEnc(tmp))
       continue;
 
-    if (tmp->port == cptr->acpt->port)
+    if (tmp->port == cptr->cli_connect->acpt->cli_connect->port)
       return 1;
   }
   
@@ -1296,7 +1297,7 @@ int find_port_cookie_encrypted(aClient *cptr) {
   
 }
 
-int find_exception(aClient *cptr)
+int find_exception(struct Client *cptr)
 {
   aConfItem *tmp;
 
@@ -1305,13 +1306,13 @@ int find_exception(aClient *cptr)
     if (!(tmp->status) & CONF_EXCEPTION)
       continue;
 
-    if ((tmp->host && (match(tmp->host, PunteroACadena(cptr->sockhost)) == 0 ||
+    if ((tmp->host && (match(tmp->host, PunteroACadena(cptr->cli_connect->sockhost)) == 0 ||
         match(tmp->host, ircd_ntoa_c(cptr)) == 0))
         && (tmp->name
-        && (match(tmp->name, PunteroACadena(cptr->user->username)) == 0))
-        && (BadPtr(tmp->passwd) || (!BadPtr(cptr->passwd)
-        && !strcmp(tmp->passwd, cptr->passwd))) && (!tmp->port
-        || (tmp->port == cptr->acpt->port)))
+        && (match(tmp->name, PunteroACadena(cli_user(cptr)->username)) == 0))
+        && (BadPtr(tmp->passwd) || (!BadPtr(cptr->cli_connect->passwd)
+        && !strcmp(tmp->passwd, cptr->cli_connect->passwd))) && (!tmp->port
+        || (tmp->port == cptr->cli_connect->acpt->cli_connect->port)))
       return 1;
   }
   {
@@ -1320,10 +1321,10 @@ int find_exception(aClient *cptr)
     for (reg = db_iterador_init(BDD_EXCEPTIONDB); reg;
         reg = db_iterador_next())
     {
-      if ((reg->clave && (match(reg->clave, PunteroACadena(cptr->sockhost)) == 0 ||
+      if ((reg->clave && (match(reg->clave, PunteroACadena(cptr->cli_connect->sockhost)) == 0 ||
           match(reg->clave, ircd_ntoa_c(cptr)) == 0))
           && (reg->valor
-          && (match(reg->valor, PunteroACadena(cptr->user->username)) == 0)))
+          && (match(reg->valor, PunteroACadena(cli_user(cptr)->username)) == 0)))
         return 1;
     }
   }  
@@ -1331,18 +1332,18 @@ int find_exception(aClient *cptr)
   return 0;
 }
 
-int find_kill(aClient *cptr)
+int find_kill(struct Client *cptr)
 {
   char reply[256], *host, *name, *username;
   aConfItem *tmp;
   aGline *agline = NULL;
 
-  if (!cptr->user)
+  if (!cli_user(cptr))
     return 0;
 
-  host = PunteroACadena(cptr->sockhost);
+  host = PunteroACadena(cptr->cli_connect->sockhost);
   name = PunteroACadena(cptr->name);
-  username = PunteroACadena(cptr->user->username);
+  username = PunteroACadena(cli_user(cptr)->username);
 
   if (strlen(host) > (size_t)HOSTLEN ||
       (username ? strlen(username) : 0) > (size_t)HOSTLEN)
@@ -1367,7 +1368,7 @@ int find_kill(aClient *cptr)
         ((tmp->status == CONF_IPKILL) &&
         match(tmp->host, ircd_ntoa_c(cptr)) == 0)) &&
         (!username || match(tmp->name, username) == 0) &&
-        (!tmp->port || (tmp->port == cptr->acpt->port)))
+        (!tmp->port || (tmp->port == cptr->cli_connect->acpt->cli_connect->port)))
     {
       /*
        * Can short-circuit evaluation - not taking chances
@@ -1458,7 +1459,7 @@ int find_kill(aClient *cptr)
  * begins with neither 'Y' or 'N' the default is to let the person on.
  * It returns a value of 0 if the user is to be let through -Hoppie
  */
-int find_restrict(aClient *cptr)
+int find_restrict(struct Client *cptr)
 {
   aConfItem *tmp;
   char reply[80], temprpl[80];
@@ -1467,11 +1468,11 @@ int find_restrict(aClient *cptr)
   int pi[2], rc = 0;
   FBFILE *file = NULL;
 
-  if (!cptr->user)
+  if (!cli_user(cptr))
     return 0;
-  username = PunteroACadena(cptr->user->username);
+  username = PunteroACadena(cli_user(cptr)->username);
   name = PunteroACadena(cptr->name);
-  host = PunteroACadena(cptr->sockhost);
+  host = PunteroACadena(cptr->cli_connect->sockhost);
   Debug((DEBUG_INFO, "R-line check for %s[%s]", name, host));
 
   for (tmp = conf; tmp; tmp = tmp->next)
@@ -1566,7 +1567,7 @@ int find_restrict(aClient *cptr)
  * parv is the sender prefix
  * filename is the file that is to be output to the K lined client
  */
-static void killcomment(aClient *sptr, char *parv, char *filename)
+static void killcomment(struct Client *sptr, char *parv, char *filename)
 {
   FBFILE *file = NULL;
   char line[80];

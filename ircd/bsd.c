@@ -19,6 +19,7 @@
  */
 
 #include "sys.h"
+#include "client.h"
 #include <signal.h>
 #include <sys/socket.h>         /* Needed for send() */
 #include "h.h"
@@ -58,10 +59,10 @@ int writeb[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
  *      net.loads today anyway. Commented out the alarms to save cpu.
  *      --Run
  */
-int deliver_it(aClient *cptr, const char *str, int len)
+int deliver_it(struct Client *cptr, const char *str, int len)
 {
   int retval;
-  aClient *acpt = cptr->acpt;
+  struct Client *acpt = cptr->cli_connect->acpt;
 
 #if defined(DEBUGMODE)
   writecalls++;
@@ -123,26 +124,26 @@ int deliver_it(aClient *cptr, const char *str, int len)
 #endif
   if (retval > 0)
   {
-    cptr->sendB += retval;
-    me.sendB += retval;
-    if (cptr->sendB > 1023)
+    cptr->cli_connect->sendB += retval;
+    me.cli_connect->sendB += retval;
+    if (cptr->cli_connect->sendB > 1023)
     {
-      cptr->sendK += (cptr->sendB >> 10);
-      cptr->sendB &= 0x03ff;    /* 2^10 = 1024, 3ff = 1023 */
+      cptr->cli_connect->sendK += (cptr->cli_connect->sendB >> 10);
+      cptr->cli_connect->sendB &= 0x03ff;    /* 2^10 = 1024, 3ff = 1023 */
     }
     if (acpt != &me)
     {
-      acpt->sendB += retval;
-      if (acpt->sendB > 1023)
+      acpt->cli_connect->sendB += retval;
+      if (acpt->cli_connect->sendB > 1023)
       {
-        acpt->sendK += (acpt->sendB >> 10);
-        acpt->sendB &= 0x03ff;
+        acpt->cli_connect->sendK += (acpt->cli_connect->sendB >> 10);
+        acpt->cli_connect->sendB &= 0x03ff;
       }
     }
-    else if (me.sendB > 1023)
+    else if (me.cli_connect->sendB > 1023)
     {
-      me.sendK += (me.sendB >> 10);
-      me.sendB &= 0x03ff;
+      me.cli_connect->sendK += (me.cli_connect->sendB >> 10);
+      me.cli_connect->sendB &= 0x03ff;
     }
   }
   return (retval);

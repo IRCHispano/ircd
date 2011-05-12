@@ -43,6 +43,7 @@
 
 #include <assert.h>
 
+#include "client.h"
 #include "h.h"
 #include "s_debug.h"
 #include "res.h"
@@ -80,7 +81,7 @@ RCSTAG_CC("$Id$");
  * identifing process fail, it is aborted and the user is given a username
  * of "unknown".
  */
-void start_auth(aClient *cptr)
+void start_auth(struct Client *cptr)
 {
   struct sockaddr_in sock;
   int err;
@@ -88,8 +89,8 @@ void start_auth(aClient *cptr)
   /* Sin IDENT */
   if (!activar_ident)
   {
-    cptr->count = 0;
-    cptr->authfd = -1;
+    cli_count(cptr) = 0;
+    cptr->cli_connect->authfd = -1;
     ClearAuth(cptr);
     if (!DoingDNS(cptr))
       SetAccess(cptr);
@@ -101,7 +102,7 @@ void start_auth(aClient *cptr)
   /* Con IDENT */
 
   Debug((DEBUG_NOTICE, "start_auth(%p) fd %d status %d",
-      cptr, cptr->fd, cptr->status));
+      cptr, cptr->fd, cli_status(cptr)));
 
   if (IsUserPort(cptr))
   {
@@ -109,10 +110,10 @@ void start_auth(aClient *cptr)
     write(cptr->fd, sendbuf, strlen(sendbuf));
   }
 
-  cptr->authfd = socket(AF_INET, SOCK_STREAM, 0);
+  cptr->cli_connect->authfd = socket(AF_INET, SOCK_STREAM, 0);
   err = errno;
 
-  if (cptr->authfd < 0)
+  if (cptr->cli_connect->authfd < 0)
   {
 #if defined(USE_SYSLOG)
     syslog(LOG_ERR, "Unable to create auth socket for %s:%m",
@@ -125,36 +126,36 @@ void start_auth(aClient *cptr)
     ircstp->is_abad++;
     return;
   }
-  if (cptr->authfd >= (MAXCONNECTIONS - 2))
+  if (cptr->cli_connect->authfd >= (MAXCONNECTIONS - 2))
   {
-    close(cptr->authfd);
-    cptr->authfd = -1;
+    close(cptr->cli_connect->authfd);
+    cptr->cli_connect->authfd = -1;
     return;
   }
   
 #if defined(VIRTUAL_HOST)
-  if (bind(cptr->authfd, (struct sockaddr *)&vserv, sizeof(vserv)) == -1)
+  if (bind(cptr->cli_connect->authfd, (struct sockaddr *)&vserv, sizeof(vserv)) == -1)
   {
     report_error("binding auth stream socket %s: %s", cptr);
-    close(cptr->authfd);
-    cptr->authfd = -1;
+    close(cptr->cli_connect->authfd);
+    cptr->cli_connect->authfd = -1;
     return;
   }
 #endif
-  memcpy(&sock.sin_addr, &cptr->ip, sizeof(struct in_addr));
+  memcpy(&sock.sin_addr, &cli_ip(cptr), sizeof(struct in_addr));
 
   sock.sin_port = htons(113);
   sock.sin_family = AF_INET;
 
-  if (connect(cptr->authfd, (struct sockaddr *)&sock,
+  if (connect(cptr->cli_connect->authfd, (struct sockaddr *)&sock,
       sizeof(sock)) == -1 && errno != EINPROGRESS)
   {
     ircstp->is_abad++;
     /*
      * No error report from this...
      */
-    close(cptr->authfd);
-    cptr->authfd = -1;
+    close(cptr->cli_connect->authfd);
+    cptr->cli_connect->authfd = -1;
     if (!DoingDNS(cptr))
       SetAccess(cptr);
 
@@ -167,12 +168,12 @@ void start_auth(aClient *cptr)
   }
   SetAuth(cptr);
   SetWRAuth(cptr);
-  set_non_blocking(cptr->authfd, cptr);
+  set_non_blocking(cptr->cli_connect->authfd, cptr);
   
   CreateRWAuthEvent(cptr);
   
-  if (cptr->authfd > highest_fd)
-    highest_fd = cptr->authfd;
+  if (cptr->cli_connect->authfd > highest_fd)
+    highest_fd = cptr->cli_connect->authfd;
   return;
 }
 
@@ -185,14 +186,14 @@ void start_auth(aClient *cptr)
  * problem since the socket should have a write buffer far greater than
  * this message to store it in should problems arise. -avalon
  */
-void send_authports(aClient *cptr)
+void send_authports(struct Client *cptr)
 {
   struct sockaddr_in us, them;
   char authbuf[32];
   socklen_t ulen, tlen;
 
   Debug((DEBUG_NOTICE, "write_authports(%p) fd %d authfd %d stat %d",
-      cptr, cptr->fd, cptr->authfd, cptr->status));
+      cptr, cptr->fd, cptr->cli_connect->authfd, cli_status(cptr)));
   tlen = ulen = sizeof(us);
   if (getsockname(cptr->fd, (struct sockaddr *)&us, &ulen) ||
       getpeername(cptr->fd, (struct sockaddr *)&them, &tlen))
@@ -209,15 +210,15 @@ void send_authports(aClient *cptr)
 
   Debug((DEBUG_SEND, "sending [%s] to auth port %s.113",
       authbuf, inetntoa(them.sin_addr)));
-  if (write(cptr->authfd, authbuf, strlen(authbuf)) != (int)strlen(authbuf))
+  if (write(cptr->cli_connect->authfd, authbuf, strlen(authbuf)) != (int)strlen(authbuf))
   {
   authsenderr:
     ircstp->is_abad++;
-    close(cptr->authfd);
-    if (cptr->authfd == highest_fd)
+    close(cptr->cli_connect->authfd);
+    if (cptr->cli_connect->authfd == highest_fd)
       while (!loc_clients[highest_fd])
         highest_fd--;
-    cptr->authfd = -1;
+    cptr->cli_connect->authfd = -1;
 
     ClearAuth(cptr);
     DelRAuthEvent(cptr);
@@ -244,7 +245,7 @@ void send_authports(aClient *cptr)
  * The actual read processijng here is pretty weak - no handling of the reply
  * if it is fragmented by IP.
  */
-void read_authports(aClient *cptr)
+void read_authports(struct Client *cptr)
 {
   Reg1 char *s, *t;
   Reg2 int len;
@@ -253,7 +254,7 @@ void read_authports(aClient *cptr)
 
   *system = *ruser = '\0';
   Debug((DEBUG_NOTICE, "read_authports(%p) fd %d authfd %d stat %d",
-      cptr, cptr->fd, cptr->authfd, cptr->status));
+      cptr, cptr->fd, cptr->cli_connect->authfd, cli_status(cptr)));
   /*
    * Nasty.  Cant allow any other reads from client fd while we're
    * waiting on the authfd to return a full valid string.  Use the
@@ -261,21 +262,21 @@ void read_authports(aClient *cptr)
    * Oh. this is needed because an authd reply may come back in more
    * than 1 read! -avalon
    */
-  if ((len = read(cptr->authfd, cptr->buffer + cptr->count,
-      sizeof(cptr->buffer) - 1 - cptr->count)) >= 0)
+  if ((len = read(cptr->cli_connect->authfd, cptr->cli_connect->buffer + cli_count(cptr),
+      sizeof(cptr->cli_connect->buffer) - 1 - cli_count(cptr))) >= 0)
   {
-    cptr->count += len;
-    cptr->buffer[cptr->count] = '\0';
+    cli_count(cptr) += len;
+    cptr->cli_connect->buffer[cli_count(cptr)] = '\0';
   }
 
-  cptr->lasttime = now;
-  if ((len > 0) && (cptr->count != (sizeof(cptr->buffer) - 1)) &&
-      (sscanf(cptr->buffer, "%hd , %hd : USERID : %*[^:]: %10s",
+  cli_lasttime(cptr) = now;
+  if ((len > 0) && (cli_count(cptr) != (sizeof(cptr->cli_connect->buffer) - 1)) &&
+      (sscanf(cptr->cli_connect->buffer, "%hd , %hd : USERID : %*[^:]: %10s",
       &remp, &locp, ruser) == 3))
   {
-    s = strrchr(cptr->buffer, ':');
+    s = strrchr(cptr->cli_connect->buffer, ':');
     *s++ = '\0';
-    for (t = (strrchr(cptr->buffer, ':') + 1); *t; t++)
+    for (t = (strrchr(cptr->cli_connect->buffer, ':') + 1); *t; t++)
       if (!IsSpace(*t))
         break;
     strncpy(system, t, sizeof(system) - 1);
@@ -288,10 +289,10 @@ void read_authports(aClient *cptr)
   }
   else if (len != 0)
   {
-    if (!strchr(cptr->buffer, '\n') && !strchr(cptr->buffer, '\r'))
+    if (!strchr(cptr->cli_connect->buffer, '\n') && !strchr(cptr->cli_connect->buffer, '\r'))
       return;
     Debug((DEBUG_ERROR, "local %d remote %d", locp, remp));
-    Debug((DEBUG_ERROR, "bad auth reply in [%s]", cptr->buffer));
+    Debug((DEBUG_ERROR, "bad auth reply in [%s]", cptr->cli_connect->buffer));
     *ruser = '\0';
     if (IsUserPort(cptr))
     {
@@ -299,18 +300,18 @@ void read_authports(aClient *cptr)
       write(cptr->fd, sendbuf, strlen(sendbuf));
     }
   }
-  close(cptr->authfd);
-  if (cptr->authfd == highest_fd)
+  close(cptr->cli_connect->authfd);
+  if (cptr->cli_connect->authfd == highest_fd)
     while (!loc_clients[highest_fd])
       highest_fd--;
-  cptr->count = 0;
-  cptr->authfd = -1;
+  cli_count(cptr) = 0;
+  cptr->cli_connect->authfd = -1;
   ClearAuth(cptr);
   DelRWAuthEvent(cptr);
   if (!DoingDNS(cptr))
     SetAccess(cptr);
   if (len > 0)
-    Debug((DEBUG_INFO, "ident reply: [%s]", cptr->buffer));
+    Debug((DEBUG_INFO, "ident reply: [%s]", cptr->cli_connect->buffer));
 
   if (!locp || !remp || !*ruser)
   {

@@ -40,28 +40,28 @@ RCSTAG_CC("$Id$");
 
 void actualiza_contadores(aClient *cptr, int length)
 {
-  aClient *acpt = cptr->acpt;
+  aClient *acpt = cptr->cli_connect->acpt;
 
-  me.receiveB += length;        /* Update bytes received */
-  cptr->receiveB += length;
-  if (cptr->receiveB > 1023)
+  me.cli_connect->receiveB += length;        /* Update bytes received */
+  cptr->cli_connect->receiveB += length;
+  if (cptr->cli_connect->receiveB > 1023)
   {
-    cptr->receiveK += (cptr->receiveB >> 10);
-    cptr->receiveB &= 0x03ff;   /* 2^10 = 1024, 3ff = 1023 */
+    cptr->cli_connect->receiveK += (cptr->cli_connect->receiveB >> 10);
+    cptr->cli_connect->receiveB &= 0x03ff;   /* 2^10 = 1024, 3ff = 1023 */
   }
   if (acpt != &me)
   {
-    acpt->receiveB += length;
-    if (acpt->receiveB > 1023)
+    acpt->cli_connect->receiveB += length;
+    if (acpt->cli_connect->receiveB > 1023)
     {
-      acpt->receiveK += (acpt->receiveB >> 10);
-      acpt->receiveB &= 0x03ff;
+      acpt->cli_connect->receiveK += (acpt->cli_connect->receiveB >> 10);
+      acpt->cli_connect->receiveB &= 0x03ff;
     }
   }
-  else if (me.receiveB > 1023)
+  else if (me.cli_connect->receiveB > 1023)
   {
-    me.receiveK += (me.receiveB >> 10);
-    me.receiveB &= 0x03ff;
+    me.cli_connect->receiveK += (me.cli_connect->receiveB >> 10);
+    me.cli_connect->receiveB &= 0x03ff;
   }
 }
 
@@ -86,7 +86,7 @@ int dopacket(aClient *cptr, char *buffer, int length)
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
   int microburst = 0;
   char buf_comp[BUFSIZE];
-  int compr = cptr->negociacion & ZLIB_ESNET_IN;
+  int compr = cptr->cli_connect->negociacion & ZLIB_ESNET_IN;
 
   inicializa_microburst();
 #endif
@@ -94,14 +94,14 @@ int dopacket(aClient *cptr, char *buffer, int length)
   actualiza_contadores(cptr, length);
 
   ch2 = buffer;
-  cptrbuf = cptr->buffer;
+  cptrbuf = cptr->cli_connect->buffer;
 
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
   if (compr)
   {
-    cptr->comp_in->avail_in = length;
-    cptr->comp_in_total_in += length;
-    cptr->comp_in->next_in = buffer;
+    cptr->cli_connect->comp_in->avail_in = length;
+    cptr->cli_connect->comp_in_total_in += length;
+    cptr->cli_connect->comp_in->next_in = buffer;
   }
 #endif
 
@@ -110,22 +110,22 @@ int dopacket(aClient *cptr, char *buffer, int length)
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
     if (compr)
     {
-      long length_out = cptr->comp_in->total_out;
+      long length_out = cptr->cli_connect->comp_in->total_out;
 
-      cptr->comp_in->avail_out = BUFSIZE;
-      ch2 = cptr->comp_in->next_out = buf_comp;
-      if (inflate(cptr->comp_in, Z_SYNC_FLUSH) != Z_OK)
+      cptr->cli_connect->comp_in->avail_out = BUFSIZE;
+      ch2 = cptr->cli_connect->comp_in->next_out = buf_comp;
+      if (inflate(cptr->cli_connect->comp_in, Z_SYNC_FLUSH) != Z_OK)
         return exit_client(cptr, cptr, &me, "Error compresion");
-      length = BUFSIZE - cptr->comp_in->avail_out;
+      length = BUFSIZE - cptr->cli_connect->comp_in->avail_out;
 
-      length_out -= cptr->comp_in->total_out;
+      length_out -= cptr->cli_connect->comp_in->total_out;
       if (length_out < 0)
         length_out = -length_out;
-      cptr->comp_in_total_out += length_out;
+      cptr->cli_connect->comp_in_total_out += length_out;
     }
 #endif
 
-    ch1 = cptrbuf + cptr->count;
+    ch1 = cptrbuf + cli_count(cptr);
 
     while (--length >= 0)
     {
@@ -144,10 +144,10 @@ int dopacket(aClient *cptr, char *buffer, int length)
         if (ch1 == cptrbuf)
           continue;             /* Skip extra LF/CR's */
         *ch1 = '\0';
-        me.receiveM += 1;       /* Update messages received */
-        cptr->receiveM += 1;
-        if (cptr->acpt != &me)
-          cptr->acpt->receiveM += 1;
+        me.cli_connect->receiveM += 1;       /* Update messages received */
+        cptr->cli_connect->receiveM += 1;
+        if (cptr->cli_connect->acpt != &me)
+          cptr->cli_connect->acpt->cli_connect->receiveM += 1;
 
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
         if (length && !microburst)
@@ -159,7 +159,7 @@ int dopacket(aClient *cptr, char *buffer, int length)
 
         if (IsServer(cptr))
         {
-          if (parse_server(cptr, cptr->buffer, ch1) == CPTR_KILLED)
+          if (parse_server(cptr, cptr->cli_connect->buffer, ch1) == CPTR_KILLED)
           {
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
             if (microburst)
@@ -168,7 +168,7 @@ int dopacket(aClient *cptr, char *buffer, int length)
             return CPTR_KILLED;
           }
         }
-        else if (parse_client(cptr, cptr->buffer, ch1) == CPTR_KILLED)
+        else if (parse_client(cptr, cptr->cli_connect->buffer, ch1) == CPTR_KILLED)
         {
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
           if (microburst)
@@ -190,24 +190,24 @@ int dopacket(aClient *cptr, char *buffer, int length)
         ch1 = cptrbuf;
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
 /* Se empieza a recibir comprimido aqui */
-        if ((!compr) && (cptr->negociacion & ZLIB_ESNET_IN))
+        if ((!compr) && (cptr->cli_connect->negociacion & ZLIB_ESNET_IN))
         {
           compr = !0;
           while ((--length >= 0) && ((*ch2 == '\n') || (*ch2 == '\r')))
             ch2++;
-          cptr->comp_in->avail_in = ++length;
-          cptr->comp_in->next_in = ch2;
+          cptr->cli_connect->comp_in->avail_in = ++length;
+          cptr->cli_connect->comp_in->next_in = ch2;
           length = 0;           /* Fuerza una nueva pasada */
         }
 #endif
       }
-      else if (ch1 < cptrbuf + (sizeof(cptr->buffer) - 1))
+      else if (ch1 < cptrbuf + (sizeof(cptr->cli_connect->buffer) - 1))
         ch1++;                  /* There is always room for the null */
     }
-    cptr->count = ch1 - cptr->buffer;
+    cli_count(cptr) = ch1 - cptr->cli_connect->buffer;
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
   }
-  while (compr && (cptr->comp_in->avail_in > 0)); /* Bucle de compresion */
+  while (compr && (cptr->cli_connect->comp_in->avail_in > 0)); /* Bucle de compresion */
   if (microburst)
     completa_microburst();
 #else
@@ -224,25 +224,25 @@ int client_dopacket(aClient *cptr, size_t length)
 {
   assert(0 != cptr);
 
-  me.receiveB += length;        /* Update bytes received */
-  cptr->receiveB += length;
+  me.cli_connect->receiveB += length;        /* Update bytes received */
+  cptr->cli_connect->receiveB += length;
 
-  if (cptr->receiveB > 1023)
+  if (cptr->cli_connect->receiveB > 1023)
   {
-    cptr->receiveK += (cptr->receiveB >> 10);
-    cptr->receiveB &= 0x03ff;   /* 2^10 = 1024, 3ff = 1023 */
+    cptr->cli_connect->receiveK += (cptr->cli_connect->receiveB >> 10);
+    cptr->cli_connect->receiveB &= 0x03ff;   /* 2^10 = 1024, 3ff = 1023 */
   }
-  if (me.receiveB > 1023)
+  if (me.cli_connect->receiveB > 1023)
   {
-    me.receiveK += (me.receiveB >> 10);
-    me.receiveB &= 0x03ff;
+    me.cli_connect->receiveK += (me.cli_connect->receiveB >> 10);
+    me.cli_connect->receiveB &= 0x03ff;
   }
-  cptr->count = 0;
+  cli_count(cptr) = 0;
 
-  ++me.receiveM;                /* Update messages received */
-  ++cptr->receiveM;
+  ++me.cli_connect->receiveM;                /* Update messages received */
+  ++cptr->cli_connect->receiveM;
 
-  if (CPTR_KILLED == parse_client(cptr, cptr->buffer, cptr->buffer + length))
+  if (CPTR_KILLED == parse_client(cptr, cptr->cli_connect->buffer, cptr->cli_connect->buffer + length))
     return CPTR_KILLED;
   else if (IsDead(cptr))
     return exit_client(cptr, cptr, &me, LastDeadComment(cptr));

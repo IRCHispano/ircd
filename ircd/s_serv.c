@@ -25,6 +25,7 @@
 #include "sys.h"
 #include <stdlib.h>
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "struct.h"
 #include "ircd.h"
@@ -62,7 +63,7 @@
 
 RCSTAG_CC("$Id$");
 
-static int exit_new_server(aClient *cptr, aClient *sptr,
+static int exit_new_server(struct Client *cptr, struct Client *sptr,
     char *host, time_t timestamp, char *fmt, ...)
     __attribute__ ((format(printf, 5, 6)));
 
@@ -72,7 +73,7 @@ unsigned int max_global_count;
 time_t max_client_count_TS = 0;
 time_t max_global_count_TS = 0;
 
-static int exit_new_server(aClient *cptr, aClient *sptr,
+static int exit_new_server(struct Client *cptr, struct Client *sptr,
     char *host, time_t timestamp, char *fmt, ...)
 {
   va_list vl;
@@ -90,13 +91,13 @@ static int exit_new_server(aClient *cptr, aClient *sptr,
   return 0;
 }
 
-static int a_kills_b_too(aClient *a, aClient *b)
+static int a_kills_b_too(struct Client *a, struct Client *b)
 {
-  for (; b != a && b != &me; b = b->serv->up);
+  for (; b != a && b != &me; b = b->cli_serv->up);
   return (a == b ? 1 : 0);
 }
 
-static void set_server_flags(aClient *cptr, const char *flags)
+static void set_server_flags(struct Client *cptr, const char *flags)
 {
     while (*flags) switch (*flags++) {
       case 'h': SetHub(cptr); break;
@@ -122,12 +123,12 @@ extern unsigned short server_port;
  *              numeric nick mask of this server.
  *    parv[7] = +h: Hub +s: Service +6: IPv6
  */
-int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_server(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Reg1 char *ch;
   Reg2 int i;
   char info[REALLEN + 1], *inpath, *host, *s;
-  aClient *acptr, *bcptr, *LHcptr = NULL;
+  struct Client *acptr, *bcptr, *LHcptr = NULL;
   aConfItem *aconf = NULL, *bconf = NULL, *cconf = NULL, *lhconf = NULL;
   int hop, ret, active_lh_line = 0;
   unsigned short int prot;
@@ -184,7 +185,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
   start_timestamp = atoi(parv[3]);
   timestamp = atoi(parv[4]);
   Debug((DEBUG_INFO, "Got SERVER %s with timestamp [%s] age " TIME_T_FMT " ("
-      TIME_T_FMT ")", host, parv[4], start_timestamp, me.serv->timestamp));
+      TIME_T_FMT ")", host, parv[4], start_timestamp, cli_serv(&me)->timestamp));
   if ((timestamp < 780000000 || (hop == 1 && start_timestamp < 780000000)))
   {
     return exit_client_msg(cptr, sptr, &me,
@@ -269,7 +270,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * See if the newly found server is behind a guaranteed
      * leaf (L-line). If so, close the link.
      */
-    if ((lhconf = find_conf_host(cptr->confs, host, CONF_LEAF)) &&
+    if ((lhconf = find_conf_host(cli_confs(cptr), host, CONF_LEAF)) &&
         (!lhconf->port || (hop > lhconf->port)))
     {
       /*
@@ -278,20 +279,20 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
        * both.
        */
       active_lh_line = 1;
-      if (timestamp <= cptr->serv->timestamp)
+      if (timestamp <= cptr->cli_serv->timestamp)
         LHcptr = NULL;          /* Kill incoming server */
       else
         LHcptr = cptr;          /* Squit ourselfs */
     }
-    else if (!(lhconf = find_conf_host(cptr->confs, host, CONF_HUB)) ||
+    else if (!(lhconf = find_conf_host(cli_confs(cptr), host, CONF_HUB)) ||
         (lhconf->port && (hop > lhconf->port)))
     {
-      aClient *ac3ptr;
+      struct Client *ac3ptr;
       active_lh_line = 2;
       /* Look for net junction causing this: */
       LHcptr = NULL;            /* incoming server */
       if (*parv[5] != 'J')
-        for (ac3ptr = sptr; ac3ptr != &me; ac3ptr = ac3ptr->serv->up)
+        for (ac3ptr = sptr; ac3ptr != &me; ac3ptr = ac3ptr->cli_serv->up)
           if (IsJunction(ac3ptr))
           {
             LHcptr = ac3ptr;
@@ -328,7 +329,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     SlabStringAllocDup(&(cptr->name), host, HOSTLEN);
 
     SlabStringAllocDup(&(cptr->info), info[0] ? info : me.name, REALLEN);
-    cptr->hopcount = hop;
+    cptr->cli_hopcount = hop;
 
     /* check connection rules */
     for (cconf = conf; cconf; cconf = cconf->next)
@@ -351,7 +352,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     update_load();
 
-    if (!(aconf = bconf = find_conf(cptr->confs, host, CONF_CONNECT_SERVER)))
+    if (!(aconf = bconf = find_conf(cli_confs(cptr), host, CONF_CONNECT_SERVER)))
     {
       ircstp->is_ref++;
       sendto_ops("Access denied. No C line for server %s", inpath);
@@ -359,7 +360,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
           "Access denied. No C line for server %s", inpath);
     }
 
-    encr = PunteroACadena(cptr->passwd);
+    encr = PunteroACadena(cptr->cli_connect->passwd);
 #if !defined(GODMODE)
     if (*aconf->passwd && !!strcmp(aconf->passwd, encr))
     {
@@ -369,10 +370,10 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
           "No Access (passwd mismatch) %s", inpath);
     }
 #endif /* not GODMODE */
-    if (cptr->passwd)
+    if (cptr->cli_connect->passwd)
     {
-      MyFree(cptr->passwd);
-      cptr->passwd = NULL;
+      MyFree(cptr->cli_connect->passwd);
+      cptr->cli_connect->passwd = NULL;
     }
 #if !defined(HUB)
     for (i = 0; i <= highest_fd; i++)
@@ -473,7 +474,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
      */
     else if (IsServer(acptr)
         && (ircd_strncmp(PunteroACadena(acptr->info), "JUPE", 4) == 0
-        || buscar_uline(cptr->confs, acptr->name)))
+        || buscar_uline(cli_confs(cptr), acptr->name)))
     {
       if (!IsServer(sptr))
         return exit_client(cptr, sptr, &me, PunteroACadena(acptr->info));
@@ -501,52 +502,52 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
      */
     if (1)
     {
-      aClient *c2ptr = NULL, *c3ptr = acptr;
-      aClient *ac2ptr, *ac3ptr;
+      struct Client *c2ptr = NULL, *c3ptr = acptr;
+      struct Client *ac2ptr, *ac3ptr;
 
       /* Search youngest link: */
-      for (ac3ptr = acptr; ac3ptr != &me; ac3ptr = ac3ptr->serv->up)
-        if (ac3ptr->serv->timestamp > c3ptr->serv->timestamp)
+      for (ac3ptr = acptr; ac3ptr != &me; ac3ptr = ac3ptr->cli_serv->up)
+        if (ac3ptr->cli_serv->timestamp > c3ptr->cli_serv->timestamp)
           c3ptr = ac3ptr;
       if (IsServer(sptr))
       {
-        for (ac3ptr = sptr; ac3ptr != &me; ac3ptr = ac3ptr->serv->up)
-          if (ac3ptr->serv->timestamp > c3ptr->serv->timestamp)
+        for (ac3ptr = sptr; ac3ptr != &me; ac3ptr = ac3ptr->cli_serv->up)
+          if (ac3ptr->cli_serv->timestamp > c3ptr->cli_serv->timestamp)
             c3ptr = ac3ptr;
       }
-      if (timestamp > c3ptr->serv->timestamp)
+      if (timestamp > c3ptr->cli_serv->timestamp)
       {
         c3ptr = NULL;
         c2ptr = acptr;          /* Make sure they differ */
       }
       /* Search second youngest link: */
-      for (ac2ptr = acptr; ac2ptr != &me; ac2ptr = ac2ptr->serv->up)
+      for (ac2ptr = acptr; ac2ptr != &me; ac2ptr = ac2ptr->cli_serv->up)
         if (ac2ptr != c3ptr &&
-            ac2ptr->serv->timestamp >
-            (c2ptr ? c2ptr->serv->timestamp : timestamp))
+            ac2ptr->cli_serv->timestamp >
+            (c2ptr ? c2ptr->cli_serv->timestamp : timestamp))
           c2ptr = ac2ptr;
       if (IsServer(sptr))
       {
-        for (ac2ptr = sptr; ac2ptr != &me; ac2ptr = ac2ptr->serv->up)
+        for (ac2ptr = sptr; ac2ptr != &me; ac2ptr = ac2ptr->cli_serv->up)
           if (ac2ptr != c3ptr &&
-              ac2ptr->serv->timestamp >
-              (c2ptr ? c2ptr->serv->timestamp : timestamp))
+              ac2ptr->cli_serv->timestamp >
+              (c2ptr ? c2ptr->cli_serv->timestamp : timestamp))
             c2ptr = ac2ptr;
       }
-      if (c3ptr && timestamp > (c2ptr ? c2ptr->serv->timestamp : timestamp))
+      if (c3ptr && timestamp > (c2ptr ? c2ptr->cli_serv->timestamp : timestamp))
         c2ptr = NULL;
       /* If timestamps are equal, decide which link to break
        *  by name.
        */
-      if ((c2ptr ? c2ptr->serv->timestamp : timestamp) ==
-          (c3ptr ? c3ptr->serv->timestamp : timestamp))
+      if ((c2ptr ? c2ptr->cli_serv->timestamp : timestamp) ==
+          (c3ptr ? c3ptr->cli_serv->timestamp : timestamp))
       {
         char *n2, *n2up;
         char *n3, *n3up;
         if (c2ptr)
         {
           n2 = c2ptr->name;
-          n2up = MyConnect(c2ptr) ? me.name : c2ptr->serv->up->name;
+          n2up = MyConnect(c2ptr) ? me.name : c2ptr->cli_serv->up->name;
         }
         else
         {
@@ -556,7 +557,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
         if (c3ptr)
         {
           n3 = c3ptr->name;
-          n3up = MyConnect(c3ptr) ? me.name : c3ptr->serv->up->name;
+          n3up = MyConnect(c3ptr) ? me.name : c3ptr->cli_serv->up->name;
         }
         else
         {
@@ -578,10 +579,10 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (!c2ptr)
         return exit_new_server(cptr, sptr, host, timestamp,
             "server %s already exists and is %ld seconds younger.",
-            host, (long)acptr->serv->timestamp - (long)timestamp);
-      else if (c2ptr->from == cptr || IsServer(sptr))
+            host, (long)acptr->cli_serv->timestamp - (long)timestamp);
+      else if (cli_from(c2ptr) == cptr || IsServer(sptr))
       {
-        aClient *killedptrfrom = c2ptr->from;
+        struct Client *killedptrfrom = cli_from(c2ptr);
         if (active_lh_line)
         {
           /*
@@ -594,7 +595,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
            * If breaking the loop here solves the L: or H:
            * line problem, we don't squit that.
            */
-          if (c2ptr->from == cptr || (LHcptr && a_kills_b_too(c2ptr, LHcptr)))
+          if (cli_from(c2ptr) == cptr || (LHcptr && a_kills_b_too(c2ptr, LHcptr)))
             active_lh_line = 0;
           else
           {
@@ -613,16 +614,16 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
          * a Ghost... (20 seconds is more then enough because all
          * SERVER messages are at the beginning of a net.burst). --Run
          */
-        if (now - cptr->serv->ghost < 20)
+        if (now - cptr->cli_serv->ghost < 20)
         {
-          killedptrfrom = acptr->from;
+          killedptrfrom = cli_from(acptr);
           if (exit_client(cptr, acptr, &me, "Ghost loop") == CPTR_KILLED)
             return CPTR_KILLED;
         }
         else if (exit_client_msg(cptr, c2ptr, &me,
             "Loop <-- %s (new link is %ld seconds younger)", host,
-            (c3ptr ? (long)c3ptr->serv->timestamp : timestamp) -
-            (long)c2ptr->serv->timestamp) == CPTR_KILLED)
+            (c3ptr ? (long)c3ptr->cli_serv->timestamp : timestamp) -
+            (long)c2ptr->cli_serv->timestamp) == CPTR_KILLED)
           return CPTR_KILLED;
         /*
          * Did we kill the incoming server off already ?
@@ -636,7 +637,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
         {
           if (LHcptr && a_kills_b_too(LHcptr, acptr))
             break;
-          if (acptr->from == cptr || (LHcptr && a_kills_b_too(acptr, LHcptr)))
+          if (cli_from(acptr) == cptr || (LHcptr && a_kills_b_too(acptr, LHcptr)))
             active_lh_line = 0;
           else
           {
@@ -703,15 +704,15 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     acptr = make_client(cptr, STAT_SERVER);
     make_server(acptr);
-    acptr->serv->prot = prot;
-    acptr->serv->timestamp = timestamp;
-    acptr->hopcount = hop;
+    acptr->cli_serv->prot = prot;
+    acptr->cli_serv->timestamp = timestamp;
+    acptr->cli_hopcount = hop;
 
     SlabStringAllocDup(&(acptr->name), host, HOSTLEN);
     SlabStringAllocDup(&(acptr->info), info, REALLEN);
 
-    acptr->serv->up = sptr;
-    acptr->serv->updown = add_dlink(&sptr->serv->down, acptr);
+    acptr->cli_serv->up = sptr;
+    acptr->cli_serv->updown = add_dlink(&sptr->cli_serv->down, acptr);
     /* Use cptr, because we do protocol 9 -> 10 translation
        for numeric nicks ! */
     SetServerYXX(cptr, acptr, parv[6]);
@@ -751,7 +752,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (!(bcptr = loc_clients[i]) || !IsServer(bcptr) ||
           bcptr == cptr || IsMe(bcptr))
         continue;
-      if (!(cconf = bcptr->serv->cline))
+      if (!(cconf = bcptr->cli_serv->cline))
       {
         sendto_ops("Lost C-line for %s on %s. Closing", PunteroACadena(cptr->name), host);
         return exit_client(cptr, cptr, &me, "Lost N line");
@@ -814,10 +815,10 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 
     make_server(cptr);
-    cptr->serv->timestamp = timestamp;
-    cptr->serv->prot = prot;
-    cptr->serv->ghost = ghost;
-    cptr->serv->esnet_db = 0;   /* De momento exigimos un BURST de la base de datos */
+    cptr->cli_serv->timestamp = timestamp;
+    cptr->cli_serv->prot = prot;
+    cptr->cli_serv->ghost = ghost;
+    cptr->cli_serv->esnet_db = 0;   /* De momento exigimos un BURST de la base de datos */
     SetServerYXX(cptr, cptr, parv[6]);
     
 #if !defined(NO_PROTOCOL9)
@@ -838,21 +839,21 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
 #if !defined(RELIABLE_CLOCK)
       sendto_ops("Debug: my start time: " TIME_T_FMT " ; others start time: "
-          TIME_T_FMT, me.serv->timestamp, start_timestamp);
+          TIME_T_FMT, cli_serv(&me)->timestamp, start_timestamp);
       sendto_ops("Debug: receive time: " TIME_T_FMT " ; received timestamp: "
           TIME_T_FMT " ; difference %ld",
           recv_time, timestamp, timestamp - recv_time);
 
-      if (start_timestamp < me.serv->timestamp)
+      if (start_timestamp < cli_serv(&me)->timestamp)
       {
         sendto_ops("got earlier start time: " TIME_T_FMT " < " TIME_T_FMT,
-            start_timestamp, me.serv->timestamp);
-        me.serv->timestamp = start_timestamp;
+            start_timestamp, cli_serv(&me)->timestamp);
+        cli_serv(&me)->timestamp = start_timestamp;
         TSoffset += timestamp - recv_time;
         sendto_ops("clock adjusted by adding %d", (int)(timestamp - recv_time));
       }
-      else if ((start_timestamp > me.serv->timestamp) && IsUnknown(cptr))
-        cptr->serv->timestamp = TStime();
+      else if ((start_timestamp > cli_serv(&me)->timestamp) && IsUnknown(cptr))
+        cptr->cli_serv->timestamp = TStime();
 
       else if (timestamp != recv_time)
         /* Equal start times, we have a collision.  Let the connected-to server
@@ -860,7 +861,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
            attempts. */
       {
         if (IsUnknown(cptr))
-          cptr->serv->timestamp = TStime();
+          cptr->cli_serv->timestamp = TStime();
         else if (IsHandshake(cptr))
         {
           sendto_ops("clock adjusted by adding %d",
@@ -869,10 +870,10 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
       }
 #else /* RELIABLE CLOCK IS TRUE, we _always_ use our own clock */
-      if (start_timestamp < me.serv->timestamp)
-        me.serv->timestamp = start_timestamp;
+      if (start_timestamp < cli_serv(&me)->timestamp)
+        cli_serv(&me)->timestamp = start_timestamp;
       if (IsUnknown(cptr))
-        cptr->serv->timestamp = TStime();
+        cptr->cli_serv->timestamp = TStime();
 #endif
     }
 
@@ -881,7 +882,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
   else
     ret = 0;
 #if defined(RELIABLE_CLOCK)
-  if (abs(cptr->serv->timestamp - recv_time) > 30)
+  if (abs(cptr->cli_serv->timestamp - recv_time) > 30)
   {
     sendto_ops("Connected to a net with a timestamp-clock"
         " difference of " STIME_T_FMT " seconds! Used SETTIME to correct"
@@ -906,13 +907,13 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * May only be called after a SERVER was received from cptr,
  * and thus make_server was called, and serv->prot set. --Run
  */
-int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t start_timestamp)
+int m_server_estab(struct Client *cptr, aConfItem *aconf, aConfItem *bconf, time_t start_timestamp)
 {
-  Reg3 aClient *acptr;
+  Reg3 struct Client *acptr;
   char *inpath, *host;
   int split, i;
 
-  split = (strCasediff(cptr->name, PunteroACadena(cptr->sockhost))
+  split = (strCasediff(cptr->name, PunteroACadena(cptr->cli_connect->sockhost))
       && ircd_strncmp(PunteroACadena(cptr->info), "JUPE", 4));
   inpath = cptr->name;
   host = cptr->name;
@@ -930,8 +931,8 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
     if (Protocol(cptr) > 9)
       sendto_one(cptr,
           "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s +%s :%s",
-          my_name_for_link(me.name, aconf), me.serv->timestamp,
-          cptr->serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
+          my_name_for_link(me.name, aconf), cli_serv(&me)->timestamp,
+          cptr->cli_serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
 #if defined(HUB)
           "h",
 #else        
@@ -941,8 +942,8 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
     else
       sendto_one(cptr,
           "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s 0 :%s",
-           my_name_for_link(me.name, aconf), me.serv->timestamp,
-           cptr->serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me), 
+           my_name_for_link(me.name, aconf), cli_serv(&me)->timestamp,
+           cptr->cli_serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me), 
            me.info ? me.info : "IRCers United");
 
     tx_num_serie_dbs(cptr);
@@ -971,12 +972,12 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
   
   UpdateCheckPing(cptr, get_client_ping(cptr));
   //nextping = now;
-  if (cptr->serv->user && cptr->serv->by &&
-      (acptr = findNUser(cptr->serv->by)) && acptr->user == cptr->serv->user)
+  if (cptr->cli_serv->user && cptr->cli_serv->by &&
+      (acptr = findNUser(cptr->cli_serv->by)) && acptr->cli_user == cptr->cli_serv->user)
   {
     if (MyUser(acptr) 
 #if !defined(NO_PROTOCOL9)
-        || Protocol(acptr->from) < 10
+        || Protocol(cli_from(acptr)) < 10
 #endif
     )
       sendto_one(acptr, ":%s NOTICE %s :Link with %s established.",
@@ -988,9 +989,9 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
   else
     acptr = NULL;
   sendto_lops_butone(acptr, "Link with %s established.", inpath);
-  cptr->serv->up = &me;
-  cptr->serv->updown = add_dlink(&me.serv->down, cptr);
-  cptr->serv->cline = aconf;
+  cptr->cli_serv->up = &me;
+  cptr->cli_serv->updown = add_dlink(&cli_serv(&me)->down, cptr);
+  cptr->cli_serv->cline = aconf;
   sendto_op_mask(SNO_NETWORK, "Net junction: %s %s", me.name, cptr->name);
   SetJunction(cptr);
 
@@ -1008,7 +1009,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
     if (!(acptr = loc_clients[i]) || !IsServer(acptr) ||
         acptr == cptr || IsMe(acptr))
       continue;
-    if ((aconf = acptr->serv->cline) &&
+    if ((aconf = acptr->cli_serv->cline) &&
         !match(my_name_for_link(me.name, aconf), PunteroACadena(cptr->name)))
       continue;
     if (split)
@@ -1016,7 +1017,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
       if (Protocol(acptr) > 9)
         sendto_one(acptr,
             "%s " TOK_SERVER " %s 2 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
-            NumServ(&me), cptr->name, cptr->serv->timestamp,
+            NumServ(&me), cptr->name, cptr->cli_serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr), NumServCap(cptr),
             IsHub(cptr) ? "h" : "", IsService(cptr) ? "s" : "", IsIPv6(cptr) ? "6" : "",
             PunteroACadena(cptr->info));
@@ -1024,7 +1025,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
       else
         sendto_one(acptr,
             ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s 0 :%s", me.name,
-            cptr->name, cptr->serv->timestamp,
+            cptr->name, cptr->cli_serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr), NumServCap(cptr),
             PunteroACadena(cptr->info));
 #endif
@@ -1033,14 +1034,14 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
     {
       if (Protocol(acptr) > 9)
         sendto_one(acptr, "%s " TOK_SERVER " %s 2 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
-            NumServ(&me), cptr->name, cptr->serv->timestamp,
+            NumServ(&me), cptr->name, cptr->cli_serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr),
             NumServCap(cptr), IsHub(cptr) ? "h" : "", IsService(cptr) ? "s" : "", 
             IsIPv6(cptr) ? "6" : "", PunteroACadena(cptr->info));
 #if !defined(NO_PROTOCOL9)
       else
         sendto_one(acptr, ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
-            me.name, cptr->name, cptr->serv->timestamp,
+            me.name, cptr->name, cptr->cli_serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr),
             NumServCap(cptr), PunteroACadena(cptr->info));
 #endif
@@ -1062,11 +1063,11 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
    * a race condition, not the normal way of operation...
    */
 
-  aconf = cptr->serv->cline;
-  for (acptr = &me; acptr; acptr = acptr->prev)
+  aconf = cptr->cli_serv->cline;
+  for (acptr = &me; acptr; acptr = acptr->cli_prev)
   {
-    /* acptr->from == acptr for acptr == cptr */
-    if (acptr->from == cptr)
+    /* cli_from(acptr) == acptr for acptr == cptr */
+    if (cli_from(acptr) == cptr)
       continue;
     if (IsServer(acptr))
     {
@@ -1075,23 +1076,23 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
       if (match(my_name_for_link(me.name, aconf), acptr->name) == 0)
         continue;
       split = (MyConnect(acptr)
-          && strCasediff(acptr->name, PunteroACadena(acptr->sockhost))
+          && strCasediff(acptr->name, PunteroACadena(acptr->cli_connect->sockhost))
           && ircd_strncmp(PunteroACadena(acptr->info), "JUPE", 4));
       if (split)
       {
         if (Protocol(cptr) > 9)
           sendto_one(cptr,
               "%s " TOK_SERVER " %s %d 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
-              NumServ(acptr->serv->up), acptr->name,
-              acptr->hopcount + 1, acptr->serv->timestamp,
+              NumServ(acptr->cli_serv->up), acptr->name,
+              acptr->cli_hopcount + 1, acptr->cli_serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
               IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", IsIPv6(acptr) ? "6" : "",
               PunteroACadena(acptr->info));
         else
           sendto_one(cptr,
               ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
-              acptr->serv->up->name, acptr->name,
-              acptr->hopcount + 1, acptr->serv->timestamp,
+              acptr->cli_serv->up->name, acptr->name,
+              acptr->cli_hopcount + 1, acptr->cli_serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
               PunteroACadena(acptr->info));
       }
@@ -1100,8 +1101,8 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
         if (Protocol(cptr) > 9)
           sendto_one(cptr,
               "%s " TOK_SERVER " %s %d 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
-              NumServ(acptr->serv->up), acptr->name,
-              acptr->hopcount + 1, acptr->serv->timestamp,
+              NumServ(acptr->cli_serv->up), acptr->name,
+              acptr->cli_hopcount + 1, acptr->cli_serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
               IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", IsIPv6(acptr) ? "6" : "",
               PunteroACadena(acptr->info));
@@ -1109,8 +1110,8 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
         else
           sendto_one(cptr,
               ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
-              acptr->serv->up->name, acptr->name,
-              acptr->hopcount + 1, acptr->serv->timestamp,
+              acptr->cli_serv->up->name, acptr->name,
+              acptr->cli_hopcount + 1, acptr->cli_serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
               PunteroACadena(acptr->info));
 #endif
@@ -1118,10 +1119,10 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
     }
   }
 
-  for (acptr = &me; acptr; acptr = acptr->prev)
+  for (acptr = &me; acptr; acptr = acptr->cli_prev)
   {
-    /* acptr->from == acptr for acptr == cptr */
-    if (acptr->from == cptr)
+    /* acptr->cli_from == acptr for acptr == cptr */
+    if (cli_from(acptr) == cptr)
       continue;
     if (IsUser(acptr))
     {
@@ -1137,18 +1138,18 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
         char xxx_buf[25];
 
         sendto_one(cptr, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s :%s",
-            acptr->user->server->name,
-            acptr->name, acptr->hopcount + 1, acptr->lastnick,
-            PunteroACadena(acptr->user->username),
-            PunteroACadena(acptr->user->host), acptr->user->server->name,
+            acptr->cli_user->server->name,
+            acptr->name, acptr->cli_hopcount + 1, acptr->cli_lastnick,
+            PunteroACadena(acptr->cli_user->username),
+            PunteroACadena(acptr->cli_user->host), acptr->cli_user->server->name,
             iptobase64(xxx_buf, &acptr->ip, sizeof(xxx_buf), IsIPv6(cptr)), 
             PunteroACadena(acptr->info));
 #else
         sendto_one(cptr, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
-            acptr->user->server->name,
-            acptr->name, acptr->hopcount + 1, acptr->lastnick,
-            PunteroACadena(acptr->user->username),
-            PunteroACadena(acptr->user->host), acptr->user->server->name,
+            acptr->cli_user->server->name,
+            acptr->name, acptr->cli_hopcount + 1, acptr->cli_lastnick,
+            PunteroACadena(acptr->cli_user->username),
+            PunteroACadena(acptr->cli_user->host), acptr->cli_user->server->name,
             PunteroACadena(acptr->info));
 #endif
         send_umode(cptr, acptr, 0, SEND_UMODES, 0, SEND_HMODES);
@@ -1162,14 +1163,14 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
         sendto_one(cptr, *s ?
             "%s " TOK_NICK " %s %d " TIME_T_FMT " %s %s +%s %s %s%s :%s" :
             "%s " TOK_NICK " %s %d " TIME_T_FMT " %s %s %s%s %s%s :%s",
-            NumServ(acptr->user->server),
-            acptr->name, acptr->hopcount + 1, acptr->lastnick,
-            PunteroACadena(acptr->user->username),
-            PunteroACadena(acptr->user->host), s, iptobase64(xxx_buf,
+            NumServ(acptr->cli_user->server),
+            acptr->name, acptr->cli_hopcount + 1, acptr->cli_lastnick,
+            PunteroACadena(acptr->cli_user->username),
+            PunteroACadena(acptr->cli_user->host), s, iptobase64(xxx_buf,
 #ifdef HISPANO_WEBCHAT
-            MyUser(acptr) ? &acptr->ip_real : &acptr->ip,
+            MyUser(acptr) ? &acptr->cli_ip_real : &acptr->cli_ip,
 #else
-            &acptr->ip,
+            &acptr->cli_ip,
 #endif
             sizeof(xxx_buf), IsIPv6(cptr)), NumNick(acptr), PunteroACadena(acptr->info));
       }
@@ -1228,7 +1229,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
  * parv[0] = sender prefix
  * parv[parc-1] = text
  */
-int m_error(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_error(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Reg1 char *para;
 
@@ -1251,10 +1252,10 @@ int m_error(aClient *cptr, aClient *sptr, int parc, char *parv[])
   else
     sendto_ops("ERROR :from %s via %s -- %s", sptr->name, cptr->name, para);
 
-  if (sptr->serv)
+  if (sptr->cli_serv)
   {
-    MyFree(sptr->serv->last_error_msg);
-    DupString(sptr->serv->last_error_msg, para);
+    MyFree(sptr->cli_serv->last_error_msg);
+    DupString(sptr->cli_serv->last_error_msg, para);
   }
 
   return 0;
@@ -1269,7 +1270,7 @@ int m_error(aClient *cptr, aClient *sptr, int parc, char *parv[])
  *
  * parv[0] - sender prefix
  */
-int m_end_of_burst(aClient *cptr, aClient *sptr, int UNUSED(parc),
+int m_end_of_burst(struct Client *cptr, struct Client *sptr, int UNUSED(parc),
     char **UNUSED(parv))
 {
   if (!IsServer(sptr))
@@ -1297,7 +1298,7 @@ int m_end_of_burst(aClient *cptr, aClient *sptr, int UNUSED(parc),
  *
  * parv[0] - sender prefix
  */
-int m_end_of_burst_ack(aClient *cptr, aClient *sptr, int UNUSED(parc),
+int m_end_of_burst_ack(struct Client *cptr, struct Client *sptr, int UNUSED(parc),
     char **UNUSED(parv))
 {
   if (!IsServer(sptr))
@@ -1323,12 +1324,12 @@ int m_end_of_burst_ack(aClient *cptr, aClient *sptr, int UNUSED(parc),
  * parv[0] - sender prefix
  * parv[parc-1] - message text
  */
-int m_desynch(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_desynch(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   if (IsServer(sptr) && parc >= 2)
   {
     int i;
-    aClient *acptr;
+    struct Client *acptr;
     /* Send message to local +g clients as if it were a wallops */
     sprintf_irc(sendbuf, ":%s WALLOPS :%s", parv[0], parv[parc - 1]);
     for (i = 0; i <= highest_fd; i++)

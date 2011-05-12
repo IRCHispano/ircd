@@ -24,7 +24,7 @@ noinst_PROGRAMS = table_gen
 #bin_PROGRAMS = convert-conf umkpasswd ircd
 bin_PROGRAMS = ircd
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I../libevent/ -DDPATH="\"$(sysconfdir)\"" \
+AM_CPPFLAGS = -I$(top_srcdir)/include -I../libs/libevent/ -I../libs/zlib -DDPATH="\"$(sysconfdir)\"" \
 	-DSPATH="\"$(bindir)/ircd\"" -DCPATH="\"ircd.conf\"" \
 	-DLPATH="\"ircd.log\""
 

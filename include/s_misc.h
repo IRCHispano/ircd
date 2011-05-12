@@ -53,7 +53,7 @@ extern int check_registered_user(aClient *sptr);
 extern int exit_client(aClient *cptr, aClient *bcptr,
     aClient *sptr, char *comment);
 extern char *myctime(time_t value);
-extern char *get_client_name(aClient *sptr, int showip);
+//extern char *get_client_name(aClient *sptr, int showip);
 #if defined(BDD_VIP)
 extern char *get_visible_name(aClient *acptr, aClient *sptr);
 #endif

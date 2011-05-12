@@ -22,6 +22,7 @@
 #include <sys/types.h>          /* size_t */
 #define INCLUDED_sys_types_h
 #endif
+struct Client;
 
 /*
  * These two globals should be considered read only

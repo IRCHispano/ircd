@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "sys.h"
+#include "client.h"
 #if HAVE_SYS_FILE_H
 #include <sys/file.h>
 #endif
@@ -371,15 +372,15 @@ static void open_debugfile(void)
 
   if (debuglevel >= 0)
   {
-    cptr = make_client(NULL, STAT_LOG);
+    cptr = make_client(NULL, 0);
     cptr->fd = 2;
-    cptr->port = debuglevel;
+    cptr->cli_connect->port = debuglevel;
     cptr->flags = 0;
-    cptr->acpt = cptr;
+    cptr->cli_connect->acpt = cptr;
     loc_clients[2] = cptr;
 
     if (NULL != me.name)
-      SlabStringAllocDup(&(cptr->sockhost), me.name, HOSTLEN);
+      SlabStringAllocDup(&(cptr->cli_connect->sockhost), me.name, HOSTLEN);
 
     printf("isatty = %d ttyname = %#x\n", isatty(2), (unsigned int)ttyname(2));
     if (!(bootopt & BOOT_TTY))  /* leave debugging output on fd 2 */
@@ -403,7 +404,7 @@ static void open_debugfile(void)
       SlabStringAllocDup(&(cptr->name), "FD2-Pipe", 0);
     }
     Debug((DEBUG_FATAL, "Debug: File <%s> Level: %u at %s",
-        cptr->name, cptr->port, myctime(now)));
+        cptr->name, cptr->cli_connect->port, myctime(now)));
   }
   else
     loc_clients[2] = NULL;
@@ -714,6 +715,7 @@ int main(int argc, char *argv[])
 #if defined(DEBUGMODE)
   initlists();
 #endif
+  init_list(MAXCLIENTS+1);
   initclass();
   initwhowas();
   initmsgtree();
@@ -721,7 +723,7 @@ int main(int argc, char *argv[])
   open_debugfile();
   if (portnum == 0)
     portnum = PORTNUM;
-  me.port = portnum;
+  me.cli_connect->port = portnum;
   init_sys();
   setup_signals();
   
@@ -769,23 +771,25 @@ int main(int argc, char *argv[])
   get_my_name(&me);
 
   now = time(NULL);
-  me.hopcount = 0;
-  me.authfd = -1;
-  me.confs = NULL;
-  me.next = NULL;
-  me.user = NULL;
-  me.from = &me;
+  me.cli_hopcount = 0;
+  me.cli_connect->authfd = -1;
+  cli_confs(&me) = NULL;
+  me.cli_next = NULL;
+  me.cli_user = NULL;
   SetMe(&me);
+  cli_magic(&me) = CLIENT_MAGIC;
+  cli_from(&me) = &me;
   make_server(&me);
-  /* Abuse own link timestamp as start timestamp: */
-  me.serv->timestamp = TStime();
-  me.serv->prot = atoi(MAJOR_PROTOCOL);
-  me.serv->up = &me;
-  me.serv->down = NULL;
+
+  cli_serv(&me)->timestamp = TStime();  /* Abuse own link timestamp as start TS */
+  cli_serv(&me)->prot      = atoi(MAJOR_PROTOCOL);
+  cli_serv(&me)->up        = &me;
+  cli_serv(&me)->down      = NULL;
+//  cli_handler(&me)         = SERVER_HANDLER;
 
   SetYXXCapacity(&me, MAXCLIENTS);
 
-  me.lasttime = me.since = me.firsttime = now;
+  cli_lasttime(&me) = cli_since(&me) = cli_firsttime(&me) = now;
   hAddClient(&me);
 
 /* Ocultacion */

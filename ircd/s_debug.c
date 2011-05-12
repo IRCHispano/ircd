@@ -41,6 +41,7 @@
 #endif
 #include <stdarg.h>
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "struct.h"
 #include "numeric.h"
@@ -359,8 +360,8 @@ void vdebug(int level, const char *form, va_list vl)
     vsprintf(debugbuf, form, vl);
     if (loc_clients[2])
     {
-      loc_clients[2]->sendM++;
-      loc_clients[2]->sendB += strlen(debugbuf);
+      loc_clients[2]->cli_connect->sendM++;
+      loc_clients[2]->cli_connect->sendB += strlen(debugbuf);
     }
     fprintf(stderr, "%s", debugbuf);
     fputc('\n', stderr);
@@ -383,7 +384,7 @@ void debug(int level, const char *form, ...)
  * different field names for "struct rusage".
  * -avalon
  */
-void send_usage(aClient *cptr, char *nick)
+void send_usage(struct Client *cptr, char *nick)
 {
 
 #if HAVE_GETRUSAGE
@@ -406,7 +407,7 @@ void send_usage(aClient *cptr, char *nick)
   {
     if (MyUser(cptr) 
 #if !defined(NO_PROTOCOL9)
-        || Protocol(cptr->from) < 10
+        || Protocol(cli_from(cptr)) < 10
 #endif
     )
       sendto_one(cptr, ":%s NOTICE %s :Getruseage error: %s.",
@@ -417,7 +418,7 @@ void send_usage(aClient *cptr, char *nick)
     return;
   }
   secs = rus.ru_utime.tv_sec + rus.ru_stime.tv_sec;
-  rup = now - me.since;
+  rup = now - cli_since(&me);
   if (secs == 0)
     secs = 1;
 
@@ -492,9 +493,9 @@ void send_usage(aClient *cptr, char *nick)
 
 #endif /* DEBUGMODE */
 
-void count_memory(aClient *cptr, char *nick)
+void count_memory(struct Client *cptr, char *nick)
 {
-  Reg1 aClient *acptr;
+  Reg1 struct Client *acptr;
   Reg2 Link *link;
   Reg3 aChannel *chptr;
   Reg4 aConfItem *aconf;
@@ -534,37 +535,37 @@ void count_memory(aClient *cptr, char *nick)
   wwm += sizeof(aWhowas) * NICKNAMEHISTORYLENGTH;
   wwm += sizeof(aWhowas *) * WW_MAX;
 
-  for (acptr = client; acptr; acptr = acptr->next)
+  for (acptr = client; acptr; acptr = acptr->cli_next)
   {
     if (IsPing(acptr))
       continue;
     if (MyConnect(acptr))
     {
       lc++;
-      for (link = acptr->confs; link; link = link->next)
+      for (link = cli_confs(acptr); link; link = link->next)
         lcc++;
     }
     else
       rc++;
-    if (acptr->user)
+    if (cli_user(acptr))
     {
       us++;
       if (MyConnect(acptr))
       {
-        for (link = acptr->invited; link; link = link->next)
+        for (link = acptr->cli_connect->invited; link; link = link->next)
           usi++;
       }
-      for (link = acptr->user->channel; link; link = link->next)
+      for (link = acptr->cli_user->channel; link; link = link->next)
         usc++;
-      if (acptr->user->away)
+      if (acptr->cli_user->away)
       {
         aw++;
-        awm += (strlen(acptr->user->away) + 1);
+        awm += (strlen(acptr->cli_user->away) + 1);
       }
     }
   }
-  lcm = lc * CLIENT_LOCAL_SIZE;
-  rcm = rc * CLIENT_REMOTE_SIZE;
+//  lcm = lc * CLIENT_LOCAL_SIZE;
+//  rcm = rc * CLIENT_REMOTE_SIZE;
 
   for (chptr = channel; chptr; chptr = chptr->nextch)
   {
@@ -695,7 +696,7 @@ void RollBackMsgLog(void)
  * Permanently stores a log entry into the recent log memory area
  * Store_Buffer MUST have been called before calling Log_Message
  */
-void Log_Message(aClient *sptr, int msgclass)
+void Log_Message(struct Client *sptr, int msgclass)
 {
   int n = last_log_entry;
 
@@ -757,14 +758,14 @@ void Log_Message(aClient *sptr, int msgclass)
  * has rejected the message and therefore calls Log_Message
  * as if the message class was 0 and the sptr null
  */
-void Store_Buffer(char *buf, aClient *cptr)
+void Store_Buffer(char *buf, struct Client *cptr)
 {
   int n;
 
   /* Check if we have an entry pending, if so
    * complete it's processing */
   if (entry_stored_forlog)
-    Log_Message((aClient *)NULL, 0);
+    Log_Message((struct Client *)NULL, 0);
 
   /* Update the "half used entry" flag */
   entry_stored_forlog = 1;

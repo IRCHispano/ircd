@@ -26,6 +26,7 @@
 #include "s_serv.h"
 #include "s_bsd.h"
 #include "send.h"
+#include "client.h"
 #include "support.h"
 #include "parse.h"
 #include "numeric.h"
@@ -50,10 +51,10 @@ static char buffer[1024];
  * the savy approach is NEVER generate an error in response to an... error :)
  */
 
-int do_numeric(int numeric, int nnn, aClient *cptr, aClient *sptr,
+int do_numeric(int numeric, int nnn, struct Client *cptr, struct Client *sptr,
     int parc, char *parv[])
 {
-  aClient *acptr = NULL;
+  struct Client *acptr = NULL;
   aChannel *achptr = NULL;
   char *p, *b;
   int i;
@@ -73,7 +74,7 @@ int do_numeric(int numeric, int nnn, aClient *cptr, aClient *sptr,
   else
     acptr = (nnn) ? (findNUser(parv[1])) : (FindUser(parv[1]));
 
-  if (((!acptr) || (acptr->from == cptr)) && !achptr)
+  if (((!acptr) || (cli_from(acptr) == cptr)) && !achptr)
     return 0;
 
   /* Remap low number numerics, not that I understand WHY.. --Nemesi  */

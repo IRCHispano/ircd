@@ -34,6 +34,7 @@
 #if defined(USE_SYSLOG)
 #include <syslog.h>
 #endif
+#include "client.h"
 #include "h.h"
 #include "s_debug.h"
 #include "struct.h"
@@ -145,23 +146,23 @@ static void move_marker(void)
 {
   if (!++who_marker)
   {
-    aClient *cptr = client;
+    struct Client *cptr = client;
     while (cptr)
     {
-      cptr->marker = 0;
-      cptr = cptr->next;
+      cli_marker(cptr) = 0;
+      cptr = cptr->cli_next;
     }
     who_marker++;
   }
 }
 
 #define CheckMark(x, y) ((x == y) ? 0 : (x = y))
-#define Process(cptr) CheckMark(cptr->marker, who_marker)
+#define Process(cptr) CheckMark(cli_marker(cptr), who_marker)
 
 /*
  * The function that actually prints out the WHO reply for a client found
  */
-static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
+static void do_who(struct Client *sptr, struct Client *acptr, aChannel *repchan,
     int fields, char *qrt)
 {
   Reg1 char *p1;
@@ -186,7 +187,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
       )
   {
     Reg3 Link *lp;
-    for (lp = acptr->user->channel; lp && !chptr; lp = lp->next)
+    for (lp = acptr->cli_user->channel; lp && !chptr; lp = lp->next)
       if (PubChannel(lp->value.chptr) &&
           (acptr == sptr || !is_zombie(acptr, chptr)))
         chptr = lp->value.chptr;
@@ -216,7 +217,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
 
   if (!fields || (fields & WHO_FIELD_UID))
   {
-    Reg3 char *p2 = PunteroACadena(acptr->user->username);
+    Reg3 char *p2 = PunteroACadena(acptr->cli_user->username);
     *(p1++) = ' ';
     while ((*p2) && (*(p1++) = *(p2++)));
   }
@@ -246,7 +247,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
 #if defined(BDD_VIP)
     Reg3 char *p2 = get_visiblehost(acptr, sptr);
 #else
-    Reg3 char *p2 = acptr->user->host;
+    Reg3 char *p2 = acptr->cli_user->host;
 #endif
     *(p1++) = ' ';
     while ((*p2) && (*(p1++) = *(p2++)));
@@ -255,7 +256,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
   if (!fields || (fields & WHO_FIELD_SER))
   {
     Reg3 char *p2 = (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr))) ? 
-                     his.name : acptr->user->server->name;
+                     his.name : acptr->cli_user->server->name;
     *(p1++) = ' ';
     while ((*p2) && (*(p1++) = *(p2++)));
   }
@@ -270,7 +271,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
   if (!fields || (fields & WHO_FIELD_FLA))
   {
     *(p1++) = ' ';
-    if (acptr->user->away)
+    if (acptr->cli_user->away)
       *(p1++) = 'G';
     else
       *(p1++) = 'H';
@@ -329,7 +330,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
     if (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr)))
       *p1++ = (sptr == acptr) ? '0' : '3';
     else
-      p1 = sprintf_irc(p1, "%d", acptr->hopcount);
+      p1 = sprintf_irc(p1, "%d", acptr->cli_hopcount);
   }
 
   if (!fields || (fields & WHO_FIELD_REN))
@@ -363,13 +364,13 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
  *            to find me, parv[3] _can_ contain spaces !.
  */
 
-int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+int m_who(struct Client *UNUSED(cptr), struct Client *sptr, int parc, char *parv[])
 {
   Reg1 char *mask;              /* The mask we are looking for              */
   Reg2 char ch;                 /* Scratch char                    */
   Reg3 Link *lp, *lp2;
   Reg4 aChannel *chptr;         /* Channel to show                          */
-  Reg5 aClient *acptr;          /* Client to show                           */
+  Reg5 struct Client *acptr;          /* Client to show                           */
 
   int bitsel;                   /* Mask of selectors to apply               */
   int matchsel;                 /* Wich fields the match should apply on    */
@@ -420,8 +421,8 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
           if (IsAnOper(sptr))
 #endif
             write_log(WPATH, "# " TIME_T_FMT " %s!%s@%s WHO %s %s\n",
-                now, sptr->name, PunteroACadena(sptr->user->username),
-                PunteroACadena(sptr->user->host),
+                now, sptr->name, PunteroACadena(sptr->cli_user->username),
+                PunteroACadena(sptr->cli_user->host),
                 (BadPtr(parv[3]) ? parv[1] : parv[3]), parv[2]);
 #endif /* WPATH */
           continue;
@@ -603,7 +604,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 
     /* First of all loop through the clients in common channels */
     if ((!(counter < 1)) && matchsel)
-      for (lp = sptr->user->channel; lp; lp = lp->next)
+      for (lp = sptr->cli_user->channel; lp; lp = lp->next)
         for (chptr = lp->value.chptr, lp2 = chptr->members; lp2;
             lp2 = lp2->next)
         {
@@ -622,9 +623,9 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               ((!(matchsel & WHO_FIELD_NIC))
               || matchexec(acptr->name, mymask, minlen))
               && ((!(matchsel & WHO_FIELD_UID))
-              || matchexec(PunteroACadena(acptr->user->username), mymask,
+              || matchexec(PunteroACadena(acptr->cli_user->username), mymask,
               minlen)) && ((!(matchsel & WHO_FIELD_SER))
-              || (!(acptr->user->server->flags & FLAGS_MAP)))
+              || (!(acptr->cli_user->server->flags & FLAGS_MAP)))
               && ((!(matchsel & WHO_FIELD_HOS))
               || (matchexec(get_visiblehost(acptr, sptr), mymask, minlen)
               && matchexec(get_visiblehost(acptr, NULL), mymask, minlen)))
@@ -640,7 +641,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               && matchexec(MyUser(acptr) ? ircd_ntoa(&acptr->ip_real) : ircd_ntoa(&acptr->ip), mymask, minlen)))))
 */
 #else
-              || !ipmask_check(&acptr->ip, &imask, ibits))
+              || !ipmask_check(&acptr->cli_ip, &imask, ibits))
 /*
               || ((((acptr->ip.s_addr & imask.mask.s_addr) !=
               imask.bits.s_addr)) || (imask.fall
@@ -654,11 +655,11 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               ((!(matchsel & WHO_FIELD_NIC))
               || matchexec(acptr->name, mymask, minlen))
               && ((!(matchsel & WHO_FIELD_UID))
-              || matchexec(PunteroACadena(acptr->user->username), mymask,
+              || matchexec(PunteroACadena(acptr->cli_user->username), mymask,
               minlen)) && ((!(matchsel & WHO_FIELD_SER))
-              || (!(acptr->user->server->flags & FLAGS_MAP)))
+              || (!(acptr->cli_user->server->flags & FLAGS_MAP)))
               && ((!(matchsel & WHO_FIELD_HOS))
-              || matchexec(acptr->user->host, mymask, minlen))
+              || matchexec(acptr->cli_user->host, mymask, minlen))
               && ((!(matchsel & WHO_FIELD_REN))
               || matchexec(PunteroACadena(acptr->info), mymask, minlen))
               && ((!(matchsel & WHO_FIELD_NIP))
@@ -678,7 +679,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
     /* Loop through all clients :-\, if we still have something to match to 
        and we can show more clients */
     if ((!(counter < 1)) && matchsel)
-      for (acptr = me.prev; acptr; acptr = acptr->prev)
+      for (acptr = cli_prev(&me); acptr; acptr = acptr->cli_prev)
       {
         if (!(IsUser(acptr) && Process(acptr)))
           continue;
@@ -695,9 +696,9 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             ((!(matchsel & WHO_FIELD_NIC))
             || matchexec(acptr->name, mymask, minlen))
             && ((!(matchsel & WHO_FIELD_UID))
-            || matchexec(PunteroACadena(acptr->user->username), mymask, minlen))
+            || matchexec(PunteroACadena(acptr->cli_user->username), mymask, minlen))
             && ((!(matchsel & WHO_FIELD_SER))
-            || (!(acptr->user->server->flags & FLAGS_MAP)))
+            || (!(acptr->cli_user->server->flags & FLAGS_MAP)))
             && ((!(matchsel & WHO_FIELD_HOS))
             || (matchexec(get_visiblehost(acptr, sptr), mymask, minlen)
             && matchexec(get_visiblehost(acptr, NULL), mymask, minlen)))
@@ -713,7 +714,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             && matchexec(MyUser(acptr) ? ircd_ntoa(&acptr->ip_real) : ircd_ntoa(&acptr->ip), mymask, minlen)))))
 */
 #else
-            || !ipmask_check(&acptr->ip, &imask, ibits))
+            || !ipmask_check(&acptr->cli_ip, &imask, ibits))
 /*
             || ((((acptr->ip.s_addr & imask.mask.s_addr) != imask.bits.s_addr))
             || (imask.fall
@@ -727,11 +728,11 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             ((!(matchsel & WHO_FIELD_NIC))
             || matchexec(acptr->name, mymask, minlen))
             && ((!(matchsel & WHO_FIELD_UID))
-            || matchexec(PunteroACadena(acptr->user->username), mymask, minlen))
+            || matchexec(PunteroACadena(acptr->cli_user->username), mymask, minlen))
             && ((!(matchsel & WHO_FIELD_SER))
-            || (!(acptr->user->server->flags & FLAGS_MAP)))
+            || (!(acptr->cli_user->server->flags & FLAGS_MAP)))
             && ((!(matchsel & WHO_FIELD_HOS))
-            || matchexec(acptr->user->host, mymask, minlen))
+            || matchexec(acptr->cli_user->host, mymask, minlen))
             && ((!(matchsel & WHO_FIELD_REN))
             || matchexec(PunteroACadena(acptr->info), mymask, minlen))
             && ((!(matchsel & WHO_FIELD_NIP))
@@ -775,11 +776,11 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
  * parv[1] = target server
  * parv[2] = nickname masklist
  */
-int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_whois(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   Reg2 Link *lp;
   Reg3 anUser *user;
-  aClient *acptr, *a2cptr;
+  struct Client *acptr, *a2cptr;
   aChannel *chptr;
   char *nick, *tmp, *name;
   char *p = NULL;
@@ -795,11 +796,11 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (parc > 2)
   {
     int hunt_result;
-    aClient *acptr;
+    struct Client *acptr;
     /* For convenience: Accept a nickname as first parameter, by replacing
        it with the correct servername - as is needed by hunt_server() */
     if (MyUser(sptr) && (acptr = FindUser(parv[1])))
-      parv[1] = acptr->user->server->name;
+      parv[1] = acptr->cli_user->server->name;
     hunt_result = hunt_server(0, cptr, sptr, MSG_WHOIS, TOK_WHOIS, "%s :%s", 1, parc, parv);
     if (hunt_result == HUNTED_NOSUCH)
       sendto_one(sptr, err_str(ERR_NOSUCHSERVER), me.name, parv[0], parv[2]);
@@ -825,7 +826,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (!MyConnect(sptr))
         continue;
       for (acptr = client; (acptr = next_client(acptr, nick));
-          acptr = acptr->next)
+          acptr = acptr->cli_next)
       {
         int canales_ocultos;
         int ocultacion_canales;
@@ -847,7 +848,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
          * - only send replies about common or public channels
          *   the target user(s) are on;
          */
-        user = acptr->user;
+        user = acptr->cli_user;
         name = (!acptr->name) ? "?" : acptr->name;
 
         invis = acptr != sptr && IsInvisible(acptr);
@@ -1016,7 +1017,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
          if (MyConnect(acptr) && (!ocultar_servidores ||
                   (sptr == acptr || IsAnOper(sptr) || IsHelpOp(sptr) || parc >= 3)))
             sendto_one(sptr, rpl_str(RPL_WHOISIDLE), me.name,
-                parv[0], name, now - user->last, acptr->firsttime);
+                parv[0], name, now - user->last, acptr->cli_firsttime);
         }
         if (found == 2 || total++ >= MAX_WHOIS_LINES)
           break;
@@ -1031,7 +1032,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
         struct db_reg *reg = db_buscar_registro(BDD_IPVIRTUAL2DB, nick);
 #endif      
         found = 2;              /* Make sure we exit the loop after passing it once */
-        user = acptr->user;
+        user = acptr->cli_user;
         name = (!acptr->name) ? "?" : acptr->name;
         a2cptr = user->server;
         

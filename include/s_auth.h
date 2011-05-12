@@ -5,8 +5,8 @@
  * Proto types
  */
 
-extern void start_auth(aClient *cptr);
-extern void send_authports(aClient *cptr);
-extern void read_authports(aClient *cptr);
+extern void start_auth(struct Client *cptr);
+extern void send_authports(struct Client *cptr);
+extern void read_authports(struct Client *cptr);
 
 #endif /* S_AUTH_H */

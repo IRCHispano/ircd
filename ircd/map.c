@@ -19,6 +19,7 @@
 
 #include "sys.h"
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "struct.h"
 #include "numeric.h"
@@ -41,7 +42,7 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask,
     int prompt_length)
 {
   static char prompt[64];
-  Dlink *lp;
+  struct DLink *lp;
   char *p = &prompt[prompt_length];
   int cnt = 0;
   char buf[16];
@@ -60,19 +61,19 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask,
     if (!clientes)
       clientes = 1;             /* Evitamos division por cero */
 
-    if (server->serv->lag > 10000)
+    if (server->cli_serv->lag > 10000)
       lag[0] = 0;
-    else if (server->serv->lag < 0)
+    else if (server->cli_serv->lag < 0)
       strcpy(lag, "(0s)");
     else
-      sprintf(lag, "(%is)", server->serv->lag);
+      sprintf(lag, "(%is)", server->cli_serv->lag);
     sprintf(buf, "%s:%d", NumServ(server), base64toint(NumServ(server)));
     clientes_float =
         (int)((1000.0 * (server ==
-        &me ? nrof.local_clients : server->serv->clients)) / clientes + 0.5);
+        &me ? nrof.local_clients : server->cli_serv->clients)) / clientes + 0.5);
     sendto_one(cptr, rpl_str(RPL_MAP), me.name, cptr->name, prompt,
         ((IsBurstOrBurstAck(server)) ? "*" : ""), server->name, buf, lag,
-        (server == &me) ? nrof.local_clients : server->serv->clients,
+        (server == &me) ? nrof.local_clients : server->cli_serv->clients,
         clientes_float / 10, clientes_float % 10);
   }
   if (prompt_length > 0)
@@ -84,7 +85,7 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask,
   if (prompt_length > 60)
     return;
   strcpy(p, "|-");
-  for (lp = server->serv->down; lp; lp = lp->next)
+  for (lp = server->cli_serv->down; lp; lp = lp->next)
     if (match(mask, lp->value.cptr->name))
       lp->value.cptr->flags &= ~FLAGS_MAP;
     else
@@ -92,7 +93,7 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask,
       lp->value.cptr->flags |= FLAGS_MAP;
       cnt++;
     }
-  for (lp = server->serv->down; lp; lp = lp->next)
+  for (lp = server->cli_serv->down; lp; lp = lp->next)
   {
     if ((lp->value.cptr->flags & FLAGS_MAP) == 0)
       continue;
@@ -110,7 +111,7 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask,
  * parv[0] = sender prefix
  * parv[1] = server mask
  */
-int m_map(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+int m_map(struct Client *UNUSED(cptr), struct Client *sptr, int parc, char *parv[])
 {
 
   if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))

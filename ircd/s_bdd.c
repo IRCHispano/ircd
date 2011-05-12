@@ -38,6 +38,7 @@
 #include <syslog.h>
 #include "h.h"
 #include "s_debug.h"
+#include "client.h"
 #include "struct.h"
 #include "ircd.h"
 #include "s_serv.h"
@@ -407,10 +408,10 @@ static struct db_reg *db_busca_db_reg(unsigned char tabla, char *clave)
  */
 static inline void elimina_cache_ips_virtuales(void)
 {
-  aClient *acptr;
+  struct Client *acptr;
 
   /* A limpiar la cache */
-  for (acptr = client; acptr; acptr = acptr->next)
+  for (acptr = client; acptr; acptr = cli_next(acptr))
   {
     if (TieneIpVirtualPersonalizada(acptr))
       continue;
@@ -429,7 +430,7 @@ static inline void elimina_cache_ips_virtuales(void)
  *                                      1999/06/23 savage@apostols.org
  */
 static void db_eliminar_registro(unsigned char tabla, char *clave,
-    int reemplazar, aClient *cptr, aClient *sptr)
+    int reemplazar, struct Client *cptr, struct Client *sptr)
 {
   char buf[100];
   int mode;
@@ -482,7 +483,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
         */
         case BDD_OPERDB:
        {
-        aClient *sptr;
+        struct Client *sptr;
         
         if ((sptr = FindUser(clave)) && MyConnect(sptr) && IsHelpOp(sptr))
         {
@@ -596,7 +597,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
         case BDD_IPVIRTUALDB:
           if (!reemplazar)
           {
-            aClient *sptr;
+            struct Client *sptr;
             if ((sptr = FindUser(c)) && IsUser(sptr))
             {
               if (MyUser(sptr))
@@ -614,7 +615,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
            * que puedan verse afectados por glines */
 
           {            
-            aClient *acptr;
+            struct Client *acptr;
             int found_g;
             for (i = 0; i <= highest_fd; i++)
             {
@@ -706,7 +707,7 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
  *                                      1999/06/23 savage@apostols.org
  */
 static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
-    aClient *cptr, aClient *sptr)
+    struct Client *cptr, struct Client *sptr)
 {
   struct db_reg *reg;
   int hashi;
@@ -770,7 +771,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
    {
     int nivel = atoi(valor);
 
-    aClient *sptr;
+    struct Client *sptr;
     
     if (nivel >= 5)
     {
@@ -808,7 +809,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       char c = valor[strlen(valor) - 1];
       int suspendido = 0;
       int prohibido = 0;
-      aClient *sptr;
+      struct Client *sptr;
 
       if (c == '+')
         suspendido = !0;
@@ -935,7 +936,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       break;
     case BDD_IPVIRTUALDB:
       {
-        aClient *sptr;
+        struct Client *sptr;
         
         if ((sptr = FindUser(c)) && IsUser(sptr))
         {
@@ -1051,7 +1052,7 @@ extern char **myargv;           /* ircd.c */
 
 static void db_die(char *msg, unsigned char que_bdd)
 {
-  aClient *acptr;
+  struct Client *acptr;
   int i;
   char buf[1024];
 
@@ -1694,7 +1695,7 @@ static void lee_hash(unsigned char que_bdd, unsigned int *hi, unsigned int *lo)
  * Modificado para usar las hash con funciones db_*
  *                                      1999/06/30 savage@apostols.org
  */
-static void db_alta(char *registro, unsigned char que_bdd, aClient *cptr, aClient *sptr)
+static void db_alta(char *registro, unsigned char que_bdd, struct Client *cptr, struct Client *sptr)
 {
   char *p0, *p1, *p2, *p3, *p4;
   char path[1024];
@@ -1958,17 +1959,17 @@ static void borrar_db(unsigned char que_bdd)
   }
 }
 
-static void corta_si_multiples_hubs(aClient *cptr, unsigned char que_bdd,
+static void corta_si_multiples_hubs(struct Client *cptr, unsigned char que_bdd,
     char *mensaje)
 {
   char buf[1024];
-  Dlink *lp;
+  struct DLink *lp;
   int num_hubs = 0;
-  aClient *acptr;
+  struct Client *acptr;
 
-  for (lp = me.serv->down; lp; lp = lp->next)
+  for (lp = cli_serv(&me)->down; lp; lp = lp->next)
   {
-    if (find_conf_host(lp->value.cptr->confs,
+    if (find_conf_host(lp->value.cptr->cli_connect->con_confs,
         lp->value.cptr->name, CONF_HUB) != NULL)
       num_hubs++;
   }
@@ -1983,7 +1984,7 @@ static void corta_si_multiples_hubs(aClient *cptr, unsigned char que_bdd,
   corta:
     if (num_hubs-- > 1)
     {                           /* Deja un HUB conectado */
-      for (lp = me.serv->down; lp; lp = lp->next)
+      for (lp = cli_serv(&me)->down; lp; lp = lp->next)
       {
         acptr = lp->value.cptr;
 /*
@@ -1991,7 +1992,7 @@ static void corta_si_multiples_hubs(aClient *cptr, unsigned char que_bdd,
 ** en concreto, respeta esa peticion
 */
         if ((acptr != cptr) &&
-            find_conf_host(acptr->confs, acptr->name, CONF_HUB) != NULL)
+            find_conf_host(cli_confs(acptr), acptr->name, CONF_HUB) != NULL)
         {
           sprintf_irc(buf, "BDD '%c' %s. Resincronizando...", que_bdd, mensaje);
           exit_client(acptr, acptr, &me, buf);
@@ -2015,7 +2016,7 @@ static void initdb2(unsigned char que_bdd)
   char path[1024];
   int res;
   int fd;
-  Dlink *lp;
+  struct DLink *lp;
   struct tabla_en_memoria mapeo;
   char *destino, *p = NULL, *p2, *p3;
   int p_len = 0;
@@ -2135,9 +2136,9 @@ static void initdb2(unsigned char que_bdd)
 ** Corta conexiones con los HUBs
 */
   corta_hubs:
-    for (lp = me.serv->down; lp; lp = lp->next)
+    for (lp = cli_serv(&me)->down; lp; lp = lp->next)
     {
-      if (find_conf_host(lp->value.cptr->confs,
+      if (find_conf_host(lp->value.cptr->cli_connect->con_confs,
           lp->value.cptr->name, CONF_HUB) != NULL)
       {
         sprintf_irc(buf, "BDD '%c' inconsistente. Resincronizando...", que_bdd);
@@ -2145,7 +2146,7 @@ static void initdb2(unsigned char que_bdd)
 #if 0
         /* fix patch.db52 */
         /* lp ya no es valido al desconectar */
-        lp = me.serv->down;
+        lp = cli_serv(&me)->down;
         if (!lp)
           break;
 #endif
@@ -2164,9 +2165,9 @@ static void initdb2(unsigned char que_bdd)
 ** Solo pide a los HUBs, porque no se
 ** aceptan datos de leafs.
 */
-    for (lp = me.serv->down; lp; lp = lp->next)
+    for (lp = cli_serv(&me)->down; lp; lp = lp->next)
     {
-      if (find_conf_host(lp->value.cptr->confs,
+      if (find_conf_host(lp->value.cptr->cli_connect->con_confs,
           lp->value.cptr->name, CONF_HUB) != NULL)
       {
         sendto_one(lp->value.cptr, "%s DB %s 0 J %u %c",
@@ -2322,7 +2323,7 @@ void reload_db(void)
   }
 }
 
-void tx_num_serie_dbs(aClient *cptr)
+void tx_num_serie_dbs(struct Client *cptr)
 {
   int cont;
 
@@ -2357,11 +2358,11 @@ void tx_num_serie_dbs(aClient *cptr)
  * 29/May/98 jcea@argo.es
  *
  */
-int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   unsigned int db;
-  aClient *acptr;
-  Dlink *lp;
+  struct Client *acptr;
+  struct DLink *lp;
   char db_buf[1024];
   char path[1024];
   int db_file;
@@ -2379,7 +2380,7 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!IsServer(sptr) || parc < 5)
     return 0;
   db = atoi(parv[2]);
-  if (find_conf_host(cptr->confs, cptr->name, CONF_HUB) != NULL)
+  if (find_conf_host(cli_confs(acptr), cptr->name, CONF_HUB) != NULL)
     es_hub = !0;
   if (!db)
   {
@@ -2427,11 +2428,11 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
         cont = 1000;
         if (db >= tabla_serie[que_bdd])
         {                       /* Se le pueden mandar registros individuales */
-          sptr->serv->esnet_db |= mascara_bdd;
+          cli_serv(sptr)->esnet_db |= mascara_bdd;
           return 0;
           break;
         }
-        else if ((sptr->serv->esnet_db) & mascara_bdd)
+        else if ((cli_serv(sptr)->esnet_db) & mascara_bdd)
         {
 /*
 ** Teniamos el grifo abierto, y ahora
@@ -2439,7 +2440,7 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
 ** Eso SOLO ocurre si ha detectado que su
 ** copia local de la BDD esta corrupta.
 */
-          sptr->serv->esnet_db &= ~mascara_bdd;
+          cli_serv(sptr)->esnet_db &= ~mascara_bdd;
 /*
 ** Borramos su BDD porque es posible
 ** que le hayamos enviado mas registros.
@@ -2514,7 +2515,7 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
         cerrar_db(&mapeo);
         if (cont)
-          sptr->serv->esnet_db |= mascara_bdd;
+          cli_serv(sptr)->esnet_db |= mascara_bdd;
         else
           sendto_one(sptr, "%s DB %s 0 B %u %c",
               NumServ(&me), parv[0], tabla_serie[que_bdd], que_bdd);
@@ -2530,7 +2531,7 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
 */
         sprintf(sendbuf, "%s DB %s 0 D %s %c",
             NumServ(sptr), parv[1], parv[4], que_bdd);
-        for (lp = me.serv->down; lp; lp = lp->next)
+        for (lp = cli_serv(&me)->down; lp; lp = lp->next)
         {
           if (lp->value.cptr == cptr)
             continue;
@@ -2539,7 +2540,7 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
 ** va a cumplir la mascara, asi que
 ** nos curamos en salud.
 */
-          lp->value.cptr->serv->esnet_db &= ~mascara_bdd;
+          lp->value.cptr->cli_serv->esnet_db &= ~mascara_bdd;
 /*
 ** No podemos usar directamente 'sendto_one'
 ** por el riesgo de que existan metacaracteres tipo '%'.
@@ -2645,7 +2646,7 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
         sprintf(sendbuf, "%s DB %s 0 Q %s %c",
             NumServ(sptr), parv[1], parv[4], que_bdd);
-        for (lp = me.serv->down; lp; lp = lp->next)
+        for (lp = cli_serv(&me)->down; lp; lp = lp->next)
         {
           if (lp->value.cptr == cptr)
             continue;
@@ -2700,9 +2701,9 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
   else
     sprintf_irc(sendbuf, "%s DB %s %u %s %s :%s",
         NumServ(sptr), parv[1], db, parv[3], parv[4], parv[5]);
-  for (lp = me.serv->down; lp; lp = lp->next)
+  for (lp = cli_serv(&me)->down; lp; lp = lp->next)
   {
-    if (!((lp->value.cptr->serv->esnet_db) & mascara_bdd) ||
+    if (!((lp->value.cptr->cli_serv->esnet_db) & mascara_bdd) ||
         (lp->value.cptr == cptr))
       continue;
 /*        
@@ -2737,10 +2738,10 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * Maneja los mensajes DBQ recibidos de users y servers.
  *                                      1999/10/13 savage@apostols.org
  */
-int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   unsigned char tabla, *clave, *servidor;
-  aClient *acptr;
+  struct Client *acptr;
   struct db_reg *reg;
   int nivel_helper = 0;
   static char *cn = NULL;
@@ -2800,7 +2801,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (!IsMe(acptr))         /* no es para mi, a rutar */
       {
 #if !defined(NO_PROTOCOL9)
-        if (Protocol(acptr->from) < 10)
+        if (Protocol(cli_from(acptr)) < 10)
           sendto_one(acptr, ":%s DBQ %s %c %s", parv[0], servidor, tabla, clave);
         else
 #endif

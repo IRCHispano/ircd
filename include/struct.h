@@ -50,21 +50,13 @@
 #define COOKIE_ENCRYPTED 0x04 /* Cookie enviada encriptada */
 #define COOKIE_VERIFIED  0x08 /* Cookie verificada correctamente */
 
-#define CLIENT_LOCAL_SIZE sizeof(aClient)
-#define CLIENT_REMOTE_SIZE offsetof(aClient, count)
+#define IsCookiePlain(x)     ((x)->cli_connect->cookie_status & COOKIE_PLAIN)
+#define IsCookieEncrypted(x) ((x)->cli_connect->cookie_status & COOKIE_ENCRYPTED)
+#define IsCookieVerified(x)  ((x)->cli_connect->cookie_status & COOKIE_VERIFIED)
 
-#define MyConnect(x)	((x)->from == (x))
-#define MyUser(x)	(MyConnect(x) && IsUser(x))
-#define MyOper(x)	(MyConnect(x) && IsOper(x))
-#define Protocol(x)	((x)->serv->prot)
-
-#define IsCookiePlain(x)     ((x)->cookie_status & COOKIE_PLAIN)
-#define IsCookieEncrypted(x) ((x)->cookie_status & COOKIE_ENCRYPTED)
-#define IsCookieVerified(x)  ((x)->cookie_status & COOKIE_VERIFIED)
-
-#define SetCookiePlain(x)     ((x)->cookie_status |= COOKIE_PLAIN)
-#define SetCookieEncrypted(x) ((x)->cookie_status |= COOKIE_ENCRYPTED)
-#define SetCookieVerified(x)  ((x)->cookie_status |= COOKIE_VERIFIED)
+#define SetCookiePlain(x)     ((x)->cli_connect->cookie_status |= COOKIE_PLAIN)
+#define SetCookieEncrypted(x) ((x)->cli_connect->cookie_status |= COOKIE_ENCRYPTED)
+#define SetCookieVerified(x)  ((x)->cli_connect->cookie_status |= COOKIE_VERIFIED)
 
 /*=============================================================================
  * Structures
@@ -86,105 +78,11 @@
 #define USER_TOK  0x8
 #endif
 
-struct Client {
-  struct Client *next, *prev, *hnext;
-  struct User *user;            /* ...defined, if this is a User */
-  struct Server *serv;          /* ...defined, if this is a server */
-  struct Whowas *whowas;        /* Pointer to ww struct to be freed on quit */
-  char yxx[4];                  /* Numeric Nick: YMM if this is a server,
-                                   XX0 if this is a user */
-  time_t lasttime;              /* ...should be only LOCAL clients? --msa */
-  time_t firsttime;             /* time client was created */
-  time_t since;                 /* last time we parsed something */
-  time_t lastnick;              /* TimeStamp on nick */
-  int marker;                   /* /who processing marker */
-  unsigned int flags;           /* client flags */
-  unsigned int hmodes;          /* HISPANO user modes (flag extensions) */
-  struct Client *from;          /* == self, if Local Client, *NEVER* NULL! */
-  int fd;                       /* >= 0, for local clients */
-  unsigned int hopcount;        /* number of servers to this 0 = local */
-  short status;                 /* Client type */
-  struct irc_in_addr ip;        /* Real ip# - NOT defined for remote servers! */
-#ifdef HISPANO_WEBCHAT
-  struct irc_in_addr ip_real;	/* IP real del usuario */
-#endif
-  char *name;                   /* Unique name of the client, nick or host */
-  char *username;               /* username here now for auth stuff */
-  char *info;                   /* Free form additional client information */
-  
-  /*
-   *  The following fields are allocated only for local clients
-   *  (directly connected to *this* server with a socket.
-   *  The first of them *MUST* be the "count"--it is the field
-   *  to which the allocation is tied to! *Never* refer to
-   *  these fields, if (from != self).
-   */
-  unsigned int count;           /* Amount of data in buffer, DON'T PUT
-                                   variables ABOVE this one! */
-  snomask_t snomask;            /* mask for server messages */
-  char buffer[BUFSIZE];         /* Incoming message buffer; or the error that
-                                   caused this clients socket to be `dead' */
-  unsigned short int lastsq;    /* # of 2k blocks when sendqueued called last */
-  time_t nextnick;              /* Next time that a nick change is allowed */
-  time_t nexttarget;            /* Next time that a target change is allowed */
-  unsigned char targets[MAXTARGETS];  /* Hash values of current targets */
-  char *cookie;                 /* Random number the user must PONG */
-  unsigned int cookie_status;   /* Estado de la cookie */
-  struct DBuf sendQ;            /* Outgoing message queue--if socket full */
-  struct DBuf recvQ;            /* Hold for data incoming yet to be parsed */
-  unsigned int sendM;           /* Statistics: protocol messages send */
-  unsigned int sendK;           /* Statistics: total k-bytes send */
-  unsigned int receiveM;        /* Statistics: protocol messages received */
-  unsigned int receiveK;        /* Statistics: total k-bytes received */
-  unsigned short int sendB;     /* counters to count upto 1-k lots of bytes */
-  unsigned short int receiveB;  /* sent and received. */
-  struct Client *acpt;          /* listening client which we accepted from */
-  struct SLink *confs;          /* Configuration record associated */
-  int authfd;                   /* fd for rfc931 authentication */
-#if defined(ESNET_NEG)
-  unsigned long negociacion;
-#if defined(ZLIB_ESNET)
-  z_stream *comp_in;
-  unsigned long long comp_in_total_in;
-  unsigned long long comp_in_total_out;
-  z_stream *comp_out;
-  unsigned long long comp_out_total_in;
-  unsigned long long comp_out_total_out;
-#endif
-#endif
-  unsigned short int port;      /* and the remote port# too :-) */
-  struct hostent *hostp;
-  struct ListingArgs *listing;
-#if defined(pyr)
-  struct timeval lw;
-#endif
-  char *sockhost;               /* This is the host name from the socket and
-                                   after which the connection was accepted. */
-  char *passwd;
-  char *passbdd;                /* Password para la BDD especificada en 
-                                   el PASS (/SERVER en los clientes) */
-
-  unsigned int flags_local;     /* Local client flags */
-  struct SLink *invited;        /* chain of invite pointer blocks */
-  
-  struct event *evread;         /* Evento que controla este cliente EV_READ */
-  struct event *evwrite;        /* Evento que controla este cliente EV_WRITE */
-  
-  struct event *evtimer;        /* Evento de temporizacion */
-  struct timeval *tm_timer;     /* Temporizador del evento */
-  
-  struct event *evauthread;     /* Evento que controla este auth EV_READ */
-  struct event *evauthwrite;    /* Evento que controla este auth EV_WRITE */
-  
-  struct event *evcheckping;    /* Evento para controlar cuando se debe revisar el ping */
-  struct timeval *tm_checkping; /* Temporizador del chequeo del proximo ping */
-};
-
 struct Server {
   struct Server *nexts;
   struct Client *up;            /* Server one closer to me */
-  struct DSlink *down;          /* List with downlink servers */
-  struct DSlink *updown;        /* own Dlink in up->serv->down struct */
+  struct DLink *down;          /* List with downlink servers */
+  struct DLink *updown;        /* own Dlink in up->serv->down struct */
   aClient **client_list;        /* List with client pointers on this server */
   struct User *user;            /* who activated this connection */
   struct ConfItem *cline;       /* C-line pointer for this server */

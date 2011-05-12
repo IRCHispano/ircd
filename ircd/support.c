@@ -120,7 +120,7 @@ struct irc_in_addr *client_addr(aClient *cptr)
   else
     return &cptr->ip;
 #else
-  return &cptr->ip;
+  return &cptr->cli_ip;
 #endif
 	
 }

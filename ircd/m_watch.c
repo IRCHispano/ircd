@@ -20,6 +20,7 @@
 #include "sys.h"
 
 #include "h.h"
+#include "client.h"
 #include "s_debug.h"
 #include "hash.h"
 #include "ircd.h"
@@ -73,7 +74,7 @@ de los clientes por flood. Reduzca MAXWATCH o incremente CLIENT_FLOOD en 'make c
  * |-wptr2-|- sptr2
  *         |- sptr1
  *
- * LINKS en las listas aClient.
+ * LINKS en las listas struct Client.
  *
  * sptr1            sptr2           sptr3
  * |- wptr1(nickA)  |-wptr1(nickA)  |-wptr1(nickA)
@@ -89,14 +90,14 @@ de los clientes por flood. Reduzca MAXWATCH o incremente CLIENT_FLOOD en 'make c
  *
  * Avisa a los usuarios la entrada/salida de un nick.
  */
-void chequea_estado_watch(aClient *sptr, int raw, char *ip_override,
+void chequea_estado_watch(struct Client *sptr, int raw, char *ip_override,
     char *ip_override_SeeHidden)
 {
   Reg1 aWatch *wptr;
   Reg2 Link *lp;
   char *username;
   char *ip;
-  aClient *acptr;
+  struct Client *acptr;
 
 /*
 ** Ocurre cuando el usuario no completa
@@ -116,7 +117,7 @@ void chequea_estado_watch(aClient *sptr, int raw, char *ip_override,
   if (!ip_override)
   {
 #if defined(BDD_VIP)
-    if (sptr->user->virtualhost == NULL)
+    if (sptr->cli_user->virtualhost == NULL)
     {
       make_virtualhost(sptr, 0);
     }
@@ -124,13 +125,13 @@ void chequea_estado_watch(aClient *sptr, int raw, char *ip_override,
 
     if (!IsHidden(sptr))
     {                           /* Optimizacion para simplificar codigo mas abajo */
-      ip_override = ip_override_SeeHidden = PunteroACadena(sptr->user->host);
+      ip_override = ip_override_SeeHidden = PunteroACadena(sptr->cli_user->host);
     }
   }
 
   wptr->lasttime = TStime();
 
-  username = PunteroACadena(sptr->user->username);
+  username = PunteroACadena(sptr->cli_user->username);
 
   /*
    * Mandamos el aviso a todos los usuarios
@@ -152,13 +153,13 @@ void chequea_estado_watch(aClient *sptr, int raw, char *ip_override,
     else
     {
 #if defined(BDD_VIP)
-      ip = PunteroACadena(sptr->user->virtualhost);
+      ip = PunteroACadena(sptr->cli_user->virtualhost);
       if (IsHiddenViewer(acptr) || (sptr == acptr))
       {
-        ip = PunteroACadena(sptr->user->host);
+        ip = PunteroACadena(sptr->cli_user->host);
       }
 #else
-      ip = PunteroACadena(sptr->user->host);
+      ip = PunteroACadena(sptr->cli_user->host);
 #endif
     }
 
@@ -173,20 +174,20 @@ void chequea_estado_watch(aClient *sptr, int raw, char *ip_override,
  *
  * Muestra el estado de un usuario.
  */
-static void muestra_estado_watch(aClient *sptr, char *nick, int raw1, int raw2)
+static void muestra_estado_watch(struct Client *sptr, char *nick, int raw1, int raw2)
 {
-  aClient *acptr;
+  struct Client *acptr;
 
   if ((acptr = FindClient(nick)))
   {
     sendto_one(sptr, watch_str(raw1), me.name, sptr->name,
-        acptr->name, PunteroACadena(acptr->user->username),
+        acptr->name, PunteroACadena(acptr->cli_user->username),
 #if defined(BDD_VIP)
         get_visiblehost(acptr, sptr),
 #else
-        acptr->user->host,
+        acptr->cli_user->host,
 #endif
-        acptr->lastnick);
+        cli_lastnick(acptr));
   }
   else
     sendto_one(sptr, watch_str(raw2), me.name, sptr->name, nick, "*", "*", 0);
@@ -198,7 +199,7 @@ static void muestra_estado_watch(aClient *sptr, char *nick, int raw1, int raw2)
  *
  * Agrega un nick a la lista de watch del usuario.
  */
-static int agrega_nick_watch(aClient *sptr, char *nick)
+static int agrega_nick_watch(struct Client *sptr, char *nick)
 {
   aWatch *wptr;
   Link *lp;
@@ -242,10 +243,10 @@ static int agrega_nick_watch(aClient *sptr, char *nick)
      */
     lp = make_link();
     memset(lp, 0, sizeof(Link));
-    lp->next = sptr->user->watch;
+    lp->next = sptr->cli_user->watch;
     lp->value.wptr = wptr;
-    sptr->user->watch = lp;
-    sptr->user->cwatch++;
+    sptr->cli_user->watch = lp;
+    sptr->cli_user->cwatch++;
 
   }
   return 0;
@@ -257,7 +258,7 @@ static int agrega_nick_watch(aClient *sptr, char *nick)
  *
  * Borra un nick de la lista de watch de un usuario.
  */
-static int borra_nick_watch(aClient *sptr, char *nick)
+static int borra_nick_watch(struct Client *sptr, char *nick)
 {
   aWatch *wptr;
   Link *lp, *lptmp = NULL;
@@ -292,7 +293,7 @@ static int borra_nick_watch(aClient *sptr, char *nick)
    * Buscamos en el link del usuario al watch
    */
   lptmp = lp = NULL;
-  if ((lp = sptr->user->watch))
+  if ((lp = sptr->cli_user->watch))
   {
     while (lp && (lp->value.wptr != wptr))
     {
@@ -306,7 +307,7 @@ static int borra_nick_watch(aClient *sptr, char *nick)
   else
   {
     if (!lptmp)
-      sptr->user->watch = lp->next;
+      sptr->cli_user->watch = lp->next;
     else
       lptmp->next = lp->next;
 
@@ -321,7 +322,7 @@ static int borra_nick_watch(aClient *sptr, char *nick)
     free_watch(wptr);
 
   /* Actualizamos contador de watch's del usuario */
-  sptr->user->cwatch--;
+  sptr->cli_user->cwatch--;
 
   return 0;
 
@@ -334,12 +335,12 @@ static int borra_nick_watch(aClient *sptr, char *nick)
  * Borra toda la lista de watch de un usuario.
  * Al hacer un /WATCH C  o porque sale del irc.
  */
-int borra_lista_watch(aClient *sptr)
+int borra_lista_watch(struct Client *sptr)
 {
   Link *lp, *lp2, *lptmp;
   aWatch *wptr;
 
-  if (!(lp = sptr->user->watch))
+  if (!(lp = sptr->cli_user->watch))
     return 0;                   /* Tenia la lista vacia */
 
   /*
@@ -378,8 +379,8 @@ int borra_lista_watch(aClient *sptr)
   /*
    * Reseteamos valores watch del usuario
    */
-  sptr->user->watch = NULL;
-  sptr->user->cwatch = 0;
+  sptr->cli_user->watch = NULL;
+  sptr->cli_user->cwatch = 0;
 
   return 0;
 }
@@ -404,7 +405,7 @@ int borra_lista_watch(aClient *sptr)
  * 2002/05/20 zoltan <zoltan@irc-dev.net>
  */
 
-int m_watch(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_watch(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   char *s, *p = NULL;
 
@@ -453,7 +454,7 @@ int m_watch(aClient *cptr, aClient *sptr, int parc, char *parv[])
         /*
          * Comprobamos si la lista esta llena o no.
          */
-        if (cptr->user->cwatch >= MAXWATCH)
+        if (cptr->cli_user->cwatch >= MAXWATCH)
         {
           sendto_one(cptr, err_str(ERR_TOOMANYWATCH), me.name,
               cptr->name, nick, MAXWATCH);
@@ -517,16 +518,16 @@ int m_watch(aClient *cptr, aClient *sptr, int parc, char *parv[])
         for (lp = wptr->watch, count = 1; (lp = lp->next); count++);
 
       sendto_one(sptr, watch_str(RPL_WATCHSTAT), me.name, parv[0],
-          sptr->user->cwatch, count);
+          sptr->cli_user->cwatch, count);
 #else
       sendto_one(sptr, watch_str(RPL_WATCHSTAT), me.name, parv[0],
-          sptr->user->cwatch);
+          sptr->cli_user->cwatch);
 #endif
 
       /*
        * Enviamos todas las entradas de la lista de WATCH
        */
-      lp = sptr->user->watch;
+      lp = sptr->cli_user->watch;
       if (lp)
       {
         /*
@@ -563,21 +564,21 @@ int m_watch(aClient *cptr, aClient *sptr, int parc, char *parv[])
      */
     if (*s == 'L' || *s == 'l')
     {
-      aClient *acptr;
-      Link *lp = sptr->user->watch;
+      struct Client *acptr;
+      Link *lp = sptr->cli_user->watch;
 
       while (lp)
       {
         if ((acptr = FindClient(lp->value.wptr->nick)))
         {
           sendto_one(sptr, watch_str(RPL_NOWON), me.name, parv[0],
-              acptr->name, PunteroACadena(acptr->user->username),
+              acptr->name, PunteroACadena(acptr->cli_user->username),
 #if defined(BDD_VIP)
               get_visiblehost(acptr, cptr),
 #else
-              acptr->user->host,
+              acptr->cli_user->host,
 #endif
-              acptr->lastnick);
+              cli_lastnick(acptr));
         }
         /*
          * Si especifica "L" mandar tambien los off-line.

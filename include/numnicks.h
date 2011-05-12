@@ -43,17 +43,17 @@ struct irc_in_addr;
 /*
  * Use this macro as follows: sprintf(buf, "%s%s ...", NumNick(cptr), ...);
  */
-#define NumNick(c) (c)->user->server->yxx, (c)->yxx
+#define NumNick(c) (c)->cli_user->server->cli_yxx, (c)->cli_yxx
 
 /*
  * Use this macro as follows: sprintf(buf, "%s ...", NumServ(cptr), ...);
  */
-#define NumServ(c) (c)->yxx
+#define NumServ(c) (c)->cli_yxx
 
 /*
  * Use this macro as follows: sprintf(buf, "%s%s ...", NumServCap(cptr), ...);
  */
-#define NumServCap(c) (c)->yxx, (c)->serv->nn_capacity
+#define NumServCap(c) (c)->cli_yxx, (c)->cli_serv->nn_capacity
 
 /*
  * Structures
