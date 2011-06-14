@@ -731,9 +731,17 @@ ENGINE_KQUEUE_TRUE
 ENGINE_KQUEUE_FALSE
 ENGINE_EPOLL_TRUE
 ENGINE_EPOLL_FALSE
+PCRE_MATCH_TRUE
+PCRE_MATCH_FALSE
+WEBCHAT_FLASH_TRUE
+WEBCHAT_FLASH_FALSE
 SSL_C
 ENVIRONMENT_DDB_TRUE
 ENVIRONMENT_DDB_FALSE
+ENVIRONMENT_SERVICES_TRUE
+ENVIRONMENT_SERVICES_FALSE
+ENVIRONMENT_UNDERNET_TRUE
+ENVIRONMENT_UNDERNET_FALSE
 LTLIBOBJS'
 ac_subst_files=''
       ac_precious_vars='build_alias
@@ -1336,7 +1344,11 @@ Optional Features:
   --enable-debug          Enable debugging mode
   --disable-asserts       Disable assertion checking
   --disable-ipv6          Disable IPv6 support
+  --enable-p09            Enable P09 support
   --disable-zlib          Disable ZLIB support
+  --enable-pcre           Enable PCRE match support
+  --enable-webchat        Enable Webchat Flash support
+  --enable-webchathtml    Enable Webchat HTML support
   --disable-ssl           Disable SSL support
   --disable-inlines       Disable inlining for a few critical functions
 
@@ -15379,6 +15391,34 @@ _ACEOF
 
 fi
 
+{ echo "$as_me:$LINENO: checking whether to enable P09 match" >&5
+echo $ECHO_N "checking whether to enable P09 match... $ECHO_C" >&6; }
+# Check whether --enable-p09 was given.
+if test "${enable_p09+set}" = set; then
+  enableval=$enable_p09; unet_cv_enable_p09=$enableval
+else
+  if test "${unet_cv_enable_p09+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  unet_cv_enable_p09=no
+fi
+
+fi
+
+
+
+{ echo "$as_me:$LINENO: result: $unet_cv_enable_p09" >&5
+echo "${ECHO_T}$unet_cv_enable_p09" >&6; }
+
+# Set the preprocessor symbol
+if test x"$unet_cv_enable_p09" = xyes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define P09_SUPPORT 1
+_ACEOF
+
+fi
+
 { echo "$as_me:$LINENO: checking whether to enable ZLIB" >&5
 echo $ECHO_N "checking whether to enable ZLIB... $ECHO_C" >&6; }
 # Check whether --enable-zlib was given.
@@ -15409,9 +15449,105 @@ _ACEOF
     CFLAGS="$CFLAGS -I../libs/zlib"
 fi
 
-#Temporal
-LIBS="$LIBS -L../libs/libevent/.libs -levent"
-CFLAGS="$CFLAGS -I../libs/libevent"
+{ echo "$as_me:$LINENO: checking whether to enable PCRE match" >&5
+echo $ECHO_N "checking whether to enable PCRE match... $ECHO_C" >&6; }
+# Check whether --enable-pcre was given.
+if test "${enable_pcre+set}" = set; then
+  enableval=$enable_pcre; unet_cv_enable_pcre=$enableval
+else
+  if test "${unet_cv_enable_pcre+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  unet_cv_enable_pcre=no
+fi
+
+fi
+
+
+
+{ echo "$as_me:$LINENO: result: $unet_cv_enable_pcre" >&5
+echo "${ECHO_T}$unet_cv_enable_pcre" >&6; }
+
+# Set the preprocessor symbol
+if test x"$unet_cv_enable_pcre" = xyes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define PCRE 1
+_ACEOF
+
+fi
+ if test x"$unet_cv_enable_pcre" = xyes; then
+  PCRE_MATCH_TRUE=
+  PCRE_MATCH_FALSE='#'
+else
+  PCRE_MATCH_TRUE='#'
+  PCRE_MATCH_FALSE=
+fi
+
+
+{ echo "$as_me:$LINENO: checking whether to enable Webchat Flash support" >&5
+echo $ECHO_N "checking whether to enable Webchat Flash support... $ECHO_C" >&6; }
+# Check whether --enable-webchat was given.
+if test "${enable_webchat+set}" = set; then
+  enableval=$enable_webchat; unet_cv_enable_webchat=$enableval
+else
+  if test "${unet_cv_enable_webchat+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  unet_cv_enable_webchat=no
+fi
+
+fi
+
+
+
+{ echo "$as_me:$LINENO: result: $unet_cv_enable_webchat" >&5
+echo "${ECHO_T}$unet_cv_enable_webchat" >&6; }
+
+# Set the preprocessor symbol
+if test x"$unet_cv_enable_webchat" = xyes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define WEBCHAT 1
+_ACEOF
+
+fi
+ if test x"$unet_cv_enable_webchat" = xyes; then
+  WEBCHAT_FLASH_TRUE=
+  WEBCHAT_FLASH_FALSE='#'
+else
+  WEBCHAT_FLASH_TRUE='#'
+  WEBCHAT_FLASH_FALSE=
+fi
+
+
+{ echo "$as_me:$LINENO: checking whether to enable Webchat HTML support" >&5
+echo $ECHO_N "checking whether to enable Webchat HTML support... $ECHO_C" >&6; }
+# Check whether --enable-webchathtml was given.
+if test "${enable_webchathtml+set}" = set; then
+  enableval=$enable_webchathtml; unet_cv_enable_webchathtml=$enableval
+else
+  if test "${unet_cv_enable_webchathtml+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  unet_cv_enable_webchathtml=no
+fi
+
+fi
+
+
+
+{ echo "$as_me:$LINENO: result: $unet_cv_enable_webchathtml" >&5
+echo "${ECHO_T}$unet_cv_enable_webchathtml" >&6; }
+
+# Set the preprocessor symbol
+if test x"$unet_cv_enable_webchathtml" = xyes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define WEBCHAT_HTML 1
+_ACEOF
+
+fi
 
 #Temporal
 unet_cv_enable_ssl=no
@@ -16076,18 +16212,49 @@ fi
 { echo "$as_me:$LINENO: result: $ircdev_cv_environment_undernet" >&5
 echo "${ECHO_T}$ircdev_cv_environment_undernet" >&6; }
 
+if test x"$ircdev_cv_environment_ddb" != "xno" ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define DDB
+#define DDB 1
 _ACEOF
 
-     if test x"$ircdev_cv_environment_ddb" = xyes; then
+elif test x"$ircdev_cv_environment_services" != "xno" ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define SERVICES 1
+_ACEOF
+
+elif test x"$ircdev_cv_environment_undernet" != "xno" ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define UNDERNET 1
+_ACEOF
+
+fi
+ if test x"$ircdev_cv_environment_ddb" = xyes; then
   ENVIRONMENT_DDB_TRUE=
   ENVIRONMENT_DDB_FALSE='#'
 else
   ENVIRONMENT_DDB_TRUE='#'
   ENVIRONMENT_DDB_FALSE=
 fi
+
+ if test x"$ircdev_cv_environment_services" = xyes; then
+  ENVIRONMENT_SERVICES_TRUE=
+  ENVIRONMENT_SERVICES_FALSE='#'
+else
+  ENVIRONMENT_SERVICES_TRUE='#'
+  ENVIRONMENT_SERVICES_FALSE=
+fi
+
+ if test x"$ircdev_cv_environment_undernet" = xyes; then
+  ENVIRONMENT_UNDERNET_TRUE=
+  ENVIRONMENT_UNDERNET_FALSE='#'
+else
+  ENVIRONMENT_UNDERNET_TRUE='#'
+  ENVIRONMENT_UNDERNET_FALSE=
+fi
+
 
 
 cat >confcache <<\_ACEOF
@@ -16228,10 +16395,38 @@ echo "$as_me: error: conditional \"ENGINE_EPOLL\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
+if test -z "${PCRE_MATCH_TRUE}" && test -z "${PCRE_MATCH_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"PCRE_MATCH\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"PCRE_MATCH\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${WEBCHAT_FLASH_TRUE}" && test -z "${WEBCHAT_FLASH_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"WEBCHAT_FLASH\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"WEBCHAT_FLASH\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
 if test -z "${ENVIRONMENT_DDB_TRUE}" && test -z "${ENVIRONMENT_DDB_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"ENVIRONMENT_DDB\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"ENVIRONMENT_DDB\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${ENVIRONMENT_SERVICES_TRUE}" && test -z "${ENVIRONMENT_SERVICES_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"ENVIRONMENT_SERVICES\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"ENVIRONMENT_SERVICES\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${ENVIRONMENT_UNDERNET_TRUE}" && test -z "${ENVIRONMENT_UNDERNET_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"ENVIRONMENT_UNDERNET\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"ENVIRONMENT_UNDERNET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -16909,13 +17104,21 @@ for ac_last_try in false false false false false :; do
 ENGINE_KQUEUE_FALSE!$ENGINE_KQUEUE_FALSE$ac_delim
 ENGINE_EPOLL_TRUE!$ENGINE_EPOLL_TRUE$ac_delim
 ENGINE_EPOLL_FALSE!$ENGINE_EPOLL_FALSE$ac_delim
+PCRE_MATCH_TRUE!$PCRE_MATCH_TRUE$ac_delim
+PCRE_MATCH_FALSE!$PCRE_MATCH_FALSE$ac_delim
+WEBCHAT_FLASH_TRUE!$WEBCHAT_FLASH_TRUE$ac_delim
+WEBCHAT_FLASH_FALSE!$WEBCHAT_FLASH_FALSE$ac_delim
 SSL_C!$SSL_C$ac_delim
 ENVIRONMENT_DDB_TRUE!$ENVIRONMENT_DDB_TRUE$ac_delim
 ENVIRONMENT_DDB_FALSE!$ENVIRONMENT_DDB_FALSE$ac_delim
+ENVIRONMENT_SERVICES_TRUE!$ENVIRONMENT_SERVICES_TRUE$ac_delim
+ENVIRONMENT_SERVICES_FALSE!$ENVIRONMENT_SERVICES_FALSE$ac_delim
+ENVIRONMENT_UNDERNET_TRUE!$ENVIRONMENT_UNDERNET_TRUE$ac_delim
+ENVIRONMENT_UNDERNET_FALSE!$ENVIRONMENT_UNDERNET_FALSE$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 7; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 15; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -17535,8 +17738,12 @@ echo ""
 echo "  Asserts:             $unet_cv_enable_asserts"
 echo "  Debug:               $unet_cv_enable_debug"
 echo "  IPv6:                $unet_cv_enable_ipv6"
+echo "  P09 Support:         $unet_cv_enable_p09"
 echo "  ZLIB:                $unet_cv_enable_zlib"
 echo "  SSL:                 $unet_cv_enable_ssl"
+echo "  PCRE match:          $unet_cv_enable_pcre"
+echo "  Webchat Flash:       $unet_cv_enable_webchat"
+echo "  Webchat HTML:        $unet_cv_enable_webchathtml"
 echo "  Inlines:             $unet_cv_enable_inlines"
 echo ""
 echo "  Prefix:              $prefix"

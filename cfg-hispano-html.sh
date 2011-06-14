@@ -2,7 +2,8 @@
 
 echo "IRC-Hispano IRCD"
 echo ""
-echo "Instalacion del demonio IRC..."
+echo "Instalacion del demonio IRC para IRC-Hispano..."
+echo "Para configurar un IRCD para los webchat HTML"
 echo ""
 
 if [ x"$2" = x ]
@@ -19,16 +20,10 @@ cd zlib
 ./configure
 make -f Makefile2
 
-echo Configurando libreria libevent...
-cd ..
-cd libevent
-./configure --disable-shared --enable-static
-make build
-
 echo Configurando IRCD
 cd ..
 cd ..
-./configure --prefix=$1 --with-maxcon=$2
+./configure --prefix=$1 --with-maxcon=$2 --enable-p09 --enable-pcre --enable-webchathtml
 
 echo ""
 exit 0

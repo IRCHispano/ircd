@@ -279,6 +279,9 @@
 /* Disable assertion checking */
 #undef NDEBUG
 
+/* Enable P09 support */
+#undef P09_SUPPORT
+
 /* Name of package */
 #undef PACKAGE
 
@@ -297,6 +300,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Enable PCRE match support */
+#undef PCRE
+
 /* Define if you have POSIX signals. */
 #undef POSIX_SIGNALS
 
@@ -305,6 +311,9 @@
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
+
+/* Services Environment (Ex-TerraIRCU) */
+#undef SERVICES
 
 /* Define to 1 if the `setvbuf' function takes the buffering type as its
    second argument and the buffer pointer as the third, as on System V before
@@ -347,6 +356,9 @@
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
 
+/* UnderNet Environment */
+#undef UNDERNET
+
 /* Define to enable the /dev/poll engine */
 #undef USE_DEVPOLL
 
@@ -367,6 +379,12 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* Enable Webchat Flash support */
+#undef WEBCHAT
+
+/* Enable Webchat HTML support */
+#undef WEBCHAT_HTML
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */

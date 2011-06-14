@@ -318,6 +318,15 @@ if test x"$unet_cv_enable_ipv6" = xyes; then
     AC_DEFINE([IPV6], 1, [Enable IPv6 support])
 fi
 
+dnl how about P09 support?
+unet_TOGGLE([p09], no, [Enable P09 support],
+    [whether to enable P09 match])
+
+# Set the preprocessor symbol
+if test x"$unet_cv_enable_p09" = xyes; then
+    AC_DEFINE([P09_SUPPORT], 1, [Enable P09 support])
+fi
+
 dnl how about ZLIB support?
 unet_TOGGLE([zlib], yes, [Disable ZLIB support],
     [whether to enable ZLIB])
@@ -329,9 +338,34 @@ if test x"$unet_cv_enable_zlib" = xyes; then
     CFLAGS="$CFLAGS -I../libs/zlib"
 fi
 
-#Temporal
-LIBS="$LIBS -L../libs/libevent/.libs -levent"
-CFLAGS="$CFLAGS -I../libs/libevent"
+dnl how about PCRE support?
+unet_TOGGLE([pcre], no, [Enable PCRE match support],
+    [whether to enable PCRE match])
+
+# Set the preprocessor symbol
+if test x"$unet_cv_enable_pcre" = xyes; then
+    AC_DEFINE([PCRE], 1, [Enable PCRE match support])
+fi
+AM_CONDITIONAL(PCRE_MATCH, [test x"$unet_cv_enable_pcre" = xyes])
+
+dnl how about Webchat Flash?
+unet_TOGGLE([webchat], no, [Enable Webchat Flash support],
+    [whether to enable Webchat Flash support])
+
+# Set the preprocessor symbol
+if test x"$unet_cv_enable_webchat" = xyes; then
+    AC_DEFINE([WEBCHAT], 1, [Enable Webchat Flash support])
+fi
+AM_CONDITIONAL(WEBCHAT_FLASH, [test x"$unet_cv_enable_webchat" = xyes])
+
+dnl how about Webchat HTML?
+unet_TOGGLE([webchathtml], no, [Enable Webchat HTML support],
+    [whether to enable Webchat HTML support])
+
+# Set the preprocessor symbol
+if test x"$unet_cv_enable_webchathtml" = xyes; then
+    AC_DEFINE([WEBCHAT_HTML], 1, [Enable Webchat HTML support])
+fi
 
 dnl how about SSL support?
 #Temporal
@@ -517,16 +551,17 @@ AC_ARG_WITH([undernet-environment],
 [ircdev_cv_environment_undernet=no])])
 AC_MSG_RESULT([$ircdev_cv_environment_undernet])
 
-dnl if test x"$ircdev_cv_environment_ddb" != "xno" ; then
-    AC_DEFINE([DDB], , [DDB Environment (Distributed DataBase)])
-    AM_CONDITIONAL(ENVIRONMENT_DDB, [test x"$ircdev_cv_environment_ddb" = xyes])
-dnl elif test x"$ircdev_cv_environment_services" != "xno" ; then
-dnl    AC_DEFINE([SERVICES], , [Services Environment (Ex-TerraIRCU)])
-dnl    AM_CONDITIONAL(ENVIRONMENT_SERVICES, [test x"$ircdev_cv_environment_services" = xyes])
-dnl elif test x"$ircdev_cv_environment_undernet" != "xno" ; then
-dnl    AC_DEFINE([UNDERNET], , [UnderNet Environment])
-dnl    AM_CONDITIONAL(ENVIRONMENT_UNDERNET, [test x"$ircdev_cv_environment_undernet" = xyes])
-dnl fi
+if test x"$ircdev_cv_environment_ddb" != "xno" ; then
+    AC_DEFINE([DDB], 1, [DDB Environment (Distributed DataBase)])
+elif test x"$ircdev_cv_environment_services" != "xno" ; then
+    AC_DEFINE([SERVICES], 1, [Services Environment (Ex-TerraIRCU)])
+elif test x"$ircdev_cv_environment_undernet" != "xno" ; then
+    AC_DEFINE([UNDERNET], 1, [UnderNet Environment])
+fi
+AM_CONDITIONAL(ENVIRONMENT_DDB, [test x"$ircdev_cv_environment_ddb" = xyes])
+AM_CONDITIONAL(ENVIRONMENT_SERVICES, [test x"$ircdev_cv_environment_services" = xyes])
+AM_CONDITIONAL(ENVIRONMENT_UNDERNET, [test x"$ircdev_cv_environment_undernet" = xyes])
+
 
 dnl Finally really generate all output files:
 AC_OUTPUT
@@ -554,8 +589,12 @@ dnl echo "  Warnings:            $unet_cv_enable_warnings"
 echo "  Debug:               $unet_cv_enable_debug"
 dnl echo "  Leak Detect:         $unet_cv_with_leak_detect"
 echo "  IPv6:                $unet_cv_enable_ipv6"
+echo "  P09 Support:         $unet_cv_enable_p09"
 echo "  ZLIB:                $unet_cv_enable_zlib"
 echo "  SSL:                 $unet_cv_enable_ssl"
+echo "  PCRE match:          $unet_cv_enable_pcre"
+echo "  Webchat Flash:       $unet_cv_enable_webchat"
+echo "  Webchat HTML:        $unet_cv_enable_webchathtml"
 dnl echo "  Profile:             $unet_cv_enable_profile"
 dnl echo "  Pedantic:            $unet_cv_enable_pedantic"
 echo "  Inlines:             $unet_cv_enable_inlines"
