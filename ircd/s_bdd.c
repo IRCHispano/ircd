@@ -1,11 +1,14 @@
 /*
- * IRC - Internet Relay Chat, ircd/s_bdd.c
- * Copyright (C) 1999 IRC-Hispano.org - ESNET - jcea & savage
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ddb.c
+ *
+ * Copyright (C) 2002-2007 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2004-2007 Toni Garcia (zoltan) <zoltan@irc-dev.net>
+ * Copyright (C) 1999-2003 Jesus Cea Avion <jcea@argo.es> Esnet IRC Network
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,7 +17,43 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+/** @file
+ * @brief Implementation of Distributed DataBase.
+ * @version $Id$
+ */
+#include "config.h"
+
+#include "ddb.h"
+#include "ircd.h"
+#include "ircd_alloc.h"
+#include "ircd_chattr.h"
+#include "ircd_log.h"
+#include "ircd_reply.h"
+#include "ircd_snprintf.h"
+#include "ircd_string.h"
+#include "ircd_tea.h"
+#include "list.h"
+#include "match.h"
+#include "msg.h"
+#include "numeric.h"
+#include "s_bsd.h"
+#include "s_debug.h"
+#include "s_misc.h"
+#include "send.h"
+
+/* #include <assert.h> -- Now using assert in ircd_log.h */
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
+/** @page ddb Distributed DataBase
+ *
+ *
+ * TODO, explicacion del sistema
  */
 
 
@@ -22,66 +61,33 @@
 ** ATENCION: Lo que sigue debe incrementarse cuando se toque alguna estructura de la BDD
 */
 #define MMAP_CACHE_VERSION 4
-
-
-
-#include "sys.h"
+#include "client.h"
+#include "hash.h"
+#include "numnicks.h"
+#include "channel.h"
+#include "ircd_features.h"
 #include <stdlib.h>
 #include "persistent_malloc.h"
-
+#include <stdarg.h>
+#include <time.h>
 #include <assert.h>
-
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <syslog.h>
-#include "h.h"
-#include "s_debug.h"
-#include "client.h"
-#include "struct.h"
-#include "ircd.h"
-#include "s_serv.h"
-#include "s_misc.h"
-#include "sprintf_irc.h"
-#include "send.h"
-#include "s_err.h"
-#include "numeric.h"
-#include "s_bsd.h"
-#include "s_conf.h"
-#include "hash.h"
-#include "common.h"
-#include "match.h"
-#include "crule.h"
-#include "parse.h"
-#include "numnicks.h"
-#include "userload.h"
-#include "s_user.h"
-#include "channel.h"
-#include "querycmds.h"
-#include "IPcheck.h"
-#include "network.h"
-#include "slab_alloc.h"
-#include "ircd_alloc.h"
-#include "ircd_chattr.h"
-#include "s_bdd.h"
 
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
 #include "dbuf.h"
 #endif
-
-#include "msg.h"
-#include "support.h"
-
 
 int numero_maximo_de_clones_por_defecto;
 char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
 unsigned char clave_de_cifrado_de_cookies[32];
 int cifrado_cookies = 0;
-int ocultar_servidores = 0;
 int activar_modos = 0;
-int activar_ident = 0;
 int auto_invisible = 0;
 int excepcion_invisible = 0;
 int activar_redireccion_canales = 0;
@@ -100,7 +106,7 @@ int compresion_zlib_cliente = 1;
 */
 #define DB_BUF_CACHE  32
 
-static struct db_reg db_buf_cache[DB_BUF_CACHE];
+static struct Ddb db_buf_cache[DB_BUF_CACHE];
 static int db_buf_cache_i = 0;
 
 struct tabla_en_memoria {
@@ -128,7 +134,7 @@ struct portable_stat {
 */
 static unsigned int tabla_residente_y_len[DB_MAX_TABLA];
 static unsigned int tabla_cuantos[DB_MAX_TABLA];
-static struct db_reg **tabla_datos[DB_MAX_TABLA];
+static struct Ddb **tabla_datos[DB_MAX_TABLA];
 static unsigned int tabla_serie[DB_MAX_TABLA];
 static unsigned int tabla_hash_hi[DB_MAX_TABLA];
 static unsigned int tabla_hash_lo[DB_MAX_TABLA];
@@ -140,8 +146,8 @@ static struct portable_stat tabla_stats[DB_MAX_TABLA];
 static void *mmap_cache_pos = NULL;
 #endif
 
-static struct db_reg *db_iterador_reg = NULL;
-static struct db_reg **db_iterador_datos = NULL;
+static struct Ddb *db_iterador_reg = NULL;
+static struct Ddb **db_iterador_datos = NULL;
 static int db_iterador_hash_pos = 0;
 static int db_iterador_hash_len = 0;
 
@@ -195,31 +201,6 @@ unsigned int db_num_serie(unsigned char tabla)
 unsigned int db_cuantos(unsigned char tabla)
 {
   return tabla_cuantos[tabla];
-}
-
-
-/*
- * TEA (cifrado)
- *
- * Cifra 64 bits de datos, usando clave de 64 bits (los 64 bits superiores son cero)
- * Se cifra v[0]^x[0], v[1]^x[1], para poder hacer CBC facilmente.
- *
- */
-void tea(unsigned int v[], unsigned int k[], unsigned int x[])
-{
-  unsigned int y = v[0] ^ x[0], z = v[1] ^ x[1], sum = 0, delta = 0x9E3779B9;
-  unsigned int a = k[0], b = k[1], n = 32;
-  unsigned int c = 0, d = 0;
-
-  while (n-- > 0)
-  {
-    sum += delta;
-    y += ((z << 4) + a) ^ ((z + sum) ^ ((z >> 5) + b));
-    z += ((y << 4) + c) ^ ((y + sum) ^ ((y >> 5) + d));
-  }
-
-  x[0] = y;
-  x[1] = z;
 }
 
 static void actualiza_hash(char *registro, unsigned char que_bdd)
@@ -305,13 +286,13 @@ static void segmentar(char *registro, char **num_serie, char **destino,
 /*
 ** Esta funcion SOLO debe llamarse desde "db_iterador_init" y "db_iterador_next"
 */
-static struct db_reg *db_iterador()
+static struct Ddb *db_iterador()
 {
-  struct db_reg *p;
+  struct Ddb *p;
 
   if (db_iterador_reg)
   {
-    db_iterador_reg = db_iterador_reg->next;
+    db_iterador_reg = db_iterador_reg->ddb_next;
     if (db_iterador_reg)
     {
       return db_iterador_reg;
@@ -338,9 +319,9 @@ static struct db_reg *db_iterador()
   return NULL;
 }
 
-struct db_reg *db_iterador_init(unsigned char tabla)
+struct Ddb *db_iterador_init(unsigned char tabla)
 {
-  assert((tabla >= ESNET_BDD) && (tabla <= ESNET_BDD_END));
+  assert((tabla >= DDB_INIT) && (tabla <= DDB_END));
   db_iterador_hash_len = tabla_residente_y_len[tabla];
   assert(db_iterador_hash_len);
   db_iterador_hash_pos = 0;
@@ -349,7 +330,7 @@ struct db_reg *db_iterador_init(unsigned char tabla)
   return db_iterador();
 }
 
-struct db_reg *db_iterador_next(void)
+struct Ddb *db_iterador_next(void)
 {
   assert(db_iterador_reg);
   assert(db_iterador_datos);
@@ -359,14 +340,14 @@ struct db_reg *db_iterador_next(void)
 }
 
 /*
-** db_busca_db_reg
+** db_busca_Ddb
 */
-static struct db_reg *db_busca_db_reg(unsigned char tabla, char *clave)
+static struct Ddb *db_busca_Ddb(unsigned char tabla, char *clave)
 {
   static char *c = NULL;
   static int c_len = 0;
   int i, hashi;
-  struct db_reg *reg;
+  struct Ddb *ddb;
 
   if ((strlen(clave) + 1 > c_len) || (!c))
   {
@@ -387,15 +368,15 @@ static struct db_reg *db_busca_db_reg(unsigned char tabla, char *clave)
   }
   hashi = db_hash_registro(c, tabla_residente_y_len[tabla]);
 
-  for (reg = tabla_datos[tabla][hashi]; reg != NULL; reg = reg->next)
+  for (ddb = tabla_datos[tabla][hashi]; ddb != NULL; ddb = ddb_next(ddb))
   {
 /*
-      segmentar(reg->p,NULL,NULL,NULL,&p,&p2,NULL,NULL);
+      segmentar(ddb->p,NULL,NULL,NULL,&p,&p2,NULL,NULL);
       if ((strlen(c)==p2-p) && (!strncmp (p, c,p2-p)))
-        return reg;
+        return ddb;
 */
-    if (!strcmp(reg->clave, c))
-      return reg;
+    if (!strcmp(ddb_key(ddb), c))
+      return ddb;
   }
   return NULL;
 }
@@ -411,7 +392,7 @@ static inline void elimina_cache_ips_virtuales(void)
   struct Client *acptr;
 
   /* A limpiar la cache */
-  for (acptr = client; acptr; acptr = cli_next(acptr))
+  for (acptr = GlobalClientList; acptr; acptr = cli_next(acptr))
   {
     if (TieneIpVirtualPersonalizada(acptr))
       continue;
@@ -434,8 +415,8 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
 {
   char buf[100];
   int mode;
-  struct db_reg *reg, *reg2, **reg3;
-  aChannel *chptr;
+  struct Ddb *ddb, *ddb2, **ddb3;
+  struct Channel *chptr;
   int hashi, i = 0;
   static char *c = NULL;
   static int c_len = 0;
@@ -461,18 +442,18 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
 
   hashi = db_hash_registro(c, tabla_residente_y_len[tabla]);
   
-  reg3 = &tabla_datos[tabla][hashi];
+  ddb3 = &tabla_datos[tabla][hashi];
 
-  for (reg = *reg3; reg != NULL; reg = reg2)
+  for (ddb = *ddb3; ddb != NULL; ddb = ddb2)
   {
     if(sptr && !IsBurstOrBurstAck(sptr))
       sendto_op_mask(SNO_SERVICE,
-          "%s DB DELETE T='%c' C='%s' H=0x%x", sptr->name, tabla, reg->clave, hashi);
+          "%s DB DELETE T='%c' C='%s' H=0x%x", cli_name(sptr), tabla, ddb_key(ddb), hashi);
     
-    reg2 = reg->next;
-    if (!strcmp(reg->clave, c))
+    ddb2 = ddb_next(ddb);
+    if (!strcmp(ddb_key(ddb), c))
     {
-      *reg3 = reg2;
+      *ddb3 = ddb2;
 
       switch (tabla)
       {
@@ -481,32 +462,31 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
         * Baja de operadores instantánea.
         *
         */
-        case BDD_OPERDB:
+        case DDB_OPERDB:
        {
         struct Client *sptr;
         
         if ((sptr = FindUser(clave)) && MyConnect(sptr) && IsHelpOp(sptr))
         {
          /* El usuario está conectado, y en nuestro servidor. */
-         int of, oh;
+         struct Flags oldflags;
 
-         of = sptr->flags;
-         oh = sptr->hmodes;
+         oldflags = cli_flags(sptr);
 
          ClearHelpOp(sptr);
-         --nrof.helpers;
+//         --UserStats.helpers;
 
-         send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
+         send_umode_out(sptr, sptr, &oldflags, 0, IsRegistered(sptr));
         }
        }
 
-        case BDD_CHANDB:
+        case DDB_CHANDB:
           if (!reemplazar)
           {
-            chptr = get_channel(NULL, c, !CREATE);
-            if (chptr && ((mode = chptr->mode.mode) & MODE_REGCHAN))
+            chptr = get_channel(NULL, c, CGT_NO_CREATE);
+            if (chptr && ((mode = chptr->mode.mode) & MODE_REGISTERED))
             {
-              chptr->mode.mode = mode & (~(MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP));  /* Modos vinculados a +r */
+              chptr->mode.mode = mode & (~(MODE_REGISTERED));  /* Modos vinculados a +r */
               chptr->modos_obligatorios = chptr->modos_prohibidos = 0;
               if (chptr->users)
               {                 /* Quedan usuarios */
@@ -515,7 +495,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                   strcat(buf, "A"); /* Modos vinculados a +r */
                 if (mode & MODE_SECUREOP)
                   strcat(buf, "S"); /* Modos vinculados a +r */
-                sendto_channel_butserv(chptr, &me, ":%s MODE %s %s", me.name,
+                sendto_channel_butserv(chptr, &me, ":%s MODE %s %s", cli_name(&me),
                     chptr->chname, buf);
               }
               else
@@ -526,7 +506,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
           }
           break;
 
-        case BDD_CONFIGDB:
+        case DDB_CONFIGDB:
           if (!reemplazar)
           {
             if (!strcmp(c, BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO))
@@ -547,39 +527,19 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               for(i=0;i<24;i++)
                 clave_de_cifrado_de_cookies[i] = 0;
             }
-            else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
-            {
-              ocultar_servidores = 0;
-            }
-            else if (!strcmp(c, BDD_ACTIVAR_IDENT))
-            {
-              activar_ident = 0;
-            }
-            else if (!strcmp(c, BDD_SERVER_NAME))
-            {
-              SlabStringAllocDup(&(his.name), SERVER_NAME, HOSTLEN);
-            }
-            else if (!strcmp(c, BDD_SERVER_INFO))
-            {
-              SlabStringAllocDup(&(his.info), SERVER_INFO, REALLEN);
-            }
             else if (!strcmp(c, BDD_AUTOINVISIBLE))
             {
               auto_invisible = 0;
-            }
-            else if (!strcmp(c, BDD_NICKLEN))
-            {
-              nicklen = 9;  /* Nicklen original por RFC1459 */
             }
             else if(!strcmp(c, BDD_COMPRESION_ZLIB_CLIENTE))
             {
               compresion_zlib_cliente = 1;
             }
-            else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
+            else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, cli_name(&me)))
             {
               activar_redireccion_canales=0;
             }              
-            else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
+            else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, cli_name(&me)))
             {
               if(mensaje_quit_personalizado)
               {
@@ -587,14 +547,14 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                 mensaje_quit_personalizado=NULL;
               }
             }
-            else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
+            else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, cli_name(&me)))
             {
               excepcion_invisible=0;
             }   
           }                     /* Fin de "!reemplazar" */
           break;
 
-        case BDD_IPVIRTUALDB:
+        case DDB_VHOSTDB:
           if (!reemplazar)
           {
             struct Client *sptr;
@@ -607,7 +567,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             } 
           }
           break;
-        case BDD_EXCEPTIONDB:
+        case DDB_EXCEPTIONDB:
           if(cptr==NULL)
             break;
 
@@ -617,39 +577,32 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
           {            
             struct Client *acptr;
             int found_g;
-            for (i = 0; i <= highest_fd; i++)
+            for (i = 0; i <= HighestFd; i++)
             {
-              if ((acptr = loc_clients[i]) && !IsMe(acptr))
+              if ((acptr = LocalClientArray[i]) && !IsMe(acptr))
               {
                 if ((found_g = find_kill(acptr)))
                 {
                   sendto_op_mask(found_g == -2 ? SNO_GLINE : SNO_OPERKILL,
                       found_g == -2 ? "G-line active for %s" : "K-line active for %s",
-                      get_client_name(acptr, FALSE));
+                      get_client_name(acptr, HIDE_IP));
                   exit_client(cptr, acptr, &me, found_g == -2 ? "G-lined" : "K-lined");
                 }
-          #if defined(R_LINES) && defined(R_LINES_REHASH) && !defined(R_LINES_OFTEN)
-                if (find_restrict(acptr))
-                {
-                  sendto_ops("Restricting %s, closing lp", get_client_name(acptr, FALSE));
-                  exit_client(cptr, acptr, &me, "R-lined") == CPTR_KILLED);
-                }
-          #endif
               }
             }
           }
       }
-      p_free(reg);
+      p_free(ddb);
       tabla_cuantos[tabla]--;
       break;
     }
-    reg3 = &(reg->next);
+    ddb3 = &(ddb_next(ddb));
   }
 }
 
 static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
 {
-  aChannel *chptr;
+  struct Channel *chptr;
   int add, del;
   char *tmp=strchr(modos,':'); /* Nombre con mays/mins correcto */
   int cambionombre = 0;
@@ -659,17 +612,17 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
   {
     *tmp='\0';                  /* corto token */
     tmp++;                      /* avanzo un caracter */
-    if (ircd_strncmp(nombre, tmp)) /* Si no coincide el nombre vuelvo al original */
+    if (ircd_strcmp(nombre, tmp)) /* Si no coincide el nombre vuelvo al original */
       tmp=nombre;
     else
       cambionombre = 1;    
   } else
     tmp=nombre;   /* Si no hay nombre especificado vuelvo al original */
   
-  chptr = get_channel(NULL, tmp, CREATE);
+  chptr = get_channel(NULL, tmp, CGT_CREATE);
   mascara_canal_flags(modos, &add, &del);
-  chptr->modos_obligatorios = add | MODE_REGCHAN;
-  chptr->modos_prohibidos = del & ~MODE_REGCHAN;
+  chptr->modos_obligatorios = add | MODE_REGISTERED;
+  chptr->modos_prohibidos = del & ~MODE_REGISTERED;
 
   if (chptr->users)
   {                             /* Hay usuarios dentro */
@@ -683,11 +636,11 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
     char *buf;
 
     buf=adapta_y_visualiza_canal_flags(chptr,add,del);
-    sendto_channel_butserv(chptr, &me, ":%s MODE %s %s", me.name, chptr->chname,buf);
+    sendto_channel_butserv(chptr, &me, ":%s MODE %s %s", cli_name(&me), chptr->chname,buf);
 */
-    if (!(chptr->mode.mode & MODE_REGCHAN))
+    if (!(chptr->mode.mode & MODE_REGISTERED))
     {
-      sendto_channel_butserv(chptr, &me, ":%s MODE %s +r", me.name,
+      sendto_channel_butserv(chptr, &me, ":%s MODE %s +r", cli_name(&me),
           chptr->chname);
     }
   }
@@ -697,7 +650,7 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
     chptr->mode.mode |= add;
     chptr->mode.mode &= ~MODE_WPARAS; /* Estos modos son especiales y no se guardan aqui */
   }
-  chptr->mode.mode |= MODE_REGCHAN;
+  chptr->mode.mode |= MODE_REGISTERED;
 }
 
 /*
@@ -709,7 +662,7 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
 static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
     struct Client *cptr, struct Client *sptr)
 {
-  struct db_reg *reg;
+  struct Ddb *ddb;
   int hashi;
   char *c, *v;
   int i = 0;
@@ -724,10 +677,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
 ** reducir la ocupacion de memoria y, sobre todo, el numero de
 ** Mallocs.
 */
-  reg = p_malloc(sizeof(struct db_reg) + strlen(clave) + 1 + strlen(valor) + 1);
-  assert(reg);
+  ddb = p_malloc(sizeof(struct Ddb) + strlen(clave) + 1 + strlen(valor) + 1);
+  assert(ddb);
 
-  c = (char *)reg + sizeof(struct db_reg);
+  c = (char *)ddb + sizeof(struct Ddb);
   v = c + strlen(clave) + 1;
 
   strcpy(c, clave);
@@ -741,22 +694,22 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
   }
 
   /* creo el registro */
-  reg->clave = c;
-  reg->valor = v;
-  reg->next = NULL;
+  ddb_key(ddb) = c;
+  ddb_content(ddb) = v;
+  ddb_next(ddb) = NULL;
 
   /* busco hash */
-  hashi = db_hash_registro(reg->clave, tabla_residente_y_len[tabla]);
+  hashi = db_hash_registro(ddb_key(ddb), tabla_residente_y_len[tabla]);
 
   /*
-     sendto_ops("Inserto T='%c' C='%s' H=%u",tabla, reg->clave, hashi);
+     sendto_ops("Inserto T='%c' C='%s' H=%u",tabla, ddb_key(ddb), hashi);
    */
   if(sptr && !IsBurstOrBurstAck(sptr))
     sendto_op_mask(SNO_SERVICE,
-        "%s DB INSERT T='%c' C='%s' H=0x%x", sptr->name, tabla, reg->clave, hashi);
+        "%s DB INSERT T='%c' C='%s' H=0x%x", cli_name(sptr), tabla, ddb_key(ddb), hashi);
   
-  reg->next = tabla_datos[tabla][hashi];
-  tabla_datos[tabla][hashi] = reg;
+  ddb_next(ddb) = tabla_datos[tabla][hashi];
+  tabla_datos[tabla][hashi] = ddb;
 
   tabla_cuantos[tabla]++;
 
@@ -767,7 +720,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       * Alta de operadores instantánea.
       *
       */
-   case BDD_OPERDB:
+   case DDB_OPERDB:
    {
     int nivel = atoi(valor);
 
@@ -784,16 +737,14 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
        
        if (IsNickRegistered(sptr))
        {
-        /* El usuario tiene +r */
-        int of, oh;
+         struct Flags oldflags;
 
-        of = sptr->flags;
-        oh = sptr->hmodes;
+         oldflags = cli_flags(sptr);
 
-        SetHelpOp(sptr);
-        ++nrof.helpers;
-       
-        send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
+         SetHelpOp(sptr);
+//        ++UserStats.helpers;
+
+         send_umode_out(sptr, sptr, &oldflags, 0, IsRegistered(sptr));
        }
      }
     }
@@ -804,7 +755,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
        * Efecto de suspends y forbids instantáneos.
        *
        */
-    case ESNET_NICKDB:
+    case DDB_NICKDB:
     {
       char c = valor[strlen(valor) - 1];
       int suspendido = 0;
@@ -820,14 +771,14 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
           (sptr = FindUser(clave)) && MyConnect(sptr))
       {
         char *botname;
-        struct db_reg *reg;
+        struct Ddb *ddb;
 
         /* Buscamos el nick del bot virtual de nicks (NiCK) */
-        reg = db_buscar_registro(BDD_BOTSDB, BDD_NICKSERV);
-        if (reg && reg->valor && (strlen(reg->valor) < HOSTLEN))
-          botname = reg->valor;
+        ddb = ddb_find_key(DDB_BOTSDB, BDD_NICKSERV);
+        if (ddb && ddb_content(ddb) && (strlen(ddb_content(ddb)) < HOSTLEN))
+          botname = ddb_content(ddb);
         else
-          botname = me.name;
+          botname = cli_name(&me);
 
         sendto_one(sptr,
             ":%s NOTICE %s :*** Tu nick %s acaba de ser %s.",
@@ -838,11 +789,11 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       break;
     }
 
-    case BDD_CHANDB:
+    case DDB_CHANDB:
       crea_canal_persistente(c, v, !cptr);
       break;
 
-    case BDD_CONFIGDB:
+    case DDB_CONFIGDB:
       if (!strcmp(c, BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO))
       {
         numero_maximo_de_clones_por_defecto = atoi(v);
@@ -876,24 +827,6 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         base64_to_buf_r(clave_de_cifrado_de_cookies, key);
         cifrado_cookies = 1;
       }
-      else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
-      {
-        ocultar_servidores = !0;
-      }
-#ifndef HISPANO_WEBCHAT
-      else if (!strcmp(c, BDD_ACTIVAR_IDENT))
-      {
-        activar_ident = !0;
-      }
-#endif
-      else if (!strcmp(c, BDD_SERVER_NAME))
-      {
-        SlabStringAllocDup(&(his.name), v, HOSTLEN);
-      }
-      else if (!strcmp(c, BDD_SERVER_INFO))
-      {
-        SlabStringAllocDup(&(his.info), v, REALLEN);
-      }
       else if (!strcmp(c, BDD_AUTOINVISIBLE))
       {
         auto_invisible = !0;
@@ -906,35 +839,20 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         else
             compresion_zlib_cliente=x;
       }
-      else if (!strcmp(c, BDD_NICKLEN))
-      {
-        int x;
-        
-        x = atoi(v);
-        /* Solo admitimos un minimo de 9 por el RFC1459 y un maximo de
-         * NICKLEN que tiene que ser igual en toda la red.
-         */
-        if (x < 9)
-          nicklen = 9;
-        else if (x > NICKLEN)
-          nicklen = NICKLEN;
-        else
-          nicklen = x;
-      }
-      else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
+      else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, cli_name(&me)))
       {
         activar_redireccion_canales=1;
       }              
-      else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
+      else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, cli_name(&me)))
       {
         SlabStringAllocDup(&mensaje_quit_personalizado, v, 0);
       }        
-      else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
+      else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, cli_name(&me)))
       {
         excepcion_invisible = !0;
       }     
       break;
-    case BDD_IPVIRTUALDB:
+    case DDB_VHOSTDB:
       {
         struct Client *sptr;
         
@@ -970,36 +888,36 @@ static void copia_en_malloc(char *buf, int len, char **p)
 }
 
 
-struct db_reg *db_buscar_registro(unsigned char tabla, char *clave)
+struct Ddb *db_buscar_registro(unsigned char tabla, char *clave)
 {
-  struct db_reg *reg;
+  struct Ddb *ddb;
   char *clave_init, *clave_end;
   char *valor_init, *valor_end;
 
   if (!tabla_residente_y_len[tabla])
     return NULL;
 
-  reg = db_busca_db_reg(tabla, clave);
-  if (!reg)
+  ddb = db_busca_Ddb(tabla, clave);
+  if (!ddb)
     return NULL;
 
 /*
-  segmentar(reg->p,NULL,NULL,NULL,&clave_init,&clave_end,&valor_init,&valor_end);
+  segmentar(ddb->p,NULL,NULL,NULL,&clave_init,&clave_end,&valor_init,&valor_end);
 */
 /* Lo que sigue lo sustituye */
-  clave_init = reg->clave;
+  clave_init = ddb_key(ddb);
   clave_end = clave_init + strlen(clave_init);
-  valor_init = reg->valor;
+  valor_init = ddb_content(ddb);
   valor_end = valor_init + strlen(valor_init);
 
   copia_en_malloc(clave_init, clave_end - clave_init,
-      &db_buf_cache[db_buf_cache_i].clave);
+      &db_buf_cache[db_buf_cache_i].ddb_key);
   copia_en_malloc(valor_init, valor_end - valor_init,
-      &db_buf_cache[db_buf_cache_i].valor);
+      &db_buf_cache[db_buf_cache_i].ddb_content);
   if (++db_buf_cache_i >= DB_BUF_CACHE)
     db_buf_cache_i = 0;
 
-  return reg;
+  return ddb;
 }
 
 /*
@@ -1015,14 +933,14 @@ int db_es_miembro(unsigned char tabla, char *clave, char *subcadena)
   static char *buf = NULL;
   static int buf_len = 0;
   char *f, *s = NULL;
-  struct db_reg *reg;
+  struct Ddb *ddb;
 
-  if ((reg = db_buscar_registro(tabla, clave)) == NULL)
+  if ((ddb = ddb_find_key(tabla, clave)) == NULL)
     return 0;
 
-  if ((strlen(reg->valor) + 1 > buf_len) || (!buf))
+  if ((strlen(ddb_content(ddb)) + 1 > buf_len) || (!buf))
   {
-    buf_len = strlen(reg->valor) + 1;
+    buf_len = strlen(ddb_content(ddb)) + 1;
     if (buf)
       MyFree(buf);
     buf = MyMalloc(buf_len);
@@ -1030,8 +948,8 @@ int db_es_miembro(unsigned char tabla, char *clave, char *subcadena)
       return 0;
   }
 
-  strcpy(buf, reg->valor);
-  for (f = strtoken(&s, buf, ","); f != NULL; f = strtoken(&s, NULL, ","))
+  strcpy(buf, ddb_content(ddb));
+  for (f = ircd_strtok(&s, buf, ","); f != NULL; f = ircd_strtok(&s, NULL, ","))
   {
     j++;
     if (!ircd_strcmp(f, subcadena))
@@ -1057,15 +975,15 @@ static void db_die(char *msg, unsigned char que_bdd)
   char buf[1024];
 
   sprintf_irc(buf, "DB '%c' - %s (%s). El daemon muere...", que_bdd, msg,
-      DBPATH);
-  for (i = 0; i <= highest_fd; i++)
+      feature_str(FEAT_DDBPATH));
+  for (i = 0; i <= HighestFd; i++)
   {
-    if (!(acptr = loc_clients[i]))
+    if (!(acptr = LocalClientArray[i]))
       continue;
     if (IsUser(acptr))
-      sendto_one(acptr, ":%s NOTICE %s :%s", me.name, PunteroACadena(acptr->name), buf);
+      sendto_one(acptr, ":%s NOTICE %s :%s", cli_name(&me), PunteroACadena(cli_name(acptr)), buf);
     else if (IsServer(acptr))
-      sendto_one(acptr, ":%s ERROR :%s", me.name, buf);
+      sendto_one(acptr, ":%s ERROR :%s", cli_name(&me), buf);
   }
 
 #if !defined(USE_SYSLOG)
@@ -1219,7 +1137,7 @@ static unsigned int mmap_cache_version(void)
   unsigned int version;
   int i;
 
-  version = sizeof(struct db_reg) * DB_MAX_TABLA;
+  version = sizeof(struct Ddb) * DB_MAX_TABLA;
 
   for (i = 0; i < DB_MAX_TABLA; i++)
     version *= 1 + tabla_residente_y_len[i] * (i + 1);
@@ -1247,7 +1165,7 @@ static int mmap_cache(void)
 #else
 static int mmap_cache(void)
 {
-  char path_buf[sizeof(DBPATH) + 1024];
+  char path_buf[sizeof(feature_str(FEAT_DDBPATH)) + 1024];
   char hashes_buf[16384];
   int handle, handle2;
   int flag_problemas = 0;
@@ -1325,7 +1243,7 @@ static int mmap_cache(void)
 
   if (!flag_problemas)
   {
-    sprintf_irc(path_buf, "%s/hashes", DBPATH);
+    sprintf_irc(path_buf, "%s/hashes", feature_str(FEAT_DDBPATH));
     handle2 = open(path_buf, O_RDONLY);
     if (handle < 0)
     {
@@ -1424,9 +1342,9 @@ static int mmap_cache(void)
   st2 = (struct portable_stat *)persistent_align(pos);
   for (i = 0; i < DB_MAX_TABLA; i++)
   {
-    if ((i >= ESNET_BDD) && (i <= ESNET_BDD_END))
+    if ((i >= DDB_INIT) && (i <= DDB_END))
     {
-      sprintf_irc(path_buf, "%s/tabla.%c", DBPATH, i);
+      sprintf_irc(path_buf, "%s/tabla.%c", feature_str(FEAT_DDBPATH), i);
       handle = open(path_buf, O_RDONLY, S_IRUSR | S_IWUSR);
       assert(handle != -1);
       get_stat(handle, &st);
@@ -1476,7 +1394,7 @@ static int mmap_cache(void)
 #if defined(BDD_MMAP)
 void db_persistent_commit(void)
 {
-  char path_buf[sizeof(DBPATH) + 1024];
+  char path_buf[sizeof(feature_str(FEAT_DDBPATH)) + 1024];
   uintptr_t *p, *p_base, *p_limite;
   unsigned char *p2;
   unsigned int len_used;
@@ -1490,9 +1408,9 @@ void db_persistent_commit(void)
 
   for (i = 0; i < DB_MAX_TABLA; i++)
   {
-    if ((i < ESNET_BDD) || (i > ESNET_BDD_END))
+    if ((i < DDB_INIT) || (i > DDB_END))
       continue;
-    sprintf_irc(path_buf, "%s/tabla.%c", DBPATH, i);
+    sprintf_irc(path_buf, "%s/tabla.%c", feature_str(FEAT_DDBPATH), i);
     handle = open(path_buf, O_RDONLY, S_IRUSR | S_IWUSR);
     assert(handle != -1);
     get_stat(handle, &st);
@@ -1517,7 +1435,7 @@ void db_persistent_commit(void)
 
   p2 = (unsigned char *)p;
 
-  sprintf_irc(path_buf, "%s/hashes", DBPATH);
+  sprintf_irc(path_buf, "%s/hashes", feature_str(FEAT_DDBPATH));
   handle = open(path_buf, O_RDONLY);
   if (handle < 0)
     return;
@@ -1592,7 +1510,7 @@ abrir_db(unsigned int registro, char *buf, unsigned char que_bdd,
   struct portable_stat estado;
 
   *buf = '\0';
-  sprintf_irc(path, "%s/tabla.%c", DBPATH, que_bdd);
+  sprintf_irc(path, "%s/tabla.%c", feature_str(FEAT_DDBPATH), que_bdd);
   handle = open(path, O_RDONLY, S_IRUSR | S_IWUSR);
   get_stat(handle, &estado);
   mapeo->len = estado.size;
@@ -1643,17 +1561,19 @@ static void almacena_hash(unsigned char que_bdd)
   char hash[20];
   int db_file;
   
+#if 0
   if(bootopt & BOOT_BDDCHECK)
     return;
+#endif
 
-  sprintf_irc(path, "%s/hashes", DBPATH);
+  sprintf_irc(path, "%s/hashes", feature_str(FEAT_DDBPATH));
   inttobase64(hash, tabla_hash_hi[que_bdd], 6);
   inttobase64(hash + 6, tabla_hash_lo[que_bdd], 6);
   db_file = open(path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
   if (db_file == -1)
     db_die("Error al intentar guardar hashes (open)", que_bdd);
   sprintf_irc(path, "%c %s\n", que_bdd, hash);
-  if (lseek(db_file, 15 * (que_bdd - ESNET_BDD), SEEK_SET) == -1)
+  if (lseek(db_file, 15 * (que_bdd - DDB_INIT), SEEK_SET) == -1)
     db_die("Error al intentar guardar hashes (lseek)", que_bdd);
   if (write(db_file, path, strlen(path)) == -1)
     db_die("Error al intentar guardas hashes (write)", que_bdd);
@@ -1669,13 +1589,13 @@ static void lee_hash(unsigned char que_bdd, unsigned int *hi, unsigned int *lo)
   char c;
   int db_file;
 
-  sprintf_irc(path, "%s/hashes", DBPATH);
+  sprintf_irc(path, "%s/hashes", feature_str(FEAT_DDBPATH));
   db_file = open(path, O_RDONLY);
 /*
 ** No metemos verificacion, porque ya verifica
 ** al contrastar el hash.
 */
-  lseek(db_file, 15 * (que_bdd - ESNET_BDD) + 2, SEEK_SET);
+  lseek(db_file, 15 * (que_bdd - DDB_INIT) + 2, SEEK_SET);
   read(db_file, path, 12);
   close(db_file);
   path[12] = '\0';
@@ -1710,7 +1630,7 @@ static void db_alta(char *registro, unsigned char que_bdd, struct Client *cptr, 
     struct portable_stat st;
 #endif
 
-    sprintf_irc(path, "%s/tabla.%c", DBPATH, que_bdd);
+    sprintf_irc(path, "%s/tabla.%c", feature_str(FEAT_DDBPATH), que_bdd);
     db_file = open(path, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
     if (db_file == -1)
       db_die("Error al intentar an~adir nuevo registro (open)", que_bdd);
@@ -1790,14 +1710,14 @@ static void db_pack(char *registro, unsigned char que_bdd)
   char c;
   unsigned int len, len2;
   struct portable_stat estado;
-  struct db_reg *reg;
+  struct Ddb *ddb;
 
 /*
 ** El primer valor es el numero de serie actual
 */
   tabla_serie[que_bdd] = atol(registro);
 
-  sprintf_irc(path, "%s/tabla.%c", DBPATH, que_bdd);
+  sprintf_irc(path, "%s/tabla.%c", feature_str(FEAT_DDBPATH), que_bdd);
   db_file = open(path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
   get_stat(db_file, &estado);
   len = estado.size;
@@ -1849,13 +1769,13 @@ static void db_pack(char *registro, unsigned char que_bdd)
     if (valor < p)
     {                           /* Nuevo registro, no un borrado */
       *(valor - 1) = '\0';
-      reg = db_buscar_registro(que_bdd, clave);
+      ddb = ddb_find_key(que_bdd, clave);
       *(valor - 1) = ' ';
-      if (reg != NULL)
+      if (ddb != NULL)
       {                         /* El registro sigue existiendo */
 
-        len2 = strlen(reg->valor);
-        if ((valor + len2 == p) && (!strncmp(valor, reg->valor, len2)))
+        len2 = strlen(ddb_content(ddb));
+        if ((valor + len2 == p) && (!strncmp(valor, ddb_content(ddb), len2)))
         {                       /* !!El mismo!! */
 
 /*
@@ -1925,7 +1845,7 @@ fin:
 static void borrar_db(unsigned char que_bdd)
 {
   int i, n;
-  struct db_reg *reg, *reg2;
+  struct Ddb *ddb, *ddb2;
 
   tabla_serie[que_bdd] = 0;
   tabla_cuantos[que_bdd] = 0;
@@ -1940,16 +1860,16 @@ static void borrar_db(unsigned char que_bdd)
   {
     for (i = 0; i < n; i++)
     {
-      for (reg = tabla_datos[que_bdd][i]; reg != NULL; reg = reg2)
+      for (ddb = tabla_datos[que_bdd][i]; ddb != NULL; ddb = ddb2)
       {
-        reg2 = reg->next;
-        p_free(reg);
+        ddb2 = ddb_next(ddb);
+        p_free(ddb);
       }
     }
   }
   else
   {                             /* NO tenemos memoria para esa tabla, asi que la pedimos */
-    tabla_datos[que_bdd] = p_malloc(n * sizeof(struct db_reg *));
+    tabla_datos[que_bdd] = p_malloc(n * sizeof(struct Ddb *));
     assert(tabla_datos[que_bdd]);
   }
 
@@ -1969,8 +1889,11 @@ static void corta_si_multiples_hubs(struct Client *cptr, unsigned char que_bdd,
 
   for (lp = cli_serv(&me)->down; lp; lp = lp->next)
   {
+/*
     if (find_conf_host(lp->value.cptr->cli_connect->con_confs,
         lp->value.cptr->name, CONF_HUB) != NULL)
+*/
+    if (IsHub(lp->value.cptr))
       num_hubs++;
   }
 
@@ -1992,7 +1915,8 @@ static void corta_si_multiples_hubs(struct Client *cptr, unsigned char que_bdd,
 ** en concreto, respeta esa peticion
 */
         if ((acptr != cptr) &&
-            find_conf_host(cli_confs(acptr), acptr->name, CONF_HUB) != NULL)
+       /*     find_conf_host(cli_confs(acptr), cli_name(acptr), CONF_HUB) != NULL) */
+            IsHub(acptr))
         {
           sprintf_irc(buf, "BDD '%c' %s. Resincronizando...", que_bdd, mensaje);
           exit_client(acptr, acptr, &me, buf);
@@ -2071,7 +1995,7 @@ static void initdb2(unsigned char que_bdd)
         strcpy(p, destino);
         *strchr(p, ' ') = '\0';
         collapse(p);
-        if (!match(p, me.name))
+        if (!match(p, cli_name(&me)))
           destino = NULL;       /* Para nosotros */
       }
 
@@ -2108,6 +2032,7 @@ static void initdb2(unsigned char que_bdd)
 */
   lee_hash(que_bdd, &hi, &lo);
 
+#if 0
   if(bootopt & BOOT_BDDCHECK)
   {
     inttobase64(str, tabla_hash_hi[que_bdd], 6);
@@ -2116,11 +2041,14 @@ static void initdb2(unsigned char que_bdd)
     fprintf(stderr, "%c %s\n",que_bdd,str);
   }
   else if ((tabla_hash_hi[que_bdd] != hi) || (tabla_hash_lo[que_bdd] != lo))
+#else
+  if ((tabla_hash_hi[que_bdd] != hi) || (tabla_hash_lo[que_bdd] != lo))
+#endif
   {
     sendto_ops("ATENCION - Base de Datos "
         "'%c' aparentemente corrupta. Borrando...", que_bdd);
     borrar_db(que_bdd);
-    sprintf_irc(path, "%s/tabla.%c", DBPATH, que_bdd);
+    sprintf_irc(path, "%s/tabla.%c", feature_str(FEAT_DDBPATH), que_bdd);
     fd = open(path, O_TRUNC, S_IRUSR | S_IWUSR);
 
 #if defined(BDD_MMAP)
@@ -2138,8 +2066,11 @@ static void initdb2(unsigned char que_bdd)
   corta_hubs:
     for (lp = cli_serv(&me)->down; lp; lp = lp->next)
     {
+/*
       if (find_conf_host(lp->value.cptr->cli_connect->con_confs,
           lp->value.cptr->name, CONF_HUB) != NULL)
+*/
+      if (IsHub(lp->value.cptr))
       {
         sprintf_irc(buf, "BDD '%c' inconsistente. Resincronizando...", que_bdd);
         exit_client(lp->value.cptr, lp->value.cptr, &me, buf);
@@ -2167,11 +2098,14 @@ static void initdb2(unsigned char que_bdd)
 */
     for (lp = cli_serv(&me)->down; lp; lp = lp->next)
     {
+/*
       if (find_conf_host(lp->value.cptr->cli_connect->con_confs,
           lp->value.cptr->name, CONF_HUB) != NULL)
+*/
+      if (IsHub(lp->value.cptr))
       {
         sendto_one(lp->value.cptr, "%s DB %s 0 J %u %c",
-            NumServ(&me), lp->value.cptr->name, tabla_serie[que_bdd], que_bdd);
+            NumServ(&me), lp->value.cptr->cli_name, tabla_serie[que_bdd], que_bdd);
       }
     }
   }
@@ -2195,7 +2129,7 @@ void initdb(void)
   char c;
 #if defined(BDD_MMAP)
   int i;
-  struct db_reg *reg;
+  struct Ddb *ddb;
 #endif
 
   memset(tabla_residente_y_len, 0, sizeof(tabla_residente_y_len));
@@ -2205,29 +2139,29 @@ void initdb(void)
 ** y no deben ser superiores a HASHSIZE, ya que ello
 ** solo desperdiciaria memoria.
 */
-  tabla_residente_y_len[ESNET_NICKDB] = 32768;
+  tabla_residente_y_len[DDB_NICKDB] = 32768;
 #if defined(BDD_CLONES)
   tabla_residente_y_len[ESNET_CLONESDB] = 512;
 #endif
-  tabla_residente_y_len[BDD_OPERDB] = 256;
-  tabla_residente_y_len[BDD_CHANDB] = 2048;
-  tabla_residente_y_len[BDD_CHAN2DB] = 8192;
-  tabla_residente_y_len[BDD_BOTSDB] = 256;
-  tabla_residente_y_len[BDD_FEATURESDB] = 256;
-  tabla_residente_y_len[BDD_JUPEDB] = 512;
-  tabla_residente_y_len[BDD_PRIVDB] = 256;
-  tabla_residente_y_len[BDD_UWORLDDB] = 256;
-  tabla_residente_y_len[BDD_IPVIRTUALDB] = 4096;
-  tabla_residente_y_len[BDD_IPVIRTUAL2DB] = 1024;
-  tabla_residente_y_len[BDD_CONFIGDB] = 256;
-  tabla_residente_y_len[BDD_EXCEPTIONDB] = 512;
-  tabla_residente_y_len[BDD_CHANREDIRECTDB] = 256;
+  tabla_residente_y_len[DDB_OPERDB] = 256;
+  tabla_residente_y_len[DDB_CHANDB] = 2048;
+  tabla_residente_y_len[DDB_CHANDB2] = 8192;
+  tabla_residente_y_len[DDB_BOTSDB] = 256;
+  tabla_residente_y_len[DDB_FEATUREDB] = 256;
+  tabla_residente_y_len[DDB_JUPEDB] = 512;
+  tabla_residente_y_len[DDB_PRIVSDB] = 256;
+  tabla_residente_y_len[DDB_UWORLDDB] = 256;
+  tabla_residente_y_len[DDB_VHOSTDB] = 4096;
+  tabla_residente_y_len[DDB_COLOURVHOSTDB] = 1024;
+  tabla_residente_y_len[DDB_CONFIGDB] = 256;
+  tabla_residente_y_len[DDB_EXCEPTIONDB] = 512;
+  tabla_residente_y_len[DDB_CHANREDIRECTDB] = 256;
   
   cache = mmap_cache();
 
   if (!cache)
   {
-    for (c = ESNET_BDD; c <= ESNET_BDD_END; c++)
+    for (c = DDB_INIT; c <= DDB_END; c++)
       initdb2(c);
   }
   else
@@ -2243,26 +2177,26 @@ void initdb(void)
 */
 
 #if defined(BDD_MMAP)
-    i = tabla_residente_y_len[BDD_CHANDB];
+    i = tabla_residente_y_len[DDB_CHANDB];
     assert(i);
     for (i--; i >= 0; i--)
     {
-      for (reg = tabla_datos[BDD_CHANDB][i]; reg != NULL; reg = reg->next)
+      for (reg = tabla_datos[DDB_CHANDB][i]; reg != NULL; reg = ddb_next(ddb))
       {
-        crea_canal_persistente(reg->clave, reg->valor, 1);
+        crea_canal_persistente(ddb_key(ddb), ddb_content(ddb), 1);
       }
     }
     if ((reg =
-        db_buscar_registro(BDD_CONFIGDB,
+        db_buscar_registro(DDB_CONFIGDB,
         BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO)))
     {
-      numero_maximo_de_clones_por_defecto = atoi(reg->valor);
+      numero_maximo_de_clones_por_defecto = atoi(ddb_content(ddb));
     }
-    if ((reg = db_buscar_registro(BDD_CONFIGDB, BDD_CLAVE_DE_CIFRADO_DE_IPS)))
+    if ((ddb = ddb_find_key(DDB_CONFIGDB, BDD_CLAVE_DE_CIFRADO_DE_IPS)))
     {
       char tmp, clave[12 + 1];
 
-      clave_de_cifrado_de_ips = reg->valor;
+      clave_de_cifrado_de_ips = ddb_content(ddb);
       strncpy(clave, clave_de_cifrado_de_ips, 12);
       clave[12] = '\0';
       tmp = clave[6];
@@ -2272,10 +2206,10 @@ void initdb(void)
       clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
 
     }
-    if ((reg = db_buscar_registro(BDD_CONFIGDB, BDD_CLAVE_DE_CIFRADO_DE_COOKIES)))
+    if ((ddb = ddb_find_key(DDB_CONFIGDB, BDD_CLAVE_DE_CIFRADO_DE_COOKIES)))
     {
       char key[45];
-      char *v = reg->valor;
+      char *v = ddb_content(ddb);
       int key_len;
       
       memset(key, 'A', sizeof(key));
@@ -2296,7 +2230,7 @@ void initdb(void)
 ** La operacion anterior puede ser una operacion larga.
 ** Resincronizamos tiempo.
 */
-  now = time(NULL);
+  CurrentTime = time(NULL);
 }
 
 /*
@@ -2311,7 +2245,7 @@ void reload_db(void)
   unsigned char c;
   sendto_ops("Releyendo Bases de Datos...");
   initdb();
-  for (c = ESNET_BDD; c <= ESNET_BDD_END; c++)
+  for (c = DDB_INIT; c <= DDB_END; c++)
   {
     if (tabla_serie[c])
     {
@@ -2336,11 +2270,11 @@ void tx_num_serie_dbs(struct Client *cptr)
 
 /* La tabla 'n' es un poco especial... */
   sendto_one(cptr, "%s DB * 0 J %u 2", NumServ(&me),
-      db_num_serie(ESNET_NICKDB));
+      db_num_serie(DDB_NICKDB));
 
-  for (cont = ESNET_BDD; cont <= ESNET_BDD_END; cont++)
+  for (cont = DDB_INIT; cont <= DDB_END; cont++)
   {
-    if (cont != ESNET_NICKDB)   /* No mandamos nicks de nuevo */
+    if (cont != DDB_NICKDB)   /* No mandamos nicks de nuevo */
       sendto_one(cptr, "%s DB * 0 J %u %c",
           NumServ(&me), tabla_serie[cont], cont);
   }
@@ -2369,7 +2303,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
   int res;
   int es_hub = 0;
   char *p, *p2, *p3, *p4;
-  unsigned char que_bdd = ESNET_NICKDB;
+  unsigned char que_bdd = DDB_NICKDB;
   unsigned int mascara_bdd = 0;
   int cont;
 #if defined(BDD_MMAP)
@@ -2380,8 +2314,9 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
   if (!IsServer(sptr) || parc < 5)
     return 0;
   db = atoi(parv[2]);
-  if (find_conf_host(cli_confs(acptr), cptr->name, CONF_HUB) != NULL)
-    es_hub = !0;
+//  if (find_conf_host(cli_confs(acptr), cli_name(cptr), CONF_HUB) != NULL)
+  //  es_hub = !0;
+  es_hub = IsHub(sptr);
   if (!db)
   {
     db = atol(parv[4]);
@@ -2395,7 +2330,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
         else if ((que_bdd < '2') || (que_bdd > '9') || (*parv[3] != 'J'))
           return 0;
         else
-          que_bdd = ESNET_NICKDB;
+          que_bdd = DDB_NICKDB;
       }
     }
 
@@ -2407,8 +2342,8 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 ** la CPU haga la rotacion un numero de veces
 ** modulo 32 o 64, pero hay que curarse en salud.
 */
-    if ((que_bdd >= ESNET_BDD) && (que_bdd <= ESNET_BDD_END))
-      mascara_bdd = ((unsigned int)1) << (que_bdd - ESNET_BDD);
+    if ((que_bdd >= DDB_INIT) && (que_bdd <= DDB_END))
+      mascara_bdd = ((unsigned int)1) << (que_bdd - DDB_INIT);
 
     switch (*parv[3])
     {
@@ -2428,11 +2363,11 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
         cont = 1000;
         if (db >= tabla_serie[que_bdd])
         {                       /* Se le pueden mandar registros individuales */
-          cli_serv(sptr)->esnet_db |= mascara_bdd;
+          cli_serv(sptr)->ddb_open |= mascara_bdd;
           return 0;
           break;
         }
-        else if ((cli_serv(sptr)->esnet_db) & mascara_bdd)
+        else if ((cli_serv(sptr)->ddb_open) & mascara_bdd)
         {
 /*
 ** Teniamos el grifo abierto, y ahora
@@ -2440,17 +2375,17 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 ** Eso SOLO ocurre si ha detectado que su
 ** copia local de la BDD esta corrupta.
 */
-          cli_serv(sptr)->esnet_db &= ~mascara_bdd;
+          cli_serv(sptr)->ddb_open &= ~mascara_bdd;
 /*
 ** Borramos su BDD porque es posible
 ** que le hayamos enviado mas registros.
 ** Es preferible empezar desde cero.
 */
           sendto_one(sptr, "%s DB %s 0 D BDD_CORRUPTA %c",
-              NumServ(&me), sptr->name, que_bdd);
+              NumServ(&me), cli_name(sptr), que_bdd);
 #if 0
           sendto_one(sptr, "%s DB %s 0 B %u %c",
-              NumServ(&me), sptr->name, tabla_serie[que_bdd], que_bdd);
+              NumServ(&me), cli_name(sptr), tabla_serie[que_bdd], que_bdd);
 #endif
           /*
            ** No enviamos nada porque ya nos lo pedira el
@@ -2515,7 +2450,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 #endif
         cerrar_db(&mapeo);
         if (cont)
-          cli_serv(sptr)->esnet_db |= mascara_bdd;
+          cli_serv(sptr)->ddb_open |= mascara_bdd;
         else
           sendto_one(sptr, "%s DB %s 0 B %u %c",
               NumServ(&me), parv[0], tabla_serie[que_bdd], que_bdd);
@@ -2540,7 +2475,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 ** va a cumplir la mascara, asi que
 ** nos curamos en salud.
 */
-          lp->value.cptr->cli_serv->esnet_db &= ~mascara_bdd;
+          lp->value.cptr->cli_serv->ddb_open &= ~mascara_bdd;
 /*
 ** No podemos usar directamente 'sendto_one'
 ** por el riesgo de que existan metacaracteres tipo '%'.
@@ -2552,9 +2487,9 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 ** Por bug en lastNNServer no se puede usar 'find_match_server()'
 */
         collapse(parv[1]);
-        if (!match(parv[1], me.name))
+        if (!match(parv[1], cli_name(&me)))
         {
-          sprintf_irc(path, "%s/tabla.%c", DBPATH, que_bdd);
+          sprintf_irc(path, "%s/tabla.%c", feature_str(FEAT_DDBPATH), que_bdd);
           db_file = open(path, O_TRUNC, S_IRUSR | S_IWUSR);
           if (db_file == -1)
           {
@@ -2569,7 +2504,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
           close(db_file);
           borrar_db(que_bdd);
           almacena_hash(que_bdd);
-          sprintf_irc(db_buf, "borrada (%s)", sptr->name);
+          sprintf_irc(db_buf, "borrada (%s)", cli_name(sptr));
           corta_si_multiples_hubs(cptr, que_bdd, db_buf);
 /*
 ** Podemos enviar a 'sptr' tranquilos, porque el
@@ -2577,7 +2512,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 ** traves del que llega la peticion.
 */
           sendto_one(sptr, "%s DB %s 0 E %s %c",
-              NumServ(&me), sptr->name, parv[4], que_bdd);
+              NumServ(&me), cli_name(sptr), parv[4], que_bdd);
         }
 
 /*
@@ -2585,7 +2520,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 ** cerrado el grifo o no, nos curamos en salud
 */
         sendto_one(cptr, "%s DB %s 0 J %u %c",
-            NumServ(&me), cptr->name, tabla_serie[que_bdd], que_bdd);
+            NumServ(&me), cli_name(cptr), tabla_serie[que_bdd], que_bdd);
 
         return 0;
         break;
@@ -2593,7 +2528,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
       case 'R':
         if ((acptr = find_match_server(parv[1])) && (!IsMe(acptr)))
           sendto_one(acptr, "%s DB %s 0 %c %s %c", NumServ(sptr),
-              acptr->name, *parv[3], parv[4], que_bdd);
+              cli_name(acptr), *parv[3], parv[4], que_bdd);
         return 0;
         break;
       case 'Q':
@@ -2603,7 +2538,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 ** Por bug en lastNNServer no se puede usar 'find_match_server()'
 */
         collapse(parv[1]);
-        if (!match(parv[1], me.name))
+        if (!match(parv[1], cli_name(&me)))
         {
           if (que_bdd == '*')
           {                     /* Estamos preguntando por un HASH global de todas las tablas */
@@ -2613,7 +2548,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
             unsigned int tablas_cuantos = 1;
             int i;
 
-            for (i = ESNET_BDD; i <= ESNET_BDD_END; i++)
+            for (i = DDB_INIT; i <= DDB_END; i++)
             {
               hashes_hi ^= tabla_hash_hi[i];
               hashes_lo ^= tabla_hash_lo[i];
@@ -2631,7 +2566,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
             inttobase64(db_buf, hashes_hi, 6);
             inttobase64(db_buf + 6, hashes_lo, 6);
             sendto_one(sptr, "%s DB %s 0 R %u-%u-%s-%s %c",
-                NumServ(&me), sptr->name, tablas_series,
+                NumServ(&me), cli_name(sptr), tablas_series,
                 tablas_cuantos, db_buf, parv[4], que_bdd);
           }
           else
@@ -2639,7 +2574,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
             inttobase64(db_buf, tabla_hash_hi[que_bdd], 6);
             inttobase64(db_buf + 6, tabla_hash_lo[que_bdd], 6);
             sendto_one(sptr, "%s DB %s 0 R %u-%u-%s-%s %c",
-                NumServ(&me), sptr->name, tabla_serie[que_bdd],
+                NumServ(&me), cli_name(sptr), tabla_serie[que_bdd],
                 tabla_cuantos[que_bdd], db_buf, parv[4], que_bdd);
           }
         }
@@ -2675,12 +2610,12 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
   if ((que_bdd < 'a') || (que_bdd > 'z'))
   {
     if (que_bdd == 'N')
-      que_bdd = ESNET_NICKDB;
+      que_bdd = DDB_NICKDB;
     else
       return 0;
   }
 
-  mascara_bdd = ((unsigned int)1) << (que_bdd - ESNET_BDD);
+  mascara_bdd = ((unsigned int)1) << (que_bdd - DDB_INIT);
   if (db <= tabla_serie[que_bdd])
     return 0;
   if (!es_hub)
@@ -2703,7 +2638,7 @@ int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
         NumServ(sptr), parv[1], db, parv[3], parv[4], parv[5]);
   for (lp = cli_serv(&me)->down; lp; lp = lp->next)
   {
-    if (!((lp->value.cptr->cli_serv->esnet_db) & mascara_bdd) ||
+    if (!((lp->value.cptr->cli_serv->ddb_open) & mascara_bdd) ||
         (lp->value.cptr == cptr))
       continue;
 /*        
@@ -2742,7 +2677,7 @@ int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
   unsigned char tabla, *clave, *servidor;
   struct Client *acptr;
-  struct db_reg *reg;
+  struct Ddb *ddb;
   int nivel_helper = 0;
   static char *cn = NULL;
   static int cl = 0;
@@ -2753,7 +2688,7 @@ int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 
   if (!IsOper(sptr) && !IsHelpOp(sptr))
   {
-    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+    send_reply(sptr, ERR_NOPRIVILEGES, cli_name(&me), parv[0]);
     return 0;                   /* No autorizado */
   }
   /* <Origen> DBQ [<server>] <Tabla> <Clave> */
@@ -2765,7 +2700,7 @@ int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
     if (!IsServer(sptr))
       sendto_one(cptr,
           ":%s NOTICE %s :Parametros incorrectos: Formato: DBQ [<server>] <Tabla> <Clave>",
-          me.name, parv[0]);
+          cli_name(&me), parv[0]);
     return 0;
   }
 
@@ -2794,7 +2729,7 @@ int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
       if (!(acptr = find_match_server(servidor)))
       {
         /* joer, el server de destino no existe */
-        sendto_one(cptr, err_str(ERR_NOSUCHSERVER), me.name, parv[0], servidor);
+        send_reply(cptr, ERR_NOSUCHSERVER, cli_name(&me), parv[0], servidor);
         return 0;
       }
 
@@ -2838,7 +2773,7 @@ int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
     )
       sendto_one(cptr,
           ":%s NOTICE %s :DBQ ERROR Tabla='%c' Clave='%s' TABLA_NO_RESIDENTE",
-          me.name, parv[0], tabla, cn);
+          cli_name(&me), parv[0], tabla, cn);
     else
       sendto_one(cptr,
           "%s " TOK_NOTICE " %s%s :DBQ ERROR Tabla='%c' Clave='%s' TABLA_NO_RESIDENTE",
@@ -2851,20 +2786,20 @@ int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 */
   if (!IsServer(sptr) && IsHelpOp(sptr))
   {
-    reg = db_buscar_registro(BDD_OPERDB, sptr->name);
-    if (reg)
+    ddb = ddb_find_key(DDB_OPERDB, cli_name(sptr));
+    if (ddb)
     {
-      nivel_helper = atoi(reg->valor);
+      nivel_helper = atoi(ddb_content(ddb));
     }
   }
 
   switch (tabla)
   {
-    case ESNET_NICKDB:         /* 'n' */
+    case DDB_NICKDB:         /* 'n' */
       if (nivel_helper < 10)
         nivel_helper = -1;
       break;
-    case BDD_CONFIGDB:         /* 'z' */
+    case DDB_CONFIGDB:         /* 'z' */
       if (!strcmp(clave, BDD_CLAVE_DE_CIFRADO_DE_IPS) && (nivel_helper < 10))
         nivel_helper = -1;
       break;
@@ -2879,7 +2814,7 @@ int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
     )
       sendto_one(cptr,
           ":%s NOTICE %s :DBQ ERROR No tienes permiso para acceder a Tabla='%c' Clave='%s'",
-          me.name, parv[0], tabla, cn);
+          cli_name(&me), parv[0], tabla, cn);
     else
       sendto_one(cptr,
           "%s " TOK_NOTICE " %s%s :DBQ ERROR No tienes permiso para acceder a Tabla='%c' Clave='%s'",
@@ -2887,8 +2822,8 @@ int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
     return 0;
   }
 
-  reg = db_buscar_registro(tabla, clave);
-  if (!reg)
+  ddb = ddb_find_key(tabla, clave);
+  if (!ddb)
   {
     if (MyUser(sptr) 
 #if !defined(NO_PROTOCOL9)
@@ -2897,7 +2832,7 @@ int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
     )
       sendto_one(cptr,
           ":%s NOTICE %s :DBQ ERROR Tabla='%c' Clave='%s' REGISTRO_NO_ENCONTRADO",
-          me.name, parv[0], tabla, cn);
+          cli_name(&me), parv[0], tabla, cn);
     else
       sendto_one(cptr,
           "%s " TOK_NOTICE " %s%s :DBQ ERROR Tabla='%c' Clave='%s' REGISTRO_NO_ENCONTRADO",
@@ -2913,10 +2848,10 @@ int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
   )
     sendto_one(cptr,
         ":%s NOTICE %s :DBQ OK Tabla='%c' Clave='%s' Valor='%s'",
-        me.name, parv[0], tabla, reg->clave, reg->valor);
+        cli_name(&me), parv[0], tabla, ddb_key(ddb), ddb_content(ddb));
   else
     sendto_one(cptr,
         "%s " TOK_NOTICE " %s%s :DBQ OK Tabla='%c' Clave='%s' Valor='%s'",
-        NumServ(&me), NumNick(sptr), tabla, reg->clave, reg->valor);
+        NumServ(&me), NumNick(sptr), tabla, ddb_key(ddb), ddb_content(ddb));
   return 0;
 }
