@@ -1,0 +1,321 @@
+$Id: CAMBIOS2_10_06,v 1.3 2002/10/07 08:31:30 jcea Exp $
+
+* 1999/11/11 savage@apostols.org  (patch.db51)                        FIX
+  -----------------------------------------------------------------------
+  Cambiados todos los 'unsigned long' de s_bdd.c a 'unsigned int', pues 
+  en realidad solo necesitamos u_int32_t, y usando 'unsigned long' tenwmos 
+  problemas en arquitecturas de 64 bits. Los mismos cambios en las 
+  funciones que llamaban a tea() en s_user.c
+  
+* 1999/11/11 savage@apostols.org  (patch.vip4)                        FIX
+  -----------------------------------------------------------------------
+  Segun lo decidido, se cambia el algoritmo de criptación de direcciones
+  al siguiente modelo:
+
+  	VIRTUAL = TEA( clave, ip<<32 + (clave>>32)&0xffff0000 + n)
+
+  Siendo 'clave' el valor que contiene el registro '.' de la tabla de 
+  direcciones virtuales, que se irá cambiando periodicamente.
+  Este fix permite que los usuarios baneados por dirección virtual no 
+  puedan abusar, conectando de nuevo o cambiando el nick, pues hay una 
+  relación directa entre la dir virtual y la real.
+  
+* 1999/10/26 savage@apostols.org  (patch.dbh15)                   FEATURE  
+  -----------------------------------------------------------------------
+  Para facilitar la migración a autentificación por server, creamos una
+  tabla 't' (residente), que PERMITE que los usuarios se autentifiquen
+  de la misma forma que los de la tabla 'n'. Si ponen clave, esta ha de
+  ser la correcta. Si no la ponen les molesta con un par de NOTICEs.
+  En VERSION del server aparece como DBH15
+  
+* 1999/10/15 savage@apostols.org  (patch.p9hispano)                   FIX
+  -----------------------------------------------------------------------
+  He definido los numeros de nodo P9 para los services en numnicks.c,
+  dado que n2k ha destruido la "autoasignación" de numeros de nodo para
+  los P9.
+  
+* 1999/10/14 savage@apostols.org  (patch.dbh14)                       FIX
+  -----------------------------------------------------------------------
+  He modificado la respuesta al /STATS B, para hacerla mas corta y le he
+  añadido el soporte de las nuevas BDD.
+  
+* 1999/10/13 savage@apostols.org  (patch.xmode2)                      FIX
+  -----------------------------------------------------------------------
+  Arreglado un pekeño bug cosmetico, que ocurria cuando mediante XMODE
+  intentabamos por ejemplo dar +o a alguien que ya tiene +o, quedando
+  visible el intento como '+x' sin parametro alguno.
+
+* 1999/10/13 savage@apostols.org  (patch.dbh13)                   FEATURE
+  -----------------------------------------------------------------------
+  Implemento comando DBQ sustituyendo el DBH de usuario, con el formato:
+
+        [<:origen>] DBQ [<server>] <tabla> <clave>
+
+  Si <server> existe pero no somos nostros, lo rutaremos al server en
+  cuestión para que sea él quien contesta. Se acepta server '*' para
+  broacast y los tipicos comodines 'jupiter.*'
+        
+* 1999/10/10 savage@apostols.org  (patch.vip3)                        FIX
+  -----------------------------------------------------------------------
+  Las desconexiones (QUIT) involuntarios (Ping timeout / Read error) ya 
+  no muestran el hostname del usuario si este tiene el modo +x activo.
+  El /WHO busca sobre la direccion virtual en lugar de la real en los 
+  usuarios +x excepto si quien mira es un +X, en cuyo caso mira en ambas.
+
+* 1999/10/05 savage@apostols.org  (patch.vip2)                    FEATURE
+  -----------------------------------------------------------------------
+  Se cambia el modo de trabajo de /WHOIS y /WHO para que lo hagan segun
+  sugerencias de jcea. El propio usuario se ve a si mismo como lo haria
+  un +X. Y la primera linea (311) de WHOIS da el host real y en la linea
+  codigo 378 informamos de la dirección virtual.
+
+* 1999/10/05 savage@apostols.org  (patch.dbh12)                       FIX
+  -----------------------------------------------------------------------
+  Las nuevas funciones base64toint() que han introducido en el parche de
+  undernet8 necesitan tener completamente rellenado el string, antes se
+  conformaban con tener \0's al final. Lo correcto es tal como lo han
+  dejado en esta versión, pero es incompatible con lo anterior.
+  Solución: a las claves cortas se les añaden tantas 'A' al final como
+  sea preciso.
+
+* 1999/10/05 savage@apostols.org  (patch.dbh11)                       FIX
+  -----------------------------------------------------------------------
+  Al introducir el parche de undernet8 y posteriores, se nos pasó cambiar
+  el %c%c%c por %s%s para imprimir el nick numerico extendido en el
+  comando BMODE. Se ha optimizado el modo de delimitar el final de de
+  cadenas en las modificaciones introducidas en la autenticación usuario.
+  Se han cambiado los %c a %s en protocolos DB y DBH para uso correcto de
+  la macro NumServ(). Puestos a arreglar, el make install crea con los
+  permisos adecuados las tablas DBH.
+  
+* 1999/09/14 savage@apostols.org  (patch.vip)                     FEATURE
+  -----------------------------------------------------------------------
+  Se introducen dos nuevos flags de usuario: +x y +X, el primero oculta
+  la dirección ip(o hostname) del usuario y el segundo (+X) permite ver
+  las direcciónes reales al ejecutar /WHOIS /WHO /USERIP y /USERHOST
+  Solo los usuarios +r acceden, automaticamente, a +x, pudiendo cambiar
+  a -x y +x a voluntad mientras perdure el flag +r
+  Solo los usuarios +o (ircops) y +h (OPERS) pueden activar el flag +X
+  El formato de las direcciones es @GaRaBaTo12Ch.virtual, y este valor
+  se calcula en todos los servers cuando el usuario activa +x,
+  guardandose en un campo especifico: User->virtualhost
+  Si los servers encuentran en la nueva tabla V un registro para el nick
+  en cuestión, instalan el valor del registro en User->virtualhost,
+  permitiendo así definir ips virtuales fijas para ciertos usuarios.
+  El valor del GaRaBaTo12Ch se calcula en make_virtualhost() de s_user.c
+  y es basicamente:
+
+    garabato = base64(tea(tea(nick,password),ip<<32+xyz<<8));
+  
+  haciendose imposible crear una relación de ips virtuales a reales, asi
+  como su desencriptación por parte de los usuarios. La unica forma de
+  conseguir averiguar una ip a partir de una virtual sera analizando los
+  logs de los distintos servidores de servicios.
+
+  he modificado además el codigo refernete a BAN para que acepte ban por
+  virtual, y el ban a real afecte tambien a los +x.
+
+  he cambiado el antiguo codigo 378 (ke ya movimos en su dia) al 380
+  he ocupado el codigo 378 para que nos indique la ip/host real del user
+  tal como lo hacen otros daemons de irc. El 379 lo he reservado para
+  que muestre los modos de usn usuario, como enotras redes, pero esto es
+  asunto de otro parche.
+
+  El comando /TRACE solo será accesible a Opers +o y HelpOps +h, antes
+  era accesible a todos. Este comando no oculta IPs.
+
+  No puedo considerar el codigo terminado, la version queda reflejada
+  como VIP+, activandose en el configurador dentro de la sección HISPANO,
+  siendo desactivable por si nos da problemas.
+  
+* 1999/09/14 savage@apostols.org  (patch.no_whois_secret)       UNFEATURE
+  -----------------------------------------------------------------------
+  Elimina completamente el parche patch.whois_secret
+  
+* 1999/07/31 savage@apostols.org  (patch.dbh10)                       FIX
+  -----------------------------------------------------------------------
+  Corrección del BMODE, pues se producian algunos desynch.
+  Lo he simplificado, y para ello he tenido que meter un parametro
+  adicional a set_mode(), que se usa en m_botmode (1) y m_mode (0).
+  Si el parametro es 1 (BMODE), se hace badop=0, bounce=0, asi no se queja
+  nadie. Como el arreglo es en la recepción, sera necesario que este activo 
+  en todos los servers antes de que sea operativo.
+  Por error, en DBH9 deje abierto a IRCops el comando BMODE, ahora es solo
+  server-server. 
+  El BURST de p10 no parsea los modos +R+A+S de canal, tb lo he arreglado. 
+  Queda reflejado como DBH10+
+  
+* 1999/07/30 savage@apostols.org  (patch.whois_secret)            FEATURE
+  -----------------------------------------------------------------------
+  Si asi lo pedimos en la configuración (make config), 
+  OPERS_SEE_IN_SECRET_CHANNELS, el whois les muestra  a los IrcOP o +k la 
+  lista de canales secretos (+s) donde esta el usuario
+  Se documenta en /VERSION como W+/W-
+
+* 1999/07/29 savage@apostols.org  (patch.dbh9)                    FEATURE
+  -----------------------------------------------------------------------
+  Incorpora el comando SERVER-SERVER BMODE, con formato:
+  
+  	:origen BMODE ChanServ #canal +modos :parametros
+
+  ChanServ se busca en la tabla B, y se nos traduce a 'CHaN!^@^', y es lo 
+  que veran los usuarios en los cambios de modos del canal realizados por
+  los servers (autoops, etc). Para mas info ver codigo m_botmode() en
+  chammel.c
+  
+  Modos de usuario:
+  
+  	B    -> Modo Bot, permite TODO sobre canales, sin estar dentro,
+        	limitado a los BOTS, no se puede colocar en modo usuario.
+  
+  Se ha usado un bit de nustro campo Client->hmodes
+  
+  Modos de Canal:
+  
+  	r    -> Canal Registrado (existe en tabla C, no se puede poner/quitar)
+        R    -> Canal Restringido, solo acepta users Registrados
+        A    -> Activacion de autoop para los ke salgan en tabla C
+        S    -> Modo Secure OP (no implementado de momento)
+        
+  Se han usado 4 bits del campo chptr->modes.modes:
+  	#define MODE_REGCHAN    0x020000
+	#define MODE_REGNICKS   0x040000
+	#define MODE_AUTOOP     0x080000
+	#define MODE_SECUREOP   0x100000 
+  
+* 1999/07/29 savage@apostols.org  (patch.noproxy4)                    FIX
+  -----------------------------------------------------------------------
+  Se corrige el tema caida por timeout si tienes el 1080 cerrado sin aviso
+  mediante firewall. Ahora deja al usuario enganchado 90 segundos antes de
+  dejarle entrar.
+  Queda reflejado como PX4+ o PX4- en el /VERSION 
+
+* 1999/07/29 savage@apostols.org  (patch.noproxy3)                    FIX
+  -----------------------------------------------------------------------
+  Se elimina el chekeo de Socks y el de Ident sobre puerto de servers
+  Queda reflejado como PX3+ o PX3- en el /VERSION 
+  
+* 1999/07/29 savage@apostols.org  (patch.dbh8)                    FEATURE
+  -----------------------------------------------------------------------
+  Implementa el nuevo modo de usuario -/+h, conocido en otras redes como
+  HelpOperator, que vendrian a ser los Oper del irc-hispano.
+  Este modo (+h) se activa automaticamente si el nick esta registrado y
+  ademas en la tabla O (de OPERS). Los oper se lo pueden quitar o poner a 
+  su antojo. La unica finalidad del modo +h es aparecer en el /WHOIS 
+  indicando que el usuario es un Operador de Servicios IRC (raw 310)
+  Ademas mejora la implementacion de los modos automaticos al cambiar 
+  de nick.
+  
+* 1999/07/28 savage@apostols.org  (patch.noproxy2)                    FIX
+  -----------------------------------------------------------------------
+  Algunos cambios cosmeticos en los textos enviados al usuario.
+  El patch.noproxy no compila modo DEBUG, este lo arregla. 
+  Queda reflejado como PX2+ o PX2- en el /VERSION 
+  
+* 1999/07/28 savage@apostols.org  (patch.noproxy)                 FEATURE
+  -----------------------------------------------------------------------
+  Implemento un checker de Socks4-Proxies (wingates incluido).
+  La implementación esta en s_socks.c y s_socks.h, pero ha sido necesario 
+  tocar ligeramente s_bsd.c, ircd.c y s_res.c. En la estructura Client de
+  struct.h he añadido el campo socksfd en la parte extendida de clientes 
+  locales. En s_bsd.h he creado las macros y usado un par de bits del 
+  campo client->hmodes.
+  
+  Implementacion:
+  
+  	- Llega conexion nueva
+        - Se lanzan en paralelo los checkers de DNS, ident y proxy
+        - Se atiende al user cuando los tres han finalizado
+        
+  Cuando lanzamos el cheker de proxy, este se intenta conectar al puerto
+  de socks4 del usuario (1080), si lo consigue, mediante protocolo socks4 
+  le solicita al proxy que habra una conexion a la direccion/puerto del
+  ircd que el usuario ha conectado. Se analiza la respuesta de socks4 y
+  si nos confirma la conexión, es un proxy abiero y lo desconectamos del 
+  irc informandole de la causa.
+  
+  Mientras se hace el proceso de checking de Proxy, el server envia unos
+  NOTICE al usuario para que vea lo que le está haciendo. He tenido que
+  usar writes directos al cptr->fd, pk al no estar registrado el usuario
+  en el momento del cheking, no podia usar las colas de salida.
+
+  Esta opcion se puede activar/desactivar (PROXY_PROTECTION) en el make 
+  config, siempre que hayamos seleccionado DB_HISPANO. Queda reflejado
+  en el /VERSION como PX+ o PX-
+  
+* 1999/07/21 savage@apostols.org  (patch.DBH6)                        FIX
+  -----------------------------------------------------------------------
+  Cambia la forma de trabajo del flag +r, impidiendo que el user
+  se lo quite, y (des)activandose solo ante autentificacion, y no ademas
+  por la llegada de un registro DBH, como hasta ahora.
+
+  Introduce algunos cambios cosmeticos en la consulta de la BD
+  (comando DBH en modo user).
+
+  Como estaba mirando la causa de que los DBH2 regalen modos +k a
+  los users, he cambiado a logica positiva la parte del condicional que
+  hace que NO sea aceptado el modo +k cuando:
+
+	- no lo tenias y no eres server y no eres ircop
+          y no (estas registrado y estas en la DB de OPERS)
+          
+  en lugar de la equivalente pero menos inteligible:
+
+  	- no lo tenias y no eres server y no eres ircop
+          y (no estas registrado o no estas en la DB de OPERS) 
+
+  Aunque el bug quedo solucionado en DBH3.
+
+  Puestos a arreglar, añado el DBPATH de la DB10 como prefijo a los
+  ficheros usados por la DBH.
+  
+* 1999/07/06 savage@apostols.org  (patch.whois_renumber)              FIX
+  -----------------------------------------------------------------------
+  Este patch renumera algunos codigos de respuesta del WHOIS para hacerlos
+  mas universales. Se activa si usamos DB_HISPANO/DB_ESNET. Los codigos
+  renumerados son:
+
+  307 (undernet) IP del usuario    ->    378 el usado en otras redes
+  308 (hispano) Nick Registrado    ->    307 el usado en otras redes
+
+  Esto hace ke BitchX se sienta inmensamente feliz :)
+
+* 1999/07/06 savage@apostols.org  (patch.DBH3)                    FEATURE
+  -----------------------------------------------------------------------
+  En el fichero struct.h he ampliado con un nuevo campo la estructura
+  Client, es un unsigned int llamado hmodes. Esto nos permitira dispo-
+  ner de 32bits adicionales como flags de usuario. Estos nuevos flags
+  son propagados si se definen en la tabla user_hmodes[] de s_user.c
+
+  En este parche se hace uso del bit de menor peso de este nuevo campo,
+  en el fichero s_bsd.h:
+        #define HMODES_NICKREGISTERED 0x00000001
+  Y las macros asocicadas:
+        IsNickRegistered(cptr);
+        SetNickRegistered(cptr);
+        ClearNickRegistered(cptr);
+
+  Cuando alguien se pone un nick, se hace un Clear, y si acierta la clave
+  se hace un SetNickRegistered.
+  Este flag queda reflejado con la letra 'r' en los modos de usuario, y
+  solo es aceptada si la envia un server (o por la autentificacion).
+  Si un usuario esta conectado y registra su nick en los servicios, este
+  flag se activara cuando llegue su registro DBH/DB. Y le sera borrado
+  cuando se llegue un borrado de su registro. Los cambios son informados
+  al usuario y propagados a la red.
+
+  El /WHOIS ha sido ampliado (whocmds.c) para mostrar este nuevo 'flag'
+  y he ocupado el ERROR 308 en los fichero s_err.c y numeric.h
+
+  He cambiado los condicionales que comprueban en tablas si nick registrado
+  por la nueva macro IsNickRegistered()
+
+  Queda reflejado en el /VERSION como DBH3.Nr+...., cambiando el anterior
+  texto (DBH2.N+....). He decidido cambiar a DBH3, pk las macros son y
+  seran ampliamente usadas en futuras DBH's, y hago desaparecer la opcion
+  de compilacion DBH_NICK_HACK quedando integrado todo su codigo en el
+  que es activado por el #define DB_HISPANO
+
+  -----------------------------------------------------------------------
+  
+* FINAL o INICIO de CAMBIOS, segun se mire :)

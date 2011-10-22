@@ -1,0 +1,793 @@
+$Id: CAMBIOS2_10_07,v 1.4 2003/07/31 12:04:55 jcea Exp $
+
+* 2000/10/10 jcea@argo.es          (---)                              FIX
+  -----------------------------------------------------------------------
+  Un "make distclean" tambien elimina los ficheros de la "zlib". Esto
+  es bastante importante si cambiamos de arquitectura.
+
+  Tambien se eliminan los ficheros de cache del "configure", por la
+  misma razon.
+
+* 2000/10/05 jcea@argo.es          (---)                          FEATURE
+  -----------------------------------------------------------------------
+  Un "/map" muestra, adicionalmente a lo normal:
+
+  - El "numeric" del servidor
+  - El lag con ese servidor (medido a partir de los "create")
+  - El numero de usuario conectados a ese servidor
+
+* 2000/10/05 jcea@argo.es          (---)                          FEATURE
+  -----------------------------------------------------------------------
+  Cuando se echa a un usuario con una nueva GLINE, se le informa a el
+  y a los que tengan activada la mascara "s" correspondiente, de
+  la razon del GLINE.
+
+* 2000/10/05 jcea@argo.es          (DB77)                         FEATURE
+  -----------------------------------------------------------------------
+  Peticion de Sisco:
+  el mensaje de 'class full' de cuando la clase de usuario se llene,
+  que diga que su clase en este server esta llena, que pruebe
+  /server libres.irc-hispano.org , Es muy efectivo y ya fue probado
+  con exito en la transicion de pulsar a pulsar2....
+
+* 2000/10/05 jcea@argo.es          (---)                          FEATURE
+  -----------------------------------------------------------------------
+  Mostrar en "/stats Y" cuantos usuarios hay conectados
+  en cada clase. Sino la unica opcion es hacer un
+  "/trace", lo que ocasiona FLOOD.
+
+* 2000/08/16 jcea@argo.es          (clones7)                      FEATURE
+  -----------------------------------------------------------------------
+  Las conexiones con clones no heredan "targets", para evitar que
+  las sesiones se quiten targets entre si.
+
+
+* 2000/06/20 jcea@argo.es          (DB76)                         FEATURE
+  -----------------------------------------------------------------------
+  Hago que los usuarios locales no puedan ACTIVAR los modos "SAR", aunque
+  el server los acepta si llegan de un usuario remoto.
+
+  De esta forma los usuarios no juegan con modos que no estan
+  desplegados aun.
+
+* 2000/06/13 jcea@argo.es          (ZLIB10)                           FIX
+  -----------------------------------------------------------------------
+  Tras horas de investigacion descubro un fallo en la implementacion
+  de las "microrafagas": cuando trabajamos con microrafagas es
+  perfectamente posible que tengamos que hacer FLUSH varias veces (no
+  solo una), ya que ZLIB puede ir almacenando compresion de forma
+  interna, y no soltarla hasta el final.
+
+  Por tanto, hay que comprobar este caso especificamente, y no confiar
+  en que un buffer de salida lo bastante grande sea suficiente, ya que
+  antes se usaba ese buffer para un unico comando, y ahora lo usamos
+  para todas las microrafagas que, en el caso de un NETJOIN, pueden
+  ser varios megabytes.
+
+  Cuando tengo que hacer varios FLUSH, aprovecho para usar "send_queued()".
+
+* 2000/06/13 jcea@argo.es          (Undernet20)                      SYNC
+  -----------------------------------------------------------------------
+  Parches Undernet hasta version 12.
+
+  Oculto la IP de los nodos tambien en el comando "uping".
+
+* 2000/06/12 jcea@argo.es          (ZLIB9)                        FEATURE
+  -----------------------------------------------------------------------
+  Para evitar la posible carga de los malloc/free durante las microrafagas,
+  implemente un sistema de cache, de forma que no haga falta pedir/liberar
+  memoria constantemente.
+
+  La cache se va purgando poco a poco, de forma que si en un momento
+  dado se pidieron muchos recursos, esto se van liberando poco a poco.
+
+* 2000/06/12 jcea@argo.es          (ZLIB8)                            FIX
+  -----------------------------------------------------------------------
+  Toda "microrafaga" que se abra, debe ser cerrada. Hay que tener cuidado
+  con posibles "return" entre la apertura y cierre, ya que impiden el
+  correcto cierre de la "microrafaga" si no se programa adecuadamente.
+
+  Para curarnos en salud, an~ado una rutina nueva que fuerza una
+  inicializacion del modulo de "microrafagas" entre lecturas de
+  las conexiones server<->server. De esta forma cualquier microrafaga
+  "huerfana" sera clausurada correctamente.
+
+  An~ado tambien otro comando para eliminar "cptr" que se hayan cerrado,
+  del sistema de "microrafagas". De esta forma no nos preocupara que
+  una conexion se cierre mientras esta en una "microrafaga".
+
+
+* 2000/06/12 jcea@argo.es          (ZLIB7)                        FEATURE
+  -----------------------------------------------------------------------
+  Intento realizar el FLUSH de compresion por grupos, no por comandos
+  aislados. Ello supone la deteccion y aprovechamiento de las microrafagas,
+  que son cuando se van a generar varios comandos de salida por una
+  o mas conexiones.
+
+  El caso mas obvio es un "netjoin", cuando el servidor transfiere al otro
+  extremo todo el BURST.
+
+  Otro caso bastante evidente es cuando se lee un bloque de otro nodo;
+  cuando ese bloque tiene varios comandos, podemos considerar que hasta
+  su final estamos trabajando con una "microrafaga".
+
+  Por ultimo, tenemos el caso de la BDD.
+
+  Cuando se cierra una microrafaga, se hace FLUSH de lo que pudiese
+  haber quedado.
+
+* 2000/06/08 jcea@argo.es          (ZLIB6)                        CLEANUP
+  -----------------------------------------------------------------------
+  Introduzco algunos "assert()" para casos que no deberian ocurrir nunca,
+  y verifico todas las llamadas a la libreria ZLIB y de gestion de
+  memoria asociadas, por si alguna falla (no deberia).
+
+* 2000/06/08 jcea@argo.es          (indent6)                      CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2000/06/06 jcea@argo.es          (ZLIB5)                            FIX
+  -----------------------------------------------------------------------
+  El servidor no compilaba correctamente si el sistema en el que se
+  va a instalar NO tenia instalado ya la ZLIB (aunque use la local al
+  servidor, no la instalada en el sistema).
+
+* 2000/05/23 jcea@argo.es          (CONFIG5)                  FEATURE/FIX
+  -----------------------------------------------------------------------
+  Corregido un bucle infinito cuando se evalua la configuracion.
+
+  "/stats f" muestra la configuracion de las lineas "F".
+
+  La negociacion en los enlaces se activa en el "make config".
+
+  Cambiados los textos de los "DEFINE".
+
+* 2000/05/23 jcea@argo.es          (CONFIG4)                      FEATURE
+  -----------------------------------------------------------------------
+  Cambio "NACK" por "REQ", que es mas logico.
+
+  Hago que las negociaciones entre nodos sean configurables mediante una
+  nueva "F"-line.
+
+  El primer campo indica el sentido salida, y el segundo el sentido entrada.
+
+  Las mayusculas indican SIEMPRE, y las minusculas NUNCA.
+
+  De momento defino "z" como ZLIB.
+
+* 2000/05/18 jcea@argo.es          (ZLIB4)                    FEATURE/FIX
+  -----------------------------------------------------------------------
+  Un "stats l" muestra el trafico transferido realmente, y su nivel
+  de compresion.
+
+  Solo crea las estructuras de datos de compresion cuando se ha negociado
+  afirmativamente la compresion (de forma independiente en cada sentido).
+
+  Este cambio corrige tambien un grave "memory leak", debido a que se
+  inicializaban unos 300Kbytes por conexion de usuario, para soportar
+  posible compresion, pero no se liberaba si no se habia negociado
+  compresion.
+
+* 2000/05/18 jcea@argo.es          (ZLIB3)                        FEATURE
+  -----------------------------------------------------------------------
+  Primera version que se va a probar en la red en produccion. Se ha
+  modificado "stats l" para que indique el porcentaje de compresion en
+  recepcion y en transmision, por cada enlace.
+
+* 2000/05/18 jcea@argo.es          (CONFIG3)                      FEATURE
+  -----------------------------------------------------------------------
+  Lo anterior no funciona todo lo bien que debiera, por multiples motivos
+  explicados en mi web.
+
+  Ahora trabajo considerando que algunas peticiones son "especulativas",
+  y se accede a ellas o se ignoran tras resolverse el tipo de conexion.
+  
+* 2000/05/18 jcea@argo.es          (CONFIG2)                      FEATURE
+  -----------------------------------------------------------------------
+  Cuando se unen dos servers, se envia un "ping" y toda la negociacion,
+  y solo se manda el BURST cuando llega el "pong" de respuesta.
+
+  Ello permite negociar ANTES de transmitir el burst.
+
+* 2000/05/17 jcea@argo.es          (CONFIG1)                      FEATURE
+  -----------------------------------------------------------------------
+  Primera implementacion del protocolo de negociacion entre servidores.
+
+  Se basa en el PPP. Un servidor solicita a otro una "feature" mediante
+  un NAK, y este la confirma activa con un ACK. Si no reconoce la
+  feature, devuelve un REJ.
+
+* 2000/05/17 jcea@argo.es          (ZLIB2)                        FEATURE
+  ----------------------------------------------------------------------
+  An~ado los flags "ZLIB_ESNET_IN" y "ZLIB_ESNET_OUT" a la estructura
+  de servidor. Tambien an~ado dos estructuras "z_stream".
+
+  Compilo la libreria ZLIB *ANTES* de compilar el servidor, para que
+  no se enlace con una version anticuada o preinstalada.
+
+  Compresion de la salida a servidor activada "a pin~on fijo", para
+  verificar que funciona bien.
+
+* 2000/05/16 jcea@argo.es          (ZLIB1)                        FEATURE
+  -----------------------------------------------------------------------
+  An~adida la libreria ZLIB de forma interna, para no depender de que
+  se tenga una version instalada y actualizada en el sistema.
+
+  Se configura y se compila correctamente. Se an~ade una opcion de
+  configuracion para permitir activar o desactivar la "feature" en tiempo
+  de compilacion.
+
+* 2000/05/16 jcea@argo.es          (Undernet19)                      SYNC
+  -----------------------------------------------------------------------
+  Parches Undernet hasta version 11.
+
+* 2000/04/04 jcea@argo.es          (DB75)                             FIX
+  -----------------------------------------------------------------------
+  Correccion al parche DB71. Si el HUB manda una orden de borrado, no
+  hace falta mandarle nada mas, ni registros ni "B", ya que la orden de
+  borrado sera confirmada y se pedira la base de datos de nuevo.
+
+* 2000/04/04 jcea@argo.es          (DB74)                             FIX
+  -----------------------------------------------------------------------
+  El parche db52 es erroneo, porque bajo ciertas condiciones se saltaba
+  "hubs", y es imperativo desconectar de todos ellos.
+
+  El sintoma es que si una tabla es muy corta, si se corrompe se genera
+  un bucle entre el nodo y el hub. Ver parche DB71.
+
+* 2000/04/04 jcea@argo.es          (---)                              FIX
+  -----------------------------------------------------------------------
+  Compila con la opcion de DEBUG activada.
+
+* 2000/04/03 jcea@argo.es          (DB73)                            FIX?
+  -----------------------------------------------------------------------
+  En algunas maquinas parece que la compactacisn da problemas, por alguna
+  razon desconocida. En Solaris parece que todo funciona bien, y no he
+  logrado reproducir el problema en mis Linux.
+
+  He modificado la forma de realizar las compactaciones para verificar
+  si se trata de un bug del Kernel Linux, bajo determinadas condiciones,
+  o no.
+  
+* 2000/03/28 jcea@argo.es          (---)                          FEATURE
+  -----------------------------------------------------------------------
+  Elimino la opcion "DBH_OPER_HACK_ONLYREG" en la configuracisn, ya que
+  ahora mismo no tiene sentido. No obstante dejo todo el codigo en el
+  servidor, para el futuro.
+
+* 2000/03/28 jcea@argo.es          (---)                          FEATURE
+  -----------------------------------------------------------------------
+  Por defecto, los opers deberian poder entrar en cualquier canal usando
+  el comando "join # OPER". Ahora esta puesto que solo puedan entrar en
+  los canales registrados en la base de datos distribuida, lo que es un
+  problema porque no hay ninguno :-)
+
+  En el futuro se devolvera a este flag a su valor normal.
+
+  Por lo pronto, la compilacion de servidores nuevos debe realizarse
+  cambiando esta opcion en el "make config". Probablemente, lo mas
+  inteligente seria eliminar esta opcion.
+
+* 2000/03/09 jcea@argo.es          (VIP13)                            FIX
+  -----------------------------------------------------------------------
+  Elimina las dependencias big endian/little endian a la hora de calcular
+  las IPs virtuales.
+
+  Por otra parte, el codigo original de savage era defectuoso y no
+  permitia recuperar una IP cifrada. Cambio el sistema de cifrado.
+
+* 2000/03/09 jcea@argo.es          (VIP12)                            FIX
+  -----------------------------------------------------------------------
+  Complemento al parche VIP11: aparte del kill, tampoco muestra en el
+  status de los usuarios conectados al servidor, cuando un IRCop ejecuta
+  el comando "/oper" con exito.
+
+  Si "/oper" falla, solo se enteran los IRCops, no todos los usuarios.
+  Esto ya estaba de antes.
+
+* 2000/03/09 jcea@argo.es          (db71)                             FIX
+  -----------------------------------------------------------------------
+  Cuando un nodo detecta que una de las bases de datos locales esta
+  corrupta, la borra y solicita actualizaciones a su HUB. Habia un
+  problema cuando la base de datos en si era lo bastante pequen~a como
+  para transferirla en una unica rafaga:
+
+  - El nodo con la BDD corrupta borra la base de datos y emite un "J 0"
+    a su hub, indicandole que le reenvie de nuevo.
+
+  - Si el HUB tenia ya el grifo abierto, envia una orden de borrado y
+    la base de datos. Si cabe entera en una rafaga, abre el grifo de nuevo.
+
+  - El nodo original recibe la orden de borrado y la responde con
+    otro "J 0"
+
+  - Dado que el HUB recibe otro "J 0" con grifo abierto, se vuelve
+    a repetir el proceso.
+
+  La solucion a este problema es no enviar la base de datos, sino un
+  comando "B num_registro", para que el otro extremo nos la pida. Es
+  decir, no hacemos un "push", sino que tiene que ser el otro extremo
+  quien nos haga el "pull".
+
+* 2000/03/09 jcea@argo.es          (VIP11)                            FIX
+  -----------------------------------------------------------------------
+  Cuando un IRCop hace un "kill", en el "path" aparece su IP virtual,
+  si tiene.
+
+* 2000/03/08 jcea@argo.es          (db70)                             FIX
+  -----------------------------------------------------------------------
+  Cuando llegaba una orden de compactacion de la base de datos con
+  contenido (por ejemplo, una frase explicativa), se producia una
+  compactacion (correcto) y no se guarda dicho registro en memoria
+  aunque si en disco (correcto).
+
+  El problema es que si se reinicia el servidor IRC, o se hace un
+  /rehash, se leen todos los registros de disco... incluyendo el
+  registro de compactado... y se almacena en memoria (mal).
+
+  Lo que hago es leer todo el fichero, como siempre, y al final
+  borrar cualquier posible registro de compactado que hayamos
+  podido capturar en memoria. El problema solo se producia cuando
+  se releia la base de datos de disco (reinicio o rehash) *Y*
+  el registro de compactado tenia algun texto explicativo.
+  
+  
+* 2000/03/08 jcea@argo.es          (db69)                         FEATURE
+  -----------------------------------------------------------------------
+  En resumen, si un nick registrado cambia a otro nick (independientemente
+  de que este registrado), anula sus flags:
+
+   r - Nick Registrado
+   h - Operador (helper)
+   x - Ocultacion de IP
+
+   Adicionalmente, si no es IRCop, anula tambien el flag:
+
+   X - Poder ver IPs ocultas.
+
+
+
+	02/Mar/00
+	Complemento a la entrada siguiente.
+
+	Cuando se pasa de un nick registrado a otro tambien
+	registrado, deberia haber un estado "intermedio"
+	sin registro, para que se detecte correctamente que
+	se trata de otro usuario tambien registrado. Ejemplo:
+
+	:pepe mode :-rhx
+	:pepe nick :juan
+	:juan mode :+rhx
+
+	O eso o, lo logico, ampliar el comando "nick" para que
+	envie tambien los modos.
+
+	02/Mar/00
+	Cuando un usuario con nick registrado pasa a nick
+	sin registrar, el servidor deberia quitar los modos
+	ANTES de cambiar el nick.
+
+	En realidad, lo bueno seria que justo antes del cambio
+	de nick se enviasen los modos que se PIERDEN y justo
+	despues los modos que se ganan.
+
+* 2000/02/15 jcea@argo.es          (db68)                             FIX
+  -----------------------------------------------------------------------
+  Si un "helper" cambia de nick y se pone otro nick
+  registrado, el resto de la red no lo vera como
+  "helper", pero su nodo lo seguira considerando
+  "helper". Problema detectado por {^DaNi^}.
+
+  Debe propagar modos al resto de la red y ajustar modos
+  en el nodo local.
+
+* 2000/01/24 jcea@argo.es          (NoProxy17)                    FEATURE
+  -----------------------------------------------------------------------
+  Si la verificacion SOCKS no llega a conectar, porque por ejemplo la
+  maquina destino tiene un cortafuegos o lo tiene el propio servidor de
+  IRC (no deberia bloquear la salida), almacena en la cache SOCKS que
+  la verificacion tuvo exito.
+
+* 2000/01/24 jcea@argo.es          (undernet18)                      SYNC
+  -----------------------------------------------------------------------
+  Parches Undernet.
+
+  Glines a canales
+  Ocultacion de las IPs de los nodos/HUBs.
+
+* 2000/01/21 jcea@argo.es          (NoProxy16)                        FIX
+  -----------------------------------------------------------------------
+  El parche original de SOCKS hace verificacion de SOCKS tambien cuando
+  un servidor se conecta a otro. Y encima el servidor que realiza la
+  verificacion en aquel que inicia la conexion... Lo cual es innecesario.
+
+* 2000/01/21 jcea@argo.es          (undernet17)                      SYNC
+  -----------------------------------------------------------------------
+  Sincronizacion con parches Undernet. Un operador puede entrar en un
+  canal local si usa la clave "OVERRIDE".
+
+* 2000/01/20 jcea@argo.es          (NoProxy15)                        FIX
+  -----------------------------------------------------------------------
+  En NoProxy14 se leia el canal, pero luego no se hacia nada con el
+  y se seguia enviando a #opers.
+
+* 2000/01/20 jcea@argo.es          (NoProxy14)                    FEATURE
+  -----------------------------------------------------------------------
+  Las notificaciones de proxy abierto no se envian a #opers, sino al
+  canal que se indique en la BDD "b" bajo la clave "sockschannel".
+
+* 2000/01/20 jcea@argo.es          (VIP10)                            FIX
+  -----------------------------------------------------------------------
+  Si un usuario cambia de nick, hay que regenerar su
+  IP virtual. Sino, nos sigue saliendo la antigua
+  cuando se vuelve a poner el nick.
+
+  Se nota si la IP virtual del usuario cambia, por ejemplo
+  porque cambie la clave de cifrado o porque cambie
+  su entrada en la BDD "v".
+
+  Lo sencillo es borrar la IP virtual cuando se cambia el nick.
+
+* 2000/01/18 jcea@argo.es          (NoProxy13)                        FIX
+  -----------------------------------------------------------------------
+  A veces, cuando un proxy esta abierto, parece que informa de ello
+  dos veces. La casuistica es sencilla: si se inician dos conexiones
+  desde un proxy abierto, como cuando se inicia la verificacion
+  todavia no sabemos el resultado, haremos dos verificaciones y, por
+  tanto, dos informes.
+
+  La solucion es sencilla: antes de imprimir el informe, hay que ver
+  si ya tenemos su valor en la cache. Si es asi, no informa en
+  absoluto, porque se acaba de hacer.
+
+  Lo malo es que la segunda vez suele indicar la IP resuelta, y con
+  esto lo perdemos.
+
+* 2000/01/17 jcea@argo.es          (clones6)                      FEATURE
+  -----------------------------------------------------------------------
+  Cuando se dice que el resultado de una verificacion
+  SOCKS esta "cached", debe indicarse tambien
+  cuanto tiempo de vida le queda.
+
+* 2000/01/17 jcea@argo.es          (clones5)                          FIX
+  -----------------------------------------------------------------------
+  ?Corrige el problema de core dump?.
+ 
+* 2000/01/17 jcea@argo.es          (NoProxy12)                    FEATURE
+  -----------------------------------------------------------------------
+  Dado que ahora se hace cache tanto del resultado positivo como negativo
+  de la verificacion de proxy, ya no tiene sentido tener una cache
+  separada para no hacer "flood" de mensajes de aviso (NoProxy10).
+
+* 2000/01/17 jcea@argo.es          (indent5)                      CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2000/01/17 jcea@argo.es          (NoProxy11)                    FEATURE
+  -----------------------------------------------------------------------
+  Despliego una cache negativa de proxies abiertos. Si un proxy esta
+  abierto, y tiene iline, le doy 30 minutos de cache. Si no tiene
+  iline, le pongo 4 horas.
+
+  El efecto es comparable a tener una gline local.
+
+* 2000/01/17 jcea@argo.es          (NoProxy10)                    FEATURE
+  -----------------------------------------------------------------------
+  No muestra mensajes repetidos de proxy inseguro (NoProxy9) si
+  las conexiones se producen en menos de 10 minutos.
+ 
+* 2000/01/17 jcea@argo.es          (clones4)                      FEATURE
+  -----------------------------------------------------------------------
+  Si una conexion tiene clones reconocidos, no hereda "target".
+
+* 2000/01/14 jcea@argo.es          (NoProxy9)                     FEATURE
+  -----------------------------------------------------------------------
+  Cuando se detecta la entrada desde un proxy inseguro, el servidor en
+  cuestion debe anunciarlo en el canal "#opers".
+
+* 2000/01/14 jcea@argo.es          (VIP9)                             FIX
+  -----------------------------------------------------------------------
+  Completa VIP8.
+
+* 2000/01/14 jcea@argo.es          (VIP8)                         FEATURE
+  -----------------------------------------------------------------------
+  "Lazy Virtual Host".
+
+  Calcula el Virtual Host solo la primera vez que alguien solicita
+  informacion sobre ese usuario. De esta forma nos ahorramos calcular
+  host virtuales de forma innecesaria, ademas de repartir el cifrado
+  a lo largo del tiempo, en vez de concentrarlo en, por ejemplo,
+  el BURST.
+
+  La casuistica es:
+
+  + Activar +x
+    - Cuando se conecta un usuario con nick registrado
+    - Cuando un usuario se pone +x
+    - Cuando nos llega un usuario con +x remoto
+
+  + Desactivar +x
+    - Cuando un usuario de pone -x
+    - Cuando el nick se desregistra desde la red
+
+* 2000/01/14 jcea@argo.es          (VIP7)                             FIX
+  -----------------------------------------------------------------------
+  Si a un usuario se le va a cifrar su IP, pero la clave de cifrado no
+  esta en la base de datos, se pone el host ""no.hay.clave.de.cifrado".
+
+  Incluyo algunos "Sanity Checks" en el trabajo con la base de datos
+  de IPs virtuales.
+
+* 2000/01/11 jcea@argo.es          (VIP6)                         FEATURE
+  -----------------------------------------------------------------------
+  Un "UserIP" sobre un usuario con IP protegida debe mostar "0.0.0.0", no
+  "127.0.0.1".
+
+* 2000/01/11 jcea@argo.es          (VIP5)                         FEATURE
+  -----------------------------------------------------------------------
+  No permite que un servidor remoto ponga en un usuario arbitrario los
+  modos +h, +x, o +X.
+
+  Si un nick no esta registrado (o se desregistra), no tolera +h, +x, +X.
+
+* 2000/01/11 jcea@argo.es          (Undernet16)                      SYNC
+  -----------------------------------------------------------------------
+  Sincronizacion con parches Undernet.
+
+* 2000/01/10 jcea@argo.es          (db67)                             FIX
+  -----------------------------------------------------------------------
+  Los cambios efectuados no tenian en cuenta que pudiese llegar por
+  la red un registro no normalizado.
+
+* 2000/01/10 jcea@argo.es          (indent4)                      CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2000/01/10 jcea@argo.es          (db66)                         FEATURE
+  -----------------------------------------------------------------------
+  Sigo preparando la gestion directa de las BDD a partir de su MMAP. En
+  esta ocasion, paso la responsabilidad de la escritura en disco a
+  "db_alta()".
+
+* 2000/01/10 jcea@argo.es          (db65)                         FEATURE
+  -----------------------------------------------------------------------
+  Cuando se busca un registro, devolvemos una copia, y no el registro
+  real. De esta forma vamos preparando el camino para eliminar los
+  registros de memoria y leerlos directamente de MMAP.
+
+  Como el resto del programa no sabe esto, trabajamos con una pequen~a
+  cache de registros (32 valores), en la que se van copiando los
+  registros que se piden, sobreescribiendo los registros antiguos
+  en un anillo.
+
+* 2000/01/10 jcea@argo.es          (db64)                         FEATURE
+  -----------------------------------------------------------------------
+  No almacenamos el destinatario en memoria.
+
+* 2000/01/10 jcea@argo.es          (db63)                         FEATURE
+  -----------------------------------------------------------------------
+  Ya no se usan "malloc/free" para trabajar con la memoria temporal
+  necesaria para normalizar datos en la base de datos; cuando se va a
+  realizar una operacion, vemos si el bloque que tenemos es suficiente.
+  Si no lo es, lo libera y pide otro mas grande.
+
+  De esta forma eliminamos muchas llamadas de gestion de memoria, y
+  reducimos la fragmentacion.
+
+  Tambien se corrigen un par de BUGS en la gestion de memoria de las BDD.
+
+* 2000/01/10 jcea@argo.es          (clones3)                      FEATURE
+  -----------------------------------------------------------------------
+  El mensaje cuando se supera el limite de clones
+  deberia publicitar la pagina web de compra.
+
+  El mensaje a imprimir se referencia como el registro ".." en BDD - 'i'.
+
+* 2000/01/10 jcea@argo.es          (db62)                         FEATURE
+  -----------------------------------------------------------------------
+  Cuando el servidor muere por culpa de la base de datos, se guarda en
+  el SYSLOG el PATH al directorio con la base de datos problematica.
+
+* 2000/01/10 jcea@argo.es          (db61)                             FIX
+  -----------------------------------------------------------------------
+  En la instalacion "make install" se usaba IRCDOWN/IRCDGRP para fijar
+  los permisos de la base de datos, cuando deberia utilizarse
+  IRC_UID/IRC_GID. En todo caso, ambos valores deberian ser equivalentes,
+  salvo por el hecho de que uno es informacisn textual y el otro es
+  numerico.
+
+* 2000/01/05 jcea@argo.es          (undernet15)                      SYNC
+  -----------------------------------------------------------------------
+  Sincronizacion con parches Undernet.
+
+* 2000/01/04 jcea@argo.es          (db60)                         CLEANUP
+  -----------------------------------------------------------------------
+  Mas aislamiento de BDD y borrado de una rutina que ya no se utiliza.
+
+* 2000/01/03 jcea@argo.es          (db59)                             FIX
+  -----------------------------------------------------------------------
+  Es importante recordar que cuando se an~ade la gestion de una nueva BDD
+  hay que modificar el "make install", para que no la borre cada vez
+  que se instala una nueva version del servidor.
+
+  Eso era lo que pasaba con la base de datos "t".
+
+* 2000/01/03 jcea@argo.es          (db58)                             FIX
+  -----------------------------------------------------------------------
+  [13:03] <YaW> Si un usuario tiene el nick registrado en la DB y al conectar se identifica (/server servidor
+ puerto nick pass). El servidor primero hace un MODE en P9 y posteriormente un NICK en P10.
+[13:03] <YaW> solucion: pasarlo todo en la linea NICK
+
+  JCEA:
+  Cuando se introduce la clave en el nick, se envia
+  inmediatamente el modo sin que se haya propagado
+  aun el nuevo usuario, ya que todavia no se ha
+  registrado contestando al PING
+
+  Si la clave se introduce como "pass", pasa lo mismo.
+
+  La solucion es sencilla: cuando se van a propagar los modos por la red,
+  solo lo hace si el USUARIO esta registrado. Es decir, si se ha conectado,
+  ha introducido sus datos y ha respondido al PING.
+
+* 2000/01/03 jcea@argo.es          (db57)                         FEATURE
+  -----------------------------------------------------------------------
+  Parche complementario al anterior, verificando tambien las BDD leidas
+  desde disco. Este parche no deberia ser necesario si no fuera porque
+  ya se han propagado bases de datos corruptas, antes de desplegar DB56.
+
+* 2000/01/03 jcea@argo.es          (db56)                         FEATURE
+  -----------------------------------------------------------------------
+  Solo acepta un registro nuevo cuando referencia una BDD correcta. Es
+  decir, cuando la BDD referenciada es 'a'-'z' o 'N'.
+
+  En particular, no acepta registros cuyo campo de base de datos conste
+  de mas de un caracter. De esa forma se pretende limitar el peligro
+  de cometer un error si se utilizan comandos "RAW".
+
+* 2000/01/03 jcea@argo.es          (db55)                         FEATURE
+  -----------------------------------------------------------------------
+  Aumenta la informacion que proporciona la respuesta al comando "Q"
+  de las bases de datos distribuidas. Ahora proporciona tambien el numero
+  de registros que contiene.
+
+  Este cambio es compatible con el protocolo previo, a nivel de servidores.
+  No asi a nivel de SERVICES que implementen "Q".
+
+* 2000/01/03 jcea@argo.es          (db54)                         CLEANUP
+  -----------------------------------------------------------------------
+  Concentra todas las operaciones "internas" (menos el hashing) de las
+  bases de datos en el modulo de bases de datos. Entre otras cosas, eso
+  supone exportar menos entorno en el *.h
+
+* 2000/01/03 jcea@argo.es          (undernet14)                      SYNC
+  -----------------------------------------------------------------------
+  Fix Y2K proveniente de Undernet. En realidad el problema ocurre todos
+  los an~os, entre el periodo en que la zona local ha cambiado de an~o,
+  pero GMT todavia no lo ha hecho.
+
+* 1999/12/21 jcea@argo.es          (patch.global7)                    FIX
+  -----------------------------------------------------------------------
+  Cuando un global se pasaba de nodo en nodo, se perdia el texto del mensaje.
+
+* 1999/12/20 jcea@argo.es          (patch.clones2)                    FIX
+  -----------------------------------------------------------------------
+  Si tiene permiso de clones, nunca debe bloquear las conexiones con
+  "Throttled".
+
+  En la version anterior, solo se eliminaba la posibilidad de throttle
+  cuando se superaba el numero maximo de conexiones, no cuando se
+  entraba y salia repetidamente.
+
+* 1999/12/16 jcea@argo.es          (patch.global6)                    FIX
+  -----------------------------------------------------------------------
+  Por alguna extran~a razon, borre un parametro de una funcion con
+  parametros variables, provocando core dump.
+
+* 1999/12/16 jcea@argo.es          (patch.global5)                    FIX
+  -----------------------------------------------------------------------
+  Se iban an~adiendo prefijos "Mensaje Global" en cada "hop".
+
+* 1999/12/16 jcea@argo.es          (patch.NoProxy8)               FEATURE
+  -----------------------------------------------------------------------
+  En la cache NoProxy, si la conexion proviene de una IP con clones,
+  se le dan cuatro horas de validez, en lugar de los 30 minutos.
+  
+* 1999/12/13 jcea@argo.es          (undernet13.patch)                SYNC
+  -----------------------------------------------------------------------
+  Fix proveniente de Undernet.
+
+* 1999/12/13 jcea@argo.es          (patch.indent3)                   SYNC
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 1999/12/13 jcea@argo.es          (patch.global4)                    FIX
+  -----------------------------------------------------------------------
+  Soluciona "Target Left IRC".
+
+* 1999/12/13 jcea@argo.es          (patch.global3)                    FIX
+  -----------------------------------------------------------------------
+  Corregido Core Dump.
+
+* 1999/12/10 jcea@argo.es          (patch.global2)                FEATURE
+  -----------------------------------------------------------------------
+  Con el cambio anterior, ya no se reconocen los mensajes globales.
+  An~adimos el texto "MENSAJE GLOBAL", asi como el nick del remitente
+  y la mascara de destino.
+
+* 1999/12/10 jcea@argo.es          (patch.global1)                FEATURE
+  -----------------------------------------------------------------------
+  Para evitar que el mIRC meta los globales en la ventana de status,
+  hacemos que cada usuario vea el global como un mensaje privado
+  dirigido a el personalmente.
+
+  Por cierto, un privado con destino "$..." se distribuye entre los usuarios
+  conectados a los servidores que cumplen la mascara.
+
+  Si el destino es "#...", el global se distribuye entre los usuarios de
+  la red cuya IP/Hostname cumple la mascara.
+
+  Si se requiere una personalizacion mayor, se puede recurrir al envio
+  de mensajes personales o, mejor, /privmsg n1,n2,n3,n4,n5...
+
+* 1999/12/10 jcea@argo.es          (patch.NoProxy7)                   FIX
+  -----------------------------------------------------------------------
+  Los servidores no tienen entrada en IPcheck, asi que no debemos hacer
+  "SetIPChecked()" de forma indiscriminada en "IPcheck_proxy_cache_set()".
+
+* 1999/12/10 savage@apostols.org   (patch.dbh17)                      FIX
+  -----------------------------------------------------------------------
+  El pseudoBot de nicks nos habla por NOTICE en lugar de PRIVMSG, lo hago
+  pensando en no liar mucho la migración de cara a los scripts.
+
+* 1999/12/09 jcea@argo.es         (patch.NoProxy6)                    FIX
+  -----------------------------------------------------------------------
+  El parche "NoProxy5" no hacia cache dependiendo del tipo de error en el
+  intento de conexion para verificar.
+
+* 1999/12/09 jcea@argo.es         (patch.NoProxy5)                FEATURE
+  -----------------------------------------------------------------------
+  Mantiene una cache del resultado de las comprobaciones de PROXY abierto.
+  Si el proxy estaba cerrado, le da una validez de 30 minutos. Si el
+  PROXY estaba abierto, realiza la comprobacion de nuevo siempre.
+
+* 1999/12/09 jcea@argo.es         (undernet12.patch)                 SYNC
+  -----------------------------------------------------------------------
+  Incluimos los tres primeros parches de Undernet para 2.10.07
+
+  Algunos detalles:
+
+    - Uno de los parches permite que los IRCops no tengan limitado el
+      numero de canales en los que puede entrar simultaneamente. Eso ya
+      estaba implementado en nuestro codigo.
+
+    - Otros parches conceden numerosos privilegios a los IRCops, dentro
+      de canales locales. Nosotros hacemos lo mismo, pero para todos
+      los canales, no solo los locales.
+
+* 1999/11/19 savage@apostols.org  (patch.db53)                        FIX
+  -----------------------------------------------------------------------
+  Linux 2.0/libc5 no contiene algunas definiciones en mman.h, como són 
+  MAP_NORESERVE y MAP_FAILED. Digital Unix no contiene MAP_NORESERVE, 
+  los he incorporado en s_bdd.h, MAP_NORESERVE=0 y MAP_FAILED=((void*)-1)
+  
+* 1999/11/18 savage@apostols.org  (patch.db52)                        FIX
+  -----------------------------------------------------------------------
+  Si está corrupta una tabla, al hacer REHASH (o kill -1) muere el daemon
+  al desconectar de los hubs, pk un puntero keda invalidado. Se ha
+  corregido con este patch.
+  
+* 1999/11/18 savage@apostols.org  (patch.dbh16)                   FEATURE
+  -----------------------------------------------------------------------
+  Los textos referentes a autenticación de usuario se enviaran con origen
+  nombe.de.server y NOTICE , excepto si existe un registro 'nickserv' en
+  la tabla 'b', en cuyo caso se enviaran con origen el contenido de dicho
+  registro mediante PRIVMSG. Resumiendo:
+
+    :jupiter.irc-hispano.org NOTICE usuario :*** Utiliza /NICK usuari...
+
+  o bien:
+  
+    :NiCK PRIVMSG usuario :*** Utiliza /NICK usuario:clave para ident...
+
+* INICIO de CAMBIOS para "ircu2.10.07"

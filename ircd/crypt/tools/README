@@ -1,0 +1,64 @@
+/************************************************************************
+ *   IRC - Internet Relay Chat, ircd/crypt/tea/README
+ *   Copyright (C) 2002 IRC-Hispano.org - ESNET - zoltan
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 1, or (at your option)
+ *   any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+
+Fichero README del programa para encriptar claves de nick para
+introducir en la tabla 'n'.
+
+
+ COMPILACION en LINUX o entornos UNIX
+Para compilarlo necesitas el Make y gcc de gnu, lo podras encontrar
+en http://www.gnu.org. Se compila tecleando "gmake" o "make".
+
+
+  COMPILACION en WINDOWS
+Si tienes el suite Visual Studio o uno de sus partes Visual C++, puedes
+hacerlo en modo grafico o en modo consola.
+En modo consola se hace con "cl cifranick.c ws2_32.lib" y te generará un
+ejecutable *.exe
+
+
+Para utilizar el programa hay que teclear en la consola:
+
+ En Linux/UNIX:
+     ./cifranick <nick> <clave>
+ En Windows:
+     cifranick <nick> <clave>
+
+siendo <nick> el nick del usuario para encriptar su clave y
+<clave> la clave del usuario. (Notese que si la clave mide mas de
+12 caracteres, se trunca a 12 caracteres).
+El programa devolvera el nick normalizado en minusculas teniendo en
+cuenta lo siguiente
+   La minuscula de ^ es ~
+    "     "     de \ es |
+    "     "     de [ es {
+    "     "     de ] es }
+y la clave sale encriptada, lista para meterla en la tabla 'n'.
+
+
+Para dudas, preguntas, sugerencias, puede comentarlas en el canal
+#irc-dev del iRC-Hispano o visitar la web http://www.irc-dev.net y
+exponerlas en los foros.
+
+
+08/04/2002 zoltan <zoltan@irc-dev.net>
+
+
+PD: La may£scula de NiCK es nick2 ;-)

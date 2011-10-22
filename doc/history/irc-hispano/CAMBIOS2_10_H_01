@@ -1,0 +1,147 @@
+$Id: CAMBIOS2_10_H_01,v 1.10 2000/11/16 15:10:19 jcea Exp $
+
+
+* 2000/11/16 jcea@argo.es          (VIP18 - u2.10.H.01.28)            FIX
+  -----------------------------------------------------------------------
+  Cuando un usuario cambia de nick registrado a no registrado, y al
+  reves, y el nick registrado tiene IP virtual propia, la IP virtual del
+  usuario no cambia.
+
+  Ahora se verifican posibles cambios en la IP virtual cuando el
+  usuario gana o pierde el flag "+r".
+
+* 2000/11/16 jcea@argo.es          (u2.10.H.01.27)                CLEANUP 
+  -----------------------------------------------------------------------
+  "make indent"
+
+* 2000/11/16 jcea@argo.es          (VIP17 - u2.10.H.01.26)            FIX
+  -----------------------------------------------------------------------
+  Modificamos el servidor para que una red hibrida con nodos con IP
+  virtual para todo el mundo, y nodos con IP virtual solo para registrados
+  puedan convivir sin problemas.
+
+  Los nodos mas restrictivos no pondran el +x a sus usuarios, pero deben
+  aceptar el +x que les llegue de otro nodo.
+
+* 2000/11/16 jcea@argo.es          (VIP16 - u2.10.H.01.24)            FIX
+  -----------------------------------------------------------------------
+  Aparecian algunos usuarios ajenos con modo "+x" de forma aleatoria.
+  El problema se producia cuando un usuario externo cambiaba de nick,
+  que siempre se le ponia el "+x", aunque el nodo original no enviase
+  dicho modo.
+
+* 2000/11/16 jcea@argo.es          (VIP15 - u2.10.H.01.23)        FEATURE
+  -----------------------------------------------------------------------
+  Solo debe verificar la clave de nick registrado cuando se trata de
+  conexiones locales.
+
+  Solo acude a la base de datos para ver si un nick esta registrado
+  si se trata de una conexion local.
+
+  Esto incrementa el rendimiento de forma notable, sobre todo en los
+  "net join".
+
+* 2000/11/15 jcea@argo.es          (u2.10.H.01.22)                FEATURE
+  -----------------------------------------------------------------------
+  Cuando se produce un "connect", solo se informa del mismo a los
+  IRCops y Helpers.
+
+* 2000/11/15 jcea@argo.es          (u2.10.H.01.21)                FEATURE
+  -----------------------------------------------------------------------
+  Cuando un usuario esta siendo bloqueado por "silence",
+  deberia salirle algo en pantalla.
+
+  Esto afecta a "invite", "message" y "notice".
+
+  Tambien afecta a "cnotice" y "cprivmsg".
+
+  Los mensajes cuyo destinatario es un canal, no informan si hay
+  un silence en algunos usuarios de un canal.
+
+* 2000/11/15 jcea@argo.es          (u2.10.H.01.20)                FEATURE
+  -----------------------------------------------------------------------
+  Los Helpers pueden solicitar listados largos "who", y ven los modos
+  "i", "w" y "g" de los usuarios, como se fueran IRCops.
+
+* 2000/11/15 jcea@argo.es          (u2.10.H.01.19)                FEATURE
+  -----------------------------------------------------------------------
+  Los opers deberian tener acceso al flag "x" del
+  comando /who.
+
+* 2000/11/15 jcea@argo.es          (VIP14 - u2.19.H.01.18)        FEATURE
+  -----------------------------------------------------------------------
+  Todos los usuarios tienen IP virtual.
+
+* 2000/11/06 jcea@argo.es          (u2.10.H.01.16)                FEATURE
+  -----------------------------------------------------------------------
+  Define un par de flags nuevos para no mezclar demasiado el tema de
+  los informes de "rename".
+
+  Documentado en http://www.argo.es/~jcea/irc/modos.htm
+
+* 2000/10/19 jcea@argo.es          (u2.10.H.01.15)                FEATURE
+  -----------------------------------------------------------------------
+  Un "/who" a un Oper (Helper) tambien devuelve el asterisco marcador
+  de IRCop, de forma que algunos scripts te sacan con colorines :-).
+
+* 2000/10/19 jcea@argo.es          (u2.10.H.01.14)                FEATURE
+  -----------------------------------------------------------------------
+  Cuando un usuario hace un "/who 0 o" tambien le salen los Opers, ya
+  que los IRCops son una especie en extencion en IRC-Hispano :-).
+
+* 2000/10/19 jcea@argo.es          (---)                              FIX
+  -----------------------------------------------------------------------
+  Solucionado un problema con el comando "LIST", que ocasionaba que solo
+  aparecieran los canales cuyo topic ha cambiado en los ultimos 10 minutos.
+
+  El problema era debido a un fallo de reconocimiento de la version del
+  servidor, por parte del mIRC. Se ha solucionado cambiando nuestra
+  version de server, de "ircu2.10.H.01.13" a "u2.10.H.01.13".
+
+  Un sistema de deteccion un tanto precario...
+
+* 2000/10/16 jcea@argo.es          (---)                              FIX
+  -----------------------------------------------------------------------
+  Solucionado un problema de compilacion cuando se configura el servidor
+  para que no soporte compresion en los enlaces.
+
+  Solucionado un problema de dependencias para "m_config.c".
+
+* 2000/10/15 jcea@argo.es          (NICK05)                           FIX
+  -----------------------------------------------------------------------
+  El Kill se mandaba dos veces.
+
+* 2000/10/15 jcea@argo.es          (NICK04)                           FIX
+  -----------------------------------------------------------------------
+  Problemas cuando se hace un "rename" a un nick al que ya se hizo
+  rename antes. El usuario se mata, porque el nick reasignado esta en uso,
+  pero luego se intentaba hacer cosas con el AUNQUE ya estaba muerto.
+
+  Ello generaba "core dump" esporadicos.
+
+* 2000/10/15 jcea@argo.es          (NICK03)                           FIX
+  -----------------------------------------------------------------------
+  El cliente recibia dos veces su cambio de nick.
+
+* 2000/10/15 jcea@argo.es          (NICK02)                           FIX
+  -----------------------------------------------------------------------
+  Solucionado un problema con el "RENAME" si el nick primitivo tiene el
+  flag "+r" (algo que teoricamente no deberia ocurrir nunca, porque
+  si tiene el flag "+r" no deberia hacersele un "rename").
+
+* 2000/10/15 jcea@argo.es          (NICK01)                       FEATURE
+  -----------------------------------------------------------------------
+  Cuando un usuario se pone un nick registrado y no se autentifica, un
+  "service" puede solicitar a su servidor que cambie de nick.
+
+* 2000/10/15 jcea@argo.es          (---)                          FEATURE
+  -----------------------------------------------------------------------
+  Cambio el orden de ejecucion de las operaciones de "make install"
+  para poder ejecutar la version nueva antes de que termine de
+  instalarse, si ya tenemos las BDD creadas. Esto acelera bastante
+  el ciclo "edicion-compilacion-ejecucion".
+
+* 2000/10/15 jcea@argo.es          (---)                          FEATURE
+  -----------------------------------------------------------------------
+  Creditos.
+

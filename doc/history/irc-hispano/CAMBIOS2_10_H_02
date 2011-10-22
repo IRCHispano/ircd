@@ -1,0 +1,578 @@
+$Id: CAMBIOS2_10_H_02,v 1.56 2001/09/10 18:50:48 jcea Exp $
+
+* 2001/09/10 jcea@argo.es          (u2.10.H.02.67)                    FIX
+  -----------------------------------------------------------------------
+  Solucionamos un problema de visualización de clave cuando usamos la
+  sintaxis de ghost "ghost nick:clave". Ahora ya no se imprime la clave.
+
+  Adicionalmente, si usamos la sintaxis "ghost nick:clave" siempre nos
+  dira que el usuario no esta online.
+
+* 2001/09/10 zolty@zolty.net       (u2.10.H.02.66)                FEATURE
+  -----------------------------------------------------------------------
+  Cambio en la raw 1, antes era "Welcome to the Internet Relay Network"
+  ahora es "Welcome to the iRC-Hispano IRC Network" como en muchas redes
+  de irc para que se pueda usar la identificacion de red que llevan varios
+  clientes, entre ellos el mIRC (la variable es $network), en la red.
+
+* 2001/09/10 jcea@argo.es          (u2.10.H.02.65)                FEATURE
+  -----------------------------------------------------------------------
+  El comando ghost admite tambien "ghost nick:clave".
+
+* 2001/09/10 jcea@argo.es          (u2.10.H.02.64)                FEATURE
+  -----------------------------------------------------------------------
+  En el comando "GHOST":
+
+  - Si queremos hacer un ghost a nosotros mismos, da un error antes siquiera
+    de comprobar la validez de la clave.
+
+  - El parametro de clave es opcional, si se introdujo una clave de conexion.
+
+  - Cambio "contraseña" por "clave", por los clientes que no sean LATIN-1.
+
+* 2001/09/10 jcea@argo.es          (u2.10.H.02.63)                CLEANUP
+  -----------------------------------------------------------------------
+  Separo la rutina de verificacion de claves de nicks, ya que con el parche
+  u2.10.H.02.62 la funcionalidad se necesita en varios sitios.
+
+  Elimino factores comunes, por tanto, en las rutinas "m_nick" y "m_ghost".
+
+* 2001/09/10 jcea@argo.es          (DB84 - u2.10.H.02.63)         CLEANUP
+  -----------------------------------------------------------------------
+  Elimino la tabla 't' de ayuda a la migracion de nicks, ya que la migracion
+  en IRC-Hispano ya esta en curso y no usa esa tabla para nada.
+
+* 2001/09/10 zolty@zolty.net       (DB83 - u2.10.H.02.62)         FEATURE
+  -----------------------------------------------------------------------
+  Comando GHOST para la eliminacion de usuarios "colgados" a traves de
+  servidor. Primero hace las siguientes comprobaciones:
+     1) Parametros necesarios?
+     2) Nick on-line?
+     3) Nick registrado?
+     4) Es a sí mismo?
+     5) Contraseña correcta?
+  Luego hace un KILL al usuario y lo propaga por la red.
+
+* 2001/08/23 jcea@argo.es          (VIP27 - u2.10.H.02.61)            FIX
+  -----------------------------------------------------------------------
+  Si compilamos el servidor con la opcion de no dar +x a los usuarios
+  propios (pero aceptando los que llegan por la red), un usuario
+  con +r puede ponerse y sacarse el +x libremente.
+
+* 2001/08/22 jcea@argo.es          (VIP26 - u2.10.H.02.60)            FIX
+  -----------------------------------------------------------------------
+  Si compilamos el servidor con la opcion de no dar +x a los usuarios
+  propios (pero aceptando los que llegan por la red), si un usuario
+  tenia +r se le daba +x automaticamente al conectar.
+
+* 2001/08/17 jcea@argo.es          (DB82 - u2.10.H.02.59)             FIX
+  -----------------------------------------------------------------------
+  Cuando un usuario cambio modos en un canal con modos "extendidos", desde
+  un nodo no actualizado, quitara los modos extendidos en cuestion. Este
+  bug fue introducido por Savage cuando se dejaron los modos extendidos
+  inoperantes, a la espera del despliegue efectivo de la BDD.
+
+  El problema es que cuando un usuario cambia de modos en un canal,
+  en un nodo no actualizado se eliminan siempre los modos extendidos.
+
+  Por ejemplo, si entro por un nodo no actualizado y pongo un canal como
+  secreto:
+
+  :jcea!~ee@jcea.admin.irc-hispano.org MODE #pericos -R+s
+
+* 2001/08/17 jcea@argo.es          (u2.10.H.02.58)                FEATURE
+  -----------------------------------------------------------------------
+  Elimino el comando "DBH", que ya no esta implementado.
+
+* 2001/08/17 jcea@argo.es          (u2.10.H.02.57)                FEATURE
+  -----------------------------------------------------------------------
+  Se fusionan las opciones de ESNET e IRC-HISPANO.
+
+* 2001/08/17 jcea@argo.es          (u2.10.H.02.56)                    FIX
+  -----------------------------------------------------------------------
+  Compila deshabilitando las opciones DBH y ESNET. Util para otras redes.
+
+* 2001/08/17 jcea@argo.es          (DB81 - u2.10.H.02.54)         FEATURE
+  -----------------------------------------------------------------------
+  Por peticion de Sisco, el modo "+X" *SOLO* debe
+  ser admitido en admins. No en opers o IRCops.
+
+* 2001/08/16 jcea@argo.es          (u2.10.H.02.54)                FEATURE
+  -----------------------------------------------------------------------
+  Que solo puedas hacer un "invite" si eres
+  OP del canal en cuestion. Ahora mismo se puede
+  hacer invite hasta en canales que ni existen.
+
+  Sugerencia hecha por cybdan.
+
+  El viejo codigo permitia invitar un usuario an canal inexistente, con el fin
+  de evitar el trafco extra que supondria entrar en un canal para crearlo,
+  invitar y salirse del canal. Pero no creo que eso, ahora, sea un problema
+  en IRC-Hispano. Ademas, deberia estar controlado por el limite de "targets".
+
+* 2001/08/16 jcea@argo.es          (u2.10.H.02.53)                    FIX
+  -----------------------------------------------------------------------
+  Un "dns -l" cuando no eres IRCop se ignora, cuando deberia
+  dar un error de que no tienes permiso.
+
+* 2001/08/16 jcea@argo.es          (u2.10.H.02.52)                FEATURE
+  -----------------------------------------------------------------------
+  No permitir caracteres de control en los nombres de los
+  canales (por ejemplo, control+o).
+
+  No se permite ningun ASCII < 32.
+
+* 2001/08/16 jcea@argo.es          (DB80 - u2.10.H.02.51)         FEATURE
+  -----------------------------------------------------------------------
+  Ahora que ya tenemos nicks en la BDD, debemos restaurar
+  el modo que no permite entrar en un canal a gente sin el +r.
+
+* 2001/05/25 zolty@zolty.net       (u2.10.H.02.50)                FEATURE
+  -----------------------------------------------------------------------
+  Ponemos el STATS i,k,o,g y /GLINE sólo para ircops y helpers para 
+  evitar que los usuarios normales vean ips. 
+
+* 2001/05/21 freemind@unr.com      (VIP25 - u2.10.H.02.49)            FIX
+  -----------------------------------------------------------------------
+NOTAS IMPORTANTES:
+
+ Al realizar este parche vi que el soporte VIP tiene dos modos de
+funcionamiento posibles:
+
+ 1) Que todos los usuarios tengan +x al entrar
+ 2) Que solamente los usuarios registrados tengan +x
+
+Analicemos los 2 casos y como he hecho q el parche actue en cada uno:
+
+ 1) Que todos los usuarios tengan +x al entrar
+
+ Cuando el ircd estaba compilado en este modo siempre te ponia el modo +x
+cuando cambiabas de nick aunque anteriormente te lo hubieses quitado... y
+encima te avisaba de tu ip virtual 2 veces seguidas, con el parche ahora
+el comportamiento cambiara en que si te quitas el modo +x el ircd no te lo
+volvera a poner solo a no ser que reconectes.
+
+ 2) Que solamente los usuarios registrados tengan +x
+
+ Cuando el ircd estaba compilado en este modo solamente podias obtener
+el modo +x si tu nick estaba registrado en la BDD, con el parche el
+funcionamiento seguira siendo el mismo que sin el, tambien se conservara
+el que obtengas +x cuando pasas de un nick no registrado a uno registrado
+(es decir cuando se valida tu contraseña y obtienes +r)
+
+ El parche lo he probado y ha funcionado tal como describo mas arriba,
+mas informacion sobre el entorno que ha sido probado (aun asi puede
+contener errores, no soy perfecto):
+
+Aplicado con exito sobre: u2.10.H.02.43
+
+# uname -a
+Linux themaster 2.2.19-stealth #14 Wed Apr 25 07:17:45 CEST 2001 i586
+unknown
+
+# patch --version
+patch 2.5.4
+
+# diff --version
+diff - GNU diffutils version 2.7
+
+# gcc -v
+Reading specs from /usr/lib/gcc-lib/i386-linux/2.95.2/specs
+gcc version 2.95.2 20000220 (Debian GNU/Linux)
+
+  
+
+* 2001/05/17 jcea@argo.es          (u2.10.H.02.48)                    FIX
+  -----------------------------------------------------------------------
+  Simplificacion.
+
+* 2001/05/17 jcea@argo.es          (u2.10.H.02.47)                FEATURE
+  -----------------------------------------------------------------------
+
+24/Abr/01
+[20:26] <kuantic> estas?
+[20:26] <kuantic> tengo un bug
+[20:28] <jcea> dime
+[20:28] <kuantic> es
+[20:28] <kuantic> /join +#opers
+[20:29] <jcea> si, entiendo
+[20:29] <kuantic> deberia estar prohibido
+[20:29] <kuantic> entrar ahi
+[20:32] <jcea> si, lo se
+[20:32] <jcea> veo el problema que comentas
+[20:32] <jcea> lo documento adecuadamente
+[20:32] <jcea> parala siguiente version del server
+
+El parche es sencillo: El segundo caracter de un canal sin modo ("+")
+no puede ser un caracter de principio de canal (en este momento,
+"+", "#" o "&").
+
+Mientras haya servidores en la red sin este parche, se pueden producir
+"desync" respecto a esos canales. No lo considero un problema, porque
+se supone que nadie los usa, y aunque se usasen no repercute en la
+estabilidad de la red (esos desync).
+
+* 2001/04/26 jcea@argo.es          (DB79 - u2.10.H.02.46)         FEATURE
+  -----------------------------------------------------------------------
+  Amplio el taman~o de las rafagas DB a 1000 entradas, en vez de las 100
+  actuales. De esta forma sincronizamos las bases de datos antes, y seguimos
+  manteniendo atado el lag cuando la actualizacion es importante.
+
+  Este parche ayudara a sincronizar las bases de datos mas rapidamente cuando
+  estas crezcan, lo que es previsible a medio plazo.
+
+
+* 2001/05/17 jcea@argo.es          (u2.10.H.02.45)                CLEANUP
+  -----------------------------------------------------------------------
+  Elimino la funcion "sendto_ops_helpers_butone", que con el parche
+  anterior ya no es necesaria, y clarifico un poco el parche anterior.
+
+* 2001/05/17 freemind@unr.com      (u2.10.H.02.44)                FEATURE
+  -----------------------------------------------------------------------
+  Los "wallops" solo son recibidos por la gente con "+w" *Y* que, al mismo
+  tiempo sean "+o" y/o "+h".
+
+  Un efecto de ello es que los usuarios normales ya no verán los
+  "remote connect".
+  
+
+* 2001/04/26 jcea@argo.es          (u2.10.H.02.43)                    FIX
+  -----------------------------------------------------------------------
+  Solucionado un problema de rutado con los silences y P10.
+
+26/Abr/01
+Cuando hacemos un silence a un usuario, este no vera
+el mensaje de "estas siendo silenciado" en su primera linea
+de texto, porque todavia no se ha propagado el
+silence por la red.
+
+No basta con pasar los + al resto de la red, como hacen
+los -, ya que en caso de split estariamos en la misma
+situacion.
+
+Tendria que ser el nodo originario el que enviase el "notice" al
+usuario.
+
+* 2001/04/26 jcea@argo.es          (VIP24 - u2.10.H.02.42)            FIX
+  -----------------------------------------------------------------------
+  Eliminacion de mensajes de activacion de IPs virtuales espureos.
+
+* 2001/04/26 jcea@argo.es          (VIP23 - u2.10.H.02.41)            FIX
+  -----------------------------------------------------------------------
+  El "silence" no actua sobre las IPs virtuales.
+
+* 2001/04/26 jcea@argo.es          (VIP22 - u2.10.H.02.40)            FIX
+  -----------------------------------------------------------------------
+  Ahora los baneos comprueban también la IP cifrada, aunque no tengamos
+  el +x activado.
+
+* 2001/04/25 jcea@argo.es          (u2.10.H.02.39)                FEATURE
+  -----------------------------------------------------------------------
+  Traduzco las fechas al castellano, con formato castellano.
+
+* 2001/04/25 jcea@argo.es          (u2.10.H.02.38)                FEATURE
+  -----------------------------------------------------------------------
+  En los record de usuarios, en vez de imprimir un "timestamp", imprimimos
+  una fecha "humana".
+
+* 2001/04/25 jcea@argo.es          (u2.10.H.02.37)                    FIX
+  -----------------------------------------------------------------------
+  Activacion de los cambios anteriores.
+
+* 2001/04/25 jcea@argo.es          (u2.10.H.02.36)                    FIX
+  -----------------------------------------------------------------------
+  Correcciones relativas a los parches de FreeMind.
+
+* 2001/04/25 jcea@argo.es          (u2.10.H.02.35)                FEATURE
+  -----------------------------------------------------------------------
+  En "users" ponemos la fecha de los maximos.
+
+* 2001/04/25 jcea@argo.es          (u2.10.H.02.34)                FEATURE
+  -----------------------------------------------------------------------
+  Desvinculo el "lusers" de "users". Es decir, que la ejecucion de
+  "lusers" ya no supone un "users" implicito.
+
+  Cambio la rutina de entrada un nuevo usuario para que le mande
+  un "lusers" seguido de un "users", en vez de un "lusers" a secas.
+
+* 2001/04/24 jcea@argo.es          (u2.10.H.02.33)                FEATURE
+  -----------------------------------------------------------------------
+  Implemento el comando "users", como el de DAL.NET.
+
+  Eliminamos el
+
+    sendto_one(sptr,
+       ":%s NOTICE %s :Highest connection count: %d (%d clients)",
+       me.name, parv[0], max_connection_count, max_client_count);
+
+  en el "lusers", ya que ahora esa informacion la recibimos con el
+  parche anterior. Se pierde, eso si, el numero de servidores conectados,
+  pero no me parece importante.
+
+  Limpieza del parche anterior.
+
+* 2001/04/24 freemind@unr.com      (u2.10.H.02.32)                FEATURE
+  -----------------------------------------------------------------------
+  Muestra estadisticas de usuarios actuales y de pico, tanto locales
+  como remotos.
+
+* 2001/04/24 jcea@argo.es          (u2.10.H.02.31)                CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza de los parches anteriores. Por ejemplo, corrijo la dependencia
+  en el "Makefile", y muevo cosas que no requieren estar en los "*.h"
+  a los "*.c" correspondientes.
+
+  Indentación.
+
+* 2001/04/24 freemind@unr.com      (u2.10.H.02.30)                FEATURE
+  -----------------------------------------------------------------------
+  Más mensajes informativos durante el establecimiento de la conexión.
+
+* 2001/04/24 freemind@unr.com      (u2.10.H.02.29)                FEATURE
+  -----------------------------------------------------------------------
+
+  Devolvemos el uso de "who i%" a los usuarios, pero devuelve 0.0.0.0 si
+  no nos hacemos el "who" a nosotros mismos ni no tenemos el flag "+X".
+
+* 2001/04/16 jcea@argo.es          (Z12 - u2.10.H.02.28)              FIX
+  -----------------------------------------------------------------------
+  Error mecanografico...
+
+* 2001/04/16 jcea@argo.es          (Z11 - u2.10.H.02.27)              FIX
+  -----------------------------------------------------------------------
+  Bug comunicado por {^DaNi^}.
+
+  Los contadores de la zlib hace "wrap". Entre otros efectos, el nivel
+  de compresion informado es incorrecto.
+
+  Soluciono el problema manteniendo un contador separado, que se actualiza
+  sumandole el valor de los contadores zlib antes y despues de la llamada,
+  considerando tambien el caso especial del wrapping.
+
+  Observo que la rutina original del IRCD tambien hace wrapping.
+
+  Ello es visible, por ejemplo, cada 2000 gigas o 2000 millones de
+  mensajes transferidos sin split.
+
+  En IRC-Hispano, a fecha de hoy, supondría tener enlaces sin caidas
+  durante unos ocho meses. Por lo tanto, no me preocupo de este tema
+  de momento...
+
+* 2001/04/10 jcea@argo.es          (u2.10.H.02.26)                    FIX
+  -----------------------------------------------------------------------
+  Bug comunicado por "glog" (Ignasi Cavero).
+
+  Si se compila el server sin soporte para BDD, monta una escabechina
+  con los permisos del servidor, ya que DBPATH="", y hace un
+  "chown", "chgrp" y "chmod", se crean ficheros, etc.
+
+* 2001/04/10 jcea@argo.es          (u2.10.H.02.25)                    FIX
+  -----------------------------------------------------------------------
+  Si el nombre del directorio de base de datos no es el por defecto ("database"),
+  algunas operaciones de "make install" no se ejecutaban correctamente.
+
+* 2001/03/13 jcea@argo.es          (u2.10.H.02.24)                    FIX
+  -----------------------------------------------------------------------
+  El "rename" convertia los nicks a "intXXXXXX", en vez de al correcto
+  "invXXXXXX".
+
+* 2001/03/06 jcea@argo.es          (u2.10.H.02.23)                    FIX
+  -----------------------------------------------------------------------
+  Quitamos a Sputnik definitivamente, ya que no es capaz de soportar
+  redes P10+ (Numerics de 3 y 5 caracteres, mezclados).
+
+  Cambio el sistema para que admita un numero arbitrario de P09, no
+  exactamente 4.
+
+* 2001/03/06 jcea@argo.es          (u2.10.H.02.22)                    FIX
+  -----------------------------------------------------------------------
+  Glog me tenia engan~ado: Sputnik es un P10, no un P09.
+
+* 2001/03/06 jcea@argo.es          (u2.10.H.02.21)                    FIX
+  -----------------------------------------------------------------------
+  Sin tocar codigo, no es posible meter servicios P09 con numerics
+  extendidos.
+
+* 2001/03/06 jcea@argo.es          (u2.10.H.02.20)                FEATURE
+  -----------------------------------------------------------------------
+  Reasignacion de los 'numerics' de los servicios P09.
+
+* 2001/03/05 jcea@argo.es          (u2.10.H.02.19)                    FIX
+  -----------------------------------------------------------------------
+  Con el cambio en los 'numerics', 'map.c' depende de 'numnicks.h'. Hago
+  los cambios de dependencias en el 'Makefile.in'.
+
+* 2001/03/05 jcea@argo.es          (u2.10.H.02.18)                    FIX
+  -----------------------------------------------------------------------
+  Solucionado un problema en la impresion de "/map", con los 'numerics'
+  extendidos.
+
+* 2001/03/05 jcea@argo.es          (u2.10.H.02.17)                    FIX
+  -----------------------------------------------------------------------
+  Falla un "assert()" si el nodo tiene 'numeric' largo.
+
+* 2001/02/26 jcea@argo.es          (u2.10.H.02.16)                FEATURE
+  -----------------------------------------------------------------------
+  Soporte para mas de 64 nodos y 4096 usuarios por nodo.
+
+  Si nuestro "numeric" es menor de 64, trabajamos con numerics de 3
+  caracteres, y tendremos hasta 4096 usuarios.
+
+  Si nuestro "numeric" es mayor o igual que 64, trabajaremos con numerics
+  de 5 caracteres, y tendremos hasta 262144 usuarios.
+
+* 2001/02/23 jcea@argo.es          (u2.10.H.02.15)                FEATURE
+  -----------------------------------------------------------------------
+  Actualizamos "rename" para que pueda trabajar con 'numerics' extendidos.
+
+* 2001/02/13 jcea@argo.es          (u2.10.H.02.14)                    FIX
+  -----------------------------------------------------------------------
+  El servidor no compilaba si se configura sin soporte IRC-HISPANO ni
+  soporte ESNET.
+
+* 2001/02/12 jcea@argo.es          (PX18 - u2.10.H.02.13)             FIX
+  -----------------------------------------------------------------------
+  Las rutinas de verificacion viejas enviaban como nombre de usuario el
+  UID bajo el cual se ejecuta el proceso, cuando se hace una verificacion
+  SOCKS4. No obstante existen SOCKS abiertos que rechazan las conexiones
+  si se les proporciona un nombre de usuario.
+
+  Las rutinas modernas no mandan NINGUN usuario.
+  
+* 2001/01/22 jcea@argo.es          (u2.10.H.02.12)                    FIX
+  -----------------------------------------------------------------------
+  El servidor deberia compilar sin el soporte de IPs virtuales. Aunque
+  ello no se admita en Hispano, parece que el servidor se utiliza en
+  otras redes tambien.
+
+* 2001/01/15 jcea@argo.es          (u2.10.H.02.11)                    FIX
+  -----------------------------------------------------------------------
+  No intenta "sobre-optimizar" la rutina "sprintf_irc".
+
+* 2001/01/10 jcea@argo.es          (u2.10.H.02.10)                    FIX
+  -----------------------------------------------------------------------
+  Parece que los topics de los canales "&" se
+  propagan por la red.
+
+  Solucionado.
+
+* 2001/01/08 jcea@argo.es          (u2.10.H.02.09)                    FIX
+  -----------------------------------------------------------------------
+  Lo correcto es verificar el FLAG "+h", y no buscar en la base de datos
+  cada vez.
+  
+
+  Adjunto email de "MACHO":
+
+  -= Buenas jcea;
+
+ .tras pasarme toda la tarde.. haciendo pruebas..
+ primero paso a explicarte el Bug, por si quedaba alguna duda:
+ Una persona, con tal de que esti aqadida en la BD de opers
+ Sin necesidad del modo +h, puede y tiene, acceso a los x4modes
+ asm como al JOIN OPER sin necesidada de estar marcados con dicho flag.
+ 
+ .Quedara mejor explicado.., con un claro ejemplo:
+ 
+  *** Has Entrado ahora en #Bugtest
+  *** MacHo pone modo: -h
+  *** MacHo pone modo: -o MacHo
+  *** MacHo pone modo: +xo MacHo
+
+  .Lo mismo pasa con el JOIN OPER, el cual he probado
+  y se puede utilizar sin el +h.
+ 
+  .Posibles datos o aclaraciones:
+
+    * Los miembros de la BD de OPERs pueden usar los modos X
+           * Si hack ONLYREG, solo en los canales registrados.
+           *                              1999/06/30 savage@apostols.org
+           */
+
+              IsNickRegistered(sptr) &&
+              db_buscar_registro(BDD_OPERDB, sptr->name))
+ 
+ .Esa funcisn.. lo que hace, esque, un usuario.., con tal de
+ que esti aqadido en la BD de opers, esti o no marcado con 
+ el flag +h, tiene acceso a los +x4modes
+
+ * El hack de la base de datos de opers permite que estos dispongan
+ * de la facilidad parecida a JOIN_GOD_ESNET, pero la clave es OPER
+ * Si activamos el hack ONLYREG, solo funcionara en canales registrados.
+ *                                    1999/06/30 savage@apostols.org
+ */
+     if (
+ #ifdef DBH_OPER_HACK_ONLYREG 
+        reg &&
+ #endif
+        IsNickRegistered(sptr) &&
+        db_buscar_registro(BDD_OPERDB, sptr->name) && (!compall("OPER", 
+key)))
+       return 0;
+ #endif
+  
+ .Con esta funcisn.. es con la que se nos permite entrar a canales
+ cerrados con el JOIN OPER, que tambiin se puede utilizar sin necesidad
+ de estar marcado con el +h, tras comprobarlo, ya que chequea el 
+ db_buscar_registro(BDD_OPERDB, sptr->name), osea.. que chequea 
+ por la DB, en vez de por el flag.
+ 
+ .Opinisn personal:
+
+ No se deberma chequear la DB en vez de el flag, ya que asm...
+ estamos haciendo que unas veces compruebe por el flag.. y 
+ otras por la DB pudiendose hacer todo por una, mejor y mas
+ sencillo, ya que en estos casos.. usa la DB y por ejemplo para
+ ponerte el +kX necesitas del +h.
+ Creo serma mejor.. cambiar eso.. db_buscar_registro(BDD_OPERDB, sptr-
+   >name) por IsHelpOp(sptr), eliminar la 
+ busqueda por la DB, ya que las busquedas consumen tiempo y 
+ recursos. =-
+
+ Un saludo:
+   
+  MacHo.     
+
+
+* 2000/12/29 jcea@argo.es          (u2.10.H.02.08)                   SYNC 
+  -----------------------------------------------------------------------
+  Verificacion del bug  en la gestion de DNS, publicado en Bugtraq
+  el 6 de Diciembre. Nuestra version del servidor de IRC, basado en el
+  codigo Undernet, no es vulnerable al problema.
+
+* 2000/12/20 jcea@argo.es          (u2.10.H.02.07)                    FIX
+  -----------------------------------------------------------------------
+  "Cannot kill, kick or deop channel service", se cambia el mensaje,
+  porque en Hispano si que se le puede hacer un kill.
+
+* 2000/12/19 jcea@argo.es          (u2.10.H.02.06)                    FIX
+  -----------------------------------------------------------------------
+  Separa adecuadamente los campos en "stats l".
+
+  Problema comunicado por Glog.
+
+* 2000/12/04 jcea@argo.es          (VIP20 - u2.10.H.02.05)            FIX
+  -----------------------------------------------------------------------
+  Cambiamos el WHO para que tampoco se pueda buscar por IP si no somos
+  opers/IRCops.
+
+* 2000/12/04 jcea@argo.es          (VIP19 - u2.10.H.02.04)            FIX
+  -----------------------------------------------------------------------
+  El comando "who" con el modo "%i" SOLO esta disponible para operadores
+  o IRCops.
+
+* 2000/12/04 jcea@argo.es          (u2.10.H.02.03)                    FIX
+  -----------------------------------------------------------------------
+  A ver si ahora YA no imprimimos los "connect" salvo a los opers y los
+  IRCops...
+
+* 2000/11/24 jcea@argo.es          (DB78 - u2.10.H.02.02)         FEATURE
+  -----------------------------------------------------------------------
+  Doy acceso a los registros sensibles, solo a determinada gente (admins).
+
+  Ponemos controles de acceso en la BDD (con el comando "dbq").
+
+* 2000/11/21 jcea@argo.es          (u2.10.H.02.01)                   SYNC
+  -----------------------------------------------------------------------
+  "make indent" con el nuevo indent 2.2.6.
+

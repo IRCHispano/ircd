@@ -1,0 +1,25 @@
+$Id: www.txt,v 1.1 2005-01-05 18:00:34 zolty Exp $
+
+More, and up to date, information can be retrieved from the following
+world wide web pages:
+
+* IRC-Dev Website:
+		http://www.irc-dev.net
+
+* IRC-Dev Documents Project:
+		http://www.irc-dev.net/ircd/docs.php
+
+* Release Notes & Patch Repository:
+		http://www.irc-dev.net/ircd/
+
+* Access to the CVS repository:
+		http://www.irc-dev.net/cvs/
+
+* HTTP interface to the CVS repository:
+		http://cvs.irc-dev.net/viewcvs.py/irc-dev/
+
+* Sourceforge Project page:
+		http://sourceforge.net/projects/irc-dev
+
+* Information about large number of file descriptors per process:
+  linux:	http://www.linux.org.za/oskar/patches/kernel/filehandle/

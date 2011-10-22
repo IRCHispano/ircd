@@ -1,0 +1,406 @@
+$Id: CAMBIOS2_10_H_07,v 1.59 2003/10/21 15:17:54 jcea Exp $
+
+* 2003/05/19 jcea@argo.es            (u2.10.H.07.01)              CLEANUP
+  -----------------------------------------------------------------------
+  "make indent".
+
+* 2003/05/19 jcea@argo.es            (u2.10.H.07.02)              CLEANUP
+  -----------------------------------------------------------------------
+  Si al hacer "make install" no existe el fichero MMAP de cache, y el
+  IRCD esta configurado para que lo use, lo creamos. Si el IRCD no tiene
+  permiso para modificar su propio directorio, era incapaz de crear
+  el MMAP y moria.
+
+* 2003/07/10 jduarter@navegalia.com   (u2.10.H.07.03)              CLEANUP
+  ------------------------------------------------------------------------
+  Los mensajes del tipo setsockopt(SO_SNDBUF) : Invalid argument' y
+  similares no son mostrados si 'DEBUGMODE' no esta activo desde el
+  'make config'.
+
+* 2003/07/11 hppmkk@terra.es         (u2.10.H.07.04)                  FIX
+  -----------------------------------------------------------------------
+  Un usuario baneado en un canal sin "+t" no puede cambiar el "topic" del
+  canal a menos que sea "+o".
+  Mostramos como mensaje de error 'Cannot send to channel' por
+  concordancia con lo usado en otras redes.
+
+* 2003/07/21 hppmkk@terra.es         (u2.10.H.07.05)                  FIX
+  -----------------------------------------------------------------------
+  El comando CPRIVMSG ya actualiza el Idle estando activado simplemente
+  IDLE_FROM_MSG al igual que PRIVMSG.
+
+* 2003/07/21 jcea@argo.es            (u2.10.H.07.06)              CLEANUP
+  -----------------------------------------------------------------------
+  Solucionados un par de "warnings" con el parche anterior, y corrijo
+  la documentacion del "make config" sobre el idle.
+
+* 2003/07/21 jcea@argo.es            (u2.10.H.07.07)                  FIX
+  -----------------------------------------------------------------------
+  Si el disco duro se llena al intentar almacenar un nuevo registro en
+  la BDD, intentamos dejar la BDD en el estado en el que estaba, para
+  intentar evitar la descarga de toda la BDD desde la red.
+
+  El sistema de persistencia va a reconocer la inconsistencia, y nos
+  interesa que ocurra para que compruebe la integridad de los ficheros
+  de BDD.
+
+* 2003/07/22 jcea@argo.es            (DB112 - u2.10.H.07.08)      FEATURE
+  -----------------------------------------------------------------------
+  Introduzco una funcion de iteracion para la BDD.
+
+* 2003/07/24 zoltan@irc-dev.net      (u2.10.H.07.09)              FEATURE
+  -----------------------------------------------------------------------
+  Si hacemos whois a un usuario con modos +Bi no se muestran los canales 
+  no comunes, y en su lugar nos mostrara tres puntos suspensivos para
+  indicarnos de que el usuario esta en mas canales. Util para evitar el 
+  flood de bots multicanal como el chanlog.
+
+* 2003/07/24 zoltan@irc-dev.net      (u2.10.H.07.10)              FEATURE
+  -----------------------------------------------------------------------
+  Metemos un contador de canales ocultos y lo mostramos en el whois. 
+  Tambien corrige una linea del parche anterior.
+
+* 2003/07/28 zoltan@irc-dev.net      (u2.10.H.07.11)                  FIX
+  -----------------------------------------------------------------------
+  Cuando un usuario glineado intenta reentrar a la red, el server mandaba
+  un mensaje "K-lined" en vez del correcto "G-lined".
+
+* 2003/07/28 zoltan@irc-dev.net      (u2.10.H.07.12)              FEATURE
+  -----------------------------------------------------------------------
+  Implementacion del soporte PASS clave_server:clave_bdd , en los clientes
+   /server servidor puerto clave_server:clave_bdd, para poder poner un
+  nick +r directamente en un servidor que se necesita especificar pass
+  (por I-line o por E-line).
+
+  La pass de BDD se almacena en el campo "passbdd" dentro de la parte local
+  de la estructura de aClient. 
+  El campo passwd se borra una vez comprobadas las I-lines y K/E-lines (Esto
+  ya lo hacia antes solo si el servidor no estaba compilado con BDD).  
+
+* 2003/07/29 zoltan@irc-dev.net      (u2.10.H.07.13)              CLEANUP
+  -----------------------------------------------------------------------
+  En el cptr->passwd, en vez de reservar X bytes, se usa memoria dinamica.
+
+
+* 2003/07/29 zoltan@irc-dev.net      (u2.10.H.07.14)                  FIX
+  -----------------------------------------------------------------------
+  Y en los anteriores parches no se ha tenido en cuenta de que se puede
+  ejecutar varios PASS antes de hacer el registro, con lo que provocaba
+  "memory leaks".
+
+* 2000/10/10 ryden@redhispana.org    (u2.10.H.07.15)                  FIX
+  -----------------------------------------------------------------------
+  Bug en db_iterador()
+
+* 2003/07/30 amn3s1a@ono.com         (u2.10.H.07.16)              CLEANUP
+  -----------------------------------------------------------------------
+  En m_nick, nick_equivalentes y nick_autentificado_en_bdd solo debe
+  usarse en el caso de que usemos el soporte para BDD. En channel.c
+  con el soporte de canales persistentes, faltaban algunos #if defined(BDD).
+
+* 2000/10/10 nikolas@irc-dev.net     (u2.10.H.07.17)                  FIX
+  -----------------------------------------------------------------------
+  En las comprobaciones de mas mascaras de los ban, nos limitamos a
+  permitir cualquier caracter ASCII mayor que el 32.
+
+* 2003/08/14 hppmkk@terra.es         (u2.10.H.07.18)                  FIX
+  -----------------------------------------------------------------------
+  Por homogeneidad con el WHO, se muestra un * en la respuesta de los
+  USERIP y USERHOST si es OPER.
+
+* 2003/08/14 hppmkk@terra.es         (u2.10.H.07.19)                  FIX
+  -----------------------------------------------------------------------
+  Se comprueba tambien la proteccion de flood "nick changed too fast"
+  aun incluso cuando la clave especificada por el usuario no coincida
+  (nicks registrados), para reducir la posibilidad de un posible ataque
+  de fuerza bruta.
+
+* 2003/08/17 abba@buscanet.com       (u2.10.H.07.20)              CLEANUP
+  -----------------------------------------------------------------------
+  Dado que solo se guardan los "invites" de los usuarios locales, esta
+  información debe almacenarse en la zona "local" de los usuarios.
+
+* 2003/08/18 hppmkk@terra.es         (u2.10.H.07.21)                  FIX
+  -----------------------------------------------------------------------
+  Se corrige un bug en el parche u2.10.H.07.19 que permitia saltarse
+  la comprobacion de clave en casos especiales.
+
+* 2003/08/22 jduarter@navegalia.com  (u2.10.H.07.22)              CLEANUP
+  -----------------------------------------------------------------------
+  Se comprueban los datos introducidos en 'IRCDOWN', 'IRCDGRP', 'IRC_UID' e
+  'IRC_GID', (sintaxis) si son incorrectos se solicitan otra vez. Se añaden
+  en Configure.in dos funciones: try_int() y try_string(), para evitar que
+  se dupliquen en 'config.h' valores doblemente preguntados.
+
+* 2003/08/22 jduarter@navegalia.com  (u2.10.H.07.23)              CLEANUP
+  -----------------------------------------------------------------------
+  Comprobamos la validacion de los datos del anterior parche, es decir,
+  si en realidad un usuario o grupo existe; o un uid/gid existe, o no.
+  En la parte de IRC_UID/IRC_GID, tras poner un valor correcto, y tras
+  ser validado, se imprime en pantalla el nombre del usuario/grupo
+  correspondiente al UID y GID tecleados.
+  Para todas estas operaciones, compilamos un programa externo, para
+  que nos vaya confirmando datos, y dandonos informacion que nos hace
+  falta. Usamos las librerias pwd.h/grp.h (getpwnam(), getgrnam(), etc).
+  No comprobamos estos datos en /etc/passwd, por si acaso el dueño del
+  PC usa otro sistema de claves, que no es SHADOW.
+
+* 2003/08/24 jduarter@navegalia.com  (u2.10.H.07.24)                 FIX
+  -----------------------------------------------------------------------
+  Arreglado un bug que provocaba que fallase el 'make install' a la hora
+  de iniciarlo sin haber especificado UID/GID en 'make config', para
+  arrancar el demonio bajo dichos privilegios. Ahora, si no es especificado
+  el UID/GID, se ignoran los chown/chgrp que hacían fallar la instalación.
+
+* 2003/08/25 jduarter@navegalia.com  (u2.10.H.07.25)              FEATURE
+  -----------------------------------------------------------------------
+  En '/users', se muestra desde cuando se ha empezado a hacer esos
+  'records', es decir, desde cuando el IRCD está encendido:
+  >>>>
+  --- Current local users: 1 Max: 1 (Lunes, 25 de Agosto de 2003 -- 12:37 +02:00, since 20030725-12:33)
+  --- Current global users: 1 Max: 1 (Lunes, 25 de Agosto de 2003 -- 12:37 +02:00, since 20030725-12:33)
+  <<<<
+
+* 2003/08/26 jcea@argo.es            (u2.10.H.07.26)              CLEANUP
+  -----------------------------------------------------------------------
+  Incluyo explicitamente algunas dependencias introducidas implicitamente
+  por el parche anterior.
+
+* 2003/08/27 jduarter@navegalia.com  (u2.10.H.07.27)              FEATURE
+  -----------------------------------------------------------------------
+  Los canales en 'netride' al enlazar dos servidores, eliminan su topic
+  en su versión más moderna. Más información en:
+ 
+  https://sourceforge.net/tracker/?func=detail&atid=504082&aid=760425&group_id=63470
+  y
+  http://mailman.argo.es/pipermail/irc-dev/2003-August/003064.html
+
+* 2003/08/27 jcea@argo.es            (u2.10.H.07.28)                  FIX
+  -----------------------------------------------------------------------
+  Soluciono un "core dump" introducido por el parche u2.10.H.07.20,
+  que mata el servidor cuando desconecta un usuario no local.
+
+* 2003/08/28 jduarter@navegalia.com  (u2.10.H.07.29)              CLEANUP
+  -----------------------------------------------------------------------
+  No se permite la entrada a canales MODELESS que empiezan por
+  '@' (+@,+@#),  por crear confusión a los usuarios.
+
+* 2003/08/28 jduarter@navegalia.com  (u2.10.H.07.30)              CLEANUP
+  -----------------------------------------------------------------------
+  Con el compilador seleccionado en 'make config', se compila ahora
+  la librería 'ZLIB'. Antes, usaba 'gcc' por defecto.
+
+* 2003/08/29 jcea@argo.es            (u2.10.H.07.31)                  FIX
+  -----------------------------------------------------------------------
+  Solucionados un par de problemas con el parche anterior:
+
+  - Incompatibilidad con "bourne shell"
+
+  - El compilador no puede estar formado por mas de una palabra.
+
+* 2003/08/29 jduarter@navegalia.com  (u2.10.H.07.32)              CLEANUP
+  -----------------------------------------------------------------------
+  Al hacer 'make clean', se borran los binarios de la libería ZLIB, y al
+  hacer 'make distclean', se borran zlib/Makefile y zlib/Makefile2, además 
+  de los binarios.
+
+* 2003/08/31 jcea@argo.es            (u2.10.H.07.33)              CLEANUP
+  -----------------------------------------------------------------------
+  Meto "zlib/Makefile2" en el ".cvsignore".
+
+* 2003/08/31 jcea@argo.es            (u2.10.H.07.34)              CLEANUP
+  -----------------------------------------------------------------------
+  Retoques al parche u2.10.H.07.32.
+
+* 2003/08/31 jcea@argo.es            (u2.10.H.07.35)                  FIX
+  -----------------------------------------------------------------------
+  Soluciono otro "core dump" introducido por el parche u2.10.H.07.20.
+
+* 2003/09/01 jcea@argo.es            (u2.10.H.07.36)              CLEANUP
+  -----------------------------------------------------------------------
+  Eliminamos la verificacion de proxy SOCKS4. Detalles en
+  http://mailman.argo.es/pipermail/irc-dev/2003-August/003007.html
+
+* 2003/09/01 jcea@argo.es            (u2.10.H.07.37)                  FIX
+  -----------------------------------------------------------------------
+  Soluciono otro "core dump" introducido por el parche u2.10.H.07.20,
+  si se hace un "/stats z".
+
+  http://mailman.argo.es/pipermail/irc-dev/2003-September/003108.html
+
+* 2003/09/01 jcea@argo.es            (u2.10.H.07.38)                  FIX
+  -----------------------------------------------------------------------
+  Soluciono otro "core dump" introducido por el parche u2.10.H.07.20.
+
+  http://mailman.argo.es/pipermail/irc-dev/2003-September/003108.html 
+
+* 2003/09/01 jcea@argo.es            (u2.10.H.07.39)                  FIX
+  -----------------------------------------------------------------------
+  Soluciono un pequen~o problema introducido en u2.10.H.07.25.
+
+* 2003/09/01 amn3s1a@ono.com         (u2.10.H.07.40)                  FIX
+  -----------------------------------------------------------------------
+  Solucionados los problemas a la hora de detectar las librerias a usar
+  en algunos entornos (ej. la deteccion de -lresolv en Redhat 8 y 9), 
+  para ello he incluido algunos scripts extraidos del IRCu.
+
+  Parche probado contra: RedHat Linux 9.0, Debian GNU/Linux 3.0r1,
+  Mandrake Linux 9.1 ProSuite, Slackware Linux 9.0, SuSE Enterprise Server 8
+  y FreeBSD 4.8.
+
+* 2003/09/02 nikolas@irc-dev.net     (DB113 - u2.10.H.07.41)      FEATURE
+  -----------------------------------------------------------------------
+  Introducimos un MOTD propio en la BDD. Su contenido se muestra usando el
+  mismo numeric que el MOTD normal, y, si compilamos con soporte BDD, es
+  la BDD la que decide en que lugar se muestra el MOTD local. Las entradas
+  del MOTD en la BDD se ponen en la tabla 'z'. Su formato es:
+
+    motd.numero contenido
+
+  Por ejemplo:
+
+    motd.0 Bienvenidos a la Red IRC-Hispano
+    motd.1 Informacion de ultima hora:
+    motd.2 Se informa a los usuarios de ADSL
+    etc...
+
+  Se utiliza la clave "motd.0" como indicador de que el MOTD de la BDD esta
+  presente. Si no existe esa clave, se muestra el MOTD normal. Si existe 
+  dicha clave, se muestra el contenido del MOTD de la BDD al pedir un 
+  /motd. El tratamiento entonces, del MOTD local, tiene dos posibilidades:
+
+    a) En la BDD aparece la cookie %LOCALMOTD. Cuando tenemos ese valor
+       en una clave, se muestra en ese instante el MOTD local y al acabar
+       se sigue con el MOTD de la BDD. Por tanto, si ponemos dicha cookie
+       como valor de motd.0, el MOTD local se mostrara el primero. Si lo
+       que hacemos es ponerla en la ultima clave que usemos, el MOTD local
+       se mostrara al final, tras el MOTD de la BDD.
+    b) En la BDD, no aparece la cookie %LOCALMOTD. En ese caso, el MOTD  
+       local no se muestra, y es responsabilidad de la persona que mantiene
+       la BDD hacer que se muestre.
+
+  Si se compila sin soporte BDD, obviamente, se muestra el MOTD local
+  siempre.
+
+* 2003/09/02 jcea@argo.es             (DB114 - u2.10.H.07.42)         FIX
+  -----------------------------------------------------------------------
+  Limpiamos un poco el parche anterior, actualizamos el numero de
+  version del sistema de persistencia y an~adimos la nueva dependencia.
+
+* 2003/09/02 jcea@argo.es             (u2.10.H.07.43)             CLEANUP
+  -----------------------------------------------------------------------
+  Eliminamos "DBH" de "/version". Hoy en dia solo existe la BDD.
+
+  Asimismo, no vincula "irc-hispano.org" a que se haya compilado con BDD,
+  ya que el IRCD de irc-hispano actual tiene muchos mas cambios.
+
+* 2003/09/02 jcea@argo.es             (u2.10.H.07.44)             FEATURE
+  -----------------------------------------------------------------------
+  Implemento la ampliacion de 9 a 15 caracteres en la longitud permitida
+  del nick. Ver detalles de funcionamiento en
+  
+  http://mailman.argo.es/pipermail/irc-dev/2003-September/003118.html
+
+* 2003/09/02 mount@irc-dev.net        (u2.10.H.07.45)                 FIX
+  -----------------------------------------------------------------------
+  Al hacer 'make install', no se procesaba correctamente la instalación
+  de 'MMAP'.
+
+* 2003/09/02 zoltan@irc-dev.net       (u2.10.H.07.46)             FEATURE
+  -----------------------------------------------------------------------
+  Si se nos invita a un canal, debemos poder entrar en él sin afectar
+  ni verse afectado por el control de "targets".
+
+* 2003/09/02 abba@buscanet.com        (u2.10.H.07.47)             CLEANUP
+  -----------------------------------------------------------------------
+  Eliminamos algunas macros y modos de hispano ya no utiles relacionados
+  con el parche u2.10.H.07.36 de la eliminacion de SOCKS4.
+
+* 2003/09/02 mount@irc-dev.net        (u2.10.H.07.48)                 FIX
+  -----------------------------------------------------------------------
+  Al hacer 'make install', se comprueban dos cosas en el aspecto de
+  MMAP:
+
+   1. Que no esté el fichero creado, si no es así, se hace touch para
+   crearlo.
+   2. Si no se indicaba en 'make config' la ruta donde colocar el MMAP,
+   se ponía en el directorio ircd/ de los sources.
+
+* 2003/09/03 nikolas@irc-dev.net      (u2.10.H.07.49)             FEATURE
+  -----------------------------------------------------------------------
+  Soporte de U:Lines en la BDD. Se ponen en la tabla 'z', con el formato:
+  u:nodo y un valor cualquiera, por ahora, usamos '*'. El /STATS U nos
+  devuelve tambien estas u:lines y las muestra asi:
+
+  U ircd.devel <NULL> Base de Datos Distribuida 0 -1
+
+  Las clasicas, se muestran como siempre.
+
+* 2003/09/04 jcea@argo.es             (u2.10.H.07.50)             CLEANUP
+  -----------------------------------------------------------------------
+  Limpieza y optimizacion del parche anterior.
+
+* 2003/09/04 jcea@argo.es             (u2.10.H.07.51)             CLEANUP
+  -----------------------------------------------------------------------
+  Cambio de orden el "/stats U", para poner la BDD al final.
+
+* 2003/09/04 jcea@argo.es             (u2.10.H.07.52)             FEATURE
+  -----------------------------------------------------------------------
+  Podemos elegir la ocultacion o no de la IP cifrada en los registros
+  en la tabla "w" (*.virtual) mediante un registro de la BDD.
+  Concretamente tabla 'z', registro
+  "ocultar.ip.cifrada.en.la.virtual2".
+
+* 2003/09/04 jcea@argo.es             (u2.10.H.07.53)             CLEANUP
+  -----------------------------------------------------------------------
+  Para la gestion de nicks largos, cambiamos el registro
+  "permite_nicks_largos_en_local" por "permite.nicks.largos.en.local",
+  por consistencia.
+
+* 2003/09/04 jcea@argo.es             (u2.10.H.07.54)             FEATURE
+  -----------------------------------------------------------------------
+  Prohibimos que un usuario se pueda poner un nick "invitado-123456",
+  ademas de los ya clasicos "inv123456".
+
+* 2003/09/04 jcea@argo.es             (u2.10.H.07.55)             FEATURE
+  -----------------------------------------------------------------------
+  Si tenemos activada la opcion de nicks locales largos, el "RENAME"
+  convierte el nick a "invitado-123456", en vez del antiguo "inv123456".
+
+* 2003/09/04 jcea@argo.es             (DB115 - u2.10.H.07.56)     CLEANUP
+  -----------------------------------------------------------------------
+  Movemos la configuracion del numero maximo de clones por IP a la
+  tabla 'z'.
+
+* 2003/09/04 jcea@argo.es             (DB116 - u2.10.H.07.57)     CLEANUP
+  -----------------------------------------------------------------------
+  Movemos la frase que se muestra al superar el numero de clones por IP
+  a la tabla 'z'.
+
+* 2003/09/04 jcea@argo.es             (DB117 - u2.10.H.07.58)     CLEANUP
+  -----------------------------------------------------------------------
+  Movemos la frase que se muestra al superar el numero de conexion para
+  una clase (linea Y) a la tabla 'z'.
+
+* 2003/09/04 jcea@argo.es             (DB118 - u2.10.H.07.59)     CLEANUP
+  -----------------------------------------------------------------------
+  Movemos la clave de cifrado de IPs virtuales a la tabla 'z'.
+
+  Seguimos manteniendo que su acceso (via comando "dbq") este limitada
+  a administradores.
+
+* 2003/09/04 jcea@argo.es             (u2.10.H.07.60)             CLEANUP
+  -----------------------------------------------------------------------
+  Un par de detalles cosmeticos del parche anterior.
+
+* 2003/09/04 jcea@argo.es             (u2.10.H.07.61)                 FIX
+  -----------------------------------------------------------------------
+  Solucionado un problema cuando no existe el registro
+  "numero.maximo.de.clones.por.defecto" en la BDD (tabla 'z').
+
+* 2003/09/04 hppmkk@terra.es          (u2.10.H.07.62)                 FIX
+  -----------------------------------------------------------------------
+  Comprobamos la protección "too fast" tambien en los GHOST, y omitimos
+  la comprobación en los NICK cuando no se indique una clave o el nick
+  esté ocupado.
+
