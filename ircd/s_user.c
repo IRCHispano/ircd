@@ -4487,6 +4487,20 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
       *parv[2]++ = '\0';
     }
     reg = db_buscar_registro(ESNET_NICKDB, nick);
+
+#ifndef NICKS_HISPANO
+    if (!reg && !strIsIrcNkHispano(nick)) {
+      int i = 0;
+
+      /* Tiene caracteres no compatibles */
+      while (nick[i] != 0) {
+       if (!isIrcNkHispano(nick[i]))
+         nick[i]='_';
+       i++;
+      }
+      reg = db_buscar_registro(ESNET_NICKDB, nick);
+    }
+#endif
   }
 
   if (!(acptr = FindClient(nick)))
