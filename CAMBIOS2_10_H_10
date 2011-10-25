@@ -1,3 +1,9 @@
+* 2011/10/25  zoltan@irc-dev.net (u2.10.H.10.164)                    FIX
+------------------------------------------------------------------------
+  Correccion del calculo de virtuales en IPv4.
+
+  Aprovechamos para meter el calculo de virtuales en IPv6.
+
 * 2011/05/01  zoltan@irc-dev.net (u2.10.H.10.163)                    FIX
 ------------------------------------------------------------------------
   Lote de fixes de los parches de IPv6.

@@ -3765,10 +3765,10 @@ void make_virtualhost(aClient *acptr, int mostrar)
       v[0] = (clave_de_cifrado_binaria[0] & 0xffff0000) + ts;
 #ifdef HISPANO_WEBCHAT
       v[1] = MyUser(acptr) ? 
-                  (ntohl((unsigned long)acptr->ip_real.in6_16[6]) << 16 | ntohl((unsigned long)acptr->ip_real.in6_16[7])) : 
-                 : (ntohl((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohl((unsigned long)acptr->ip..in6_16[7]))
+                  (ntohs((unsigned long)acptr->ip_real.in6_16[6]) << 16 | ntohs((unsigned long)acptr->ip_real.in6_16[7])) : 
+                 : (ntohs((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohs((unsigned long)acptr->ip..in6_16[7]))
 #else
-      v[1] = ntohl((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohl((unsigned long)acptr->ip.in6_16[7]);
+      v[1] = ntohs((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohs((unsigned long)acptr->ip.in6_16[7]);
 #endif
 
       tea(v, clave_de_cifrado_binaria, x);
@@ -3793,8 +3793,28 @@ void make_virtualhost(aClient *acptr, int mostrar)
       }
     }
   } else { /* IPv6 */
-    strncpy(ip_virtual_temporal, ircd_ntoa(&acptr->ip), HOSTLEN);
-    strncat(ip_virtual_temporal, ".virtual6", HOSTLEN);
+    /* resultado */
+    x[0] = x[1] = 0;
+
+#ifdef HISPANO_WEBCHAT
+    v[0] = MyUser(acptr) ?
+                (ntohs((unsigned long)acptr->ip_real.in6_16[0]) << 16 | ntohs((unsigned long)acptr->ip_real.in6_16[1]))
+              : (ntohs((unsigned long)acptr->ip.in6_16[0]) << 16 | ntohs((unsigned long)acptr->ip.in6_16[1]));
+    v[1] = MyUser(acptr) ?
+                (ntohs((unsigned long)acptr->ip_real.in6_16[2]) << 16 | ntohs((unsigned long)acptr->ip_real.in6_16[3]))
+              : (ntohs((unsigned long)acptr->ip.in6_16[2]) << 16 | ntohs((unsigned long)acptr->ip.in6_16[3]));
+#else
+    v[0] = ntohs((unsigned long)acptr->ip.in6_16[0]) << 16 | ntohs((unsigned long)acptr->ip.in6_16[1]);
+    v[1] = ntohs((unsigned long)acptr->ip.in6_16[2]) << 16 | ntohs((unsigned long)acptr->ip.in6_16[3]);
+#endif
+
+    tea(v, clave_de_cifrado_binaria, x);
+
+    /* formato direccion virtual: qWeRty.AsDfGh.virtual6 */
+    inttobase64(ip_virtual_temporal, x[0], 6);
+    ip_virtual_temporal[6] = '.';
+    inttobase64(ip_virtual_temporal + 7, x[1], 6);
+    strcpy(ip_virtual_temporal + 13, ".virtual6");
   }
 
 #if defined(BDD_VIP3)
