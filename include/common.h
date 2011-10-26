@@ -60,7 +60,9 @@
 #define NTL_IRCHN 0x4000        /*    Hostnames charset (weak, RFC 1033)  */
 #define NTL_IRCIP 0x8000        /*    Numeric IPs charset (DIGIT and .)   */
 #define NTL_EOL  0x10000        /*    \r\n                                */
-#define NTL_IRCNKHISPANO 0x20000
+#define NTL_LOWERHISPANO 0x20000
+#define NTL_UPPERHISPANO 0x40000
+#define NTL_IRCNKHISPANO 0x80000
 
 /*=============================================================================
  * Structures
