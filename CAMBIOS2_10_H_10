@@ -1,3 +1,12 @@
+* 2011/10/26  zoltan@irc-dev.net (u2.10.H.10.165)                FEATURE
+------------------------------------------------------------------------
+  A peticion de la Admin. de IRC-Hispano, no se permite utilizar nicks
+  que contengan los caracteres [\\]^{|}~` en nicks no registrados. Se
+  sustituiran por _ y si esta registrado o en uso se cambiara a nick de
+  invitado.
+
+  Este parche se puede desactivar con #define NO_NICKS_HISPANO.
+ 
 * 2011/10/25  zoltan@irc-dev.net (u2.10.H.10.164)                    FIX
 ------------------------------------------------------------------------
   Correccion del calculo de virtuales en IPv4.

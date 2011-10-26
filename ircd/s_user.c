@@ -4419,7 +4419,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-#if 1 /* NICKS_HISPANO */
+#ifndef NO_NICKS_HISPANO
   reg = db_buscar_registro(ESNET_NICKDB, nick);
 
   if (!reg && !strIsIrcNkHispano(nick)) {
@@ -4431,13 +4431,17 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
        nick[i]='_';
      i++;
     }
-      reg = db_buscar_registro(ESNET_NICKDB, nick);
-      if (reg) {
-        parv[1] = nuevo_nick_aleatorio(sptr);
-        nick_aleatorio = 1;
-        strncpy(nick, parv[1], nicklen + 1);
-        nick[nicklen] = 0;
-      }
+    reg = db_buscar_registro(ESNET_NICKDB, nick);
+    if (reg || FindClient(nick)) {
+      parv[1] = nuevo_nick_aleatorio(sptr);
+      nick_aleatorio = 1;
+      strncpy(nick, parv[1], nicklen + 1);
+      nick[nicklen] = 0;
+    }
+    sendto_one(cptr,
+      ":%s NOTICE %s :*** El alias que has elegido contiene caracteres no permitidos, el sistema te ha asignado el alias %s.",
+            me.name, BadPtr(parv[0]) ? "*" : parv[0], nick);
+
   }
 #endif
 

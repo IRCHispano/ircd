@@ -567,7 +567,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             }
             else if (!strcmp(c, BDD_NICKLEN))
             {
-              nicklen = 9;  /* Nicklen original por RFC1459 */
+              nicklen = 30;
             }
             else if(!strcmp(c, BDD_COMPRESION_ZLIB_CLIENTE))
             {
