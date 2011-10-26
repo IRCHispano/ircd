@@ -101,7 +101,7 @@ char *debugmode = "";           /*  -"-    -"-   -"-  */
 int dorehash = 0;
 int restartFlag = 0;
 static char *dpath = DPATH;
-int nicklen = 9; /* Nicklen Original */
+int nicklen = 30;
 
 struct event   ev_nextconnect;
 struct event   ev_nextdnscheck;
