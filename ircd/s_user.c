@@ -1951,7 +1951,7 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * Therefore we still need to detect numeric nick collisions too.
      */
     if (MyConnect(acptr) && IsServer(cptr) && Protocol(cptr) > 9)
-      sendto_one(cptr, "%s " TOK_KILL " %s%s y:%s!%s (Ghost5)",
+      sendto_one(cptr, "%s " TOK_KILL " %s%s :%s!%s (Ghost5)",
           NumServ(&me), NumNick(acptr), inpath, path);
     acptr->flags |= FLAGS_KILLED;
   }
@@ -2626,7 +2626,7 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
           || IsChannelService(sptr)
 #endif
           || IsHiddenViewer(sptr)
-          || !IsHidden(acptr)) ? ircd_ntoa_c(acptr) : "0.0.0.0");
+          || !IsHidden(acptr)) ? ircd_ntoa_c(acptr) : "::ffff:0.0.0.0");
     }
     else
     {
