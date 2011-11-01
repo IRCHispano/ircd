@@ -928,7 +928,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
      */
     if (Protocol(cptr) > 9)
       sendto_one(cptr,
-          "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s +%s :%s",
+          "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s +6%s :%s",
           my_name_for_link(me.name, aconf), me.serv->timestamp,
           cptr->serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
 #if defined(HUB)
