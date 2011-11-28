@@ -4394,7 +4394,14 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /*
      * Notify all other users on the new channel
      */
+#if defined(ESNET_NEG)
+    if (MyUser(acptr) && acptr->negociacion & USER_TOK)
+      sendto_one(acptr, ":%s JOIN :%s", acptr->name, name);
+    sendto_channel_notok_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
+    sendto_channel_tok_butserv(chptr, acptr, ":%s J :%s", acptr->name, chptr->numeric);
+#else
     sendto_channel_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
+#endif
   
     del_invite(acptr, chptr);
     if (chptr->topic)

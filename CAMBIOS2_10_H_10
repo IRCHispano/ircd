@@ -1,3 +1,8 @@
+* 2011/11/28  zoltan@irc-dev.net (u2.10.H.10.167)                    FIX
+------------------------------------------------------------------------
+  Fix del parche 10.152 y 10.156, que no se contemplaba los SVSJOIN en los
+  joins.
+
 * 2011/11/02  zoltan@irc-dev.net (u2.10.H.10.166)                    FIX
 ------------------------------------------------------------------------
   Lote de fixes.
