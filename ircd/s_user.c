@@ -722,6 +722,11 @@ static int register_user(aClient *cptr, aClient *sptr,
   config_resolve_speculative(cptr);
 #endif
   
+/* APANIO PROVISIONAL */
+  if (!strcmp("Usuario del webchat de Terra v5", PunteroACadena(sptr->info)))
+    cptr->negociacion &= ~USER_TOK;
+/* FIN APANIO */
+
   if (IsInvisible(sptr))
     ++nrof.inv_clients;
   if (IsOper(sptr))
