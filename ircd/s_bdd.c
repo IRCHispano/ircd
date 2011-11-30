@@ -513,6 +513,9 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                   strcat(buf, "A"); /* Modos vinculados a +r */
                 if (mode & MODE_SECUREOP)
                   strcat(buf, "S"); /* Modos vinculados a +r */
+#if defined(WEBCHAT)
+                /* No se muestran modos en tok/web */
+#endif
                 sendto_channel_butserv(chptr, &me, ":%s MODE %s %s", me.name,
                     chptr->chname, buf);
               }
@@ -685,6 +688,9 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
 */
     if (!(chptr->mode.mode & MODE_REGCHAN))
     {
+#if defined(WEBCHAT)
+      /* No mostramos modos en tok/web */
+#endif
       sendto_channel_butserv(chptr, &me, ":%s MODE %s +r", me.name,
           chptr->chname);
     }

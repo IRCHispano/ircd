@@ -943,9 +943,13 @@ int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (strlen(modebuf) > (size_t)1 || sendts > 0)
   {
-    if (strlen(modebuf) > (size_t)1)
+    if (strlen(modebuf) > (size_t)1) {
+#if defined(WEBCHAT)
+      /* No se muestran modos en tok/web */
+#endif
       sendto_channel_butserv(chptr, NULL, ":%s MODE %s %s %s",
           botname, chptr->chname, modebuf, parabuf);
+    }
     if (IsLocalChannel(chptr->chname))
       return 0;
 #if defined(NO_PROTOCOL9)
@@ -1067,7 +1071,7 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (LocalChanOperMode)
       {
 #if defined(WEBCHAT)
-        /* No mostramos modos en tok */
+        /* No mostramos modos en tok/web */
 #endif
         sendto_channel_butserv(chptr, &me, ":%s MODE %s %s %s",
             me.name, chptr->chname, modebuf, parabuf);
@@ -1078,7 +1082,7 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       else
 #endif
 #if defined(WEBCHAT)
-        /* No mostramos modos en tok */
+        /* No mostramos modos en tok/web */
 #endif
         sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s %s",
             parv[0], chptr->chname, modebuf, parabuf);
@@ -3954,9 +3958,16 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
       while ((lp = sptr->user->channel))
       {
         chptr = lp->value.chptr;
-        if (!is_zombie(sptr, chptr))
+        if (!is_zombie(sptr, chptr)) {
+#if defined(WEBCHAT)
+          sendto_channel_tok_butservchptr, sptr, PartFmt2,
+              parv[0], chptr->chname, "Left all channels");
+          sendto_channel_web_butserv(chptr, sptr, PartWeb,
+              chptr->numeric, parv[0]);
+#endif
           sendto_channel_butserv(chptr, sptr, PartFmt2,
               parv[0], chptr->chname, "Left all channels");
+        }
         remove_user_from_channel(sptr, chptr);
       }
       /* Just in case */
@@ -4255,6 +4266,9 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
               NumServ(&me), BDD_CHANSERV, chptr->chname, NumNick(sptr));
 
           /* queridos usuarios, ahora os tomo el pelo como a chinos */
+#if defined(WEBCHAT)
+          /* No mostramos modos en tok/web */
+#endif
           sendto_channel_butserv(chptr, NULL, ":%s MODE %s +o %s",
               botname, chptr->chname, sptr->name);
         }
@@ -4581,6 +4595,12 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
         (badop || IsModelessChannel(name)) ? CHFL_DEOPPED : CHFL_CHANOP);
 
     /* Send user join to the local clients (if any) */
+#if defined(WEBCHAT)
+      if (MyUser(sptr) && (sptr->negociacion & USER_TOK || sptr->negociacion & USER_WEB))
+        sendto_one(sptr, ":%s JOIN :%s", parv[0], name);
+      sendto_channel_tok_butserv(chptr, sptr, ":%s J :%s", parv[0], chptr->numeric);
+      sendto_channel_web_butserv(chptr, sptr, ":J%s%s", chptr->numeric, parv[0]);
+#endif
     sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
 
     if (badop)
@@ -4596,9 +4616,13 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       /* Send the op to local clients:
          (if any; extremely unlikely, but it CAN happen) */
-      if (!IsModelessChannel(name))
+      if (!IsModelessChannel(name)) {
+#if defined(WEBCHAT)
+        /* No mostramos modos en tok/web */
+#endif
         sendto_channel_butserv(chptr, sptr, ":%s MODE %s +o %s",
             sptr->user->server->name, name, parv[0]);
+      }
 
       /* Set/correct TS and add the channel to the
          buffer for accepted channels: */
@@ -4859,6 +4883,12 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       /* Hemos borrado todo, ahora anunciamos al canal
        * que se ha eliminado el topic. */
 
+#if defined(WEBCHAT)
+      sendto_channel_tok_butserv(chptr, &me, ":%s TOPIC %s :",
+          me.name, chptr->chname);
+      sendto_channel_web_butserv(chptr, &me, ":%s TOPIC %s :",
+          me.name, chptr->chname);
+#endif
       sendto_channel_butserv(chptr, &me, ":%s TOPIC %s :",
           me.name, chptr->chname);
     }
@@ -5362,6 +5392,12 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
     for (member = chptr->members; member; member = member->next)
       if (member->flags & CHFL_BURST_JOINED)
       {
+#if defined(WEBCHAT)
+        if (MyUser(member->value.cptr) && (member->value.cptr->negociacion & USER_TOK || member->value.cptr->negociacion & USER_WEB))
+          sendto_one(member->value.cptr, ":%s JOIN :%s", member->value.cptr, name);
+        sendto_channel_tok_butserv(chptr, member->value.cptr, ":%s J :%s", member->value.cptr, chptr->numeric);
+        sendto_channel_web_butserv(chptr, member->value.cptr, ":J%s%s", chptr->numeric, member->value.cptr);
+#endif
         sendto_channel_butserv(chptr, member->value.cptr, ":%s JOIN :%s",
             member->value.cptr->name, chptr->chname);
 #if !defined(NO_PROTOCOL9)
@@ -5390,6 +5426,9 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
               if (6 == ++cnt)
               {
                 modebuf[mblen2] = 0;
+#if defined(WEBCHAT)
+                /* No mostramos modos en tok/web */
+#endif
                 sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
                     ocultar_servidores ?  his.name : parv[0],
                     chptr->chname, modebuf, parabuf);
@@ -5416,6 +5455,9 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (cnt > 0 || mblen2 > 1)
       {
         modebuf[mblen2] = 0;
+#if defined(WEBCHAT)
+        /* No mostramos modos en tok/web */
+#endif
         sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
             ocultar_servidores ? his.name : parv[0],
             chptr->chname, modebuf, parabuf);
@@ -5577,6 +5619,9 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       {
         /* Time to send buffer */
         modebuf[mblen2] = 0;
+#if defined(WEBCHAT)
+        /* No mostramos modos en tok/web */
+#endif
         sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
             ocultar_servidores ? his.name : parv[0],
             chptr->chname, modebuf, parabuf);
@@ -5617,6 +5662,9 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (cnt > 0 || mblen2 > 1)
     {
       modebuf[mblen2] = 0;
+#if defined(WEBCHAT)
+      /* No mostramos modos en tok/web */
+#endif
       sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s%s",
           ocultar_servidores ? his.name : parv[0],
           chptr->chname, modebuf, parabuf);
@@ -5696,6 +5744,7 @@ int m_part(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!(lp->flags & CHFL_ZOMBIE))
     {
 #if defined(WEBCHAT)
+      sendto_channel_tok_butserv(chptr, sptr, PartFmt1, parv[0], chptr->chname);
       sendto_channel_web_butserv(chptr, sptr, PartWeb, chptr->numeric, parv[0]);
 #endif
       if (comment)
@@ -5807,6 +5856,7 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!(lp->flags & CHFL_ZOMBIE))
   {
 #if defined(WEBCHAT)
+    sendto_channel_tok_butserv(chptr, sptr, PartFmt1, acptr->name,  chptr->chname);
     sendto_channel_web_butserv(chptr, acptr, PartWeb, chptr->numeric, acptr->name);
 #endif
     if (comment)
@@ -5978,9 +6028,16 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     else
     {
-      if (lp)
+      if (lp) {
+#if defined(WEBCHAT)
+        sendto_channel_tok_butserv(chptr, sptr,
+            ":%s KICK %s %s :%s", parv[0], chptr->chname, who->name, comment);
+        sendto_channel_web_butserv(chptr, sptr,
+            ":%s KICK %s %s :%s", parv[0], chptr->chname, who->name, comment);
+#endif
         sendto_channel_butserv(chptr, sptr,
             ":%s KICK %s %s :%s", parv[0], chptr->chname, who->name, comment);
+      }
       if (!IsLocalChannel(parv[1]))
       {
 #if !defined(NO_PROTOCOL9)

@@ -471,7 +471,7 @@ void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
     if (MyConnect(acptr)) {       /* (It is always a client) */
-#ifdef (WEBCHAT)
+#if defined(WEBCHAT)
       if (!((acptr->negociacion & USER_TOK) || (acptr->negociacion & USER_WEB)))
 #endif
       vsendto_prefix_one(acptr, from, pattern, vl);
@@ -653,7 +653,7 @@ void sendto_channel_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
 #if defined(WEBCHAT)
-    if (MyConnect(acptr) && IsStripColor(acptr) && !((acptr->negociacion & USER_TOK) || (acptr->negociacion & USER_WEB))       /* (It is always a client) */
+    if (MyConnect(acptr) && IsStripColor(acptr) && !((acptr->negociacion & USER_TOK) || (acptr->negociacion & USER_WEB)))       /* (It is always a client) */
 #else
     if (MyConnect(acptr) && IsStripColor(acptr))       /* (It is always a client) */
 #endif
@@ -1005,13 +1005,17 @@ void sendto_channel_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
   Reg2 aClient *acptr;
 
   for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
+#if defined(WEBCHAT)
+    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && !((acptr->negociacion & USER_TOK) || (acptr->negociacion & USER_WEB)))
+#else
     if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE))
+#endif
       vsendto_prefix_one(acptr, from, pattern, vl);
   va_end(vl);
   return;
 }
 
-#if defined(ESNET_NEG)
+#if defined(WEBCHAT)
 void sendto_channel_tok_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
 {
   va_list vl;
@@ -1025,14 +1029,14 @@ void sendto_channel_tok_butserv(aChannel *chptr, aClient *from, char *pattern, .
   return;
 }
 
-void sendto_channel_notok_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
+void sendto_channel_web_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
   Reg2 aClient *acptr;
 
   for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
-    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && !(acptr->negociacion & USER_TOK))
+    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && (acptr->negociacion & USER_WEB))
       vsendto_prefix_one(acptr, from, pattern, vl);
   va_end(vl);
   return;
