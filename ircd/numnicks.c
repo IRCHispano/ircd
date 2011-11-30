@@ -82,7 +82,7 @@ static int numerics_extendidos = 0;
 static unsigned int lastNNServer = 0;
 static struct Client *server_list[NN_MAX_SERVER];
 
-#ifdef ESNET_NEG
+#if defined(WEBCHAT)
 #define NN_MAX_CHANNELS		262144  /* NUMNICKBASE ^ 3 */
 static struct Channel *channel_list[NN_MAX_CHANNELS];
 #endif
@@ -613,7 +613,7 @@ const char *CreateNNforProtocol9server(const struct Client *server)
   return YXX;
 }
 
-#ifdef ESNET_NEG
+#if defined(WEBCHAT)
 int SetXXXChannel(struct Channel *chptr)
 {
   static unsigned int last_cn = 0;

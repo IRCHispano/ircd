@@ -95,8 +95,9 @@
 #define ZLIB_ESNET_OUT_SPECULATIVE     0x4
 #endif
 
-#if defined(ESNET_NEG)
+#if defined(WEBCHAT)
 #define USER_TOK  0x8
+#define USER_WEB 0x10
 #endif
 
 struct Client {

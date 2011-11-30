@@ -38,7 +38,7 @@
 
 #include <assert.h>
 
-typedef enum { FIN, ZLIB, TOK } opcion;
+typedef enum { FIN, ZLIB, TOK, WEB } opcion;
 
 static struct {
   char *texto;
@@ -48,7 +48,10 @@ opciones[] = {
 #if defined(ZLIB_ESNET)
   {"zlib", ZLIB},
 #endif
+#if defined(WEBCHAT)
   {"tok", TOK},
+  {"web", WEB},
+#endif
   {NULL, FIN}
 };
 
@@ -189,12 +192,16 @@ int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
         cptr->negociacion |= ZLIB_ESNET_OUT_SPECULATIVE;
         break;
 #endif
+#if defined(WEBCHAT)
       case TOK:
-          if(IsCookieEncrypted(cptr)) {
-            sendto_one(sptr, ":%s " MSG_CONFIG " ACK :tok", me.name);
-            cptr->negociacion |= USER_TOK;
-          }
+          sendto_one(sptr, ":%s " MSG_CONFIG " ACK :tok", me.name);
+          cptr->negociacion |= USER_TOK;
           break;
+      case WEB:
+          sendto_one(sptr, ":%s " MSG_CONFIG " ACK :web", me.name);
+          cptr->negociacion |= USER_WEB;
+          break;
+#endif
       case FIN:
         assert(0);              /* No deberia darse nunca */
     }

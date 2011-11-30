@@ -624,6 +624,7 @@ static void exit_one_client(aClient *bcptr, char *comment)
 #if defined(ESNET_NEG)
     sendto_common_notok_channels(bcptr, ":%s QUIT :%s", bcptr->name, comment);
     sendto_common_tok_channels(bcptr, ":%s Q", bcptr->name);
+    sendto_common_tok2_channels(bcptr, ":Q%s", bcptr->name);
 #else
     sendto_common_channels(bcptr, ":%s QUIT :%s", bcptr->name, comment);
 #endif

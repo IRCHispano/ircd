@@ -77,6 +77,7 @@ static char *PartFmt1 = ":%s PART %s";
 static char *PartFmt1Serv = "%s%s " TOK_PART " %s";
 static char *PartFmt2 = ":%s PART %s :%s";
 static char *PartFmt2Serv = "%s%s " TOK_PART " %s :%s";
+static char *PartWeb = ":L%s%s";
 
 /*
  * some buffers for rebuilding channel/nick lists with ,'s
@@ -1065,6 +1066,9 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(OPER_MODE_LCHAN)
       if (LocalChanOperMode)
       {
+#if defined(WEBCHAT)
+        /* No mostramos modos en tok */
+#endif
         sendto_channel_butserv(chptr, &me, ":%s MODE %s %s %s",
             me.name, chptr->chname, modebuf, parabuf);
         sendto_op_mask(SNO_HACK4,
@@ -1072,6 +1076,9 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
             sptr->name, chptr->chname, modebuf, parabuf);
       }
       else
+#endif
+#if defined(WEBCHAT)
+        /* No mostramos modos en tok */
 #endif
         sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s %s",
             parv[0], chptr->chname, modebuf, parabuf);
@@ -3684,7 +3691,7 @@ aChannel *get_channel(aClient *sptr, char *chname, int flag)
     chptr->creationtime = mio_flag ? TStime() : (time_t) 0;
     channel = chptr;
     hAddChannel(chptr);
-#ifdef ESNET_NEG
+#if defined(WEBCHAT)
     if (!SetXXXChannel(chptr))
     {
       /* No se pudo, borramos */
@@ -3834,7 +3841,7 @@ void sub1_from_channel(aChannel *chptr)
   hRemChannel(chptr);
   --nrof.channels;
 
-#ifdef ESNET_NEG
+#if defined(WEBCHAT)
   RemoveXXXChannel(chptr->numeric);
 #endif
 
@@ -4140,14 +4147,13 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
       /*
        * Notify all other users on the new channel
        */
-#if defined(ESNET_NEG)
-      if (MyUser(sptr) && sptr->negociacion & USER_TOK)
+#if defined(WEBCHAT)
+      if (MyUser(sptr) && (sptr->negociacion & USER_TOK || sptr->negociacion & USER_WEB))
         sendto_one(sptr, ":%s JOIN :%s", parv[0], name);
-      sendto_channel_notok_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
       sendto_channel_tok_butserv(chptr, sptr, ":%s J :%s", parv[0], chptr->numeric);
-#else
-      sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
+      sendto_channel_web_butserv(chptr, sptr, ":J%s%s", chptr->numeric, parv[0]);
 #endif
+      sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
       if (MyUser(sptr))
       {
         del_invite(sptr, chptr);
@@ -4394,14 +4400,13 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /*
      * Notify all other users on the new channel
      */
-#if defined(ESNET_NEG)
-    if (MyUser(acptr) && acptr->negociacion & USER_TOK)
+#if defined(WEBCHAT)
+    if (MyUser(acptr) && (acptr->negociacion & USER_TOK || acptr->negociacion & USER_WEB))
       sendto_one(acptr, ":%s JOIN :%s", acptr->name, name);
-    sendto_channel_notok_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
     sendto_channel_tok_butserv(chptr, acptr, ":%s J :%s", acptr->name, chptr->numeric);
-#else
-    sendto_channel_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
+    sendto_channel_web_butserv(chptr, acptr, ":J%s%s", chptr->numeric, acptr->name);
 #endif
+    sendto_channel_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
   
     del_invite(acptr, chptr);
     if (chptr->topic)
@@ -5690,6 +5695,9 @@ int m_part(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /* Send part to all clients */
     if (!(lp->flags & CHFL_ZOMBIE))
     {
+#if defined(WEBCHAT)
+      sendto_channel_web_butserv(chptr, sptr, PartWeb, chptr->numeric, parv[0]);
+#endif
       if (comment)
         sendto_channel_butserv(chptr, sptr, PartFmt2, parv[0], chptr->chname,
             comment);
@@ -5798,6 +5806,9 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
   /* Send part to all clients */
   if (!(lp->flags & CHFL_ZOMBIE))
   {
+#if defined(WEBCHAT)
+    sendto_channel_web_butserv(chptr, acptr, PartWeb, chptr->numeric, acptr->name);
+#endif
     if (comment)
       sendto_channel_butserv(chptr, acptr, PartFmt2, acptr->name, chptr->chname, comment);
     else
@@ -6925,8 +6936,8 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
   if (!BadPtr(para))
   {
-#ifdef ESNET_NEG
-    if (sptr->negociacion & USER_TOK)
+#if defined(WEBCHAT)
+    if ((sptr->negociacion & USER_TOK) || (sptr->negociacion & USER_WEB))
       sendto_one(sptr, ":%s %d %s %s %s :End of /NAMES list", me.name, RPL_ENDOFNAMES, parv[0],
            ch2ptr ? ch2ptr->chname : para, ch2ptr ? ch2ptr->numeric : "*");
     else

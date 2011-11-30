@@ -721,11 +721,12 @@ static int register_user(aClient *cptr, aClient *sptr,
 #if defined(ESNET_NEG)
   config_resolve_speculative(cptr);
 #endif
-  
+#if defined(WEBCHAT)
 /* APANIO PROVISIONAL */
   if (!strcmp("Usuario del webchat de Terra v5", PunteroACadena(sptr->info)))
     cptr->negociacion &= ~USER_TOK;
 /* FIN APANIO */
+#endif
 
   if (IsInvisible(sptr))
     ++nrof.inv_clients;
@@ -1255,8 +1256,12 @@ static int m_message(aClient *cptr, aClient *sptr,
             if(!strCasecmp(cmd,"PRIVMSG")) {
               sendto_channel_tok_color_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], "P", chptr->numeric, parv[parc - 1]);
+              sendto_channel_tok2_color_butone(cptr, sptr, chptr,
+                  ":%s%s %s%s", "P", parv[0], chptr->numeric, parv[parc - 1]);
               sendto_channel_tok_nocolor_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], "P", chptr->numeric, buffer_nocolor);
+              sendto_channel_tok2_nocolor_butone(cptr, sptr, chptr,
+                  ":%s%s %s%s", "P", parv[0], chptr->numeric, buffer_nocolor);
               sendto_channel_notok_color_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
               sendto_channel_notok_nocolor_butone(cptr, sptr, chptr,
@@ -1276,6 +1281,8 @@ static int m_message(aClient *cptr, aClient *sptr,
             if(!strCasecmp(cmd,"PRIVMSG")) {
               sendto_channel_tok_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], "P", chptr->numeric, parv[parc - 1]);
+              sendto_channel_tok2_butone(cptr, sptr, chptr,
+                  ":%s%s %s%s", "P", parv[0], chptr->numeric, parv[parc - 1]);
               sendto_channel_notok_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
             }
@@ -3934,6 +3941,10 @@ void rename_user(aClient *sptr, char *nick_nuevo)
   sptr->lastnick = now;
 
   /* Esto manda una copia al propio usuario */
+#if defined(WEBCHAT)
+  sendto_common_tok_channels(sptr, ":%s NICK :%s", sptr->name, nick_nuevo);
+  sendto_common_web_channels(sptr, ":N%s %s", sptr->name, nick_nuevo);
+#endif
   sendto_common_channels(sptr, ":%s NICK :%s", sptr->name, nick_nuevo);
 
 /*
@@ -5164,7 +5175,12 @@ nickkilldone:
         }
       }
 
+#if defined(WEBCHAT)
+      sendto_common_tok_channels(sptr, ":%s NICK :%s", parv[0], nick);
+      sendto_common_web_channels(sptr, ":N%s %s", parv[0], nick);
+#endif
       sendto_common_channels(sptr, ":%s NICK :%s", parv[0], nick);
+
       add_history(sptr, 1);
 #if defined(NO_PROTOCOL9)
       sendto_serv_butone(cptr,
@@ -5829,7 +5845,12 @@ nickkilldone:
         }
       }
 
+#if defined(WEBCHAT)
+      sendto_common_tok_channels(sptr, ":%s NICK :%s", parv[0], nick);
+      sendto_common_web_channels(sptr, ":N%s %s", parv[0], nick);
+#endif
       sendto_common_channels(sptr, ":%s NICK :%s", parv[0], nick);
+
       add_history(sptr, 1);
 #if defined(NO_PROTOCOL9)
       sendto_serv_butone(cptr,
