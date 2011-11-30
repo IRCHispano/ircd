@@ -3960,7 +3960,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         chptr = lp->value.chptr;
         if (!is_zombie(sptr, chptr)) {
 #if defined(WEBCHAT)
-          sendto_channel_tok_butservchptr, sptr, PartFmt2,
+          sendto_channel_tok_butserv(chptr, sptr, PartFmt2,
               parv[0], chptr->chname, "Left all channels");
           sendto_channel_web_butserv(chptr, sptr, PartWeb,
               chptr->numeric, parv[0]);
@@ -5394,7 +5394,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       {
 #if defined(WEBCHAT)
         if (MyUser(member->value.cptr) && (member->value.cptr->negociacion & USER_TOK || member->value.cptr->negociacion & USER_WEB))
-          sendto_one(member->value.cptr, ":%s JOIN :%s", member->value.cptr, name);
+          sendto_one(member->value.cptr, ":%s JOIN :%s", member->value.cptr, chptr->chname);
         sendto_channel_tok_butserv(chptr, member->value.cptr, ":%s J :%s", member->value.cptr, chptr->numeric);
         sendto_channel_web_butserv(chptr, member->value.cptr, ":J%s%s", chptr->numeric, member->value.cptr);
 #endif

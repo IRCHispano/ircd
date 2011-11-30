@@ -1256,17 +1256,18 @@ static int m_message(aClient *cptr, aClient *sptr,
             if(!strCasecmp(cmd,"PRIVMSG")) {
               sendto_channel_tok_color_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], "P", chptr->numeric, parv[parc - 1]);
-              sendto_channel_tok2_color_butone(cptr, sptr, chptr,
+              sendto_channel_web_color_butone(cptr, sptr, chptr,
                   ":%s%s %s%s", "P", parv[0], chptr->numeric, parv[parc - 1]);
               sendto_channel_tok_nocolor_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], "P", chptr->numeric, buffer_nocolor);
-              sendto_channel_tok2_nocolor_butone(cptr, sptr, chptr,
+              sendto_channel_web_nocolor_butone(cptr, sptr, chptr,
                   ":%s%s %s%s", "P", parv[0], chptr->numeric, buffer_nocolor);
+/*
               sendto_channel_notok_color_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
               sendto_channel_notok_nocolor_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, buffer_nocolor);
-
+*/
             } else {
 #endif
               sendto_channel_color_butone(cptr, sptr, chptr,
@@ -1281,10 +1282,12 @@ static int m_message(aClient *cptr, aClient *sptr,
             if(!strCasecmp(cmd,"PRIVMSG")) {
               sendto_channel_tok_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], "P", chptr->numeric, parv[parc - 1]);
-              sendto_channel_tok2_butone(cptr, sptr, chptr,
+              sendto_channel_web_butone(cptr, sptr, chptr,
                   ":%s%s %s%s", "P", parv[0], chptr->numeric, parv[parc - 1]);
+/*
               sendto_channel_notok_butone(cptr, sptr, chptr,
                   ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
+*/
             }
             else
 #endif
