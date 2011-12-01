@@ -895,7 +895,11 @@ void sendto_common_channels(aClient *acptr, char *pattern, ...)
       for (member = chan->value.chptr->members; member; member = member->next)
       {
         Reg3 aClient *cptr = member->value.cptr;
+#if defined(WEBCHAT)
+        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && !((cptr->negociacion & USER_TOK) || (cptr->negociacion & USER_WEB)))
+#else
         if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker)
+#endif
         {
           sentalong[cptr->fd] = sentalong_marker;
           vsendto_prefix_one(cptr, acptr, pattern, vl);
@@ -958,35 +962,6 @@ void sendto_common_web_channels(aClient *acptr, char *pattern, ...)
           vsendto_one(cptr, pattern, vl);
         }
       }
-  va_end(vl);
-  return;
-}
-
-void sendto_common_notok_channels(aClient *acptr, char *pattern, ...)
-{
-  va_list vl;
-  Reg1 Link *chan;
-  Reg2 Link *member;
-
-  va_start(vl, pattern);
-
-  ++sentalong_marker;
-  if (acptr->fd >= 0)
-    sentalong[acptr->fd] = sentalong_marker;
-  /* loop through acptr's channels, and the members on their channels */
-  if (acptr->user)
-    for (chan = acptr->user->channel; chan; chan = chan->next)
-      for (member = chan->value.chptr->members; member; member = member->next)
-      {
-        Reg3 aClient *cptr = member->value.cptr;
-        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && !(cptr->negociacion & USER_TOK))
-        {
-          sentalong[cptr->fd] = sentalong_marker;
-          vsendto_prefix_one(cptr, acptr, pattern, vl);
-        }
-      }
-  if (MyConnect(acptr))
-    vsendto_prefix_one(acptr, acptr, pattern, vl);
   va_end(vl);
   return;
 }
