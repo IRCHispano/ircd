@@ -535,7 +535,7 @@ void sendto_channel_web_butone(aClient *one, aClient *from, aChannel *chptr,
       continue;
     if (MyConnect(acptr)) {       /* (It is always a client) */
       if((acptr->negociacion & USER_WEB))
-        vsendto_prefix_one(acptr, from, pattern, vl);
+        vsendto_one(acptr, pattern, vl);
     }
   }
   va_end(vl);
@@ -627,7 +627,7 @@ void sendto_channel_web_color_butone(aClient *one, aClient *from, aChannel *chpt
       continue;
     if (MyConnect(acptr)) {       /* (It is always a client) */
       if(!IsStripColor(acptr) && (acptr->negociacion & USER_WEB))
-        vsendto_prefix_one(acptr, from, pattern, vl);
+        vsendto_one(acptr, pattern, vl);
     }
   }
   va_end(vl);
@@ -706,7 +706,7 @@ void sendto_channel_web_nocolor_butone(aClient *one, aClient *from, aChannel *ch
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
     if (MyConnect(acptr) && IsStripColor(acptr) && (acptr->negociacion & USER_WEB))       /* (It is always a client) */
-      vsendto_prefix_one(acptr, from, pattern, vl);
+      vsendto_one(acptr, pattern, vl);
   }
   va_end(vl);
   return;
@@ -955,7 +955,7 @@ void sendto_common_web_channels(aClient *acptr, char *pattern, ...)
         if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && (cptr->negociacion & USER_WEB))
         {
           sentalong[cptr->fd] = sentalong_marker;
-          vsendto_prefix_one(cptr, acptr, pattern, vl);
+          vsendto_one(cptr, pattern, vl);
         }
       }
   va_end(vl);
@@ -1037,7 +1037,7 @@ void sendto_channel_web_butserv(aChannel *chptr, aClient *from, char *pattern, .
 
   for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
     if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && (acptr->negociacion & USER_WEB))
-      vsendto_prefix_one(acptr, from, pattern, vl);
+      vsendto_one(acptr, pattern, vl);
   va_end(vl);
   return;
 }
