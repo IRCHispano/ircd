@@ -4162,7 +4162,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (MyUser(sptr) && (sptr->negociacion & USER_TOK || sptr->negociacion & USER_WEB))
         sendto_one(sptr, ":%s JOIN :%s", parv[0], name);
       sendto_channel_tok_butserv(chptr, sptr, ":%s J :%s", parv[0], chptr->numeric);
-      sendto_channel_web_butserv(chptr, sptr, ":J%s%s", chptr->numeric, parv[0]);
+      sendto_channel_web_butserv(chptr, sptr, ":%s%s%s", TOK_JOIN, chptr->numeric, parv[0]);
 #endif
       sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
       if (MyUser(sptr))
@@ -4418,7 +4418,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (MyUser(acptr) && (acptr->negociacion & USER_TOK || acptr->negociacion & USER_WEB))
       sendto_one(acptr, ":%s JOIN :%s", acptr->name, name);
     sendto_channel_tok_butserv(chptr, acptr, ":%s J :%s", acptr->name, chptr->numeric);
-    sendto_channel_web_butserv(chptr, acptr, ":J%s%s", chptr->numeric, acptr->name);
+    sendto_channel_web_butserv(chptr, acptr, ":%s%s%s", TOK_JOIN, chptr->numeric, acptr->name);
 #endif
     sendto_channel_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
   
@@ -4599,7 +4599,7 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (MyUser(sptr) && (sptr->negociacion & USER_TOK || sptr->negociacion & USER_WEB))
         sendto_one(sptr, ":%s JOIN :%s", parv[0], name);
       sendto_channel_tok_butserv(chptr, sptr, ":%s J :%s", parv[0], chptr->numeric);
-      sendto_channel_web_butserv(chptr, sptr, ":J%s%s", chptr->numeric, parv[0]);
+      sendto_channel_web_butserv(chptr, sptr, ":%s%s%s", TOK_JOIN, chptr->numeric, parv[0]);
 #endif
     sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
 
@@ -4886,8 +4886,8 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(WEBCHAT)
       sendto_channel_tok_butserv(chptr, &me, ":%s TOPIC %s :",
           me.name, chptr->chname);
-      sendto_channel_web_butserv(chptr, &me, ":%s TOPIC %s :",
-          me.name, chptr->chname);
+      sendto_channel_web_butserv(chptr, &me, ":%s%s%s",
+          TOK_TOPIC, chptr->numeric, me.name);
 #endif
       sendto_channel_butserv(chptr, &me, ":%s TOPIC %s :",
           me.name, chptr->chname);
@@ -5396,7 +5396,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
         if (MyUser(member->value.cptr) && (member->value.cptr->negociacion & USER_TOK || member->value.cptr->negociacion & USER_WEB))
           sendto_one(member->value.cptr, ":%s JOIN :%s", member->value.cptr, chptr->chname);
         sendto_channel_tok_butserv(chptr, member->value.cptr, ":%s J :%s", member->value.cptr, chptr->numeric);
-        sendto_channel_web_butserv(chptr, member->value.cptr, ":J%s%s", chptr->numeric, member->value.cptr);
+        sendto_channel_web_butserv(chptr, member->value.cptr, ":%s%s%s", TOK_JOIN, chptr->numeric, member->value.cptr);
 #endif
         sendto_channel_butserv(chptr, member->value.cptr, ":%s JOIN :%s",
             member->value.cptr->name, chptr->chname);
@@ -6033,7 +6033,7 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
         sendto_channel_tok_butserv(chptr, sptr,
             ":%s KICK %s %s :%s", parv[0], chptr->chname, who->name, comment);
         sendto_channel_web_butserv(chptr, sptr,
-            ":%s KICK %s %s :%s", parv[0], chptr->chname, who->name, comment);
+            ":%s%s%s %s %s", TOK_KICK, chptr->numeric, parv[0], who->name, comment);
 #endif
         sendto_channel_butserv(chptr, sptr,
             ":%s KICK %s %s :%s", parv[0], chptr->chname, who->name, comment);
@@ -6283,9 +6283,16 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_highprot_butone(cptr, 10, "%s " TOK_TOPIC " %s %lu %lu :%s",
               NumServ(sptr), chptr->chname, chptr->creationtime, chptr->topic_time, chptr->topic);
       }
-      if(newtopic)
+      if(newtopic) {
+#if defined(WEBCHAT)
+        sendto_channel_tok_butserv(chptr, from, ":%s TOPIC %s :%s",
+              from->name, chptr->chname, chptr->topic);
+        sendto_channel_web_butserv(chptr, from, ":%s%s%s %s",
+              TOK_TOPIC, chptr->numeric, from->name, chptr->topic);
+#endif
         sendto_channel_butserv(chptr, from, ":%s TOPIC %s :%s",
               from->name, chptr->chname, chptr->topic);
+      }
     }
     else
     {

@@ -621,10 +621,9 @@ static void exit_one_client(aClient *bcptr, char *comment)
      * that the client can show the "**signoff" message).
      * (Note: The notice is to the local clients *only*)
      */
-#if defined(ESNET_NEG)
-    sendto_common_notok_channels(bcptr, ":%s QUIT :%s", bcptr->name, comment);
+#if defined(WEBCHAT)
     sendto_common_tok_channels(bcptr, ":%s Q", bcptr->name);
-    sendto_common_web_channels(bcptr, ":Q%s", bcptr->name);
+    sendto_common_web_channels(bcptr, ":%s%s", TOK_QUIT, bcptr->name);
 #else
     sendto_common_channels(bcptr, ":%s QUIT :%s", bcptr->name, comment);
 #endif
