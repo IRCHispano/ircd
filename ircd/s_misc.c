@@ -623,7 +623,7 @@ static void exit_one_client(aClient *bcptr, char *comment)
      */
 #if defined(WEBCHAT)
     sendto_common_tok_channels(bcptr, ":%s Q", bcptr->name);
-    sendto_common_web_channels(bcptr, ":%s%s", TOK_QUIT, bcptr->name);
+    sendto_common_web_channels(bcptr, ":Q%s", bcptr->name);
 #else
     sendto_common_channels(bcptr, ":%s QUIT :%s", bcptr->name, comment);
 #endif
