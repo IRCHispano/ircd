@@ -1,3 +1,11 @@
+* 2011/12/02  zoltan@irc-dev.net (u2.10.H.10.168)                FEATURE
+------------------------------------------------------------------------
+  Version para aplicaciones Web del protocolo server->cliente para un
+  ahorro considerable de trafico. Pregunta WEBCHAT en el make config dentro
+  de ESNET_NEG.
+
+  Se activa enviando "CONFIG REQ :web" al conectar al ircd.
+
 * 2011/11/28  zoltan@irc-dev.net (u2.10.H.10.167)                    FIX
 ------------------------------------------------------------------------
   Fix del parche 10.152 y 10.156, que no se contemplaba los SVSJOIN en los
