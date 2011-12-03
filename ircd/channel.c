@@ -6997,14 +6997,14 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
       strcat(buf, c2ptr->name);
 #if defined(WEBCHAT)
-      strcat(buf, ":");
-      strcat(buf, c2ptr->webnumeric);
+      if (sptr->negociacion & USER_WEB2) {
+        strcat(buf, ":");
+        strcat(buf, c2ptr->webnumeric);
+        idx += 4; /* Numeric + ':' */
+      }
 #endif
       strcat(buf, " ");
       idx += strlen(c2ptr->name) + 1;
-#if defined(WEBCHAT)
-      idx += 4; /* Numeric + ':' */
-#endif
       flag = 1;
 #if defined(GODMODE)
       {
