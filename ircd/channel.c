@@ -4171,7 +4171,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (MyUser(sptr) && (sptr->negociacion & USER_WEB || sptr->negociacion & USER_WEB2))
         sendto_one(sptr, ":%s JOIN :%s", parv[0], name);
       sendto_channel_web_butserv(chptr, sptr, ":J%s%s", chptr->webnumeric, parv[0]);
-      sendto_channel_web2_butserv(chptr, sptr, "J%s%s%s", chptr->webnumeric, sptr->webnumeric, sptr->name);
+      sendto_channel_web2_butserv(chptr, sptr, "%s%s%s", chptr->webnumeric, sptr->webnumeric, sptr->name);
 #endif
       sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
       if (MyUser(sptr))
@@ -4427,7 +4427,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (MyUser(acptr) && (acptr->negociacion & USER_WEB || acptr->negociacion & USER_WEB2))
       sendto_one(acptr, ":%s JOIN :%s", acptr->name, name);
     sendto_channel_web_butserv(chptr, acptr, ":J%s%s", chptr->webnumeric, acptr->name);
-    sendto_channel_web2_butserv(chptr, acptr, "J%s%s%s", chptr->webnumeric, acptr->webnumeric, acptr->name);
+    sendto_channel_web2_butserv(chptr, acptr, "%s%s%s", chptr->webnumeric, acptr->webnumeric, acptr->name);
 #endif
     sendto_channel_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
   
@@ -4608,7 +4608,7 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (MyUser(sptr) && (sptr->negociacion & USER_WEB || sptr->negociacion & USER_WEB2))
         sendto_one(sptr, ":%s JOIN :%s", parv[0], name);
       sendto_channel_web_butserv(chptr, sptr, ":J%s%s", chptr->webnumeric, parv[0]);
-      sendto_channel_web2_butserv(chptr, sptr, "J%s%s%s", chptr->webnumeric, sptr->webnumeric, sptr->name);
+      sendto_channel_web2_butserv(chptr, sptr, "%s%s%s", chptr->webnumeric, sptr->webnumeric, sptr->name);
 #endif
     sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
 
@@ -5408,7 +5408,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
         if (MyUser(member->value.cptr) && (member->value.cptr->negociacion & USER_WEB || member->value.cptr->negociacion & USER_WEB2))
           sendto_one(member->value.cptr, ":%s JOIN :%s", member->value.cptr, chptr->chname);
         sendto_channel_web_butserv(chptr, member->value.cptr, ":J%s%s", chptr->webnumeric, member->value.cptr->name);
-        sendto_channel_web2_butserv(chptr, member->value.cptr, "J%s%s%s", chptr->webnumeric, member->value.cptr->webnumeric, member->value.cptr->name);
+        sendto_channel_web2_butserv(chptr, member->value.cptr, "%s%s%s", chptr->webnumeric, member->value.cptr->webnumeric, member->value.cptr->name);
 #endif
         sendto_channel_butserv(chptr, member->value.cptr, ":%s JOIN :%s",
             member->value.cptr->name, chptr->chname);
