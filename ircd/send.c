@@ -401,11 +401,7 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
     par = va_arg(vl, char *);
     strcpy(sender, from->name);
 
-#if defined(WEBCHAT)
-    if (user && !((to->negociacion & USER_TOK) || (to->negociacion & USER_WEB)))
-#else
     if (user)
-#endif
     {
       if (user->username)
       {
@@ -427,11 +423,7 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
      * Flag is used instead of strchr(sender, '@') for speed and
      * also since username/nick may have had a '@' in them. -avalon
      */
-#if defined(WEBCHAT)
-    if (!flag && MyConnect(from) && user->host && !((to->negociacion & USER_TOK) || (to->negociacion & USER_WEB)))
-#else
     if (!flag && MyConnect(from) && user->host)
-#endif
     {
       strcat(sender, "@");
 #if defined(BDD_VIP)
@@ -472,7 +464,7 @@ void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
       continue;
     if (MyConnect(acptr)) {       /* (It is always a client) */
 #if defined(WEBCHAT)
-      if (!((acptr->negociacion & USER_TOK) || (acptr->negociacion & USER_WEB)))
+      if (!((acptr->negociacion & USER_WEB) || (acptr->negociacion & USER_WEB2)))
 #endif
       vsendto_prefix_one(acptr, from, pattern, vl);
     }
@@ -490,32 +482,6 @@ void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
 }
 
 #if defined(WEBCHAT)
-void sendto_channel_tok_butone(aClient *one, aClient *from, aChannel *chptr,
-    char *pattern, ...)
-{
-  va_list vl;
-  Reg1 Link *lp;
-  Reg2 aClient *acptr;
-  Reg3 int i;
-
-  va_start(vl, pattern);
-
-  ++sentalong_marker;
-  for (lp = chptr->members; lp; lp = lp->next)
-  {
-    acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
-        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
-      continue;
-    if (MyConnect(acptr)) {       /* (It is always a client) */
-      if((acptr->negociacion & USER_TOK))
-        vsendto_prefix_one(acptr, from, pattern, vl);
-    }
-  }
-  va_end(vl);
-  return;
-}
-
 void sendto_channel_web_butone(aClient *one, aClient *from, aChannel *chptr,
     char *pattern, ...)
 {
@@ -535,6 +501,32 @@ void sendto_channel_web_butone(aClient *one, aClient *from, aChannel *chptr,
       continue;
     if (MyConnect(acptr)) {       /* (It is always a client) */
       if((acptr->negociacion & USER_WEB))
+        vsendto_one(acptr, pattern, vl);
+    }
+  }
+  va_end(vl);
+  return;
+}
+
+void sendto_channel_web2_butone(aClient *one, aClient *from, aChannel *chptr,
+    char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+  Reg3 int i;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  for (lp = chptr->members; lp; lp = lp->next)
+  {
+    acptr = lp->value.cptr;
+    if (acptr->from == one ||   /* ...was the one I should skip */
+        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
+      continue;
+    if (MyConnect(acptr)) {       /* (It is always a client) */
+      if((acptr->negociacion & USER_WEB2))
         vsendto_one(acptr, pattern, vl);
     }
   }
@@ -562,7 +554,7 @@ void sendto_channel_color_butone(aClient *one, aClient *from, aChannel *chptr,
       continue;
     if (MyConnect(acptr)) {       /* (It is always a client) */
 #if defined(WEBCHAT)
-      if(!IsStripColor(acptr) && !((acptr->negociacion & USER_TOK) || (acptr->negociacion & USER_WEB)))
+      if(!IsStripColor(acptr) && !((acptr->negociacion & USER_WEB) || (acptr->negociacion & USER_WEB2)))
 #else
       if(!IsStripColor(acptr))
 #endif
@@ -582,32 +574,6 @@ void sendto_channel_color_butone(aClient *one, aClient *from, aChannel *chptr,
 }
 
 #if defined(WEBCHAT)
-void sendto_channel_tok_color_butone(aClient *one, aClient *from, aChannel *chptr,
-    char *pattern, ...)
-{
-  va_list vl;
-  Reg1 Link *lp;
-  Reg2 aClient *acptr;
-  Reg3 int i;
-
-  va_start(vl, pattern);
-
-  ++sentalong_marker;
-  for (lp = chptr->members; lp; lp = lp->next)
-  {
-    acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
-        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
-      continue;
-    if (MyConnect(acptr)) {       /* (It is always a client) */
-      if(!IsStripColor(acptr) && (acptr->negociacion & USER_TOK))
-        vsendto_prefix_one(acptr, from, pattern, vl);
-    }
-  }
-  va_end(vl);
-  return;
-}
-
 void sendto_channel_web_color_butone(aClient *one, aClient *from, aChannel *chptr,
     char *pattern, ...)
 {
@@ -627,6 +593,32 @@ void sendto_channel_web_color_butone(aClient *one, aClient *from, aChannel *chpt
       continue;
     if (MyConnect(acptr)) {       /* (It is always a client) */
       if(!IsStripColor(acptr) && (acptr->negociacion & USER_WEB))
+        vsendto_one(acptr, pattern, vl);
+    }
+  }
+  va_end(vl);
+  return;
+}
+
+void sendto_channel_web2_color_butone(aClient *one, aClient *from, aChannel *chptr,
+    char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+  Reg3 int i;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  for (lp = chptr->members; lp; lp = lp->next)
+  {
+    acptr = lp->value.cptr;
+    if (acptr->from == one ||   /* ...was the one I should skip */
+        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
+      continue;
+    if (MyConnect(acptr)) {       /* (It is always a client) */
+      if(!IsStripColor(acptr) && (acptr->negociacion & USER_WEB2))
         vsendto_one(acptr, pattern, vl);
     }
   }
@@ -653,7 +645,7 @@ void sendto_channel_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
 #if defined(WEBCHAT)
-    if (MyConnect(acptr) && IsStripColor(acptr) && !((acptr->negociacion & USER_TOK) || (acptr->negociacion & USER_WEB)))       /* (It is always a client) */
+    if (MyConnect(acptr) && IsStripColor(acptr) && !((acptr->negociacion & USER_WEB) || (acptr->negociacion & USER_WEB2)))       /* (It is always a client) */
 #else
     if (MyConnect(acptr) && IsStripColor(acptr))       /* (It is always a client) */
 #endif
@@ -664,30 +656,6 @@ void sendto_channel_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
 }
 
 #if defined(WEBCHAT)
-void sendto_channel_tok_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
-    char *pattern, ...)
-{
-  va_list vl;
-  Reg1 Link *lp;
-  Reg2 aClient *acptr;
-  Reg3 int i;
-
-  va_start(vl, pattern);
-
-  ++sentalong_marker;
-  for (lp = chptr->members; lp; lp = lp->next)
-  {
-    acptr = lp->value.cptr;
-    if (acptr->from == one ||   /* ...was the one I should skip */
-        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
-      continue;
-    if (MyConnect(acptr) && IsStripColor(acptr) && (acptr->negociacion & USER_TOK))       /* (It is always a client) */
-      vsendto_prefix_one(acptr, from, pattern, vl);
-  }
-  va_end(vl);
-  return;
-}
-
 void sendto_channel_web_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
     char *pattern, ...)
 {
@@ -706,6 +674,30 @@ void sendto_channel_web_nocolor_butone(aClient *one, aClient *from, aChannel *ch
         (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
       continue;
     if (MyConnect(acptr) && IsStripColor(acptr) && (acptr->negociacion & USER_WEB))       /* (It is always a client) */
+      vsendto_one(acptr, pattern, vl);
+  }
+  va_end(vl);
+  return;
+}
+
+void sendto_channel_web2_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
+    char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+  Reg3 int i;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  for (lp = chptr->members; lp; lp = lp->next)
+  {
+    acptr = lp->value.cptr;
+    if (acptr->from == one ||   /* ...was the one I should skip */
+        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
+      continue;
+    if (MyConnect(acptr) && IsStripColor(acptr) && (acptr->negociacion & USER_WEB2))       /* (It is always a client) */
       vsendto_one(acptr, pattern, vl);
   }
   va_end(vl);
@@ -896,7 +888,7 @@ void sendto_common_channels(aClient *acptr, char *pattern, ...)
       {
         Reg3 aClient *cptr = member->value.cptr;
 #if defined(WEBCHAT)
-        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && !((cptr->negociacion & USER_TOK) || (cptr->negociacion & USER_WEB)))
+        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && !((cptr->negociacion & USER_WEB) || (cptr->negociacion & USER_WEB2)))
 #else
         if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker)
 #endif
@@ -912,33 +904,6 @@ void sendto_common_channels(aClient *acptr, char *pattern, ...)
 }
 
 #if defined(WEBCHAT)
-void sendto_common_tok_channels(aClient *acptr, char *pattern, ...)
-{
-  va_list vl;
-  Reg1 Link *chan;
-  Reg2 Link *member;
-
-  va_start(vl, pattern);
-
-  ++sentalong_marker;
-  if (acptr->fd >= 0)
-    sentalong[acptr->fd] = sentalong_marker;
-  /* loop through acptr's channels, and the members on their channels */
-  if (acptr->user)
-    for (chan = acptr->user->channel; chan; chan = chan->next)
-      for (member = chan->value.chptr->members; member; member = member->next)
-      {
-        Reg3 aClient *cptr = member->value.cptr;
-        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && (cptr->negociacion & USER_TOK))
-        {
-          sentalong[cptr->fd] = sentalong_marker;
-          vsendto_prefix_one(cptr, acptr, pattern, vl);
-        }
-      }
-  va_end(vl);
-  return;
-}
-
 void sendto_common_web_channels(aClient *acptr, char *pattern, ...)
 {
   va_list vl;
@@ -965,6 +930,33 @@ void sendto_common_web_channels(aClient *acptr, char *pattern, ...)
   va_end(vl);
   return;
 }
+
+void sendto_common_web2_channels(aClient *acptr, char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *chan;
+  Reg2 Link *member;
+
+  va_start(vl, pattern);
+
+  ++sentalong_marker;
+  if (acptr->fd >= 0)
+    sentalong[acptr->fd] = sentalong_marker;
+  /* loop through acptr's channels, and the members on their channels */
+  if (acptr->user)
+    for (chan = acptr->user->channel; chan; chan = chan->next)
+      for (member = chan->value.chptr->members; member; member = member->next)
+      {
+        Reg3 aClient *cptr = member->value.cptr;
+        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && (cptr->negociacion & USER_WEB2))
+        {
+          sentalong[cptr->fd] = sentalong_marker;
+          vsendto_one(cptr, pattern, vl);
+        }
+      }
+  va_end(vl);
+  return;
+}
 #endif
 
 /*
@@ -981,7 +973,7 @@ void sendto_channel_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
 
   for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
 #if defined(WEBCHAT)
-    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && !((acptr->negociacion & USER_TOK) || (acptr->negociacion & USER_WEB)))
+    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && !((acptr->negociacion & USER_WEB) || (acptr->negociacion & USER_WEB2)))
 #else
     if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE))
 #endif
@@ -991,19 +983,6 @@ void sendto_channel_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
 }
 
 #if defined(WEBCHAT)
-void sendto_channel_tok_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
-{
-  va_list vl;
-  Reg1 Link *lp;
-  Reg2 aClient *acptr;
-
-  for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
-    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && (acptr->negociacion & USER_TOK))
-      vsendto_prefix_one(acptr, from, pattern, vl);
-  va_end(vl);
-  return;
-}
-
 void sendto_channel_web_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
 {
   va_list vl;
@@ -1012,6 +991,19 @@ void sendto_channel_web_butserv(aChannel *chptr, aClient *from, char *pattern, .
 
   for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
     if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && (acptr->negociacion & USER_WEB))
+      vsendto_one(acptr, pattern, vl);
+  va_end(vl);
+  return;
+}
+
+void sendto_channel_web2_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+
+  for (va_start(vl, pattern), lp = chptr->members; lp; lp = lp->next)
+    if (MyConnect(acptr = lp->value.cptr) && !(lp->flags & CHFL_ZOMBIE) && (acptr->negociacion & USER_WEB2))
       vsendto_one(acptr, pattern, vl);
   va_end(vl);
   return;

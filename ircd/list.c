@@ -128,6 +128,10 @@ aClient *make_client(aClient *from, int status)
     cptr->nexttarget = now - (TARGET_DELAY * (STARTTARGETS - 1));
     cptr->authfd = -1;
   }
+
+#if defined(WEBCHAT)
+  SetWebXXXClient(cptr);
+#endif
   return (cptr);
 }
 
@@ -179,6 +183,10 @@ void free_client(aClient *cptr)
       RunFree(cptr->tm_checkping);
     }
   }
+
+#if defined(WEBCHAT)
+  RemoveWebXXXClient(cptr->webnumeric);
+#endif
 
   RunFree(cptr);
 }

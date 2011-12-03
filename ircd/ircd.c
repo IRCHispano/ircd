@@ -775,6 +775,9 @@ int main(int argc, char *argv[])
   me.user = NULL;
   me.from = &me;
   SetMe(&me);
+#if defined(WEBCHAT)
+  SetWebXXXClient(&me);
+#endif
   make_server(&me);
   /* Abuse own link timestamp as start timestamp: */
   me.serv->timestamp = TStime();

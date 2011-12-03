@@ -38,7 +38,7 @@
 
 #include <assert.h>
 
-typedef enum { FIN, ZLIB, TOK, WEB } opcion;
+typedef enum { FIN, ZLIB, WEB, WEB2 } opcion;
 
 static struct {
   char *texto;
@@ -49,8 +49,8 @@ opciones[] = {
   {"zlib", ZLIB},
 #endif
 #if defined(WEBCHAT)
-  {"tok", TOK},
   {"web", WEB},
+  {"web2", WEB2},
 #endif
   {NULL, FIN}
 };
@@ -193,13 +193,13 @@ int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
         break;
 #endif
 #if defined(WEBCHAT)
-      case TOK:
-          sendto_one(sptr, ":%s " MSG_CONFIG " ACK :tok", me.name);
-          cptr->negociacion |= USER_TOK;
-          break;
       case WEB:
           sendto_one(sptr, ":%s " MSG_CONFIG " ACK :web", me.name);
           cptr->negociacion |= USER_WEB;
+          break;
+      case WEB2:
+          sendto_one(sptr, ":%s " MSG_CONFIG " ACK :web2", me.name);
+          cptr->negociacion |= USER_WEB2;
           break;
 #endif
       case FIN:

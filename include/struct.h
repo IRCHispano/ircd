@@ -96,8 +96,8 @@
 #endif
 
 #if defined(WEBCHAT)
-#define USER_TOK  0x8
 #define USER_WEB 0x10
+#define USER_WEB2 0x20
 #endif
 
 struct Client {
@@ -107,6 +107,9 @@ struct Client {
   struct Whowas *whowas;        /* Pointer to ww struct to be freed on quit */
   char yxx[4];                  /* Numeric Nick: YMM if this is a server,
                                    XX0 if this is a user */
+#if defined(WEBCHAT)
+  char webnumeric[4];
+#endif
   time_t lasttime;              /* ...should be only LOCAL clients? --msa */
   time_t firsttime;             /* time client was created */
   time_t since;                 /* last time we parsed something */

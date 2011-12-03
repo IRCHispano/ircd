@@ -83,8 +83,9 @@ static unsigned int lastNNServer = 0;
 static struct Client *server_list[NN_MAX_SERVER];
 
 #if defined(WEBCHAT)
-#define NN_MAX_CHANNELS		262144  /* NUMNICKBASE ^ 3 */
-static struct Channel *channel_list[NN_MAX_CHANNELS];
+#define NN_MAX_WEBNUMERICS		262144  /* NUMNICKBASE ^ 3 */
+static struct Client *webclient_list[NN_MAX_WEBNUMERICS];
+static struct Channel *webchannel_list[NN_MAX_WEBNUMERICS];
 #endif
 
 /* *INDENT-OFF* */
@@ -614,35 +615,67 @@ const char *CreateNNforProtocol9server(const struct Client *server)
 }
 
 #if defined(WEBCHAT)
-int SetXXXChannel(struct Channel *chptr)
+int SetWebXXXClient(struct Client *cptr)
 {
   static unsigned int last_cn = 0;
   unsigned int count = 0;
 
-  while (channel_list[last_cn & (NN_MAX_CHANNELS-1)])
+  while(webclient_list[last_cn & (NN_MAX_WEBNUMERICS-1)])
   {
-    if (++count == NN_MAX_CHANNELS)
+    if (++count == NN_MAX_WEBNUMERICS)
     {
-      assert(count < NN_MAX_CHANNELS);
+      assert(count < NN_MAX_WEBNUMERICS);
       return 0;
     }
-    if (++last_cn == NN_MAX_CHANNELS)
+    if (++last_cn == NN_MAX_WEBNUMERICS)
       last_cn = 0;
   }
-  channel_list[last_cn & (NN_MAX_CHANNELS-1)] = chptr; /* Reserve the numeric ! */
+  webclient_list[last_cn & (NN_MAX_WEBNUMERICS-1)] = cptr; /* Reserve the numeric ! */
 
-  inttobase64(chptr->numeric, last_cn, 3);
+  inttobase64(cptr->webnumeric, last_cn, 3);
 
-  if (++last_cn == NN_MAX_CHANNELS)
+  if (++last_cn == NN_MAX_WEBNUMERICS)
     last_cn = 0;
   return 1;
 }
 
-void RemoveXXXChannel(const char *xxx)
+void RemoveWebXXXClient(const char *xxx)
 {
   if (*xxx)
   {
-    channel_list[base64toint(xxx) & (NN_MAX_CHANNELS-1)] = 0;
+    webclient_list[base64toint(xxx) & (NN_MAX_WEBNUMERICS-1)] = 0;
+  }
+}
+
+int SetWebXXXChannel(struct Channel *chptr)
+{
+  static unsigned int last_chn = 0;
+  unsigned int count = 0;
+
+  while (webchannel_list[last_chn & (NN_MAX_WEBNUMERICS-1)])
+  {
+    if (++count == NN_MAX_WEBNUMERICS)
+    {
+      assert(count < NN_MAX_WEBNUMERICS);
+      return 0;
+    }
+    if (++last_chn == NN_MAX_WEBNUMERICS)
+      last_chn = 0;
+  }
+  webchannel_list[last_chn & (NN_MAX_WEBNUMERICS-1)] = chptr; /* Reserve the numeric ! */
+
+  inttobase64(chptr->webnumeric, last_chn, 3);
+
+  if (++last_chn == NN_MAX_WEBNUMERICS)
+    last_chn = 0;
+  return 1;
+}
+
+void RemoveWebXXXChannel(const char *xxx)
+{
+  if (*xxx)
+  {
+    webchannel_list[base64toint(xxx) & (NN_MAX_WEBNUMERICS-1)] = 0;
   }
 }
 

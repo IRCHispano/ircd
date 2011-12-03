@@ -182,7 +182,7 @@ struct Channel {
   struct SLink *invites;
   struct SLink *banlist;
 #if defined(WEBCHAT)
-  char numeric[4];
+  char webnumeric[4];
 #endif
   char chname[1];
 };

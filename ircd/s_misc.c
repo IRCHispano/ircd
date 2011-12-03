@@ -622,8 +622,8 @@ static void exit_one_client(aClient *bcptr, char *comment)
      * (Note: The notice is to the local clients *only*)
      */
 #if defined(WEBCHAT)
-    sendto_common_tok_channels(bcptr, ":%s Q", bcptr->name);
     sendto_common_web_channels(bcptr, ":Q%s", bcptr->name);
+    sendto_common_web2_channels(bcptr, "Q%s", bcptr->webnumeric);
 #else
     sendto_common_channels(bcptr, ":%s QUIT :%s", bcptr->name, comment);
 #endif
