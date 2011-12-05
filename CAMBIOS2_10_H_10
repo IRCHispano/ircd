@@ -1,5 +1,12 @@
 * 2011/12/02  zoltan@irc-dev.net (u2.10.H.10.168)                FEATURE
 ------------------------------------------------------------------------
+  Segunda version para Apps Web, que reduce mas aun el trafico. Se ahorra
+  mas del 50% con respecto al rfc1459 original.
+
+  Mandar "web2" en el Config Req.
+
+* 2011/12/02  zoltan@irc-dev.net (u2.10.H.10.168)                FEATURE
+------------------------------------------------------------------------
   Version para aplicaciones Web del protocolo server->cliente para un
   ahorro considerable de trafico. Pregunta WEBCHAT en el make config dentro
   de ESNET_NEG.
