@@ -731,6 +731,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       SetHub(acptr);
       SetService(acptr);
+      SetIPv6(acptr);
     }
     
     if (*parv[5] == 'J')

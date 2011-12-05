@@ -1,4 +1,9 @@
-* 2011/12/02  zoltan@irc-dev.net (u2.10.H.10.168)                FEATURE
+* 2011/12/06  zoltan@irc-dev.net (u2.10.H.10.170)                FEATURE
+------------------------------------------------------------------------
+  Dado que los deep.space manejan las IPs con 128 bits (IPv6) fuerzo que
+  los P09 reciban las IPv6 en formato de 128 bits en vez de 32 bits.
+
+* 2011/12/05  zoltan@irc-dev.net (u2.10.H.10.169)                FEATURE
 ------------------------------------------------------------------------
   Segunda version para Apps Web, que reduce mas aun el trafico. Se ahorra
   mas del 50% con respecto al rfc1459 original.
