@@ -539,7 +539,7 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
         
     if ((GlineIsIpMask(agline) ? ipmask_check(&cptr->ip, &agline->gl_addr, agline->gl_bits) != 0 :
     	(GlineIsRealName(agline) ? match_pcre(agline->re, tmp) :
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
     	  match(agline->host, PunteroACadena(cptr->user->host)))) == 0 &&
 #else
     	  match(agline->host, PunteroACadena(cptr->sockhost)))) == 0 &&

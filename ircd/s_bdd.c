@@ -884,7 +884,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         ocultar_servidores = !0;
       }
-#ifndef HISPANO_WEBCHAT
+#if !defined(WEBCHAT_HTML)
       else if (!strcmp(c, BDD_ACTIVAR_IDENT))
       {
         activar_ident = !0;

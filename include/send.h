@@ -68,15 +68,10 @@ extern void sendbufto_serv_butone(aClient *one);
 extern void sendcmdto_one(aClient *to, aClient *from, char *cmd, char *token, const char *pattern, ...);
 
 #if defined(WEBCHAT)
-extern void sendto_channel_web_butone(aClient *one, aClient *from, aChannel *chptr,  char *pattern, ...);
 extern void sendto_channel_web2_butone(aClient *one, aClient *from, aChannel *chptr,  char *pattern, ...);
-extern void sendto_channel_web_color_butone(aClient *one, aClient *from, aChannel *chptr,  char *pattern, ...);
 extern void sendto_channel_web2_color_butone(aClient *one, aClient *from, aChannel *chptr,  char *pattern, ...);
-extern void sendto_channel_web_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,  char *pattern, ...);
 extern void sendto_channel_web2_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,  char *pattern, ...);
-extern void sendto_common_web_channels(aClient *acptr, char *pattern, ...);
 extern void sendto_common_web2_channels(aClient *acptr, char *pattern, ...);
-extern void sendto_channel_web_butserv(aChannel *chptr, aClient *from, char *pattern, ...);
 extern void sendto_channel_web2_butserv(aChannel *chptr, aClient *from, char *pattern, ...);
 #endif
 

@@ -248,7 +248,7 @@ int m_help(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), char *parv[])
 {
   int i;
 
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
   return 0;
 #endif
 

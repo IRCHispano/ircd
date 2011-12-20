@@ -1,3 +1,9 @@
+* 2011/12/20  zoltan@irc-dev.net (u2.10.H.10.172)                CLEANUP
+------------------------------------------------------------------------
+  Limpieza de codigo de primera version de Apps Web, ya no se usa.
+
+  Se aprovecha para poner pregunta en el conf para Webchat HTML.
+
 * 2011/12/20  zoltan@irc-dev.net (u2.10.H.10.171)                FEATURE
 ------------------------------------------------------------------------
   Soporte de Glines con CIDR para IPv4 y IPv6 y mejoras de gline a IP.

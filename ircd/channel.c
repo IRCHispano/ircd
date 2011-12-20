@@ -424,7 +424,7 @@ static int is_banned(aClient *cptr, aChannel *chptr, Link *member)
       if (!ip_s)
         ip_s =
             make_nick_user_ip(cptr->name, PunteroACadena(cptr->user->username),
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
             MyUser(cptr) ? &cptr->ip_real : &cptr->ip);
 #else
             &cptr->ip);
@@ -1074,8 +1074,6 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (LocalChanOperMode)
       {
 #if defined(WEBCHAT)
-        sendto_channel_web_butserv(chptr, &me, ":M%s%s %s %s",
-            chptr->webnumeric, me.name, modebuf, parabuf);
         sendto_channel_web2_butserv(chptr, &me, "M%s%s %s %s",
             chptr->webnumeric, me.webnumeric, modebuf, parabuf);
 #endif
@@ -1088,8 +1086,6 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       else
 #endif
 #if defined(WEBCHAT)
-        sendto_channel_web_butserv(chptr, sptr, ":M%s%s %s %s",
-            chptr->webnumeric, parv[0], modebuf, parabuf);
         sendto_channel_web2_butserv(chptr, sptr, "M%s%s %s %s",
             chptr->webnumeric, sptr->webnumeric, modebuf, parabuf);
 #endif
@@ -3969,8 +3965,6 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         chptr = lp->value.chptr;
         if (!is_zombie(sptr, chptr)) {
 #if defined(WEBCHAT)
-          sendto_channel_web_butserv(chptr, sptr, PartWeb,
-              chptr->webnumeric, parv[0]);
           sendto_channel_web2_butserv(chptr, sptr, PartWeb2,
               chptr->webnumeric, sptr->webnumeric);
 #endif
@@ -4170,7 +4164,6 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(WEBCHAT)
       if (MyUser(sptr) && (sptr->negociacion & USER_WEB || sptr->negociacion & USER_WEB2))
         sendto_one(sptr, ":%s JOIN :%s", parv[0], name);
-      sendto_channel_web_butserv(chptr, sptr, ":J%s%s", chptr->webnumeric, parv[0]);
       sendto_channel_web2_butserv(chptr, sptr, "%s%s%s", chptr->webnumeric, sptr->webnumeric, sptr->name);
 #endif
       sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
@@ -4426,7 +4419,6 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(WEBCHAT)
     if (MyUser(acptr) && (acptr->negociacion & USER_WEB || acptr->negociacion & USER_WEB2))
       sendto_one(acptr, ":%s JOIN :%s", acptr->name, name);
-    sendto_channel_web_butserv(chptr, acptr, ":J%s%s", chptr->webnumeric, acptr->name);
     sendto_channel_web2_butserv(chptr, acptr, "%s%s%s", chptr->webnumeric, acptr->webnumeric, acptr->name);
 #endif
     sendto_channel_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
@@ -4607,7 +4599,6 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(WEBCHAT)
       if (MyUser(sptr) && (sptr->negociacion & USER_WEB || sptr->negociacion & USER_WEB2))
         sendto_one(sptr, ":%s JOIN :%s", parv[0], name);
-      sendto_channel_web_butserv(chptr, sptr, ":J%s%s", chptr->webnumeric, parv[0]);
       sendto_channel_web2_butserv(chptr, sptr, "%s%s%s", chptr->webnumeric, sptr->webnumeric, sptr->name);
 #endif
     sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
@@ -4627,8 +4618,6 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
          (if any; extremely unlikely, but it CAN happen) */
       if (!IsModelessChannel(name)) {
 #if defined(WEBCHAT)
-        sendto_channel_web_butserv(chptr, sptr, ":M%s%s +o %s",
-            chptr->webnumeric, sptr->user->server->name, parv[0]);
         sendto_channel_web2_butserv(chptr, sptr, "M%s%s +o %s",
             chptr->webnumeric, sptr->user->server->webnumeric, parv[0]);
 #endif
@@ -4896,8 +4885,6 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
        * que se ha eliminado el topic. */
 
 #if defined(WEBCHAT)
-      sendto_channel_web_butserv(chptr, &me, ":T%s%s",
-          chptr->webnumeric, me.name);
       sendto_channel_web2_butserv(chptr, &me, "T%s%s",
           chptr->webnumeric, me.webnumeric);
 #endif
@@ -5407,7 +5394,6 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(WEBCHAT)
         if (MyUser(member->value.cptr) && (member->value.cptr->negociacion & USER_WEB || member->value.cptr->negociacion & USER_WEB2))
           sendto_one(member->value.cptr, ":%s JOIN :%s", member->value.cptr, chptr->chname);
-        sendto_channel_web_butserv(chptr, member->value.cptr, ":J%s%s", chptr->webnumeric, member->value.cptr->name);
         sendto_channel_web2_butserv(chptr, member->value.cptr, "%s%s%s", chptr->webnumeric, member->value.cptr->webnumeric, member->value.cptr->name);
 #endif
         sendto_channel_butserv(chptr, member->value.cptr, ":%s JOIN :%s",
@@ -5439,9 +5425,6 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
               {
                 modebuf[mblen2] = 0;
 #if defined(WEBCHAT)
-                sendto_channel_web_butserv(chptr, sptr, ":M%s%s %s%s",
-                    chptr->webnumeric, ocultar_servidores ?  his.name : parv[0],
-                    modebuf, parabuf);
                 sendto_channel_web2_butserv(chptr, sptr, "M%s%s %s%s",
                     chptr->webnumeric, ocultar_servidores ?  his.name : sptr->webnumeric,
                     modebuf, parabuf);
@@ -5473,9 +5456,6 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       {
         modebuf[mblen2] = 0;
 #if defined(WEBCHAT)
-        sendto_channel_web_butserv(chptr, sptr, ":M%s%s %s%s",
-            chptr->webnumeric, ocultar_servidores ? his.name : parv[0],
-            modebuf, parabuf);
         sendto_channel_web2_butserv(chptr, sptr, "M%s%s %s%s",
             chptr->webnumeric, ocultar_servidores ? his.name : sptr->webnumeric,
             modebuf, parabuf);
@@ -5642,9 +5622,6 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
         /* Time to send buffer */
         modebuf[mblen2] = 0;
 #if defined(WEBCHAT)
-        sendto_channel_web_butserv(chptr, sptr, ":M%s%s %s%s",
-            chptr->webnumeric, ocultar_servidores ? his.name : parv[0],
-            modebuf, parabuf);
         sendto_channel_web2_butserv(chptr, sptr, "M%s%s %s%s",
             chptr->webnumeric, ocultar_servidores ? his.name : sptr->webnumeric,
             modebuf, parabuf);
@@ -5690,9 +5667,6 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       modebuf[mblen2] = 0;
 #if defined(WEBCHAT)
-      sendto_channel_web_butserv(chptr, sptr, ":M%s%s %s%s",
-          chptr->webnumeric, ocultar_servidores ? his.name : parv[0],
-          modebuf, parabuf);
       sendto_channel_web2_butserv(chptr, sptr, "M%s%s %s%s",
           chptr->webnumeric, ocultar_servidores ? his.name : sptr->name,
           modebuf, parabuf);
@@ -5776,7 +5750,6 @@ int m_part(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!(lp->flags & CHFL_ZOMBIE))
     {
 #if defined(WEBCHAT)
-      sendto_channel_web_butserv(chptr, sptr, PartWeb, chptr->webnumeric, parv[0]);
       sendto_channel_web2_butserv(chptr, sptr, PartWeb2, chptr->webnumeric, sptr->webnumeric);
 #endif
       if (comment)
@@ -5888,7 +5861,6 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!(lp->flags & CHFL_ZOMBIE))
   {
 #if defined(WEBCHAT)
-    sendto_channel_web_butserv(chptr, acptr, PartWeb, chptr->webnumeric, acptr->name);
     sendto_channel_web2_butserv(chptr, acptr, PartWeb2, chptr->webnumeric, acptr->webnumeric);
 #endif
     if (comment)
@@ -6062,8 +6034,6 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       if (lp) {
 #if defined(WEBCHAT)
-        sendto_channel_web_butserv(chptr, sptr,
-            ":K%s%s %s %s", chptr->webnumeric, parv[0], who->name, comment);
         sendto_channel_web2_butserv(chptr, sptr,
             "K%s%s%s %s", chptr->webnumeric, sptr->webnumeric, who->webnumeric, comment);
 #endif
@@ -6317,8 +6287,6 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
       }
       if(newtopic) {
 #if defined(WEBCHAT)
-        sendto_channel_web_butserv(chptr, from, ":T%s%s %s",
-              chptr->webnumeric, from->name, chptr->topic);
         sendto_channel_web2_butserv(chptr, from, "T%s%s %s",
               chptr->webnumeric, from->webnumeric, chptr->topic);
 #endif

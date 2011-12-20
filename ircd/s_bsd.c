@@ -645,7 +645,7 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
     {
       sendto_op_mask(SNO_IPMISMATCH, "IP# Mismatch: %s != %s[%08x]",
           ircd_ntoa(&cptr->ip), hp->h_name, *((unsigned int *)hp->h_addr));
-#ifndef HISPANO_WEBCHAT
+#if !defined(WEBCHAT_HTML)
       if (IsUserPort(cptr))
       {
         sprintf_irc(sendbuf, IP_LOOKUP_BAD,
@@ -1454,7 +1454,7 @@ aClient *add_connection(aClient *cptr, int fd, int type)
     if (!acptr->hostp)
     {
       SetDNS(acptr);
-#ifndef HISPANO_WEBCHAT
+#if !defined(WEBCHAT_HTML)
       if (IsUserPort(acptr))
       {
         sprintf_irc(sendbuf, IP_LOOKUP_START, me.name);
@@ -1462,7 +1462,7 @@ aClient *add_connection(aClient *cptr, int fd, int type)
       }
 #endif
     }
-#ifndef HISPANO_WEBCHAT
+#if !defined(WEBCHAT_HTML)
     else if (IsUserPort(acptr))
     {
       sprintf_irc(sendbuf, IP_LOOKUP_CACHE, me.name);
@@ -2745,7 +2745,7 @@ static void do_dns_async(void)
       if ((cptr = ln.value.cptr))
       {
         del_queries((char *)cptr);
-#ifndef HISPANO_WEBCHAT
+#if !defined(WEBCHAT_HTML)
         if (IsUserPort(cptr))
         {
           if (hp)

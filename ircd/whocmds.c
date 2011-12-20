@@ -631,7 +631,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               || matchexec(PunteroACadena(acptr->info), mymask, minlen))
               && ((!(matchsel & WHO_FIELD_NIP)) || (IsHidden(acptr)
               && !IsHiddenViewer(sptr))
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
               || !ipmask_check((MyUser(acptr) ? &acptr->ip :  &acptr->ip_real, &imask, ibits))
 /*
               || (((((MyUser(acptr) ? acptr->ip_real.s_addr : acptr->ip.s_addr) & imask.mask.s_addr) !=
@@ -704,7 +704,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             || matchexec(PunteroACadena(acptr->info), mymask, minlen))
             && ((!(matchsel & WHO_FIELD_NIP))
             || (IsHidden(acptr) && !IsHiddenViewer(sptr))
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
             || !ipmask_check((MyUser(acptr) ? &acptr->ip_real : &acptr->ip), &imask, ibits))
 /*
             || (((((MyUser(acptr) ? acptr->ip_real.s_addr : acptr->ip.s_addr) & imask.mask.s_addr) != imask.bits.s_addr))

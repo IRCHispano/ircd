@@ -315,7 +315,7 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
   unsigned char stat = parc > 1 ? parv[1][0] : '\0';
   Reg1 int i;
 
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
   if (!IsAnOper(sptr))
     return 0;
 #endif

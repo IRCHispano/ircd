@@ -575,7 +575,7 @@ static int register_user(aClient *cptr, aClient *sptr,
     }
     if (IsUnixSocket(sptr))
       SlabStringAllocDup(&(user->host), me.name, HOSTLEN);
-#ifndef HISPANO_WEBCHAT
+#if !defined(WEBCHAT_HTML)
     else
       SlabStringAllocDup(&(user->host), PunteroACadena(sptr->sockhost),
           HOSTLEN);
@@ -817,7 +817,7 @@ static int register_user(aClient *cptr, aClient *sptr,
       "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
       NumServ(user->server), nick, sptr->hopcount + 1, sptr->lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
       iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), IsIPv6(cptr)),
 #else
       iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), IsIPv6(cptr)),
@@ -868,7 +868,7 @@ static int register_user(aClient *cptr, aClient *sptr,
       "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
       NumServ(user->server), nick, sptr->hopcount + 1, (int)(sptr->lastnick),
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
       iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), 1),
 #else
       iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 1),
@@ -880,7 +880,7 @@ static int register_user(aClient *cptr, aClient *sptr,
       "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
       NumServ(user->server), nick, sptr->hopcount + 1, (int)(sptr->lastnick),
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
       iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), 0),
 #else
       iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 0),
@@ -1248,21 +1248,13 @@ static int m_message(aClient *cptr, aClient *sptr,
             strip_color(parv[parc-1], sizeof(buffer_nocolor), buffer_nocolor);
 #if defined(WEBCHAT)
             if (!strCasecmp(cmd, "PRIVMSG")) {
-              sendto_channel_web_color_butone(cptr, sptr, chptr,
-                  ":P%s %s%s", parv[0], chptr->webnumeric, parv[parc - 1]);
               sendto_channel_web2_color_butone(cptr, sptr, chptr,
                   "P%s%s%s", sptr->webnumeric, chptr->webnumeric, parv[parc - 1]);
-              sendto_channel_web_nocolor_butone(cptr, sptr, chptr,
-                  ":P%s %s%s", parv[0], chptr->webnumeric, buffer_nocolor);
               sendto_channel_web2_nocolor_butone(cptr, sptr, chptr,
                   "P%s%s%s", sptr->webnumeric, chptr->webnumeric, buffer_nocolor);
             } else {
-              sendto_channel_web_color_butone(cptr, sptr, chptr,
-                  ":O%s %s%s", parv[0], chptr->webnumeric, parv[parc - 1]);
               sendto_channel_web2_color_butone(cptr, sptr, chptr,
                   "O%s%s%s", sptr->webnumeric, chptr->webnumeric, parv[parc - 1]);
-              sendto_channel_web_nocolor_butone(cptr, sptr, chptr,
-                  ":O%s %s%s", parv[0], chptr->webnumeric, buffer_nocolor);
               sendto_channel_web2_nocolor_butone(cptr, sptr, chptr,
                   "O%s%s%s", sptr->webnumeric, chptr->webnumeric, buffer_nocolor);
             }
@@ -1274,13 +1266,9 @@ static int m_message(aClient *cptr, aClient *sptr,
           } else {
 #if defined(WEBCHAT)
             if (!strCasecmp(cmd,"PRIVMSG")) {
-              sendto_channel_web_butone(cptr, sptr, chptr,
-                  ":P%s %s%s", parv[0], chptr->webnumeric, parv[parc - 1]);
               sendto_channel_web2_butone(cptr, sptr, chptr,
                   "P%s%s%s", sptr->webnumeric, chptr->webnumeric, parv[parc - 1]);
             } else {
-              sendto_channel_web_butone(cptr, sptr, chptr,
-                  ":O%s %s%s", parv[0], chptr->webnumeric, parv[parc - 1]);
               sendto_channel_web2_butone(cptr, sptr, chptr,
                   "O%s %s%s", sptr->webnumeric, chptr->webnumeric, parv[parc - 1]);
             }
@@ -2631,7 +2619,7 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
           (IsAnOper(acptr)
           || IsHelpOp(acptr)) ? "*" : "", (acptr->user->away) ? '-' : '+',
           PunteroACadena(acptr->user->username), (sptr == acptr
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
           || IsChannelService(sptr)
 #endif
           || IsHiddenViewer(sptr)
@@ -3772,7 +3760,7 @@ void make_virtualhost(aClient *acptr, int mostrar)
       x[0] = x[1] = 0;
 
       v[0] = (clave_de_cifrado_binaria[0] & 0xffff0000) + ts;
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
       v[1] = MyUser(acptr) ? 
                   (ntohs((unsigned long)acptr->ip_real.in6_16[6]) << 16 | ntohs((unsigned long)acptr->ip_real.in6_16[7])) : 
                  : (ntohs((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohs((unsigned long)acptr->ip..in6_16[7]))
@@ -3805,7 +3793,7 @@ void make_virtualhost(aClient *acptr, int mostrar)
     /* resultado */
     x[0] = x[1] = 0;
 
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
     v[0] = MyUser(acptr) ?
                 (ntohs((unsigned long)acptr->ip_real.in6_16[0]) << 16 | ntohs((unsigned long)acptr->ip_real.in6_16[1]))
               : (ntohs((unsigned long)acptr->ip.in6_16[0]) << 16 | ntohs((unsigned long)acptr->ip.in6_16[1]));
@@ -3885,7 +3873,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
         if (x[0] >= 4294000000ul)
           continue;
 
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
         sprintf_irc(resultado, "webchat-%.6d", (int)(x[0] % 1000000));
 #else
         sprintf_irc(resultado, "invitado-%.6d", (int)(x[0] % 1000000));
@@ -3939,7 +3927,6 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 
   /* Esto manda una copia al propio usuario */
 #if defined(WEBCHAT)
-  sendto_common_web_channels(sptr, ":N%s %s", sptr->name, nick_nuevo);
   sendto_common_web2_channels(sptr, "N%s%s", sptr->webnumeric, nick_nuevo);
 #endif
   sendto_common_channels(sptr, ":%s NICK :%s", sptr->name, nick_nuevo);
@@ -4196,7 +4183,7 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   aClient *acptr;
 
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
   /* Permitimos que pueda solicitar un rename
    * Esto deberia ser a traves de un Service
    * pero hoy por hoy no podemos modificarlo
@@ -5173,7 +5160,6 @@ nickkilldone:
       }
 
 #if defined(WEBCHAT)
-      sendto_common_web_channels(sptr, ":N%s %s", parv[0], nick);
       sendto_common_web2_channels(sptr, "N%s%s", sptr->webnumeric, nick);
 #endif
       sendto_common_channels(sptr, ":%s NICK :%s", parv[0], nick);
@@ -5843,7 +5829,6 @@ nickkilldone:
       }
 
 #if defined(WEBCHAT)
-      sendto_common_web_channels(sptr, ":N%s %s", parv[0], nick);
       sendto_common_web2_channels(sptr, "N%s%s", sptr->webnumeric, nick);
 #endif
       sendto_common_channels(sptr, ":%s NICK :%s", parv[0], nick);
@@ -5967,7 +5952,7 @@ static char *nuevo_nick_aleatorio(aClient *cptr)
     if (x[0] >= 4294000000ul)
       continue;
 
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
     sprintf_irc(resultado, "webchat-%.6d", (int)(x[0] % 1000000));
 #else
     sprintf_irc(resultado, "invitado-%.6d", (int)(x[0] % 1000000));

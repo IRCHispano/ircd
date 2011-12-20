@@ -437,7 +437,7 @@ ipmask_parse(const char *input, struct irc_in_addr *ip, unsigned char *pbits)
 
 struct irc_in_addr *client_addr(aClient *cptr)
 {
-#ifdef HISPANO_WEBCHAT
+#if defined(WEBCHAT_HTML)
   if (MyConnect(cptr))
     return &cptr->ip_real;
   else
