@@ -1991,7 +1991,7 @@ int m_die(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return m_die_remoto(cptr, sptr, parc, parv);
 }
 
-static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, char *comment,
+static void add_gline(aClient *cptr, aClient *sptr, char *host, char *comment,
     char *user, time_t expire, time_t lastmod, time_t lifetime, int local)
 {
 
@@ -2036,7 +2036,7 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
   if (!lifetime) /* si no me ponen tiempo de vida uso el tiempo de expiracion */
     lifetime = expire;
 
-  agline = make_gline(ip_mask, host, comment, user, expire, lastmod, lifetime);
+  agline = make_gline(host, comment, user, expire, lastmod, lifetime);
   if (local)
     SetGlineIsLocal(agline);
 
@@ -2075,7 +2075,7 @@ static void add_gline(aClient *cptr, aClient *sptr, int ip_mask, char *host, cha
       } else if(GlineIsRealName(agline))
         tmp=PunteroACadena(acptr->info);
 
-      if ((GlineIsIpMask(agline) ? match(agline->host, ircd_ntoa(client_addr(acptr))) :
+      if ((GlineIsIpMask(agline) ? ipmask_check(&acptr->ip, &agline->gl_addr, agline->gl_bits) != 0 :
           (GlineIsRealName(agline) ? match_pcre(agline->re, tmp) :
             match(agline->host, PunteroACadena(acptr->sockhost)))) == 0 &&
             match(agline->name, PunteroACadena(acptr->user->username)) == 0)
@@ -2144,7 +2144,7 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   aGline *agline, *a2gline;
   char *user, *host;
-  int active, ip_mask, gtype = 0;
+  int active, gtype = 0;
   time_t expire = 0, lastmod = 0, lifetime = 0;
 
   /* Remove expired G-lines */
@@ -2203,7 +2203,7 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
 {
   char *user, *host;
-  int active, ip_mask, gtype = 0;
+  int active, gtype = 0;
   time_t expire = 0, lastmod = 0, lifetime = 0;
   int tiene_uline;
 
@@ -2266,7 +2266,6 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
     user = parv[2];
     *(host++) = '\0';       /* break up string at the '@' */
   }
-  ip_mask = check_if_ipmask(host);  /* Store this boolean */
 #if defined(BADCHAN)
   if (*host == '#' || *host == '&' || *host == '+')
     gtype = 1;              /* BAD CHANNEL GLINE */
@@ -2313,12 +2312,11 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
 #if 0
       for (agline = gtype ? badchan : gline; agline; agline = agline->next)
           if (!mmatch(agline->name, user) &&
-              (ip_mask ? GlineIsIpMask(agline) : !GlineIsIpMask(agline)) &&
               !mmatch(agline->host, host))
             return 0;         /* found an existing G-line that matches */
 #endif
         /* add the line: */
-        add_gline(cptr, sptr, ip_mask, host, parv[parc - 1], user, expire, lastmod, lifetime, 0);
+        add_gline(cptr, sptr, host, parv[parc - 1], user, expire, lastmod, lifetime, 0);
     }
   }
 
@@ -2338,7 +2336,7 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
 int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
 {
   char *user, *host;
-  int active, ip_mask, gtype = 0;
+  int active, gtype = 0;
   time_t expire = 0, lastmod = 0, lifetime = 0;
 
   if (parc < 2 || *parv[1] == '\0')
@@ -2431,7 +2429,6 @@ int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
       user = parv[1];
       *(host++) = '\0';         /* break up string at the '@' */
     }
-    ip_mask = check_if_ipmask(host);  /* Store this boolean */
 #if defined(BADCHAN)
     if (*host == '#' || *host == '&' || *host == '+')
 #if !defined(LOCAL_BADCHAN)
@@ -2445,7 +2442,6 @@ int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
         agline = agline->next)
     {
       if (!mmatch(agline->name, user) &&
-          (ip_mask ? GlineIsIpMask(agline) : !GlineIsIpMask(agline)) &&
           !mmatch(agline->host, host))
         break;
       a2gline = agline;
@@ -2463,7 +2459,7 @@ int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
               me.name, parv[0], "GLINE");
           return 0;
         }
-        add_gline(cptr, sptr, ip_mask, host, parv[3], user, expire, lastmod, lifetime, 1);
+        add_gline(cptr, sptr, host, parv[3], user, expire, lastmod, lifetime, 1);
       }
       else
 #endif

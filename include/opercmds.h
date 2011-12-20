@@ -1,6 +1,7 @@
 #if !defined(OPERCMDS_H)
 #define OPERCMDS_H
 
+#include "res.h"
 #include "pcre.h"
 
 /*=============================================================================
@@ -47,6 +48,8 @@ struct Gline {
   time_t expire;
   time_t lastmod;
   time_t lifetime;
+  struct irc_in_addr gl_addr;   /**< IP address (for IP-based G-lines). */
+  unsigned char gl_bits;    /**< Usable bits in gl_addr. */
   pcre *re;
   unsigned int gflags;
 };
