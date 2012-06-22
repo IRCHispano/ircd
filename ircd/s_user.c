@@ -1686,8 +1686,40 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
+#if defined(WEBCHAT_HTML)
+  struct hostent *hp;
+
+  /* Prioridad IPv4 */
+  hp = gethostbyname2(host, AF_INET);
+  if (hp) {
+    struct irc_in_addr ircaddr;
+    struct in_addr addr4;
+
+    /* IPv4 */
+    memcpy(&addr4, hp->h_addr, hp->h_length);
+
+    /* Traducimos de in_addr a irc_in_addr */
+    memset(&ircaddr, 0, sizeof(ircaddr));
+    ircaddr.in6_16[5] = htons(65535);
+    ircaddr.in6_16[6] = htons(ntohl(addr4.s_addr) >> 16);
+    ircaddr.in6_16[7] = htons(ntohl(addr4.s_addr) & 65535);
+
+    memcpy(&sptr->ip_real, &ircaddr, sizeof(struct irc_in_addr));
+  } else {
+    hp = gethostbyname2(host, AF_INET6);
+
+    if (hp)
+    {
+        /* IPv6 */
+        memcpy(&sptr->ip_real, hp->h_addr, hp->h_length);
+    } else
+      return exit_client(cptr, sptr, &me, "Conexion Ilegal al Webchat");
+  }
+  SlabStringAllocDup(&(user->host), host, HOSTLEN);
+#else
   if (!strchr(host, '.'))       /* Not an IP# as hostname ? */
     sptr->flags |= (UFLAGS & atoi(host));
+#endif
   if ((sptr->flags & FLAGS_SERVNOTICE))
     set_snomask(sptr, (isDigit(*server) && !strchr(server, '.')) ?
         (atoi(server) & SNO_USER) : SNO_DEFAULT, SNO_SET);
@@ -1700,7 +1732,9 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
   else
   {
     SlabStringAllocDup(&(sptr->user->username), username, USERLEN);
+#if !defined(WEBCHAT_HTML)
     SlabStringAllocDup(&(user->host), host, HOSTLEN);
+#endif
   }
   return 0;
 }
@@ -3752,7 +3786,11 @@ void make_virtualhost(aClient *acptr, int mostrar)
   }
 
   /* IPv4 */
+#if defined(WEBCHAT_HTML)
+  if (irc_in_addr_is_ipv4(MyUser(acptr) ? &acptr->ip_real : &acptr->ip))
+#else
   if (irc_in_addr_is_ipv4(&acptr->ip))
+#endif
   {
     while (1)
     {
@@ -3761,9 +3799,9 @@ void make_virtualhost(aClient *acptr, int mostrar)
 
       v[0] = (clave_de_cifrado_binaria[0] & 0xffff0000) + ts;
 #if defined(WEBCHAT_HTML)
-      v[1] = MyUser(acptr) ? 
-                  (ntohs((unsigned long)acptr->ip_real.in6_16[6]) << 16 | ntohs((unsigned long)acptr->ip_real.in6_16[7])) : 
-                 : (ntohs((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohs((unsigned long)acptr->ip..in6_16[7]))
+      v[1] = MyUser(acptr) ?
+                  (ntohs((unsigned long)acptr->ip_real.in6_16[6]) << 16 | ntohs((unsigned long)acptr->ip_real.in6_16[7])) :
+                  (ntohs((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohs((unsigned long)acptr->ip.in6_16[7]));
 #else
       v[1] = ntohs((unsigned long)acptr->ip.in6_16[6]) << 16 | ntohs((unsigned long)acptr->ip.in6_16[7]);
 #endif
@@ -3807,11 +3845,11 @@ void make_virtualhost(aClient *acptr, int mostrar)
 
     tea(v, clave_de_cifrado_binaria, x);
 
-    /* formato direccion virtual: qWeRty.AsDfGh.virtual6 */
+    /* formato direccion virtual: qWeRty.AsDfGh.v6 */
     inttobase64(ip_virtual_temporal, x[0], 6);
     ip_virtual_temporal[6] = '.';
     inttobase64(ip_virtual_temporal + 7, x[1], 6);
-    strcpy(ip_virtual_temporal + 13, ".virtual6");
+    strcpy(ip_virtual_temporal + 13, ".v6");
   }
 
 #if defined(BDD_VIP3)

@@ -1,3 +1,13 @@
+* 2012/06/22  zoltan@irc-dev.net (u2.10.H.10.173)                FEATURE
+------------------------------------------------------------------------
+  Soporte de Webchat HTML con IPv6. 
+
+  Se ha cambiado el dominio de las virtuales de IPv6, sera .v6 en ves de
+  .virtual6, mas corto. Se podria hacer lo mismo con .virtual -> .v4, lo 
+  dejamos sin tocar por costumbre.
+
+  Limpieza de diverso codigo provisional de IPv6.
+
 * 2011/12/20  zoltan@irc-dev.net (u2.10.H.10.172)                CLEANUP
 ------------------------------------------------------------------------
   Limpieza de codigo de primera version de Apps Web, ya no se usa.

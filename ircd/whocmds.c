@@ -632,19 +632,9 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               && ((!(matchsel & WHO_FIELD_NIP)) || (IsHidden(acptr)
               && !IsHiddenViewer(sptr))
 #if defined(WEBCHAT_HTML)
-              || !ipmask_check((MyUser(acptr) ? &acptr->ip :  &acptr->ip_real, &imask, ibits))
-/*
-              || (((((MyUser(acptr) ? acptr->ip_real.s_addr : acptr->ip.s_addr) & imask.mask.s_addr) !=
-              imask.bits.s_addr)) || (imask.fall
-              && matchexec(MyUser(acptr) ? ircd_ntoa(&acptr->ip_real) : ircd_ntoa(&acptr->ip), mymask, minlen)))))
-*/
+              || !ipmask_check(MyUser(acptr) ? &acptr->ip : &acptr->ip_real, &imask, ibits))
 #else
               || !ipmask_check(&acptr->ip, &imask, ibits))
-/*
-              || ((((acptr->ip.s_addr & imask.mask.s_addr) !=
-              imask.bits.s_addr)) || (imask.fall
-              && matchexec(ircd_ntoa(&acptr->ip), mymask, minlen)))))
-*/
 #endif
               )
             continue;
@@ -662,11 +652,6 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               || matchexec(PunteroACadena(acptr->info), mymask, minlen))
               && ((!(matchsel & WHO_FIELD_NIP))
               || !ipmask_check(&acptr->ip, &imask, ibits)))
-/*
-              || ((((acptr->ip.s_addr & imask.mask.s_addr) !=
-              imask.bits.s_addr)) || (imask.fall
-              && matchexec(ircd_ntoa(&acptr->ip), mymask, minlen)))))
-*/
             continue;
 #endif
           if (!SHOW_MORE(sptr, counter))
@@ -705,19 +690,9 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             && ((!(matchsel & WHO_FIELD_NIP))
             || (IsHidden(acptr) && !IsHiddenViewer(sptr))
 #if defined(WEBCHAT_HTML)
-            || !ipmask_check((MyUser(acptr) ? &acptr->ip_real : &acptr->ip), &imask, ibits))
-/*
-            || (((((MyUser(acptr) ? acptr->ip_real.s_addr : acptr->ip.s_addr) & imask.mask.s_addr) != imask.bits.s_addr))
-            || (imask.fall
-            && matchexec(MyUser(acptr) ? ircd_ntoa(&acptr->ip_real) : ircd_ntoa(&acptr->ip), mymask, minlen)))))
-*/
+            || !ipmask_check(MyUser(acptr) ? &acptr->ip_real : &acptr->ip, &imask, ibits))
 #else
             || !ipmask_check(&acptr->ip, &imask, ibits))
-/*
-            || ((((acptr->ip.s_addr & imask.mask.s_addr) != imask.bits.s_addr))
-            || (imask.fall
-            && matchexec(ircd_ntoa(&acptr->ip), mymask, minlen)))))
-*/
 #endif
             )
           continue;
@@ -735,11 +710,6 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             || matchexec(PunteroACadena(acptr->info), mymask, minlen))
             && ((!(matchsel & WHO_FIELD_NIP))
             || !ipmask_check(&acptr->ip, &imask, ibits))
-/*
-            || ((((acptr->ip.s_addr & imask.mask.s_addr) != imask.bits.s_addr))
-            || (imask.fall
-            && matchexec(ircd_ntoa(acptr->ip), mymask, minlen)))))
-*/
           continue;
 #endif
         if (!SHOW_MORE(sptr, counter))

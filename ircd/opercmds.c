@@ -2000,6 +2000,7 @@ static void add_gline(aClient *cptr, aClient *sptr, char *host, char *comment,
   int fd, gtype = 0;
   char cptr_info_low[REALLEN+1];
   char *tmp;
+return;
 
 #if defined(BADCHAN)
   if (*host == '#' || *host == '&' || *host == '+')
