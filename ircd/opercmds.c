@@ -2075,7 +2075,7 @@ static void add_gline(aClient *cptr, aClient *sptr, char *host, char *comment,
       } else if(GlineIsRealName(agline))
         tmp=PunteroACadena(acptr->info);
 
-      if ((GlineIsIpMask(agline) ? ipmask_check(&acptr->ip, &agline->gl_addr, agline->gl_bits) != 0 :
+      if ((GlineIsIpMask(agline) ? ipmask_check(&acptr->ip, &agline->gl_addr, agline->gl_bits) == 0 :
           (GlineIsRealName(agline) ? match_pcre(agline->re, tmp) :
             match(agline->host, PunteroACadena(acptr->sockhost)))) == 0 &&
             match(agline->name, PunteroACadena(acptr->user->username)) == 0)
