@@ -89,14 +89,11 @@ de los clientes por flood. Reduzca MAXWATCH o incremente CLIENT_FLOOD en 'make c
  *
  * Avisa a los usuarios la entrada/salida de un nick.
  */
-void chequea_estado_watch(aClient *sptr, int raw, char *ip_override,
-    char *ip_override_SeeHidden)
+void chequea_estado_watch(aClient *sptr, int raw)
 {
   Reg1 aWatch *wptr;
   Reg2 Link *lp;
   char *username;
-  char *ip;
-  aClient *acptr;
 
 /*
 ** Ocurre cuando el usuario no completa
@@ -105,28 +102,10 @@ void chequea_estado_watch(aClient *sptr, int raw, char *ip_override,
   if (!IsUser(sptr))
     return;
 
-  assert((!ip_override && !ip_override_SeeHidden) || (ip_override
-      && ip_override_SeeHidden));
-
   wptr = FindWatch(sptr->name);
 
   if (!wptr)
     return;                     /* No esta en ningun notify */
-
-  if (!ip_override)
-  {
-#if defined(BDD_VIP)
-    if (sptr->user->virtualhost == NULL)
-    {
-      make_virtualhost(sptr, 0);
-    }
-#endif
-
-    if (!IsHidden(sptr))
-    {                           /* Optimizacion para simplificar codigo mas abajo */
-      ip_override = ip_override_SeeHidden = PunteroACadena(sptr->user->host);
-    }
-  }
 
   wptr->lasttime = TStime();
 
@@ -137,34 +116,14 @@ void chequea_estado_watch(aClient *sptr, int raw, char *ip_override,
    * que lo tengan en el notify.
    */
   for (lp = wptr->watch; lp; lp = lp->next)
-  {
-    acptr = lp->value.cptr;
-    if (ip_override)
-    {
-      ip = ip_override;
-#if defined(BDD_VIP)
-      if (IsHiddenViewer(acptr) || (sptr == acptr))
-      {
-        ip = ip_override_SeeHidden;
-      }
-#endif
-    }
-    else
-    {
-#if defined(BDD_VIP)
-      ip = PunteroACadena(sptr->user->virtualhost);
-      if (IsHiddenViewer(acptr) || (sptr == acptr))
-      {
-        ip = PunteroACadena(sptr->user->host);
-      }
-#else
-      ip = PunteroACadena(sptr->user->host);
-#endif
-    }
-
     sendto_one(lp->value.cptr, watch_str(raw), me.name, lp->value.cptr->name,
-        sptr->name, username, ip, wptr->lasttime);
-  }
+        sptr->name, username,
+#if defined(BDD_VIP)
+        get_visiblehost(sptr, lp->value.cptr),
+#else
+        sptr->user->host,
+#endif
+        wptr->lasttime);
 }
 
 

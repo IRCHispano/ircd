@@ -250,8 +250,10 @@ void free_user(anUser *user)
 
     if (user->username)
       SlabStringFree(user->username);
-    if (user->virtualhost)
-      SlabStringFree(user->virtualhost);
+    if (user->vhost)
+      SlabStringFree(user->vhost);
+    if (user->vhostperso)
+      SlabStringFree(user->vhostperso);
     if (user->host)
       SlabStringFree(user->host);
 

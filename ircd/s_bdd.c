@@ -411,13 +411,8 @@ static inline void elimina_cache_ips_virtuales(void)
   /* A limpiar la cache */
   for (acptr = client; acptr; acptr = acptr->next)
   {
-    if (TieneIpVirtualPersonalizada(acptr))
-      continue;
-
     if (IsUser(acptr))
-    {
       BorraIpVirtual(acptr);
-    }
   }
 }
 
@@ -601,11 +596,11 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             aClient *sptr;
             if ((sptr = FindUser(c)) && IsUser(sptr))
             {
+              BorraIpVirtualPerso(sptr);
               if (MyUser(sptr))
-                make_virtualhost(sptr, 1);
-              else
-                BorraIpVirtual(sptr);
-            } 
+                sendto_one(sptr, rpl_str(RPL_HOSTHIDDEN), me.name, sptr->name,
+                    get_virtualhost(sptr, 0));
+            }
           }
           break;
         case BDD_EXCEPTIONDB:
@@ -944,10 +939,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         
         if ((sptr = FindUser(c)) && IsUser(sptr))
         {
+          BorraIpVirtualPerso(sptr);
+          SetIpVirtualPersonalizada(sptr);
           if (MyUser(sptr))
-            make_virtualhost(sptr, 1);
-          else
-            BorraIpVirtual(sptr);
+            make_vhostperso(sptr, 1);
         }
       }
       break;

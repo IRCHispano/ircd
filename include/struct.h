@@ -240,7 +240,8 @@ struct User {
   char *username;
   char *host;
 #if defined(BDD_VIP)
-  char *virtualhost;
+  char *vhost;
+  char *vhostperso;
 #endif
 #if defined(LIST_DEBUG)
   struct Client *bcptr;

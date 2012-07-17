@@ -442,9 +442,15 @@ static int is_banned(aClient *cptr, aChannel *chptr, Link *member)
         break;
 #if defined(BDD_VIP)
       s = make_nick_user_host(cptr->name, PunteroACadena(cptr->user->username),
-          get_virtualhost(cptr));
+          get_virtualhost(cptr, 0));
       if (match(tmp->value.ban.banstr, s) == 0)
         break;
+      if (TieneIpVirtualPersonalizada(cptr)) {
+        s = make_nick_user_host(cptr->name, PunteroACadena(cptr->user->username),
+            get_virtualhost(cptr, 1));
+        if (match(tmp->value.ban.banstr, s) == 0)
+          break;
+      }
     }
 #endif
   }

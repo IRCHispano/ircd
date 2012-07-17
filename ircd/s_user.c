@@ -914,7 +914,7 @@ static int register_user(aClient *cptr, aClient *sptr,
    * ha entrado en la red.
    * (Nuevo usuario local)
    */
-  chequea_estado_watch(sptr, RPL_LOGON, NULL, NULL);
+  chequea_estado_watch(sptr, RPL_LOGON);
 
 #endif /* WATCH */
 
@@ -1689,25 +1689,27 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(WEBCHAT_HTML)
   struct hostent *hp;
 
-  /* Prioridad IPv4 */
-  hp = gethostbyname2(host, AF_INET);
-  if (hp) {
-    struct irc_in_addr ircaddr;
-    struct in_addr addr4;
+  if (!strchr(host, ':')) {
+    /* Prioridad IPv4 en hosts */
+    hp = gethostbyname2(host, AF_INET);
+    if (hp) {
+      struct irc_in_addr ircaddr;
+      struct in_addr addr4;
 
-    /* IPv4 */
-    memcpy(&addr4, hp->h_addr, hp->h_length);
+      /* IPv4 */
+      memcpy(&addr4, hp->h_addr, hp->h_length);
 
-    /* Traducimos de in_addr a irc_in_addr */
-    memset(&ircaddr, 0, sizeof(ircaddr));
-    ircaddr.in6_16[5] = htons(65535);
-    ircaddr.in6_16[6] = htons(ntohl(addr4.s_addr) >> 16);
-    ircaddr.in6_16[7] = htons(ntohl(addr4.s_addr) & 65535);
+      /* Traducimos de in_addr a irc_in_addr */
+      memset(&ircaddr, 0, sizeof(ircaddr));
+      ircaddr.in6_16[5] = htons(65535);
+      ircaddr.in6_16[6] = htons(ntohl(addr4.s_addr) >> 16);
+      ircaddr.in6_16[7] = htons(ntohl(addr4.s_addr) & 65535);
 
-    memcpy(&sptr->ip_real, &ircaddr, sizeof(struct irc_in_addr));
-  } else {
+      memcpy(&sptr->ip_real, &ircaddr, sizeof(struct irc_in_addr));
+    }
+  }
+  if (!hp) {
     hp = gethostbyname2(host, AF_INET6);
-
     if (hp)
     {
         /* IPv6 */
@@ -2925,11 +2927,14 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(BDD_VIP) && defined(BDD_VIP2)
 /*
 ** Antes no tenia +r, y ahora si.
-** Puede ser que tengamos una virtual propia
+** Puede ser que tengamos una virtual personalizada propia
 */
     if (!(sethmodes & HMODE_NICKREGISTERED))
     {
-      BorraIpVirtual(sptr);
+      if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
+        SetIpVirtualPersonalizada(sptr);
+      else
+        BorraIpVirtualPerso(sptr);
     }
 #endif
   }
@@ -2956,7 +2961,8 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(BDD_VIP)
   if ((sethmodes & HMODE_HIDDEN) && !IsHidden(sptr))
   {
-    BorraIpVirtual(sptr);
+    if (TieneIpVirtualPersonalizada(sptr))
+      BorraIpVirtualPerso(sptr);
   }
 #endif
 
@@ -3057,7 +3063,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(WATCH)
   if (IsWatch(sptr))
   {
-    chequea_estado_watch(sptr, RPL_LOGON, NULL, NULL);
+    chequea_estado_watch(sptr, RPL_LOGON);
     ClearWatch(sptr);
   }
 #endif
@@ -3482,7 +3488,7 @@ int is_silenced(aClient *sptr, aClient *acptr)
       ircd_ntoa_c(sptr));
 #if defined(BDD_VIP)
   sprintf_irc(sendervirtual, "%s!%s@%s", sptr->name,
-      PunteroACadena(user->username), get_virtualhost(sptr));
+      PunteroACadena(user->username), get_virtualhost(sptr, 1));
 #endif
 
   for (; lp; lp = lp->next)
@@ -3688,14 +3694,21 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * Nos da la virtual de una conexion, aunque no tenga flag +x.
  *
  */
-char *get_virtualhost(aClient *sptr)
+char *get_virtualhost(aClient *sptr, int perso)
 {
   if (!IsUser(sptr))
     return "<Que_Pasa?>";       /* esto no deberia salir nunca */
 
-  if (sptr->user->virtualhost == NULL)
-    make_virtualhost(sptr, 0);
-  return sptr->user->virtualhost;
+  if (perso && TieneIpVirtualPersonalizada(sptr))
+  {
+    if (!sptr->user->vhostperso)
+      make_vhostperso(sptr, 0);
+    return sptr->user->vhostperso;
+  }
+
+  if (!sptr->user->vhost)
+    make_vhost(sptr, 0);
+  return sptr->user->vhost;
 }
 
 /*
@@ -3716,71 +3729,36 @@ char *get_visiblehost(aClient *sptr, aClient *acptr)
     return PunteroACadena(sptr->user->host);
   else
   {
-    if (sptr->user->virtualhost == NULL)
-      make_virtualhost(sptr, 0);
-    return sptr->user->virtualhost;
+    if (TieneIpVirtualPersonalizada(sptr)) {
+      if (!sptr->user->vhostperso)
+        make_vhostperso(sptr, 0);
+      return sptr->user->vhostperso;
+    }
+
+    if (!sptr->user->vhost)
+      make_vhost(sptr, 0);
+    return sptr->user->vhost;
   }
 }
 
 /*
- * make_virtualhost(acptr, mostrar)                 ** MIGRAR A hispano.c **
+ * make_vhost(acptr, mostrar)                       ** MIGRAR A hispano.c **
  *
  * crea la ip virtual
  *
  */
-void make_virtualhost(aClient *acptr, int mostrar)
+void make_vhost(aClient *acptr, int mostrar)
 {
   struct db_reg *reg = NULL;
   unsigned int v[2], x[2];
   int ts = 0;
   char ip_virtual_temporal[HOSTLEN + 1];
-  int encontramos_nueva_ip_virtual_personalizada = 0;
 
   assert(!mostrar || MyUser(acptr));
 
-/*
-** Comprobamos si el nick en cuestión tiene IP virtual personalizada
-**
-*/
-  if (IsNickRegistered(acptr))
-  {
-    if ((reg = db_buscar_registro(BDD_IPVIRTUALDB, acptr->name)))
-    {
-      encontramos_nueva_ip_virtual_personalizada = !0;
-    }
-  }
-
-/*
-** Si tenia una IP personalizada, hay que recalcularla. Si era
-** la IP virtual generica (la IP cifrada), no hace falta recalcular.
-*/
-  if ((!encontramos_nueva_ip_virtual_personalizada)
-      && (acptr->user->virtualhost != NULL)
-      && !TieneIpVirtualPersonalizada(acptr))
-  {
-    return;                     /* No es necesario recalcular la IP virtual */
-  }
-
-  /* Busco dirección virtual fija para este nick */
-  /* Si esta suspendido, no hay vhost personalizado */
-  if (encontramos_nueva_ip_virtual_personalizada)
-  {
-    SlabStringAllocDup(&(acptr->user->virtualhost), reg->valor, HOSTLEN);
-    SetIpVirtualPersonalizada(acptr);
-    if (mostrar)
-      sendto_one(acptr, rpl_str(RPL_HOSTHIDDEN), me.name, acptr->name,
-          acptr->user->virtualhost);
-    return;
-  }
-
-  SlabStringAllocDup(&(acptr->user->virtualhost),
-      PunteroACadena(acptr->user->host), 0);
-  ClearIpVirtualPersonalizada(acptr);
-
   if (!clave_de_cifrado_de_ips)
   {
-    SetIpVirtualPersonalizada(acptr);
-    SlabStringAllocDup(&(acptr->user->virtualhost), "no.hay.clave.de.cifrado",
+    SlabStringAllocDup(&(acptr->user->vhost), "no.hay.clave.de.cifrado",
         0);
     return;
   }
@@ -3858,15 +3836,36 @@ void make_virtualhost(aClient *acptr, int mostrar)
     strcpy(ip_virtual_temporal, PunteroACadena(acptr->user->host));
   }
 #endif
-  SlabStringAllocDup(&(acptr->user->virtualhost), ip_virtual_temporal, HOSTLEN);
+  SlabStringAllocDup(&(acptr->user->vhost), ip_virtual_temporal, HOSTLEN);
 
   if (mostrar)
   {
     sendto_one(acptr, rpl_str(RPL_HOSTHIDDEN), me.name, acptr->name,
-        acptr->user->virtualhost);
+        acptr->user->vhost);
   }
 }
 
+/*
+ * make_vhostperso(acptr, mostrar)                  ** MIGRAR A hispano.c **
+ *
+ * crea la ip virtual personalizada
+ *
+ */
+void make_vhostperso(aClient *acptr, int mostrar)
+{
+  struct db_reg *reg = NULL;
+
+  assert(!mostrar || MyUser(acptr));
+
+  if ((reg = db_buscar_registro(BDD_IPVIRTUALDB, acptr->name)))
+  {
+    SlabStringAllocDup(&(acptr->user->vhostperso), reg->valor, HOSTLEN);
+    SetIpVirtualPersonalizada(acptr);
+    if (mostrar)
+      sendto_one(acptr, rpl_str(RPL_HOSTHIDDEN), me.name, acptr->name,
+          acptr->user->vhostperso);
+  }
+}
 #endif
 
 /*
@@ -3880,6 +3879,10 @@ void make_virtualhost(aClient *acptr, int mostrar)
  */
 void rename_user(aClient *sptr, char *nick_nuevo)
 {
+#if defined(BDD_VIP)
+  int vhperso = 0;
+#endif
+
   assert(MyConnect(sptr));
 
   if (!nick_nuevo)
@@ -3990,14 +3993,17 @@ void rename_user(aClient *sptr, char *nick_nuevo)
      * Avisamos a sus contactos que el nick
      * ha salido (ha cambiado de nick).
      */
-    chequea_estado_watch(sptr, RPL_LOGOFF, NULL, NULL);
+    chequea_estado_watch(sptr, RPL_LOGOFF);
 #endif /* WATCH */
   }
   SlabStringAllocDup(&(sptr->name), nick_nuevo, 0);
   hAddClient(sptr);
 
 #if defined(BDD_VIP)
-  BorraIpVirtual(sptr);
+  if (TieneIpVirtualPersonalizada(sptr)) {
+      BorraIpVirtualPerso(sptr);
+      vhperso = 1;
+  }
 #endif
 
 /* 23-Oct-2003: mount@irc-dev.net
@@ -4042,6 +4048,8 @@ void rename_user(aClient *sptr, char *nick_nuevo)
                                  * contrario dejo el modo tal como esta.
                                  */
       SetHidden(sptr);
+      if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
+        SetIpVirtualPersonalizada(sptr);
 #else
       /* Puede que tenga una ip virtual personalizada */
       if (IsNickSuspended(sptr))
@@ -4051,6 +4059,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       else if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
       {
         SetHidden(sptr);
+        SetIpVirtualPersonalizada(sptr);
       }
       else
       {
@@ -4058,16 +4067,18 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       }
 #endif
 
-/* Al cambiar de nick a otro se
-** regenera la ip virtual SIEMPRE.
-*/
       if (IsHidden(sptr))
       {
-        make_virtualhost(sptr, 1);
-      }
-      else
-      {
-        BorraIpVirtual(sptr);
+        if (TieneIpVirtualPersonalizada(sptr)) {
+          make_vhostperso(sptr, 1);
+        } else {
+            /* Tenia vhost personalizada, ahora mandamos
+             * cambio para que el usuario tenga constancia.
+             */
+          if (vhperso)
+            sendto_one(sptr, rpl_str(RPL_HOSTHIDDEN), me.name, sptr->name,
+                 get_virtualhost(sptr, 0));
+        }
       }
 #endif
 
@@ -4086,7 +4097,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
    * Avisamos a sus contactos que el nick
    * ha entrado (ha cambiado de nick).
    */
-  chequea_estado_watch(sptr, RPL_LOGON, NULL, NULL);
+  chequea_estado_watch(sptr, RPL_LOGON);
 
 #endif /* WATCH */
 }
@@ -4350,35 +4361,13 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char *regexp;
   char nick_low[NICKLEN+1];
   char *tmp;
-#if defined(WATCH)
-  char ip_override[HOSTLEN + 10];
-  char ip_override_SeeHidden[HOSTLEN + 10];
+#if defined(BDD_VIP)
+  int vhperso = 0;
+#endif
 
   assert(MyConnect(sptr));
 
-  if (IsUser(sptr) && (sptr->user->host))
-  {
-#if defined(BDD_VIP)
-    strcpy(ip_override_SeeHidden, sptr->user->host);
-    if (IsHidden(sptr))
-    {
-      if (sptr->user->virtualhost == NULL)
-      {
-        make_virtualhost(sptr, 0);
-      }
-      strcpy(ip_override, sptr->user->virtualhost);
-    }
-    else
-    {
-      strcpy(ip_override, sptr->user->host);
-    }
-#else
-    strcpy(ip_override, sptr->user->host);
-#endif
-  }
-
   ClearWatch(sptr);             /* Nos curamos en salud */
-#endif
 
 /*
 ** No dejamos que un usuario cambie de nick varias veces ANTES
@@ -5045,8 +5034,10 @@ nickkilldone:
 ** rutina con un usuario no inicializado del todo (recien conectado)
 ** que todavia no esta marcado como "user".
 */
-    if (IsUser(sptr))
-      BorraIpVirtual(sptr);
+    if (IsUser(sptr) && TieneIpVirtualPersonalizada(sptr)) {
+      BorraIpVirtualPerso(sptr);
+      vhperso = 1;
+    }
 #endif
     server->serv->ghost = 0;    /* :server NICK means end of net.burst */
     SlabStringAllocDup(&(sptr->info), parv[parc - 1], REALLEN);
@@ -5059,7 +5050,7 @@ nickkilldone:
      * ha entrado en la red.
      * (Nuevo usuario remoto)
      */
-    chequea_estado_watch(sptr, RPL_LOGON, NULL, NULL);
+    chequea_estado_watch(sptr, RPL_LOGON);
 
 #endif /* WATCH */
 
@@ -5169,8 +5160,7 @@ nickkilldone:
          * (Cambio de nick local y remoto)
          */
         if (!nick_equivalentes)
-          chequea_estado_watch(sptr, RPL_LOGOFF, ip_override,
-              ip_override_SeeHidden);
+            chequea_estado_watch(sptr, RPL_LOGOFF);
 #endif /* WATCH */
 
         of = sptr->flags;
@@ -5190,6 +5180,10 @@ nickkilldone:
 #if !defined(BDD_VIP2)
           ClearHidden(sptr);
 #endif
+          if (TieneIpVirtualPersonalizada(sptr)) {
+            BorraIpVirtualPerso(sptr);
+            vhperso = 1;
+          }
 #endif
           if (!IsAnOper(sptr))
             ClearHiddenViewer(sptr);
@@ -5294,6 +5288,7 @@ nickkilldone:
     else if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
     {
       SetHidden(sptr);          /* Tiene una ip virtual personalizada */
+      SetIpVirtualPersonalizada(sptr);
     }
     else
     {
@@ -5334,6 +5329,8 @@ nickkilldone:
                                  * contrario dejo el modo tal como esta.
                                  */
       SetHidden(sptr);
+      if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
+        SetIpVirtualPersonalizada(sptr);
 #else
       /* Puede que tenga una ip virtual personalizada */
       if (nick_suspendido)
@@ -5343,6 +5340,7 @@ nickkilldone:
       else if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
       {
         SetHidden(sptr);
+        SetIpVirtualPersonalizada(sptr);
       }
       else
       {
@@ -5366,22 +5364,20 @@ nickkilldone:
       ClearHelpOp(sptr);
     }
 #if defined(BDD_VIP)
-/* Al cambiar de nick a otro se
-** regenera la ip virtual SIEMPRE.
-**
-** Necesitamos hacer la verificacion porque se puede invocar esta
-** rutina con un usuario no inicializado del todo (recien conectado)
-** que todavia no esta marcado como "user".
-*/
     if (IsUser(sptr))
     {
       if (IsHidden(sptr))
       {
-        make_virtualhost(sptr, 1);
-      }
-      else
-      {
-        BorraIpVirtual(sptr);
+        if (TieneIpVirtualPersonalizada(sptr)) {
+          make_vhostperso(sptr, 1);
+        } else {
+          /* Tenia vhost personalizada, ahora mandamos
+           * cambio para que el usuario tenga constancia.
+           */
+          if (vhperso)
+            sendto_one(sptr, rpl_str(RPL_HOSTHIDDEN), me.name, sptr->name,
+                get_virtualhost(sptr, 0));
+        }
       }
     }
 #endif /* defined(BDD_VIP) */
@@ -5397,7 +5393,7 @@ nickkilldone:
 
   if (IsUser(sptr) && !nick_equivalentes)
   {
-    chequea_estado_watch(sptr, RPL_LOGON, NULL, NULL);
+    chequea_estado_watch(sptr, RPL_LOGON);
   }
 #endif /* WATCH */
 
@@ -5434,36 +5430,11 @@ int m_nick_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char nick[NICKLEN + 2];
   time_t lastnick = (time_t) 0;
   int differ = 1;
-#if defined(WATCH)
-  char ip_override[HOSTLEN + 10];
-  char ip_override_SeeHidden[HOSTLEN + 10];
 
   assert(!MyConnect(sptr));
   assert(IsServer(cptr));
 
-  if (IsUser(sptr) && (sptr->user->host))
-  {
-#if defined(BDD_VIP)
-    strcpy(ip_override_SeeHidden, sptr->user->host);
-    if (IsHidden(sptr))
-    {
-      if (sptr->user->virtualhost == NULL)
-      {
-        make_virtualhost(sptr, 0);
-      }
-      strcpy(ip_override, sptr->user->virtualhost);
-    }
-    else
-    {
-      strcpy(ip_override, sptr->user->host);
-    }
-#else
-    strcpy(ip_override, sptr->user->host);
-#endif
-  }
-
   ClearWatch(sptr);             /* Nos curamos en salud */
-#endif
 
   nick_autentificado_en_bdd = IsNickRegistered(sptr) || IsNickSuspended(sptr);
 
@@ -5792,14 +5763,13 @@ nickkilldone:
     hAddClient(sptr);
 
 #if defined(BDD_VIP)
-/*
-** Necesitamos hacer la verificacion porque se puede invocar esta
-** rutina con un usuario no inicializado del todo (recien conectado)
-** que todavia no esta marcado como "user".
-*/
-    if (IsUser(sptr))
-      BorraIpVirtual(sptr);
+  /* Si tiene +r y vhost, lo marcamos */
+  if (IsNickRegistered(sptr) && db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
+  {
+    SetIpVirtualPersonalizada(sptr);
+  }
 #endif
+
 
     server->serv->ghost = 0;    /* :server NICK means end of net.burst */
     SlabStringAllocDup(&(sptr->info), parv[parc - 1], REALLEN);
@@ -5812,7 +5782,7 @@ nickkilldone:
      * ha entrado en la red.
      * (Nuevo usuario remoto)
      */
-    chequea_estado_watch(sptr, RPL_LOGON, NULL, NULL);
+    chequea_estado_watch(sptr, RPL_LOGON);
 
 #endif /* WATCH */
 
@@ -5843,8 +5813,7 @@ nickkilldone:
          * (Cambio de nick local y remoto)
          */
         if (!nick_equivalentes)
-          chequea_estado_watch(sptr, RPL_LOGOFF, ip_override,
-              ip_override_SeeHidden);
+            chequea_estado_watch(sptr, RPL_LOGOFF);
 #endif /* WATCH */
 
         of = sptr->flags;
@@ -5893,7 +5862,9 @@ nickkilldone:
     SlabStringAllocDup(&(sptr->name), nick, 0);
     hAddClient(sptr);
 #if defined(BDD_VIP)
-    BorraIpVirtual(sptr);
+    if (TieneIpVirtualPersonalizada(sptr)) {
+      BorraIpVirtualPerso(sptr);
+    }
 #endif
   }
   else
@@ -5920,7 +5891,7 @@ nickkilldone:
     /* despues desde m_umode              */
     if (!db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
     {
-      chequea_estado_watch(sptr, RPL_LOGON, NULL, NULL);
+      chequea_estado_watch(sptr, RPL_LOGON);
     }
     else
     {

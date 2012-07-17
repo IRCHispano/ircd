@@ -217,7 +217,7 @@ void add_history(aClient *cptr, int still_on)
   DupString(ww.newww->username, PunteroACadena(cptr->user->username));
   DupString(ww.newww->hostname, cptr->user->host);
 #if defined(BDD_VIP)
-  DupString(ww.newww->virtualhost, get_virtualhost(cptr));
+  DupString(ww.newww->virtualhost, get_virtualhost(cptr, 1));
 #endif
   /* Should be changed to server numeric */
   DupString(ww.newww->servername, cptr->user->server->name);

@@ -1,3 +1,19 @@
+* 2012/07/18  zoltan@irc-dev.net (u2.10.H.10.175)                FEATURE
+------------------------------------------------------------------------
+  Cambio de la forma de funcionamiento de los vhosts.
+
+  Antes, solo se tenia un vhost, que podia ser personalizada o generica
+  si no se tenia la perso. Se recalculaba cada vez que se cambiaba el
+  nick.
+
+  Ahora, un usuario SIEMPRE tiene una generica y ademas tiene la
+  personalizada si la tiene. La prioridad para mostrar es la personalizada
+  , la generica solo se usaria para los bans.
+
+  Se ha modificado la rutina de los bans para que compruebe ambos vhosts.
+
+  Por la reescritura, se ha eliminado codigo de overriden de Watch que ya
+  no hace falta.
 
 * 2012/07/18  zoltan@irc-dev.net (u2.10.H.10.174)                    FIX
 ------------------------------------------------------------------------

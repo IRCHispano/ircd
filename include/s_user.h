@@ -71,9 +71,10 @@ extern int check_target_limit(aClient *sptr, void *target, const char *name,
 extern void add_target(aClient *sptr, void *target);
 extern int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 #if defined(BDD_VIP)
-extern char *get_virtualhost(aClient *sptr);
-void make_virtualhost(aClient *acptr, int mostrar);
+extern char *get_virtualhost(aClient *sptr, int perso);
 extern char *get_visiblehost(aClient *sptr, aClient *acptr);
+void make_vhost(aClient *acptr, int mostrar);
+void make_vhostperso(aClient *acptr, int mostrar);
 #endif
 extern void rename_user(aClient *sptr, char *nick_nuevo);
 extern void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh, int registrado);

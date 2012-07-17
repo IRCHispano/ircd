@@ -647,7 +647,7 @@ static void exit_one_client(aClient *bcptr, char *comment)
      * Y ademas avisamos a sus contactos de su salida :)
      */
     borra_lista_watch(bcptr);
-    chequea_estado_watch(bcptr, RPL_LOGOFF, NULL, NULL);
+    chequea_estado_watch(bcptr, RPL_LOGOFF);
 
 #endif /* WATCH */
 

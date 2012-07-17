@@ -301,12 +301,18 @@ extern struct sockaddr_in vserv;
 
 #define ClearIpVirtualPersonalizada(x)  ((x)->hmodes &= ~HFLAG_IPVIRTUAL_PERSONALIZADA)
 
-
 #define BorraIpVirtual(x)      do { \
                                  assert(IsUser(x)); \
-                                 if((x)->user->virtualhost) \
-                                   SlabStringFree((x)->user->virtualhost); \
-                                 (x)->user->virtualhost=NULL; \
+                                 if((x)->user->vhost) \
+                                   SlabStringFree((x)->user->vhost); \
+                                 (x)->user->vhost=NULL; \
+                               } while (0)
+
+#define BorraIpVirtualPerso(x) do { \
+                                 assert(IsUser(x)); \
+                                 if((x)->user->vhostperso) \
+                                   SlabStringFree((x)->user->vhostperso); \
+                                 (x)->user->vhostperso=NULL; \
                                  ClearIpVirtualPersonalizada(x); \
                                } while (0)
 
