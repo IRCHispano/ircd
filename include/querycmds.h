@@ -12,7 +12,9 @@ struct lusers_st {
   unsigned int local_clients;   /* IsUser() && MyConnect() */
   /* Global counts: */
   unsigned int servers;         /* IsServer() || IsMe() */
+  unsigned int pservers;        /* Pseudoserver Services */
   unsigned int clients;         /* IsUser() */
+  unsigned int services;        /* Services */
   /* Global user mode changes: */
   unsigned int inv_clients;     /* IsUser() && IsInvisible() */
   unsigned int opers;           /* IsUser() && IsOper() */

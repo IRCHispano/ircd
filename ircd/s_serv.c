@@ -733,6 +733,9 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
       SetService(acptr);
       SetIPv6(acptr);
     }
+
+    if (IsService(acptr))
+      nrof.pservers++;
     
     if (*parv[5] == 'J')
     {
@@ -833,7 +836,10 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (*parv[7] == '+')
         set_server_flags(cptr, parv[7] + 1);
     }
-                                          
+
+    if (IsService(cptr))
+      nrof.pservers++;
+
     if (start_timestamp > 780000000)
     {
 #if !defined(RELIABLE_CLOCK)

@@ -115,7 +115,41 @@ int m_map(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 
   if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
   {
-    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+    aClient *acptr;
+    unsigned int clientes;
+    unsigned int clientes_float;
+    int numps = 0;
+
+    /* MAP Especial solo mostrando services */
+
+    clientes = nrof.clients - nrof.services;
+    clientes_float = (int)((1000.0 * clientes) / nrof.clients + 0.5);
+
+    sendto_one(sptr, ":%s 015 %s :%s [%i clientes - %i.%i%%]",
+        me.name, parv[0], his.name, clientes,
+        clientes_float / 10, clientes_float % 10);
+
+    for (acptr = client; acptr; acptr = acptr->next)
+    {
+      if (!IsServer(acptr) && !IsMe(acptr))
+        continue;
+      if (!IsService(acptr))
+        continue;
+
+      numps++;
+      clientes = acptr->serv->clients;
+      clientes_float = (int)((1000.0 * clientes) / nrof.clients + 0.5);
+
+      if (numps < nrof.pservers)
+        sendto_one(sptr, ":%s 015 %s :|-%s [%i clientes - %i.%i%%]",
+            me.name, parv[0], acptr->name, clientes,
+            clientes_float / 10, clientes_float % 10);
+      else
+        sendto_one(sptr, ":%s 015 %s :`-%s [%i clientes - %i.%i%%]",
+            me.name, parv[0], acptr->name, clientes,
+            clientes_float / 10, clientes_float % 10);
+    }
+    sendto_one(sptr, rpl_str(RPL_MAPEND), me.name, parv[0]);
     return 0;
   }
 

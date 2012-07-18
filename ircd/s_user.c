@@ -715,6 +715,8 @@ static int register_user(aClient *cptr, aClient *sptr,
   {
     SlabStringAllocDup(&(user->username), username, USERLEN);
     Count_newremoteclient(nrof, sptr);
+    if (IsService(sptr->user->server))
+      nrof.services++;
   }
   SetUser(sptr);
 
@@ -2901,6 +2903,15 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if (!(sethmodes & HMODE_SERVICESBOT))
       ClearServicesBot(sptr);
+
+    if (!(sethmodes & HMODE_USERDEAF))
+      ClearUserDeaf(sptr);
+
+    if (!(sethmodes & HMODE_USERBLIND))
+      ClearUserBlind(sptr);
+
+    if (!(sethmodes & HMODE_USERNOJOIN))
+      ClearUserNoJoin(sptr);
   }
 
   if (IsNickRegistered(sptr))

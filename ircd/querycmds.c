@@ -201,9 +201,22 @@ int m_links(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
   {
-    sendto_one(sptr, rpl_str(RPL_ENDOFLINKS), me.name, parv[0],
-      parc < 2 ? "*" : parv[1]);
-    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+    /* Links especial solo mostrando services*/
+    sendto_one(sptr, rpl_str(RPL_LINKS),
+        me.name, parv[0], his.name, his.name, 0, 10, his.info);
+    for (acptr = client; acptr; acptr = acptr->next)
+    {
+      if (!IsServer(acptr) && !IsMe(acptr))
+        continue;
+      if (!IsService(acptr))
+        continue;
+      sendto_one(sptr, rpl_str(RPL_LINKS),
+          me.name, parv[0], acptr->name, his.name,
+        1, acptr->serv->prot,
+        (acptr->info[0] ? acptr->info : "(Unknown Location)"));
+    }
+
+    sendto_one(sptr, rpl_str(RPL_ENDOFLINKS), me.name, parv[0], "*");
     return 0;
   }
 
@@ -284,18 +297,21 @@ int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
         HUNTED_ISME)
       return 0;
 
-  sprintf_irc(since, "%d%02d%02d-%02d:%02d", 1900 + since_t->tm_year,
-      since_t->tm_mon + 1, since_t->tm_mday, since_t->tm_hour, since_t->tm_min);
-
-  if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr)))
-    sendto_one(sptr, rpl_str(RPL_LOCALUSERS), me.name, parv[0], 0, 0, "", "");
+  if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr))) {
+    sendto_one(sptr, ":%s 265 %s :Current local users: %d Max: %d",
+        me.name, parv[0], nrof.clients - nrof.services, max_global_count - nrof.services);
+    sendto_one(sptr, ":%s 266 %s :Current global users: %d Max: %d",
+        me.name, parv[0], nrof.clients, max_global_count);
+  }
   else
+  {
+    sprintf_irc(since, "%d%02d%02d-%02d:%02d", 1900 + since_t->tm_year,
+        since_t->tm_mon + 1, since_t->tm_mday, since_t->tm_hour, since_t->tm_min);
     sendto_one(sptr, rpl_str(RPL_LOCALUSERS), me.name, parv[0],
         nrof.local_clients, max_client_count, date(max_client_count_TS), since);
-
-  sendto_one(sptr, rpl_str(RPL_GLOBALUSERS), me.name, parv[0], nrof.clients,
-      max_global_count, date(max_global_count_TS), since);
-
+    sendto_one(sptr, rpl_str(RPL_GLOBALUSERS), me.name, parv[0], nrof.clients,
+        max_global_count, date(max_global_count_TS), since);
+  }
   return 0;
 }
 
@@ -314,8 +330,12 @@ int m_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
         HUNTED_ISME)
       return 0;
 
-  sendto_one(sptr, rpl_str(RPL_LUSERCLIENT), me.name, parv[0],
-      nrof.clients - nrof.inv_clients, nrof.inv_clients, nrof.servers);
+  if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr)))
+    sendto_one(sptr, rpl_str(RPL_LUSERCLIENT), me.name, parv[0],
+        nrof.clients - nrof.inv_clients, nrof.inv_clients, nrof.pservers + 1);
+  else
+    sendto_one(sptr, rpl_str(RPL_LUSERCLIENT), me.name, parv[0],
+        nrof.clients - nrof.inv_clients, nrof.inv_clients, nrof.servers);
   if ((nrof.opers) || (nrof.helpers) || (nrof.bots_oficiales))
     sendto_one(sptr, rpl_str(RPL_LUSEROP), me.name, parv[0], nrof.helpers,
         nrof.opers, nrof.bots_oficiales);
@@ -326,12 +346,14 @@ int m_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_one(sptr, rpl_str(RPL_LUSERCHANNELS), me.name, parv[0],
         nrof.channels);
   if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr)))
-    sendto_one(sptr, rpl_str(RPL_LUSERME), me.name, parv[0], 0, 0);
+    sendto_one(sptr, rpl_str(RPL_LUSERME), me.name, parv[0], nrof.clients - nrof.services,
+        nrof.pservers);
   else
     sendto_one(sptr, rpl_str(RPL_LUSERME), me.name, parv[0], nrof.local_clients,
         nrof.local_servers);
   if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr)))
-    sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0], 0, 0);
+    sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],
+        max_global_count - nrof.services, max_global_count - nrof.services - nrof.pservers);
   else
     sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],
         max_connection_count, max_client_count);
