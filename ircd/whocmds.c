@@ -942,12 +942,13 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 me.name, parv[0], name, buf);
         }
 
-        sendto_one(sptr, rpl_str(RPL_WHOISSERVER), me.name,
-            parv[0], name,
-            (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr))) ?
-                  his.name : a2cptr->name,
-            (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr))) ?
-                  his.info : PunteroACadena(a2cptr->info));
+        if (ocultar_servidores && !IsService(a2cptr) &&
+            !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr)))
+          sendto_one(sptr, rpl_str(RPL_WHOISSERVER), me.name,
+              parv[0], name, his.name, his.info);
+        else
+          sendto_one(sptr, rpl_str(RPL_WHOISSERVER), me.name,
+              parv[0], name, a2cptr->name, PunteroACadena(a2cptr->info));
 
         if (user)
         {
