@@ -1,3 +1,8 @@
+* 2012/08/01  zoltan@irc-dev.net (u2.10.H.10.178)                    FIX
+------------------------------------------------------------------------
+  Bug detectado cuando hay mas de 3 hopcounts en el envio de IP base64
+  segun si el servidor soporta IPv6 o no.
+
 * 2012/07/31  zoltan@irc-dev.net (u2.10.H.10.177)                    FIX
 ------------------------------------------------------------------------
   Fix estetico en el whois.

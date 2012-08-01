@@ -509,7 +509,6 @@ static int register_user(aClient *cptr, aClient *sptr,
   anUser *user = sptr->user;
   Dlink *lp;
   char ip_base64[25];
-  char sendbuf4[2048];
   int found_g;
 
   user->last = now;
@@ -820,9 +819,9 @@ static int register_user(aClient *cptr, aClient *sptr,
       NumServ(user->server), nick, sptr->hopcount + 1, sptr->lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
 #if defined(WEBCHAT_HTML)
-      iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), IsIPv6(cptr)),
+      iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), 1),
 #else
-      iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), IsIPv6(cptr)),
+      iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 1),
 #endif
       NumNick(sptr), PunteroACadena(sptr->info));
 
@@ -833,7 +832,7 @@ static int register_user(aClient *cptr, aClient *sptr,
   sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s :%s",
       user->server->name, nick, sptr->hopcount + 1, sptr->lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host),
-      user->server->name, iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), IsIPv6(cptr)),
+      user->server->name, iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 1),
       PunteroACadena(sptr->info));
 #else
   sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
@@ -877,26 +876,36 @@ static int register_user(aClient *cptr, aClient *sptr,
 #endif
       NumNick(sptr), PunteroACadena(sptr->info));
 
-  sprintf_irc(sendbuf4, *tmpstr ?
-      "%s " TOK_NICK " %s %d %d %s %s +%s %s %s%s :%s" :
-      "%s " TOK_NICK " %s %d %d %s %s %s%s %s%s :%s",
-      NumServ(user->server), nick, sptr->hopcount + 1, (int)(sptr->lastnick),
-      PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
-#if defined(WEBCHAT_HTML)
-      iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), 0),
-#else
-      iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 0),
-#endif
-      NumNick(sptr), PunteroACadena(sptr->info));
-
   for (lp = me.serv->down; lp; lp = lp->next)
   {
     if (lp->value.cptr == cptr || Protocol(lp->value.cptr) < 10)
       continue;
     if (IsIPv6(lp->value.cptr))
       sendbufto_one(lp->value.cptr);
-    else
-      sendto_one(lp->value.cptr, sendbuf4);
+    else {
+      /* Sin prioridad para servidores sin IPv6 */
+      if (*tmpstr)
+        sendto_one(lp->value.cptr, "%s " TOK_NICK " %s %d %d %s %s +%s %s %s%s :%s",
+            NumServ(user->server), nick, sptr->hopcount + 1, (int)(sptr->lastnick),
+            PunteroACadena(user->username), PunteroACadena(user->host), tmpstr,
+#if defined(WEBCHAT_HTML)
+            iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), 0),
+#else
+            iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 0),
+#endif
+            NumNick(sptr), PunteroACadena(sptr->info));
+
+      else
+        sendto_one(lp->value.cptr, "%s " TOK_NICK " %s %d %d %s %s %s %s%s :%s",
+            NumServ(user->server), nick, sptr->hopcount + 1, (int)(sptr->lastnick),
+            PunteroACadena(user->username), PunteroACadena(user->host),
+#if defined(WEBCHAT_HTML)
+            iptobase64(ip_base64, MyUser(sptr) ? &sptr->ip_real : &sptr->ip, sizeof(ip_base64), 0),
+#else
+            iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 0),
+#endif
+            NumNick(sptr), PunteroACadena(sptr->info));
+    }
   }
 
 #endif
