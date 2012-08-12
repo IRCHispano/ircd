@@ -74,7 +74,7 @@ extern void remove_dlink(Dlink **lpp, Dlink *lp);
 extern struct ConfItem *make_conf(void);
 extern void delist_conf(struct ConfItem *aconf);
 extern void free_conf(struct ConfItem *aconf);
-extern aGline *make_gline(char *host, char *reason, char *name,
+extern aGline *make_gline(int is_ipmask, char *host, char *reason, char *name,
     time_t expire, time_t lastmod, time_t lifetime);
 extern aGline *find_gline(aClient *cptr, aGline **pgline);
 extern void free_gline(aGline *agline, aGline *pgline);

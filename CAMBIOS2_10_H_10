@@ -1,3 +1,12 @@
+* 2012/08/12  zoltan@irc-dev.net (u2.10.H.10.179)                    FIX
+------------------------------------------------------------------------
+  Tras no poder conseguir reproducir un misterioso bug del CIDR y por
+  necesidades de la red, desactivo el codigo de CIDR.
+  Para activar en pruebas, usar "#define GLINE_CIDR".
+
+  Ademas provoco error de compilacion si se compila el ircd sin soporte
+  de Glines de canales (BADCHAN).
+
 * 2012/08/01  zoltan@irc-dev.net (u2.10.H.10.178)                    FIX
 ------------------------------------------------------------------------
   Bug detectado cuando hay mas de 3 hopcounts en el envio de IP base64
