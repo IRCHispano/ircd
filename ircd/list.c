@@ -458,7 +458,7 @@ void free_conf(aConfItem *aconf)
   return;
 }
 
-aGline *make_gline(int is_ipmask, char *host, char *reason,
+aGline *make_gline(char *host, char *reason,
     char *name, time_t expire, time_t lastmod, time_t lifetime)
 {
   Reg4 aGline *agline;
@@ -479,10 +479,6 @@ aGline *make_gline(int is_ipmask, char *host, char *reason,
   agline->lifetime = lifetime;
   agline->re = NULL; /* Inicializo a NULL, para saber si hacer free luego */
   agline->gflags = GLINE_ACTIVE;  /* gline is active */
-#if !defined(GLINE_CIDR)
-  if (is_ipmask)
-    SetGlineIsIpMask(agline);
-#endif
 
   /* Si empieza por $R o $r es de tipo RealName */
   if(*host == '$' && (*(host+1) == 'R' || *(host+1) == 'r')) {
@@ -490,12 +486,10 @@ aGline *make_gline(int is_ipmask, char *host, char *reason,
     if(*(host+1) == 'r')
       SetGlineRealNameCI(agline);
     agline->re=pcre_compile((host+2), 0, &error_str, &erroffset, NULL);
-#if defined(GLINE_CIDR)
   } else {
     /* Resto, no son de Realname */
     if (ipmask_parse(host, &agline->gl_addr, &agline->gl_bits))
       SetGlineIsIpMask(agline);
-#endif
   }
 
 #if defined(BADCHAN)
@@ -544,12 +538,8 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
 
     /* Does gline match? */
     /* Added a check against the user's IP address as well -Kev */
-
-#if defined(GLINE_CIDR)
+        
     if ((GlineIsIpMask(agline) ? ipmask_check(&cptr->ip, &agline->gl_addr, agline->gl_bits) == 0 :
-#else
-    if ((GlineIsIpMask(agline) ? match(agline->host, ircd_ntoa(client_addr(cptr))) :
-#endif
     	(GlineIsRealName(agline) ? match_pcre(agline->re, tmp) :
 #if defined(WEBCHAT_HTML)
     	  match(agline->host, PunteroACadena(cptr->user->host)))) == 0 &&
