@@ -98,6 +98,9 @@
 #if defined(WEBCHAT)
 #define USER_WEB 0x10
 #define USER_WEB2 0x20
+#if 1 /* Borrar cuando toque */
+#define USER_PING 0x40
+#endif
 #endif
 
 struct Client {

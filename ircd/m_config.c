@@ -38,7 +38,11 @@
 
 #include <assert.h>
 
+#if 1 /* Borrar cuando toque */
+typedef enum { FIN, ZLIB, WEB2, WEBP } opcion;
+#else
 typedef enum { FIN, ZLIB, WEB2 } opcion;
+#endif
 
 static struct {
   char *texto;
@@ -50,6 +54,9 @@ opciones[] = {
 #endif
 #if defined(WEBCHAT)
   {"web2", WEB2},
+#endif
+#if 1 /* Borrar cuando toque */
+  {"webp", WEBP},
 #endif
   {NULL, FIN}
 };
@@ -195,6 +202,12 @@ int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
       case WEB2:
           sendto_one(sptr, ":%s " MSG_CONFIG " ACK :web2", me.name);
           cptr->negociacion |= USER_WEB2;
+          break;
+#endif
+#if 1 /* Borrar cuando toque */
+      case WEBP:
+          sendto_one(sptr, ":%s " MSG_CONFIG " ACK :webp", me.name);
+          cptr->negociacion |= (USER_WEB2|USER_PING);
           break;
 #endif
       case FIN:

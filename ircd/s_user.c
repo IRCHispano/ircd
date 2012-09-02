@@ -5301,7 +5301,14 @@ nickkilldone:
           *tmpcook = toUpper(*tmpcook);
           tmpcook++;
         }
+#if 1 /* Borrar cuando toque */
+        if (cptr->negociacion & USER_PING)
+          sendto_one(cptr, "PING :%s:%s", cifrado_cookies ? tmp : "0", cifrado_cookies2 ? tmp2 : "0");
+        else
+          sendto_one(cptr, "PING :%s", cifrado_cookies2 ? tmp2 : tmp);
+#else
         sendto_one(cptr, "PING :%s:%s", cifrado_cookies ? tmp : "0", cifrado_cookies2 ? tmp2 : "0");
+#endif
       } else {
         strncpy(tmp, sptr->cookie, COOKIELEN+1);
         sendto_one(cptr, "PING :%s", tmp);
