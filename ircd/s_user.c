@@ -180,6 +180,7 @@ aClient *next_client(aClient *next, char *ch)
   return next;
 }
 
+#if defined(WEBCHAT)
 void genera_aleatorio(unsigned char *out, int count) {
     int i;
     for(i=0;i<count;i++)
@@ -211,7 +212,7 @@ void genera_cookie(char *out, int count) {
     *out++='\0';
 }
 
-void cifra_cookie(char *out, char *cookie)
+void cifra_cookie(char *out, char *cookie, char *clave_cifrado)
 {
     aes_context ctx;
     uint8_t k[32], x[24], v[16], s[8];
@@ -231,7 +232,7 @@ void cifra_cookie(char *out, char *cookie)
     res[44]='\0';
 
     genera_aleatorio(s, sizeof(s));
-    memcpy(k,clave_de_cifrado_de_cookies,24);
+    memcpy(k,clave_cifrado,24);
     memcpy(k+24,s,8);
 
     aes_setkey_enc(&ctx, k, 256);
@@ -243,7 +244,7 @@ void cifra_cookie(char *out, char *cookie)
     buf_to_base64_r(out, x, sizeof(x));
 }
 
-void descifra_cookie(char *out, char *cookie)
+void descifra_cookie(char *out, char *cookie, char *clave_cifrado)
 {
     aes_context ctx;
     uint8_t k[32], v[16], x[24];
@@ -262,7 +263,7 @@ void descifra_cookie(char *out, char *cookie)
     msg[32]='\0';
 
     base64_to_buf_r(x, (unsigned char *) msg);
-    memcpy(k,clave_de_cifrado_de_cookies,24);
+    memcpy(k,clave_cifrado,24);
     memcpy(k+24,x,8);
     memcpy(v,x+8,16);
 
@@ -272,6 +273,7 @@ void descifra_cookie(char *out, char *cookie)
     strncpy(out, (char *)v, COOKIELEN);
     out[COOKIELEN]='\0';
 }
+#endif /* WEBCHAT */
 
 /*
  * hunt_server
@@ -2161,19 +2163,27 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
   /* Check to see if this is a PONG :cookie reply from an
    * unregistered user.  If so, process it. -record       */
 
-  if ((!IsRegistered(sptr)) && (sptr->cookie != NULL) &&
+  if ((!IsRegistered(sptr)) && (sptr->cookie != 0) &&
       (!IsCookieVerified(sptr)) && (parc > 1))
   {
+#if defined(WEBCHAT)
     char tmp[COOKIELEN+COOKIECRYPTLEN+1];
-    if(IsCookieEncrypted(sptr))
-      descifra_cookie(tmp, parv[parc-1]);
-    else {
+    char tmp2[COOKIELEN+COOKIECRYPTLEN+1];
+    if (IsCookieEncrypted(sptr)) {
+      if (cifrado_cookies)
+        descifra_cookie(tmp, parv[parc-1], clave_de_cifrado_de_cookies);
+      if (cifrado_cookies2)
+        descifra_cookie(tmp2, parv[parc-1], clave_de_cifrado_de_cookies2);
+    } else {
       strncpy(tmp, parv[parc-1], COOKIELEN);
       tmp[COOKIELEN]='\0';
     }
 
-
-    if (!strncmp(tmp,sptr->cookie, COOKIELEN))
+    if ((!IsCookieEncrypted(sptr) && !strncmp(tmp, sptr->cookie, COOKIELEN)) ||
+        (IsCookieEncrypted(sptr) && (cifrado_cookies && !strncmp(tmp, sptr->cookie, COOKIELEN)) || (cifrado_cookies2 && !strncmp(tmp2, sptr->cookie, COOKIELEN))))
+#else
+    if (atol(parv[parc - 1]) == (long)sptr->cookie)
+#endif
     {
 /*
 ** Si el usuario tiene pendiente de verificar la cookie es porque ya ha mandado su nick,
@@ -4402,7 +4412,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 ** No dejamos que un usuario cambie de nick varias veces ANTES
 ** de haber completado su entrada en la red.
 */
-  if (!IsRegistered(sptr) && (sptr->cookie != NULL) &&
+  if (!IsRegistered(sptr) && (sptr->cookie != 0) &&
       !IsCookieVerified(sptr))
   {
     return 0;
@@ -5268,7 +5278,9 @@ nickkilldone:
      */
     if (!sptr->cookie)
     {
+#if defined(WEBCHAT)
       char tmp[COOKIECRYPTLEN+COOKIELEN+1];
+      char tmp2[COOKIECRYPTLEN+COOKIELEN+1];
       do
       {
         sptr->cookie = SlabStringAlloc(COOKIELEN+1);
@@ -5276,20 +5288,33 @@ nickkilldone:
       }
       while ((!sptr->cookie) || IsCookieVerified(sptr));
 
-      if(find_port_cookie_encrypted(sptr) && cifrado_cookies) {
-        char *tmp2=sptr->cookie;
-        cifra_cookie(tmp, sptr->cookie);
+      if (find_port_cookie_encrypted(sptr) && (cifrado_cookies || cifrado_cookies2)) {
+        char *tmpcook=sptr->cookie;
+
+        if (cifrado_cookies)
+          cifra_cookie(tmp, sptr->cookie, clave_de_cifrado_de_cookies);
+        if (cifrado_cookies2)
+          cifra_cookie(tmp2, sptr->cookie, clave_de_cifrado_de_cookies2);
         SetCookieEncrypted(sptr);
 
-        while(*tmp2) {
-          *tmp2 = toUpper(*tmp2);
-          tmp2++;
+        while(*tmpcook) {
+          *tmpcook = toUpper(*tmpcook);
+          tmpcook++;
         }
-
-      } else
+        sendto_one(cptr, "PING :%s:%s", cifrado_cookies ? tmp : "0", cifrado_cookies2 ? tmp2 : "0");
+      } else {
         strncpy(tmp, sptr->cookie, COOKIELEN+1);
+        sendto_one(cptr, "PING :%s", tmp);
+      }
+#else
+      do
+      { 
+        sptr->cookie = ircrandom() & 0x7fffffff;
+      }
+      while ((!sptr->cookie) || IsCookieVerified(sptr));
 
-      sendto_one(cptr, "PING :%s", tmp);
+      sendto_one(cptr, "PING :%u", sptr->cookie);
+#endif /* WEBCHAT */
     }
     else if (sptr->user->host && IsCookieVerified(sptr))
     {

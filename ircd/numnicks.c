@@ -681,6 +681,7 @@ void RemoveWebXXXChannel(const char *xxx)
 
 #endif
 
+#if defined(WEBCHAT)
 void buf_to_base64_r(unsigned char *out, const unsigned char *buf, size_t buf_len)
 {
         size_t i, j;
@@ -776,4 +777,4 @@ size_t base64_to_buf_r(unsigned char *buf, unsigned char *str)
   
         return buf_len;
 }
-
+#endif /* WEBCHAT */

@@ -151,8 +151,10 @@ void free_client(aClient *cptr)
     if (cptr->sockhost)
       SlabStringFree(cptr->sockhost);
     
+#if defined(WEBCHAT)
     if (cptr->cookie)
       SlabStringFree(cptr->cookie);
+#endif
     
     DelClientEvent(cptr);
     DelRWAuthEvent(cptr);

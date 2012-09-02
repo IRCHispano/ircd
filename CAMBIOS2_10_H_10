@@ -1,3 +1,18 @@
+* 2012/09/02  zoltan@irc-dev.net (u2.10.H.10.182)                FEATURE
+------------------------------------------------------------------------
+  Modifico el parche u.2.10.H.10.94 cuando se compila sin WEBCHAT para que
+  genere el ping numerico de toda la vida ejecutando mucho menos codigo.
+
+  Cuando se compila para WEBCHAT, si se entra por un puerto sin cifrar,
+  sale el ping alfanumerico como ha venido haciendo y si entra por un puerto
+  cifrado el ping tiene el siguiente formato:
+
+  PING  :clave1:clave2
+
+  Siendo clave1 y clave2 el token de ping cifrado con la correspondiente
+  clave de cifrado de cookies del ircd. Si una de las dos claves no existe
+  manda un "0".
+
 * 2012/09/02  zoltan@irc-dev.net (u2.10.H.10.181)                    FIX
 ------------------------------------------------------------------------
   Cuando se compila para WEBCHAT (para clientes flash), los notices a

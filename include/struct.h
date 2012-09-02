@@ -145,7 +145,11 @@ struct Client {
   time_t nextnick;              /* Next time that a nick change is allowed */
   time_t nexttarget;            /* Next time that a target change is allowed */
   unsigned char targets[MAXTARGETS];  /* Hash values of current targets */
+#if defined(WEBCHAT)
   char *cookie;                 /* Random number the user must PONG */
+#else
+  unsigned int cookie;          /* Random number the user must PONG */
+#endif
   unsigned int cookie_status;   /* Estado de la cookie */
   struct DBuf sendQ;            /* Outgoing message queue--if socket full */
   struct DBuf recvQ;            /* Hold for data incoming yet to be parsed */

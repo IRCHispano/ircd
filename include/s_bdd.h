@@ -57,6 +57,7 @@
 #define BDD_AUTOINVISIBLE    "auto.invisible"
 #define BDD_NICKLEN           "nicklen"
 #define BDD_CLAVE_DE_CIFRADO_DE_COOKIES "clave.de.cifrado.de.cookies"
+#define BDD_CLAVE_DE_CIFRADO_DE_COOKIES2 "clave.de.cifrado.de.cookies2"
 #define BDD_COMPRESION_ZLIB_CLIENTE "compresion.zlib.cliente"
 #define BDD_CANAL_DEBUG "debugchan"
 /* Para las features de los pseudoBOTS */
@@ -94,8 +95,12 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int numero_maximo_de_clones_por_defecto;
 extern char *clave_de_cifrado_de_ips;
 extern unsigned int clave_de_cifrado_binaria[2];
+#if defined(WEBCHAT)
 extern unsigned char clave_de_cifrado_de_cookies[32];
 extern int cifrado_cookies;
+extern unsigned char clave_de_cifrado_de_cookies2[32];
+extern int cifrado_cookies2;
+#endif
 extern int ocultar_servidores;
 extern int activar_ident;
 extern int auto_invisible;
