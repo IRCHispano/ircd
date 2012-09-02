@@ -1,3 +1,10 @@
+* 2012/09/02  zoltan@irc-dev.net (u2.10.H.10.184)                CLEANUP
+------------------------------------------------------------------------
+  Prioridad de SVSNICK sobre RENAME de cara al futuro.
+  Cuando todos los servidores sean .184 o superior, retirar el rename.
+  El soporte de SVSNICK se introdujo en el u2.10.H.10.65 y se nos olvido
+  de ello.
+
 * 2012/09/02  zoltan@irc-dev.net (u2.10.H.10.183)                FEATURE
 ------------------------------------------------------------------------
   Introducimos una transicion para los clientes Web. Si se especifica 

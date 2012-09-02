@@ -79,10 +79,7 @@ void make_vhostperso(aClient *acptr, int mostrar);
 extern void rename_user(aClient *sptr, char *nick_nuevo);
 extern void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh, int registrado);
 
-#if !0
-/* Esto hay que quitarlo en algun momento... */
-extern int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-#endif
+extern int m_svsnick(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 
 extern struct SLink *opsarray[];
 

@@ -4265,9 +4265,7 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
 }
 
 
-#if !0
-/* Esto hay que quitarlo en algun momento... */
-int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
+int m_svsnick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   aClient *acptr;
 
@@ -4307,11 +4305,11 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if(!MyUser(acptr))
   {
     if (parc == 3)
-      sendcmdto_one(acptr, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, ":%s", parv[2]);
+      sendcmdto_one(acptr, IsUser(sptr) ? &me : sptr, "SVSNICK", TOK_SVSNICK, ":%s", parv[2]);
     else if(parc == 4)
-      sendcmdto_one(acptr, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, "%s :%s", parv[2], parv[3]);
+      sendcmdto_one(acptr, IsUser(sptr) ? &me : sptr, "SVSNICK", TOK_SVSNICK, "%s :%s", parv[2], parv[3]);
     else
-      sendcmdto_one(acptr, IsUser(sptr) ? &me : sptr, "RENAME", TOK_RENAME, "");
+      sendcmdto_one(acptr, IsUser(sptr) ? &me : sptr, "SVSNICK", TOK_SVSNICK, "");
 
     return 0;
   }
@@ -4355,7 +4353,6 @@ int m_rename(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   return 0;
 }
-#endif
 
 /* m_nick stuff... */
 
