@@ -1330,8 +1330,17 @@ static int m_message(aClient *cptr, aClient *sptr,
           {
             if (MyUser(acptr))
               add_target(acptr, sptr);
+#if defined(WEBCHAT)
+            if (MyUser(acptr))
+              sendto_prefix_one(acptr, sptr, ":%s PRIVMSG %s :%s",
+                 parv[0], acptr->name, parv[parc - 1]);
+            else
+              sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
+                 parv[0], cmd, acptr->name, parv[parc - 1]);
+#else
             sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
                parv[0], cmd, acptr->name, parv[parc - 1]);
+#endif
           }
           else {
             if (IsServer(sptr))

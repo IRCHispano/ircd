@@ -1,4 +1,9 @@
-* 2012/08/12  zoltan@irc-dev.net (u2.10.H.10.179)                CLEANUP
+* 2012/09/02  zoltan@irc-dev.net (u2.10.H.10.181)                    FIX
+------------------------------------------------------------------------
+  Cuando se compila para WEBCHAT (para clientes flash), los notices a
+  nicks se envian como privmsg al cliente flash.
+
+* 2012/08/12  zoltan@irc-dev.net (u2.10.H.10.180)                CLEANUP
 ------------------------------------------------------------------------
   Revierto el parche anterior, no existe el bug, funciona perfectamente.
   Se ha debido a una equivocacion de versiones.
