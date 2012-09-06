@@ -1147,7 +1147,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
             acptr->name, acptr->hopcount + 1, acptr->lastnick,
             PunteroACadena(acptr->user->username),
             PunteroACadena(acptr->user->host), acptr->user->server->name,
-            iptobase64(xxx_buf, &acptr->ip, sizeof(xxx_buf), IsIPv6(cptr)), 
+            iptobase64(xxx_buf, &acptr->ip, sizeof(xxx_buf), 1), 
             PunteroACadena(acptr->info));
 #else
         sendto_one(cptr, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
@@ -1177,7 +1177,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
 #else
             &acptr->ip,
 #endif
-            sizeof(xxx_buf), IsIPv6(cptr)), NumNick(acptr), PunteroACadena(acptr->info));
+            sizeof(xxx_buf), 1), NumNick(acptr), PunteroACadena(acptr->info));
       }
     }
   }

@@ -1,3 +1,9 @@
+* 2012/09/06  zoltan@irc-dev.net (u2.10.H.10.185)                    FIX
+------------------------------------------------------------------------
+  Hay problemas de propagacion de IPs transitorias, anulamos la transicion
+  y ahora se manda en IPv6 si o si, en vez de depender de la version del
+  servidor.
+
 * 2012/09/02  zoltan@irc-dev.net (u2.10.H.10.184)                CLEANUP
 ------------------------------------------------------------------------
   Prioridad de SVSNICK sobre RENAME de cara al futuro.

@@ -203,12 +203,12 @@ int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
           sendto_one(sptr, ":%s " MSG_CONFIG " ACK :web2", me.name);
           cptr->negociacion |= USER_WEB2;
           break;
-#endif
 #if 1 /* Borrar cuando toque */
       case WEBP:
           sendto_one(sptr, ":%s " MSG_CONFIG " ACK :webp", me.name);
           cptr->negociacion |= (USER_WEB2|USER_PING);
           break;
+#endif
 #endif
       case FIN:
         assert(0);              /* No deberia darse nunca */
