@@ -1,3 +1,12 @@
+* 2012/09/26  zoltan@irc-dev.net (u2.10.H.10.186)                FEATURE
+------------------------------------------------------------------------
+  Parche para facilitar la transicion de deep.space a P10.
+  Ahora en el NICK manda el numerico para poder gestionar bien los nicks
+  y los netsplits en deep.space mientras trabajen en P09 con codigo de 
+  P10.
+
+  Solo aplicable si se compila con MIGRACION_DEEPSPACE_P10
+  
 * 2012/09/06  zoltan@irc-dev.net (u2.10.H.10.185)                    FIX
 ------------------------------------------------------------------------
   Hay problemas de propagacion de IPs transitorias, anulamos la transicion

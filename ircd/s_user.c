@@ -831,10 +831,11 @@ static int register_user(aClient *cptr, aClient *sptr,
 
   /* First send message to all 2.9 servers */
 #ifdef MIGRACION_DEEPSPACE_P10
-  sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s :%s",
+  sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s %s%s :%s",
       user->server->name, nick, sptr->hopcount + 1, sptr->lastnick,
       PunteroACadena(user->username), PunteroACadena(user->host),
       user->server->name, iptobase64(ip_base64, &sptr->ip, sizeof(ip_base64), 1),
+      NumNick(sptr),
       PunteroACadena(sptr->info));
 #else
   sprintf_irc(sendbuf, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
