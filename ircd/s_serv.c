@@ -952,11 +952,24 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
 #endif        
           me.info ? me.info : "IRCers United");
     else
+#ifdef MIGRACION_DEEPSPACE_P10
+      sendto_one(cptr,
+          "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s +6%s :%s",
+           my_name_for_link(me.name, aconf), me.serv->timestamp,
+           cptr->serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
+#if defined(HUB)
+          "h",
+#else
+          "",
+#endif
+           me.info ? me.info : "IRCers United");
+#else
       sendto_one(cptr,
           "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s 0 :%s",
            my_name_for_link(me.name, aconf), me.serv->timestamp,
            cptr->serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me), 
            me.info ? me.info : "IRCers United");
+#endif
 
     tx_num_serie_dbs(cptr);
 
@@ -1061,10 +1074,18 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
             IsIPv6(cptr) ? "6" : "", PunteroACadena(cptr->info));
 #if !defined(NO_PROTOCOL9)
       else
+#ifdef MIGRACION_DEEPSPACE_P10
+        sendto_one(acptr, ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
+            me.name, cptr->name, cptr->serv->timestamp,
+            (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr),
+            NumServCap(cptr), IsHub(cptr) ? "h" : "", IsService(cptr) ? "s" : "",
+            IsIPv6(cptr) ? "6" : "", PunteroACadena(cptr->info));
+#else
         sendto_one(acptr, ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
             me.name, cptr->name, cptr->serv->timestamp,
             (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr),
             NumServCap(cptr), PunteroACadena(cptr->info));
+#endif
 #endif
     }
   }
@@ -1110,12 +1131,22 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
               IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", IsIPv6(acptr) ? "6" : "",
               PunteroACadena(acptr->info));
         else
+#ifdef MIGRACION_DEEPSPACE_P10
+          sendto_one(cptr,
+              ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
+              acptr->serv->up->name, acptr->name,
+              acptr->hopcount + 1, acptr->serv->timestamp,
+              protocol_str, Protocol(acptr), NumServCap(acptr),
+              IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", IsIPv6(acptr) ? "6" : "",
+              PunteroACadena(acptr->info));
+#else
           sendto_one(cptr,
               ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
               acptr->serv->up->name, acptr->name,
               acptr->hopcount + 1, acptr->serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
               PunteroACadena(acptr->info));
+#endif
       }
       else
       {
@@ -1129,12 +1160,22 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
               PunteroACadena(acptr->info));
 #if !defined(NO_PROTOCOL9)
         else
+#ifdef MIGRACION_DEEPSPACE_P10
+          sendto_one(cptr,
+              ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
+              acptr->serv->up->name, acptr->name,
+              acptr->hopcount + 1, acptr->serv->timestamp,
+              protocol_str, Protocol(acptr), NumServCap(acptr),
+              IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", IsIPv6(acptr) ? "6" : "",
+              PunteroACadena(acptr->info));
+#else
           sendto_one(cptr,
               ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
               acptr->serv->up->name, acptr->name,
               acptr->hopcount + 1, acptr->serv->timestamp,
               protocol_str, Protocol(acptr), NumServCap(acptr),
               PunteroACadena(acptr->info));
+#endif
 #endif
       }
     }
