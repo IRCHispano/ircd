@@ -1,3 +1,10 @@
+* 2013/01/20  zoltan@irc-dev.net (u2.10.H.10.187)                FEATURE
+------------------------------------------------------------------------
+  Otro parche de transicion de deep.space a P10.
+  En el SERVER manda los modos de los servidores.
+
+  Solo aplicable si se compila con MIGRACION_DEEPSPACE_P10
+
 * 2012/09/26  zoltan@irc-dev.net (u2.10.H.10.186)                FEATURE
 ------------------------------------------------------------------------
   Parche para facilitar la transicion de deep.space a P10.
