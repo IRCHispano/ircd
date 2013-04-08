@@ -3021,7 +3021,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 
 /*
-** El +X solo se lo pueden poner los admins.
+** El +X solo se lo pueden poner usuarios con nivel 5 o superior.
 */
   if (MyUser(sptr) && (!(sethmodes & HMODE_HIDDENVIEWER))
       && IsHiddenViewer(sptr))
@@ -3037,8 +3037,8 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       reg = db_buscar_registro(BDD_OPERDB, sptr->name);
       if (reg)
       {
-        if (atoi(reg->valor) < 10)
-          ClearHiddenViewer(sptr);  /* Si no es admin, tampoco */
+        if (atoi(reg->valor) < 5)
+          ClearHiddenViewer(sptr);
       }
     }
   }

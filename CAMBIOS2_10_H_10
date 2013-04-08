@@ -1,3 +1,8 @@
+* 2013/04/08  zoltan@irc-dev.net (u2.10.H.10.189)                FEATURE
+------------------------------------------------------------------------
+  Cambio la restrccion para tener +X, ahora basta con tener nivel 5
+  en vez de 10 de antes.
+
 * 2013/01/20  zoltan@irc-dev.net (u2.10.H.10.188)                FEATURE
 ------------------------------------------------------------------------
   Faltaban 4 casos mas del parche anterior.
