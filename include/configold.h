@@ -7,12 +7,6 @@
 /*
  * Compile stuff
  */
-#define CC "gcc"
-#define CFLAGS "-g -pipe"
-#define cflags_O3_remark done
-#define EXTRA_INCLUDEDIRS "none"
-#define LDFLAGS "none"
-#define IRCDLIBS "-lresolv -lrt -lcrypt"
 #define BINDIR "/home/ircd/bin/ircd.hub"
 #define SYMLINK "ircd.hub"
 #define IRCDMODE "711"
@@ -30,27 +24,8 @@
 #undef  CMDLINE_CONFIG
 #undef  UNIXPORT
 #undef  VIRTUAL_HOST
-#define HUB
 
-/*
- * Debugging (do not define this on production servers)
- */
 #define DEBUGMODE
-#define DEBUGMALLOC
-#define MEMMAGICNUMS
-#define MEMLEAKSTATS
-#define MEMSIZESTATS
-#define MEMTIMESTATS
-#undef  NODNS
-
-/*
- * Paths and files
- */
-#define CPATH "ircd.conf"
-#define MPATH "ircd.motd"
-#define RPATH "remote.motd"
-#define PPATH "ircd.pid"
-
 /*
  * Logging (filenames are either full paths or files within DPATH)
  */
@@ -73,17 +48,10 @@
 /*
  * Configuration
  */
-#define CRYPT_OPER_PASSWORD
-#define BUFFERPOOL (27000000)
-#define FERGUSON_FLUSHER
-#define CLIENT_FLOOD (4096)
-#define PORTNUM (6667)
-#define NICKNAMEHISTORYLENGTH (800)
 #define ALLOW_SNO_CONNEXIT
 #define SNO_CONNEXIT_IP
 #undef  R_LINES
 #undef  USEONE
-#define NODEFAULTMOTD
 
 /*
  * Oper commands
@@ -117,10 +85,7 @@
  * Server characteristics
  */
 #define CONFIG_LIST
-#define DEFAULT_LIST "T<10"
-#define DEFAULT_LIST_PARAM "T<10"
 #define COMMENT_IS_FILE
-#define IDLE_FROM_MSG
 #undef  CHECK_TS_LINKS
 
 /*
@@ -140,18 +105,16 @@
 #define ZLIB_ESNET
 #define MAXIMUM_LINKS (1)
 #undef  MSGLOG_ENABLED
-#undef  LOCAL_KILL_ONLY
-#define KILLCHASETIMELIMIT (30)
-#define MAXCHANNELSPERUSER (20)
-#define MAXSILES (25)
-#define WATCH
-#define MAXWATCH (256)
-#define AVBANLEN (40)
-#define MAXSILELENGTH (40 * MAXSILES)
 #define TIMESEC (60)
-#define PINGFREQUENCY (120)
-#define CONNECTFREQUENCY (600)
-#define HANGONGOODLINK (300)
-#define HANGONRETRYDELAY (10)
-#define CONNECTTIMEOUT (90)
-#define DEFAULTMAXSENDQLENGTH (40000)
+
+
+#if defined(CHECK_TS_LINKS)
+#define CHECK_TS_MAX_LINKS     30 /* 30 segundos de desfase maximo
+                                   * permitido en los TS
+                                   */
+#endif
+
+#define GLINE_BURST_TIME       86400 /* Tiempo de modificacion para
+                                        reenvio de GLINEs en burst
+                                        86400 segundos (1 dia) */
+

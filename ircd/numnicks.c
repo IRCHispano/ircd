@@ -29,7 +29,7 @@
 #include "client.h"
 #include "ircd.h"
 #include "ircd_alloc.h"
-//#include "ircd_log.h"
+#include "ircd_log.h"
 #include "ircd_string.h"
 #include "match.h"
 #include "s_bsd.h"
@@ -96,7 +96,7 @@ static unsigned int lastNNServer = 0;
 static struct Client* server_list[NN_MAX_SERVER];
 #if defined(WEBCHAT)
 /** Array of channels indexed by numchannel. */
-static struct Channel *channel_list[NN_MAX_CHANNELS];
+static struct Channel* channel_list[NN_MAX_CHANNELS];
 #endif
 
 /* *INDENT-OFF* */
@@ -279,23 +279,23 @@ void SetServerYXX(struct Client* cptr, struct Client* server, const char* yxx)
   else {
     char buffer[1024];
 #if defined(DDB)
-    struct db_reg *reg;
+    struct Ddb *ddb;
 
     strcpy(buffer, "p09:");
-    strcat(buffer, server->name);
+    strcat(buffer, cli_name(server));
 
-    reg = db_buscar_registro(BDD_CONFIGDB, buffer);
-    if (reg)
+    ddb = ddb_find_key(DDB_CONFIGDB, buffer);
+    if (ddb)
     {
-      *server->yxx = convert2y[atoi(reg->valor)];
-      inttobase64(server->serv->nn_capacity, 63, 2);
-      server->serv->nn_mask = 63;
+      *cli_yxx(server) = convert2y[atoi(ddb_content(ddb))];
+      inttobase64(cli_serv(server)->nn_capacity, 63, 2);
+      cli_serv(server)->nn_mask = 63;
     }
 #else
-    if (!ircd_strcmp(server->name, "services.irc-dev.net")) {
-      *server->yxx = convert2y[60];
-      inttobase64(server->serv->nn_capacity, 63, 2);
-      server->serv->nn_mask = 63;
+    if (!ircd_strcmp(cli_name(server), "services.irc-dev.net")) {
+      *cli_yxx(server) = convert2y[60];
+      inttobase64(cli_serv(server)->nn_capacity, 63, 2);
+      cli_serv(server)->nn_mask = 63;
     } 
 #endif
   }
@@ -477,12 +477,10 @@ int markMatchexServer(const char *cmask, int minlen)
     if ((acptr = server_list[i]))
     {
       if (matchexec(cli_name(acptr), cmask, minlen))
-        //ClrFlag(acptr, FLAG_MAP);
-        acptr->flags &= ~FLAGS_MAP;
+        ClrFlag(acptr, FLAG_MAP);
       else
       {
-        //SetFlag(acptr, FLAG_MAP);
-        acptr->flags |= FLAGS_MAP;
+        SetFlag(acptr, FLAG_MAP);
         cnt++;
       }
     }
@@ -617,13 +615,13 @@ void base64toip(const char* input, struct irc_in_addr* addr)
 const char *CreateNNforProtocol9server(const struct Client *server)
 {
   static char YXX[4];
-  struct Server *serv = server->serv;
+  struct Server *serv = cli_serv(server);
   unsigned int count = 0;
 
   assert(IsServer(server));
   assert(9 == Protocol(server));
 
-  YXX[0] = *server->yxx;
+  YXX[0] = *cli_yxx(server);
   YXX[3] = 0;
 
   while (serv->client_list[serv->nn_last])
@@ -662,12 +660,14 @@ int SetXXXChannel(struct Channel *chptr)
     if (++last_cn == NN_MAX_CHANNELS)
       last_cn = 0;
   }
-  channel_list[last_cn & (NN_MAX_CHANNELS-1)] = chptr; /* Reserve the numeric ! */
+
+  channel_list[last_cn & (NN_MAX_CHANNELS - 1)] = chptr; /* Reserve the numeric ! */
 
   inttobase64(chptr->numeric, last_cn, 3);
 
   if (++last_cn == NN_MAX_CHANNELS)
     last_cn = 0;
+
   return 1;
 }
 
@@ -683,97 +683,93 @@ void RemoveXXXChannel(const char *xxx)
 
 void buf_to_base64_r(unsigned char *out, const unsigned char *buf, size_t buf_len)
 {
-        size_t i, j;
-        uint32_t limb;
+  size_t   i, j;
+  uint32_t limb;
 
+  for (i = 0, j = 0, limb = 0; i + 2 < buf_len; i += 3, j += 4) {
+    limb =
+           ((uint32_t) buf[i] << 16) |
+           ((uint32_t) buf[i + 1] << 8) |
+           ((uint32_t) buf[i + 2]);
 
-        for (i = 0, j = 0, limb = 0; i + 2 < buf_len; i += 3, j += 4) {
-                limb =
-                        ((uint32_t) buf[i] << 16) |
-                        ((uint32_t) buf[i + 1] << 8) |
-                        ((uint32_t) buf[i + 2]);
-
-                out[j] = convert2y[(limb >> 18) & 63];
-                out[j + 1] = convert2y[(limb >> 12) & 63];
-                out[j + 2] = convert2y[(limb >> 6) & 63];
-                out[j + 3] = convert2y[(limb) & 63];
-        }
+           out[j] = convert2y[(limb >> 18) & 63];
+           out[j + 1] = convert2y[(limb >> 12) & 63];
+           out[j + 2] = convert2y[(limb >> 6) & 63];
+           out[j + 3] = convert2y[(limb) & 63];
+  }
   
-        switch (buf_len - i) {
-          case 0:
-                break;
-          case 1:
-                limb = ((uint32_t) buf[i]);
-                out[j++] = convert2y[(limb >> 2) & 63];
-                out[j++] = convert2y[(limb << 4) & 63];
-                out[j++] = '=';
-                out[j++] = '=';
-                break;
-          case 2:
-                limb = ((uint32_t) buf[i] << 8) | ((uint32_t) buf[i + 1]);
-                out[j++] = convert2y[(limb >> 10) & 63];
-                out[j++] = convert2y[(limb >> 4) & 63];
-                out[j++] = convert2y[(limb << 2) & 63];
-                out[j++] = '=';
-                break;
-          default:
-                // something wonkey happened...
-                break;
-        }
+  switch (buf_len - i) {
+    case 0:
+      break;
+    case 1:
+      limb = ((uint32_t) buf[i]);
+      out[j++] = convert2y[(limb >> 2) & 63];
+      out[j++] = convert2y[(limb << 4) & 63];
+      out[j++] = '=';
+      out[j++] = '=';
+      break;
+    case 2:
+      limb = ((uint32_t) buf[i] << 8) | ((uint32_t) buf[i + 1]);
+      out[j++] = convert2y[(limb >> 10) & 63];
+      out[j++] = convert2y[(limb >> 4) & 63];
+      out[j++] = convert2y[(limb << 2) & 63];
+      out[j++] = '=';
+      break;
+    default:
+      // something wonkey happened...
+      break;
+  }
 
-        out[j] = '\0';
+  out[j] = '\0';
 }
 
 size_t base64_to_buf_r(unsigned char *buf, unsigned char *str)
 {
-        int i, j, len;
-        uint32_t limb;
-        size_t buf_len;
+  int      i, j, len;
+  uint32_t limb;
+  size_t   buf_len;
 
-        len = strlen((char *) str);
-        buf_len = (len * 6 + 7) / 8;
-        /*buf = (unsigned char*) malloc(buf_len);*/
+  len = strlen((char *) str);
+  buf_len = (len * 6 + 7) / 8;
   
-        for (i = 0, j = 0, limb = 0; i + 3 < len; i += 4) {
-                if (str[i] == '=' || str[i + 1] == '=' || str[i + 2] == '=' || str[i + 3] == '=') {
-                        if (str[i] == '=' || str[i + 1] == '=') {
-                                break;
-                        }
+  for (i = 0, j = 0, limb = 0; i + 3 < len; i += 4) {
+    if (str[i] == '=' || str[i + 1] == '=' || str[i + 2] == '=' || str[i + 3] == '=') {
+      if (str[i] == '=' || str[i + 1] == '=') {
+        break;
+      }
           
-                        if (str[i + 2] == '=') {
-                                limb =
-                                        ((uint32_t) convert2n[str[i]] << 6) |
-                                        ((uint32_t) convert2n[str[i + 1]]);
-                                buf[j] = (unsigned char) (limb >> 4) & 0xff;
-                                j++;
-                        }
-                        else {
-                                limb =
-                                        ((uint32_t) convert2n[str[i]] << 12) |
-                                        ((uint32_t) convert2n[str[i + 1]] << 6) |
-                                        ((uint32_t) convert2n[str[i + 2]]);
-                                buf[j] = (unsigned char) (limb >> 10) & 0xff;
-                                buf[j + 1] = (unsigned char) (limb >> 2) & 0xff;
-                                j += 2;
-                        }
-                }
-                else {
-                        limb =
-                                ((uint32_t) convert2n[str[i]] << 18) |
-                                ((uint32_t) convert2n[str[i + 1]] << 12) |
-                                ((uint32_t) convert2n[str[i + 2]] << 6) |
-                                ((uint32_t) convert2n[str[i + 3]]);
+      if (str[i + 2] == '=') {
+        limb =
+               ((uint32_t) convert2n[str[i]] << 6) |
+               ((uint32_t) convert2n[str[i + 1]]);
+        buf[j] = (unsigned char) (limb >> 4) & 0xff;
+        j++;
+      } else {
+        limb =
+               ((uint32_t) convert2n[str[i]] << 12) |
+               ((uint32_t) convert2n[str[i + 1]] << 6) |
+               ((uint32_t) convert2n[str[i + 2]]);
+        buf[j] = (unsigned char) (limb >> 10) & 0xff;
+        buf[j + 1] = (unsigned char) (limb >> 2) & 0xff;
+        j += 2;
+      }
+    } else {
+      limb =
+               ((uint32_t) convert2n[str[i]] << 18) |
+               ((uint32_t) convert2n[str[i + 1]] << 12) |
+               ((uint32_t) convert2n[str[i + 2]] << 6) |
+               ((uint32_t) convert2n[str[i + 3]]);
           
-                        buf[j] = (unsigned char) (limb >> 16) & 0xff;
-                        buf[j + 1] = (unsigned char) (limb >> 8) & 0xff;
-                        buf[j + 2] = (unsigned char) (limb) & 0xff;
-                        j += 3;
-                }
-        }
+      buf[j] = (unsigned char) (limb >> 16) & 0xff;
+      buf[j + 1] = (unsigned char) (limb >> 8) & 0xff;
+      buf[j + 2] = (unsigned char) (limb) & 0xff;
+      j += 3;
+    }
+  }
 
-        buf_len = j;
+  buf_len = j;
   
-        return buf_len;
+  return buf_len;
 }
 
 #endif /* WEBCHAT */

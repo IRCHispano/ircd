@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/match.c
  *
- * Copyright (C) 2002-2007 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996 Carlo Wood <carlo@runaway.xs4all.nl>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
@@ -29,7 +29,7 @@
 #include "match.h"
 #include "ircd_chattr.h"
 #include "ircd_string.h"
-//#include "ircd_snprintf.h"
+#include "ircd_snprintf.h"
 
 /*
  * mmatch()

@@ -28,11 +28,10 @@
 #include "ircd_string.h"
 #include "ircd_defs.h"
 #include "ircd_chattr.h"
-//#include "ircd_log.h"
+#include "ircd_log.h"
 #include "res.h"
 
 /* #include <assert.h> -- Now using assert in ircd_log.h */
-#include <assert.h>
 #include <string.h>
 #include <sys/types.h>
 #include <netinet/in.h>

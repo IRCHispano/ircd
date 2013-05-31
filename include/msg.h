@@ -1,12 +1,13 @@
 /*
- * IRC - Internet Relay Chat, include/msg.h
- * Copyright (C) 1990 Jarkko Oikarinen and
- *                    University of Oulu, Computing Center
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/msg.h
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,20 +16,30 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
+/** @file
+ * @brief Command and token declarations and structures.
+ * @version $Id: msg.h,v 1.16 2007-07-21 23:51:39 zolty Exp $
+ */
+#ifndef INCLUDED_msg_h
+#define INCLUDED_msg_h
 
-#if !defined(MSG_H)
-#define MSG_H
+#ifndef INCLUDED_ircd_handler_h
+#include "ircd_handler.h"
+#endif
 
-/*=============================================================================
+struct Client;
+
+/*
  * General defines
  */
 
-#define MAXPARA	   15
+#define MAXPARA    15
 
 /*-----------------------------------------------------------------------------
- * Macro's
+ * Macros
  */
 
 /*
@@ -40,364 +51,404 @@
 
 /* *INDENT-OFF* */
 
-#define MSG_DB			"DB"		/* Base de Datos ESNET */
-#define TOK_DB			"DB"
-#define CLASS_DB		LEVEL_PROPAGATE
+#define MSG_PRIVATE             "PRIVMSG"       /* PRIV */
+#define TOK_PRIVATE             "P"
+#define CMD_PRIVATE		MSG_PRIVATE, TOK_PRIVATE
 
-#define MSG_DBQ                 "DBQ"           /* Consulta Base de Datos IRC-HISPANO */
-#define TOK_DBQ			"DBQ"
-#define CLASS_DBQ		LEVEL_PROPAGATE
+#define MSG_WHO                 "WHO"           /* WHO  -> WHOC */
+#define TOK_WHO                 "H"
+#define CMD_WHO			MSG_WHO, TOK_WHO
 
-#define MSG_BMODE               "BMODE"         /* Base de Datos IRC-HISPANO */
-#define TOK_BMODE     		"BMODE"
-#define CLASS_BMODE		LEVEL_PROPAGATE
+#define MSG_WHOIS               "WHOIS"         /* WHOI */
+#define TOK_WHOIS               "W"
+#define CMD_WHOIS		MSG_WHOIS, TOK_WHOIS
 
-#define MSG_GHOST               "GHOST"         /* Comando GHOST para eliminar conexiones fantasma */
-#define TOK_GHOST               "GHOST"
-#define CLASS_GHOST             LEVEL_QUERY
+#define MSG_WHOWAS              "WHOWAS"        /* WHOW */
+#define TOK_WHOWAS              "X"
+#define CMD_WHOWAS		MSG_WHOWAS, TOK_WHOWAS
 
-#if defined(ESNET_NEG)
-#define MSG_CONFIG              "CONFIG"        /* Configuracion dinamica del enlace */
-#define TOK_CONFIG              "CONFIG"
-#define CLASS_CONFIG            LEVEL_QUERY
-#endif
+#define MSG_USER                "USER"          /* USER */
+#define TOK_USER                "USER"
+#define CMD_USER		MSG_USER, TOK_USER
 
+#define MSG_NICK                "NICK"          /* NICK */
+#define TOK_NICK                "N"
+#define CMD_NICK		MSG_NICK, TOK_NICK
 
-#if !0
-/* Esto hay que quitarlo en algun momento... */
-#define MSG_RENAME		"RENAME"
-#define TOK_RENAME		"RENAME"
-#define CLASS_RENAME		LEVEL_PROPAGATE
-#endif
+#define MSG_SERVER              "SERVER"        /* SERV */
+#define TOK_SERVER              "S"
+#define CMD_SERVER		MSG_SERVER, TOK_SERVER
 
-#define MSG_SVSNICK    "SVSNICK"
-#define TOK_SVSNICK    "SN"
-#define CLASS_SVSNICK    LEVEL_PROPAGATE
+#define MSG_LIST                "LIST"          /* LIST */
+#define TOK_LIST                "LIST"
+#define CMD_LIST		MSG_LIST, TOK_LIST
 
-#define MSG_SVSMODE    "SVSMODE"
-#define TOK_SVSMODE    "SM"
-#define CLASS_SVSMODE    LEVEL_PROPAGATE
+#define MSG_TOPIC               "TOPIC"         /* TOPI */
+#define TOK_TOPIC               "T"
+#define CMD_TOPIC		MSG_TOPIC, TOK_TOPIC
 
-#define MSG_SVSJOIN    "SVSJOIN"
-#define TOK_SVSJOIN    "SJ"
-#define CLASS_SVSJOIN    LEVEL_PROPAGATE
+#define MSG_INVITE              "INVITE"        /* INVI */
+#define TOK_INVITE              "I"
+#define CMD_INVITE		MSG_INVITE, TOK_INVITE
 
-#define MSG_SVSPART    "SVSPART" 
-#define TOK_SVSPART    "SL"
-#define CLASS_SVSPART    LEVEL_PROPAGATE
+#define MSG_VERSION             "VERSION"       /* VERS */
+#define TOK_VERSION             "V"
+#define CMD_VERSION		MSG_VERSION, TOK_VERSION
 
-#if defined(WATCH)
-#define MSG_WATCH              "WATCH"         /* Comando WATCH */
-#define TOK_WATCH              "WATCH"
-#define CLASS_WATCH            LEVEL_QUERY
-#endif
+#define MSG_QUIT                "QUIT"          /* QUIT */
+#define TOK_QUIT                "Q"
+#define CMD_QUIT		MSG_QUIT, TOK_QUIT
 
+#define MSG_SQUIT               "SQUIT"         /* SQUI */
+#define TOK_SQUIT               "SQ"
+#define CMD_SQUIT		MSG_SQUIT, TOK_SQUIT
 
-#define MSG_PRIVATE		"PRIVMSG"	/* PRIV */
-#define TOK_PRIVATE		"P"
-#define CLASS_PRIVATE		LEVEL_PROPAGATE
+#define MSG_KILL                "KILL"          /* KILL */
+#define TOK_KILL                "D"
+#define CMD_KILL		MSG_KILL, TOK_KILL
 
-#define MSG_WHO			"WHO"		/* WHO	-> WHOC */
-#define TOK_WHO			"H"
-#define CLASS_WHO		LEVEL_QUERY
+#define MSG_INFO                "INFO"          /* INFO */
+#define TOK_INFO                "F"
+#define CMD_INFO		MSG_INFO, TOK_INFO
 
-#define MSG_WHOIS		"WHOIS"		/* WHOI */
-#define TOK_WHOIS		"W"
-#define CLASS_WHOIS		LEVEL_QUERY
+#define MSG_LINKS               "LINKS"         /* LINK */
+#define TOK_LINKS               "LI"
+#define CMD_LINKS		MSG_LINKS, TOK_LINKS
 
-#define MSG_WHOWAS		"WHOWAS"	/* WHOW */
-#define TOK_WHOWAS		"X"
-#define CLASS_WHOWAS		LEVEL_QUERY
+#define MSG_STATS               "STATS"         /* STAT */
+#define TOK_STATS               "R"
+#define CMD_STATS		MSG_STATS, TOK_STATS
 
-#define MSG_USER		"USER"		/* USER */
-#define TOK_USER		"USER"
-#define CLASS_USER		LEVEL_CLIENT
+#define MSG_HELP                "HELP"          /* HELP */
+#define TOK_HELP                "HELP"
+#define CMD_HELP		MSG_HELP, TOK_HELP
 
-#define MSG_NICK		"NICK"		/* NICK */
-#define TOK_NICK		"N"
-#define CLASS_NICK		LEVEL_CLIENT
+#define MSG_ERROR               "ERROR"         /* ERRO */
+#define TOK_ERROR               "Y"
+#define CMD_ERROR		MSG_ERROR, TOK_ERROR
 
-#define MSG_SERVER		"SERVER"	/* SERV */
-#define TOK_SERVER		"S"
-#define CLASS_SERVER		LEVEL_MAP
+#define MSG_AWAY                "AWAY"          /* AWAY */
+#define TOK_AWAY                "A"
+#define CMD_AWAY		MSG_AWAY, TOK_AWAY
 
-#define MSG_LIST		"LIST"		/* LIST */
-#define TOK_LIST		"LIST"
-#define CLASS_LIST		LEVEL_QUERY
+#define MSG_CONNECT             "CONNECT"       /* CONN */
+#define TOK_CONNECT             "CO"
+#define CMD_CONNECT		MSG_CONNECT, TOK_CONNECT
 
-#define MSG_TOPIC		"TOPIC"		/* TOPI */
-#define TOK_TOPIC		"T"
-#define CLASS_TOPIC		LEVEL_PROPAGATE
+#define MSG_MAP                 "MAP"           /* MAP  */
+#define TOK_MAP                 "MAP"
+#define CMD_MAP			MSG_MAP, TOK_MAP
 
-#define MSG_INVITE		"INVITE"	/* INVI */
-#define TOK_INVITE		"I"
-#define CLASS_INVITE		LEVEL_MODE
+#define MSG_PING                "PING"          /* PING */
+#define TOK_PING                "G"
+#define CMD_PING		MSG_PING, TOK_PING
 
-#define MSG_VERSION		"VERSION"	/* VERS */
-#define TOK_VERSION		"V"
-#define CLASS_VERSION		LEVEL_QUERY
+#define MSG_PONG                "PONG"          /* PONG */
+#define TOK_PONG                "Z"
+#define CMD_PONG		MSG_PONG, TOK_PONG
 
-#define MSG_QUIT		"QUIT"		/* QUIT */
-#define TOK_QUIT		"Q"
-#define CLASS_QUIT		LEVEL_CLIENT
+#define MSG_OPER                "OPER"          /* OPER */
+#define TOK_OPER                "OPER"
+#define CMD_OPER		MSG_OPER, TOK_OPER
 
-#define MSG_SQUIT		"SQUIT"		/* SQUI */
-#define TOK_SQUIT		"SQ"
-#define CLASS_SQUIT		LEVEL_MAP
+#define MSG_PASS                "PASS"          /* PASS */
+#define TOK_PASS                "PA"
+#define CMD_PASS		MSG_PASS, TOK_PASS
 
-#define MSG_KILL		"KILL"		/* KILL */
-#define TOK_KILL		"D"
-#define CLASS_KILL		LEVEL_CLIENT
+#define MSG_WALLOPS             "WALLOPS"       /* WALL */
+#define TOK_WALLOPS             "WA"
+#define CMD_WALLOPS		MSG_WALLOPS, TOK_WALLOPS
 
-#define MSG_INFO		"INFO"		/* INFO */
-#define TOK_INFO		"F"
-#define CLASS_INFO		LEVEL_QUERY
-
-#define MSG_LINKS		"LINKS"		/* LINK */
-#define TOK_LINKS		"LI"
-#define CLASS_LINKS		LEVEL_QUERY
-
-#define MSG_STATS		"STATS"		/* STAT */
-#define TOK_STATS		"R"
-#define CLASS_STATS		LEVEL_QUERY
-
-#define MSG_HELP		"HELP"		/* HELP */
-#define TOK_HELP		"HELP"
-#define CLASS_HELP		LEVEL_QUERY
-
-#define MSG_ERROR		"ERROR"		/* ERRO */
-#define TOK_ERROR		"Y"
-#define CLASS_ERROR		LEVEL_PROPAGATE
-
-#define MSG_AWAY		"AWAY"		/* AWAY */
-#define TOK_AWAY		"A"
-#define CLASS_AWAY		LEVEL_PROPAGATE
-
-#define MSG_CONNECT		"CONNECT"	/* CONN */
-#define TOK_CONNECT		"CO"
-#define CLASS_CONNECT		LEVEL_PROPAGATE
-
-#define MSG_UPING		"UPING"		/* UPIN */
-#define TOK_UPING		"UP"
-#define CLASS_UPING		LEVEL_PROPAGATE
-
-#define MSG_MAP			"MAP"		/* MAP	*/
-#define TOK_MAP			"MAP"
-#define CLASS_MAP		LEVEL_QUERY
-
-#define MSG_PING		"PING"		/* PING */
-#define TOK_PING		"G"
-#define CLASS_PING		LEVEL_PROPAGATE
-
-#define MSG_PONG		"PONG"		/* PONG */
-#define TOK_PONG		"Z"
-#define CLASS_PONG		LEVEL_CLIENT
-
-#define MSG_OPER		"OPER"		/* OPER */
-#define TOK_OPER		"OPER"
-#define CLASS_OPER		LEVEL_PROPAGATE
-
-#define MSG_PASS		"PASS"		/* PASS */
-#define TOK_PASS		"PA"
-#define CLASS_PASS		LEVEL_CLIENT
-
-#define MSG_WALLOPS		"WALLOPS"	/* WALL */
-#define TOK_WALLOPS		"WA"
-#define CLASS_WALLOPS		LEVEL_PROPAGATE
+#define MSG_WALLUSERS           "WALLUSERS"     /* WALL */
+#define TOK_WALLUSERS           "WU"
+#define CMD_WALLUSERS		MSG_WALLUSERS, TOK_WALLUSERS
 
 #define MSG_DESYNCH             "DESYNCH"       /* DESY */
 #define TOK_DESYNCH             "DS"
-#define CLASS_DESYNCH           LEVEL_PROPAGATE
+#define CMD_DESYNCH		MSG_DESYNCH, TOK_DESYNCH
 
-#define MSG_TIME		"TIME"		/* TIME */
-#define TOK_TIME		"TI"
-#define CLASS_TIME		LEVEL_QUERY
+#define MSG_TIME                "TIME"          /* TIME */
+#define TOK_TIME                "TI"
+#define CMD_TIME		MSG_TIME, TOK_TIME
 
-#define MSG_SETTIME		"SETTIME"	/* SETT */
-#define TOK_SETTIME		"SE"
-#define CLASS_SETTIME		LEVEL_PROPAGATE
+#define MSG_SETTIME             "SETTIME"       /* SETT */
+#define TOK_SETTIME             "SE"
+#define CMD_SETTIME		MSG_SETTIME, TOK_SETTIME
 
-#define MSG_RPING		"RPING"		/* RPIN */
-#define TOK_RPING		"RI"
-#define CLASS_RPING		LEVEL_PROPAGATE
+#define MSG_RPING               "RPING"         /* RPIN */
+#define TOK_RPING               "RI"
+#define CMD_RPING		MSG_RPING, TOK_RPING
 
-#define MSG_RPONG		"RPONG"		/* RPON */
-#define TOK_RPONG		"RO"
-#define CLASS_RPONG		LEVEL_PROPAGATE
+#define MSG_RPONG               "RPONG"         /* RPON */
+#define TOK_RPONG               "RO"
+#define CMD_RPONG		MSG_RPONG, TOK_RPONG
 
-#define MSG_NAMES		"NAMES"		/* NAME */
-#define TOK_NAMES		"E"
-#define CLASS_NAMES		LEVEL_QUERY
+#define MSG_NAMES               "NAMES"         /* NAME */
+#define TOK_NAMES               "E"
+#define CMD_NAMES		MSG_NAMES, TOK_NAMES
 
-#define MSG_ADMIN		"ADMIN"		/* ADMI */
-#define TOK_ADMIN		"AD"
-#define CLASS_ADMIN		LEVEL_QUERY
+#define MSG_ADMIN               "ADMIN"         /* ADMI */
+#define TOK_ADMIN               "AD"
+#define CMD_ADMIN		MSG_ADMIN, TOK_ADMIN
 
-#define MSG_TRACE		"TRACE"		/* TRAC */
-#define TOK_TRACE		"TR"
-#define CLASS_TRACE		LEVEL_PROPAGATE
+#define MSG_TRACE               "TRACE"         /* TRAC */
+#define TOK_TRACE               "TR"
+#define CMD_TRACE		MSG_TRACE, TOK_TRACE
 
-#define MSG_NOTICE		"NOTICE"	/* NOTI */
-#define TOK_NOTICE		"O"
-#define CLASS_NOTICE		LEVEL_PROPAGATE
+#define MSG_NOTICE              "NOTICE"        /* NOTI */
+#define TOK_NOTICE              "O"
+#define CMD_NOTICE		MSG_NOTICE, TOK_NOTICE
 
-#define MSG_WALLCHOPS		"WALLCHOPS"	/* WC */
-#define TOK_WALLCHOPS		"WC"
-#define CLASS_WALLCHOPS		LEVEL_PROPAGATE
+#define MSG_WALLCHOPS           "WALLCHOPS"     /* WC */
+#define TOK_WALLCHOPS           "WC"
+#define CMD_WALLCHOPS		MSG_NOTICE, TOK_WALLCHOPS
 
-#define MSG_CPRIVMSG		"CPRIVMSG"	/* CPRI */
-#define TOK_CPRIVMSG		"CP"
-#define CLASS_CPRIVMSG		LEVEL_CLIENT
+#define MSG_WALLVOICES           "WALLVOICES"     /* WV */
+#define TOK_WALLVOICES           "WV"
+#define CMD_WALLVOICES		MSG_NOTICE, TOK_WALLVOICES
 
-#define MSG_CNOTICE		"CNOTICE"	/* CNOT */
-#define TOK_CNOTICE		"CN"
-#define CLASS_CNOTICE		LEVEL_CLIENT
+#define MSG_CPRIVMSG            "CPRIVMSG"      /* CPRI */
+#define TOK_CPRIVMSG            "CP"
+#define CMD_CPRIVMSG		MSG_CPRIVMSG, TOK_CPRIVMSG
 
-#define MSG_JOIN		"JOIN"		/* JOIN */
-#define TOK_JOIN		"J"
-#define CLASS_JOIN		LEVEL_CHANNEL
+#define MSG_CNOTICE             "CNOTICE"       /* CNOT */
+#define TOK_CNOTICE             "CN"
+#define CMD_CNOTICE		MSG_CNOTICE, TOK_CNOTICE
 
-#define MSG_PART		"PART"		/* PART */
-#define TOK_PART		"L"
-#define CLASS_PART		LEVEL_CHANNEL
+#define MSG_JOIN                "JOIN"          /* JOIN */
+#define TOK_JOIN                "J"
+#define CMD_JOIN		MSG_JOIN, TOK_JOIN
 
-#define MSG_LUSERS		"LUSERS"	/* LUSE */
-#define TOK_LUSERS		"LU"
-#define CLASS_LUSERS		LEVEL_QUERY
+#define MSG_PART                "PART"          /* PART */
+#define TOK_PART                "L"
+#define CMD_PART		MSG_PART, TOK_PART
 
-#define MSG_USERS               "USERS"        /* USERS */
-#define TOK_USERS               "UU"
-#define CLASS_USERS             LEVEL_QUERY
+#define MSG_LUSERS              "LUSERS"        /* LUSE */
+#define TOK_LUSERS              "LU"
+#define CMD_LUSERS		MSG_LUSERS, TOK_LUSERS
 
-#define MSG_MOTD		"MOTD"		/* MOTD */
-#define TOK_MOTD		"MO"
-#define CLASS_MOTD		LEVEL_QUERY
+#define MSG_USERS              "USERS"        /* USE */
+#define TOK_USERS              "US"
+#define CMD_USERS              MSG_USERS, TOK_USERS
 
-#define MSG_MODE		"MODE"		/* MODE */
-#define TOK_MODE		"M"
-#define CLASS_MODE		LEVEL_MODE
+#define MSG_MOTD                "MOTD"          /* MOTD */
+#define TOK_MOTD                "MO"
+#define CMD_MOTD		MSG_MOTD, TOK_MOTD
 
-#define MSG_KICK		"KICK"		/* KICK */
-#define TOK_KICK		"K"
-#define CLASS_KICK		LEVEL_CHANNEL
+#define MSG_MODE                "MODE"          /* MODE */
+#define TOK_MODE                "M"
+#define CMD_MODE		MSG_MODE, TOK_MODE
 
-#define MSG_USERHOST		"USERHOST"	/* USER -> USRH */
-#define TOK_USERHOST		"USERHOST"
-#define CLASS_USERHOST		LEVEL_QUERY
+#define MSG_KICK                "KICK"          /* KICK */
+#define TOK_KICK                "K"
+#define CMD_KICK		MSG_KICK, TOK_KICK
 
-#define MSG_USERIP		"USERIP"	/* USER -> USIP */
-#define TOK_USERIP		"USERIP"
-#define CLASS_USERIP		LEVEL_QUERY
+#define MSG_USERHOST            "USERHOST"      /* USER -> USRH */
+#define TOK_USERHOST            "USERHOST"
+#define CMD_USERHOST		MSG_USERHOST, TOK_USERHOST
 
-#define MSG_ISON		"ISON"		/* ISON */
-#define TOK_ISON		"ISON"
-#define CLASS_ISON		LEVEL_QUERY
+#define MSG_USERIP              "USERIP"        /* USER -> USIP */
+#define TOK_USERIP              "USERIP"
+#define CMD_USERIP		MSG_USERIP, TOK_USERIP
 
-#define MSG_SQUERY		"SQUERY"	/* SQUE */
-#define TOK_SQUERY		"SQUERY"
-#define CLASS_SQUERY		LEVEL_QUERY
+#define MSG_ISON                "ISON"          /* ISON */
+#define TOK_ISON                "ISON"
+#define CMD_ISON		MSG_ISON, TOK_ISON
 
-#define MSG_SERVLIST		"SERVLIST"	/* SERV -> SLIS */
-#define TOK_SERVLIST		"SERVSET"
-#define CLASS_SERVLIST		LEVEL_QUERY
+#define MSG_SQUERY              "SQUERY"        /* SQUE */
+#define TOK_SQUERY              "SQUERY"
+#define CMD_SQUERY		MSG_SQUERY, TOK_SQUERY
 
-#define MSG_SERVSET		"SERVSET"	/* SERV -> SSET */
-#define TOK_SERVSET		"SERVSET"
-#define CLASS_SERVSET		LEVEL_CLIENT
+#define MSG_SERVLIST            "SERVLIST"      /* SERV -> SLIS */
+#define TOK_SERVLIST            "SERVSET"
+#define CMD_SERVLIST		MSG_SERVLIST, TOK_SERVLIST
 
-#define MSG_REHASH		"REHASH"	/* REHA */
-#define TOK_REHASH		"RH"
-#define CLASS_REHASH		LEVEL_MAP
+#define MSG_SERVSET             "SERVSET"       /* SERV -> SSET */
+#define TOK_SERVSET             "SERVSET"
+#define CMD_SERVSET		MSG_SERVSET, TOK_SERVSET
 
-#define MSG_RESTART		"RESTART"	/* REST */
-#define TOK_RESTART		"RS"
-#define CLASS_RESTART		LEVEL_MAP
+#define MSG_REHASH              "REHASH"        /* REHA */
+#define TOK_REHASH              "RH"
+#define CMD_REHASH		MSG_REHASH, TOK_REHASH
 
-#define MSG_CLOSE		"CLOSE"		/* CLOS */
-#define TOK_CLOSE		"CLOSE"
-#define CLASS_CLOSE		LEVEL_CLIENT
+#define MSG_RESTART             "RESTART"       /* REST */
+#define TOK_RESTART             "RS"
+#define CMD_RESTART		MSG_RESTART, TOK_RESTART
 
-#define MSG_DIE			"DIE"		/* DIE	*/
-#define TOK_DIE			"DI"
-#define CLASS_DIE		LEVEL_MAP
+#define MSG_CLOSE               "CLOSE"         /* CLOS */
+#define TOK_CLOSE               "CLOSE"
+#define CMD_CLOSE		MSG_CLOSE, TOK_CLOSE
 
-#define MSG_HASH		"HASH"		/* HASH */
-#define TOK_HASH		"HASH"
-#define CLASS_HASH		LEVEL_QUERY
+#define MSG_DIE                 "DIE"           /* DIE  */
+#define TOK_DIE                 "DI"
+#define CMD_DIE			MSG_DIE, TOK_DIE
 
-#define MSG_DNS			"DNS"		/* DNS	-> DNSS */
-#define TOK_DNS			"DNS"
-#define CLASS_DNS		LEVEL_QUERY
+#define MSG_HASH                "HASH"          /* HASH */
+#define TOK_HASH                "HASH"
+#define CMD_HASH		MSG_HASH, TOK_HASH
 
-#define MSG_SILENCE		"SILENCE"	/* SILE */
-#define TOK_SILENCE		"U"
-#define CLASS_SILENCE		LEVEL_PROPAGATE
+#define MSG_DNS                 "DNS"           /* DNS  -> DNSS */
+#define TOK_DNS                 "DNS"
+#define CMD_DNS			MSG_DNS, TOK_DNS
 
-#define MSG_GLINE		"GLINE"		/* GLIN */
-#define TOK_GLINE		"GL"
-#define CLASS_GLINE		LEVEL_CLIENT
+#define MSG_SILENCE             "SILENCE"       /* SILE */
+#define TOK_SILENCE             "U"
+#define CMD_SILENCE		MSG_SILENCE, TOK_SILENCE
 
-#define MSG_BURST		"BURST"		/* BURS */
-#define TOK_BURST		"B"
-#define CLASS_BURST		LEVEL_CHANNEL
+#define MSG_GLINE               "GLINE"         /* GLIN */
+#define TOK_GLINE               "GL"
+#define CMD_GLINE		MSG_GLINE, TOK_GLINE
 
-#define MSG_CREATE		"CREATE"	/* CREA */
-#define TOK_CREATE		"C"
-#define CLASS_CREATE		LEVEL_CHANNEL
+#define MSG_BURST               "BURST"         /* BURS */
+#define TOK_BURST               "B"
+#define CMD_BURST		MSG_BURST, TOK_BURST
 
-#define MSG_DESTRUCT		"DESTRUCT"	/* DEST */
-#define TOK_DESTRUCT		"DE"
-#define CLASS_DESTRUCT		LEVEL_CHANNEL
+#define MSG_UPING               "UPING"         /* UPIN */
+#define TOK_UPING               "UP"
+#define CMD_UPING		MSG_UPING, TOK_UPING
 
-#define MSG_END_OF_BURST	"END_OF_BURST"	/* END_ */
-#define TOK_END_OF_BURST	"EB"
-#define CLASS_END_OF_BURST	LEVEL_MAP
+#define MSG_CREATE              "CREATE"        /* CREA */
+#define TOK_CREATE              "C"
+#define CMD_CREATE		MSG_CREATE, TOK_CREATE
 
-#define MSG_END_OF_BURST_ACK	"EOB_ACK"	/* EOB_ */
-#define TOK_END_OF_BURST_ACK	"EA"
-#define CLASS_END_OF_BURST_ACK	LEVEL_MAP
+#define MSG_DESTRUCT            "DESTRUCT"      /* DEST */
+#define TOK_DESTRUCT            "DE"
+#define CMD_DESTRUCT		MSG_DESTRUCT, TOK_DESTRUCT
 
-/* *INDENT-ON* */
+#define MSG_END_OF_BURST        "END_OF_BURST"  /* END_ */
+#define TOK_END_OF_BURST        "EB"
+#define CMD_END_OF_BURST	MSG_END_OF_BURST, TOK_END_OF_BURST
 
-/*=============================================================================
+#define MSG_END_OF_BURST_ACK    "EOB_ACK"       /* EOB_ */
+#define TOK_END_OF_BURST_ACK    "EA"
+#define CMD_END_OF_BURST_ACK	MSG_END_OF_BURST_ACK, TOK_END_OF_BURST_ACK
+
+#define MSG_PROTO               "PROTO"         /* PROTO */
+#define TOK_PROTO               "PROTO"         /* PROTO */
+#define CMD_PROTO		MSG_PROTO, TOK_PROTO
+
+#define MSG_JUPE                "JUPE"          /* JUPE */
+#define TOK_JUPE                "JU"
+#define CMD_JUPE		MSG_JUPE, TOK_JUPE
+
+#define MSG_OPMODE              "OPMODE"        /* OPMO */
+#define TOK_OPMODE              "OM"
+#define CMD_OPMODE		MSG_OPMODE, TOK_OPMODE
+
+#define MSG_CLEARMODE           "CLEARMODE"     /* CLMO */
+#define TOK_CLEARMODE           "CM"
+#define CMD_CLEARMODE		MSG_CLEARMODE, TOK_CLEARMODE
+
+#define MSG_ACCOUNT		"ACCOUNT"	/* ACCO */
+#define TOK_ACCOUNT		"AC"
+#define CMD_ACCOUNT		MSG_ACCOUNT, TOK_ACCOUNT
+
+#define MSG_ASLL               "ASLL"          /* ASLL */
+#define TOK_ASLL               "LL"
+#define CMD_ASLL               MSG_ASLL, TOK_ASLL
+
+#define MSG_POST                "POST"          /* POST */
+#define TOK_POST                "POST"
+
+#define MSG_SET			"SET"		/* SET */
+#define TOK_SET			"SET"
+
+#define MSG_RESET		"RESET"		/* RESE */
+#define TOK_RESET		"RESET"
+
+#define MSG_GET			"GET"		/* GET */
+#define TOK_GET			"GET"
+
+#define MSG_PRIVS		"PRIVS"		/* PRIV */
+#define TOK_PRIVS		"PR"
+#define CMD_PRIVS               MSG_PRIVS, TOK_PRIVS
+
+#define MSG_CAP			"CAP"
+#define TOK_CAP			"CAP"
+#define CMD_CAP			MSG_CAP, TOK_CAP
+
+#define MSG_WATCH		"WATCH"		/* WATC */
+#define TOK_WATCH		"WATCH"
+
+#if defined(DDB)
+#define MSG_DB                  "DB"            /* DB */
+#define TOK_DB                  "DB"
+#define CMD_DB			MSG_DB, TOK_DB
+
+#define MSG_DBQ                 "DBQ"           /* DBQ */
+#define TOK_DBQ			"DBQ"
+#define CMD_DBQ			MSG_DBQ, TOK_DBQ
+
+#define MSG_BMODE		"BMODE"		/* BMODE */
+#define TOK_BMODE		"BM"
+#define CMD_BMODE		MSG_BMODE, TOK_BMODE
+
+#define MSG_GHOST               "GHOST"         /* GHOST */
+#define TOK_GHOST               "GHOST"
+#define CMD_GHOST               MSG_GHOST, TOK_GHOST
+
+#define MSG_SVSNICK             "SVSNICK"       /* SVSN */
+#define TOK_SVSNICK             "SN"
+#define CMD_SVSNICK             MSG_SVSNICK, TOK_SVSNICK
+
+#define MSG_CONFIG             "CONFIG"
+#define TOK_CONFIG             "CONFIG"
+#define CMD_CONFIG             MSG_CONFIG, TOK_CONFIG
+#endif
+
+#define MSG_SVSMODE    "SVSMODE"
+#define TOK_SVSMODE    "SM"
+#define CMD_SVSMODE            MSG_SVSMODE, TOK_SVSMODE
+
+#define MSG_SVSJOIN    "SVSJOIN"
+#define TOK_SVSJOIN    "SJ"
+#define CMD_SVSJOIN             MSG_SVSJOIN, TOK_SVSJOIN
+
+#define MSG_SVSPART    "SVSPART"
+#define TOK_SVSPART    "SL"
+#define CMD_SVSPART             MSG_SVSPART, TOK_SVSPART
+
+
+
+/*
  * Constants
  */
-#define   MFLG_SLOW              0x01 /* Command can be executed roughly    *
-                                       * once per 2 seconds.                */
-#define   MFLG_UNREG             0x02 /* Command available to unregistered  *
-                                       * clients.                           */
+#define   MFLG_SLOW              0x01   /** Limit command usage to
+                                         * once per 2 seconds (for
+                                         * local users). */
+#define   MFLG_UNREG             0x02   /** Command available to
+                                         * unregistered clients. */
+#define   MFLG_IGNORE            0x04   /** Silently ignore command from
+                                         * unregistered clients. */
+#define   MFLG_EXTRA             0x08   /** Handler requests that
+                                         * mptr->extra be passed in
+                                         * parv[1]. */
 
-/*=============================================================================
+/*
  * Structures
  */
 
+/** Information on how to parse a message. */
 struct Message {
-  unsigned int msgclass;
-  char *cmd;
-  char *tok;
-  int (*func) (aClient *cptr, aClient *sptr, int parc, char *parv[]);
-  /* cptr = Connected client ptr
-     sptr = Source client ptr
-     parc = parameter count
-     parv = parameter variable array */
-  unsigned int count;
-  unsigned int parameters;
-  unsigned char flags;          /* bit 0 set means that this command is allowed
-                                   to be used only on the average of once per 2
-                                   seconds -SRB */
-  unsigned int bytes;
+  char *cmd;                  /**< command string */
+  char *tok;                  /**< token (shorter command string) */
+  unsigned int count;         /**< number of times message used */
+  unsigned int parameters;    /**< minimum number of parameters */
+  unsigned int flags;         /**< MFLG_* flags for command */
+  unsigned int bytes;         /**< bytes received for this message */
+  void *extra;                /**< extra pointer to be passed in parv[1] */
+  /*
+   * cptr = Connected client ptr
+   * sptr = Source client ptr
+   * parc = parameter count
+   * parv = parameter variable array
+   */
+  /* handlers:
+   * UNREGISTERED, CLIENT, SERVER, OPER, SERVICE, LAST
+   */
+  MessageHandler handlers[LAST_HANDLER_TYPE];
 };
-
-struct MessageTree {
-  char *final;
-  struct Message *msg;
-  struct MessageTree *pointers[26];
-};
-
-/*=============================================================================
- * Proto types
- */
 
 extern struct Message msgtab[];
 
-#endif /* MSG_H */
+#endif /* INCLUDED_msg_h */

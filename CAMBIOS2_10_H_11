@@ -1,3 +1,9 @@
+* 2013/05/31 zoltan@irc-dev.net      (u2.10.H.11.06)                 PORT
+  -----------------------------------------------------------------------
+  2 anios despues seguimos. Hago copia de seguridad de codigo.
+
+  *NO COMPILA*
+
 * 2011/05/12 zoltan@irc-dev.net      (u2.10.H.11.05)                 PORT
   -----------------------------------------------------------------------
   Separo el Client local&remoto por Client y Connection. 

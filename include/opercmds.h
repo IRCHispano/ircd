@@ -1,73 +1,50 @@
-#if !defined(OPERCMDS_H)
-#define OPERCMDS_H
+/*
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/opercmds.h
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1990 Jarkko Oikarinen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+/** @file opercmds.h
+ * @brief Declarations of AsLL ping helper commands.
+ * @version $Id: opercmds.h,v 1.5 2007-04-19 22:53:47 zolty Exp $
+ */
+#ifndef INCLUDED_opercmds_h
+#define INCLUDED_opercmds_h
 
-#include "pcre.h"
+#ifndef INCLUDED_sys_types_h
+#include <sys/types.h>
+#define INCLUDED_sys_types_h
+#endif
 
-/*=============================================================================
+struct Client;
+
+/*
  * General defines
  */
 
 /*-----------------------------------------------------------------------------
  * Macro's
  */
-
-#define GLINE_ACTIVE	  0x01
-#define GLINE_IPMASK 	  0x02
-#define GLINE_LOCAL	  0x04
-#define GLINE_REALNAME    0x08 /* GLINE realname */
-#define GLINE_REALNAME_CI 0x10 /* GLINE de realname case insensitive */
-
 /*
- * G-line macros.
- */
-
-#define GlineIsActive(g)	((g)->gflags & GLINE_ACTIVE)
-#define GlineIsIpMask(g)	((g)->gflags & GLINE_IPMASK)
-#define GlineIsLocal(g)		((g)->gflags & GLINE_LOCAL)
-#define GlineIsRealName(g)      ((g)->gflags & GLINE_REALNAME)
-#define GlineIsRealNameCI(g)    ((g)->gflags & GLINE_REALNAME_CI)
-
-
-#define SetActive(g)		((g)->gflags |= GLINE_ACTIVE)
-#define ClearActive(g)		((g)->gflags &= ~GLINE_ACTIVE)
-#define SetGlineIsIpMask(g)	((g)->gflags |= GLINE_IPMASK)
-#define SetGlineIsLocal(g)	((g)->gflags |= GLINE_LOCAL)
-#define SetGlineRealName(g)     ((g)->gflags |= GLINE_REALNAME)
-#define SetGlineRealNameCI(g)   ((g)->gflags |= GLINE_REALNAME_CI)
-
-/*=============================================================================
- * Structures
- */
-
-struct Gline {
-  struct Gline *next;
-  char *host;
-  char *reason;
-  char *name;
-  time_t expire;
-  time_t lastmod;
-  time_t lifetime;
-  pcre *re;
-  unsigned int gflags;
-};
-
-/*=============================================================================
  * Proto types
  */
 
-extern int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_restart(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_die(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_wallops(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_time(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_rping(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_rpong(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_close(aClient *cptr, aClient *sptr, int parc, char *parv[]);
-extern int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+extern char *militime(char* sec, char* usec);
+extern char *militime_float(char *start);
 
-#endif /* OPERCMDS_H */
+#endif /* INCLUDED_opercmds_h */

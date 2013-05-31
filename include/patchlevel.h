@@ -1,10 +1,12 @@
 /*
- * IRC - Internet Relay Chat, include/patchlevel.h
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/patchlevel.h
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -13,354 +15,24 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-/*
- * PATCHes
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Only put here ADDED special stuff, for instance: ".mu3" or ".ban"
- * Please start the patchlevel with a '.'
+ * $Id: patchlevel.h,v 1.60 2008-01-19 19:25:58 zolty Exp $
  *
- * IMPORTANT: Since u2.9 there is a new format of this file. The reason
- * is that this way it shouldn't be needed anymore for the user to edit
- * this manually !!!
- * If you do, be sure you know what you are doing!
- *
- * For patch devellopers:
- * To make a diff of your patch, edit any of the below lines containing
- * a "" (an EMPTY string). Your patch will then succeed, with only an
- * offset, on the first empty place in the users patchlevel.h.
- * Do not change anyother line, the '\' are to make sure that the 'fuzz'
- * will stay 0. --Run
  */
+#define PATCHLEVEL ""
 
-#define PATCH1	\
-		\
-		\
-		\
-		".H.01"
+#define RELEASE ".H.11."
 
 /*
  * Deliberate empty lines
  */
-
-#define PATCH2	\
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH3	\
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH4	\
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH5	\
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH6	\
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH7	\
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH8	\
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH9	\
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH10 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH11 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH12 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH13 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH14 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH15 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH16 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH17 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH18 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH19 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH20 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH21 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH22 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH23 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH24 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH25 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH26 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH27 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH28 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH29 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH30 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH31 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
-#define PATCH32 \
-		\
-		\
-		\
-		""
-
-/*
- * Deliberate empty lines
- */
-
 /* Do NOT edit those: */
 
-#if !defined(BASE_VERSION)
+#ifndef BASE_VERSION
 #define BASE_VERSION "u2.10"
 #endif
 
-#if !defined(MAJOR_PROTOCOL)
+#ifndef MAJOR_PROTOCOL
 #define MAJOR_PROTOCOL "10"
 #endif

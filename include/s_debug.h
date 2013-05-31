@@ -1,44 +1,78 @@
-#if !defined(S_DEBUG_H)
-#define S_DEBUG_H
-
+/*
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/s_debug.h
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1990 Jarkko Oikarinen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+/* @file s_debug.h
+ * @brief Debug APIs for the ircd.
+ * @version $Id: s_debug.h,v 1.5 2007-04-19 22:53:47 zolty Exp $
+ */
+#ifndef INCLUDED_s_debug_h
+#define INCLUDED_s_debug_h
+#ifndef INCLUDED_config_h
+#include "config.h"          /* Needed for DEBUGMODE */
+#endif
+#ifndef INCLUDED_ircd_defs_h
+#include "ircd_defs.h"       /* Needed for HOSTLEN */
+#endif
+#ifndef INCLUDED_stdarg_h
 #include <stdarg.h>
-#if defined(MSGLOG_ENABLED)
-#include "struct.h"             /* Needed for HOSTLEN */
+#define INCLUDED_stdarg_h
 #endif
 
-#if defined(DEBUGMODE)
+struct Client;
+struct StatDesc;
 
-/*=============================================================================
+#ifdef DEBUGMODE
+
+/*
  * Macro's
  */
 
+/** If DEBUGMODE is defined, output the debug message.
+ * @param x A two-or-more element list containing level, format and arguments.
+ */
 #define Debug(x) debug x
-#define LOGFILE LPATH
+#define LOGFILE LPATH /**< Path to debug log file. */
 
 /*
  * defined debugging levels
  */
-#define DEBUG_FATAL  0
-#define DEBUG_ERROR  1          /* report_error() and other
-                                   errors that are found */
-#define DEBUG_NOTICE 3
-#define DEBUG_DNS    4          /* used by all DNS related routines - a *lot* */
-#define DEBUG_INFO   5          /* general usful info */
-#define DEBUG_NUM    6          /* numerics */
-#define DEBUG_SEND   7          /* everything that is sent out */
-#define DEBUG_DEBUG  8          /* anything to do with debugging,
-                                   ie unimportant :) */
-#define DEBUG_MALLOC 9          /* malloc/free calls */
-#define DEBUG_LIST  10          /* debug list use */
+#define DEBUG_FATAL   0  /**< fatal error */
+#define DEBUG_ERROR   1  /**< report_error() and other errors that are found */
+#define DEBUG_NOTICE  3  /**< somewhat useful, but non-critical, messages */
+#define DEBUG_DNS     4  /**< used by all DNS related routines - a *lot* */
+#define DEBUG_INFO    5  /**< general useful info */
+#define DEBUG_SEND    7  /**< everything that is sent out */
+#define DEBUG_DEBUG   8  /**< everything that is received */ 
+#define DEBUG_MALLOC  9  /**< malloc/free calls */
+#define DEBUG_LIST   10  /**< debug list use */
+#define DEBUG_ENGINE 11  /**< debug event engine; can dump gigabyte logs */
 
-/*=============================================================================
+/*
  * proto types
  */
 
 extern void vdebug(int level, const char *form, va_list vl);
-extern void debug(int level, const char *form, ...)
-    __attribute__ ((format(printf, 2, 3)));
-extern void send_usage(aClient *cptr, char *nick);
+extern void debug(int level, const char *form, ...);
+extern void send_usage(struct Client *cptr, const struct StatDesc *sd,
+                       char *param);
 
 #else /* !DEBUGMODE */
 
@@ -47,110 +81,9 @@ extern void send_usage(aClient *cptr, char *nick);
 
 #endif /* !DEBUGMODE */
 
-extern void count_memory(aClient *cptr, char *nick);
-extern char serveropts[];
+extern const char* debug_serveropts(void);
+extern void debug_init(int use_tty);
+extern void count_memory(struct Client *cptr, const struct StatDesc *sd,
+                         char *param);
 
-/*=============================================================================
- * Message logging service
- */
-
-/*
- * Message levels: these are inclusive, i.e. a message that is LEVEL_MAP
- * affects also clients and channels and is propagated and needs a query of
- * some status, and therefore belongs to all the classes, in the same way
- * _every_ message is parsed so belongs to LEVEL_PARSED
- */
-
-/* Messages that affect servers' map */
-#define LEVEL_MAP	6
-
-/* Messages that affect clients existance */
-#define LEVEL_CLIENT	5
-
-/* Messages that affect channel existance */
-#define LEVEL_CHANNEL	4
-
-/* Messages that affect channel modes */
-#define LEVEL_MODE	3
-
-/* Messages that are only to be propagated somewhere */
-#define LEVEL_PROPAGATE 2
-
-/*
- * Messages that only perform queries
- * note how every message may need some status query over data structs
- * and at the same time every query might need to be propagated
- * somewhere... so the distinction between levels PROPAGATE and
- * QUERY is quite fuzzy
- */
-#define LEVEL_QUERY	1
-
-/* Messages that only perform queries */
-#define LEVEL_PARSED	0
-
-#if defined(MSGLOG_ENABLED)
-
-/*=============================================================================
- * Macro's
- */
-
-#define LogMessage(x) Log_Message x
-#define StoreBuffer(x) Store_Buffer x
-
-/* Logging mask, selection on type of connection */
-#define LOG_PING	(0x8000 >> (8 + STAT_PING))
-#define LOG_LOG		(0x8000 >> (8 + STAT_LOG))
-#define LOG_CONNECTING	(0x8000 >> (8 + STAT_CONNECTING))
-#define LOG_HANDSHAKE	(0x8000 >> (8 + STAT_HANDSHAKE))
-#define LOG_ME		(0x8000 >> (8 + STAT_ME))
-#define LOG_UNKNOWN	(0x8000 >> (8 + STAT_UNKNOWN))
-#define LOG_SERVER	(0x8000 >> (8 + STAT_SERVER))
-#define LOG_CLIENT	(0x8000 >> (8 + STAT_USER))
-
-/*
- * Define here the type of connection(s) that will be monitored.
- * Default is to log messages coming from any connection.
- */
-#define LOG_MASK_TYPE \
-    ( LOG_PING | LOG_LOG | LOG_CONNECTING | \
-      LOG_HANDSHAKE | LOG_ME | LOG_UNKNOWN | LOG_SERVER | LOG_CLIENT )
-
-/*=============================================================================
- * data structures
- */
-
-struct log_entry {
-  int cptr_status;
-  char cptr_name[HOSTLEN + 1];
-  char cptr_yxx[3];
-  int cptr_fd;
-
-  int sptr_status;
-  char sptr_name[HOSTLEN + 1];
-  char sptr_yxx[4];
-  char sptr_from_name[HOSTLEN + 1];
-
-  char buffer[512];
-
-  /* The following may be lost before log gets used,
-     anyhow they are only here for usage through gdb */
-
-  aClient *cptr;
-  aClient *sptr;
-};
-
-/*=============================================================================
- * proto types
- */
-
-extern void Log_Message(aClient *sptr, int msgclass);
-extern void Store_Buffer(char *buf, aClient *cptr);
-
-#else /* !MSGLOG_ENABLED */
-
-#define LogMessage(x)
-#define StoreBuffer(x)
-
-#endif /* !MSGLOG_ENABLED */
-
-#endif /* S_DEBUG_H */
+#endif /* INCLUDED_s_debug_h */

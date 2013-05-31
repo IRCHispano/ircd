@@ -1,14 +1,14 @@
 /*
- * IRC - Internet Relay Chat, ircd/hash.c
- * Copyright (C) 1998 Andrea Cocito, completely rewritten version.
- * Previous version was Copyright (C) 1991 Darren Reed, the concept
- * of linked lists for each hash bucket and the move-to-head 
- * optimization has been borrowed from there.
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/hash.c
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1998 Andrea Cocito
+ * Copyright (C) 1991 Darren Reed
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,257 +17,94 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
+/** @file
+ * @brief Hash table management.
+ * @version $Id$
+ *
+ * This file used to use some very complicated hash function.  Now it
+ * uses CRC-32, but effectively remaps each input byte according to a
+ * table initialized at startup.
+ */
+#include "config.h"
 
-#include "sys.h"
-#include <stdlib.h>
-#include <limits.h>
-#include "h.h"
-#include "client.h"
-#include "s_debug.h"
-#include "struct.h"
-#include "common.h"
-#include "s_bdd.h"
-#include "m_watch.h"
 #include "hash.h"
+#include "client.h"
 #include "channel.h"
-#include "send.h"
-#include "s_serv.h"
-#include "ircd.h"
-#include "support.h"
-#include "numeric.h"
-#include "s_err.h"
+#if defined(DDB)
+#include "ddb.h"
+#endif
 #include "ircd_alloc.h"
 #include "ircd_chattr.h"
+#include "ircd_log.h"
+#include "ircd_reply.h"
+#include "ircd_string.h"
+#include "ircd.h"
+#include "match.h"
+#include "msg.h"
+#include "numeric.h"
+#include "random.h"
+#include "send.h"
+#include "struct.h"
+#include "watch.h"
 
-RCSTAG_CC("$Id$");
+/* #include <assert.h> -- Now using assert in ircd_log.h */
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
 
-/************************* Nemesi's hash alghoritm ***********************/
-
-/* This hash function returns *exactly* N%HASHSIZE, where 'N'
- * is the string itself (included the trailing '\0') seen as 
- * a baseHASHSHIFT number whose "digits" are the bytes of the
- * number mapped through a "weight" transformation that gives
- * the same "weight" to caseless-equal chars, example:
- *
- * Hashing the string "Nick\0" the result will be:
- * N  i  c  k \0
- * |  |  |  |  `--->  ( (hash_weight('\0') * (HASHSHIFT**0) +
- * |  |  |  `------>    (hash_weight('k')  * (HASHSHIFT**1) +
- * |  |  `--------->    (hash_weight('c')  * (HASHSHIFT**2) +
- * |  `------------>    (hash_weight('i')  * (HASHSHIFT**3) +
- * `--------------->    (hash_weight('N')  * (HASHSHIFT**4)   ) % HASHSIZE
- *
- * It's actually a lot similar to a base transformation of the
- * text representation of an integer.
- * Looking at it this way seems slow and requiring unlimited integer
- * precision, but we actually do it with a *very* fast loop, using only 
- * short integer arithmetic and by means of two memory accesses and 
- * 3 additions per each byte processed.. and nothing else, as a side
- * note the distribution of real nicks over the hash table of this
- * function is about 3 times better than the previous one, and the
- * hash function itself is about 25% faster with a "normal" HASHSIZE
- * (it gets slower with larger ones and faster for smallest ones
- * because the hash table size affect the size of some maps and thus
- * the effectiveness of RAM caches while accesing them).
- * These two pages of macros are here to make the following code
- * _more_ understandeable... I hope ;)
- */
-
-/* Internal stuff, think well before changing this, it's how
-   much the weights of two lexicograhically contiguous chars 
-   differ, i.e. (hash_weight('b')-hash_weight('a')) == HASHSTEP
-   One seems to be fine but the alghoritm doesn't depend on it */
-#define HASHSTEP 1
-
-/* The smallest _prime_ int beeing HASHSTEP times bigger than a byte,
-   that is the first prime bigger than the maximum hash_weight
-   (since the maximum hash weight is gonne be the "biggest-byte * HASHSTEP") 
- */
-#define HASHSHIFT 257
-
-/* Are we sure that HASHSHIFT is big enough ? */
-#if !(HASHSHIFT > (HASHSTEP*(CHAR_MAX-CHAR_MIN)))
-#error "No no, I cannot, please make HASHSHIFT a bigger prime !"
-#endif
-
-/* Now HASHSIZE doesn't need to be a prime, but we really don't want it
-   to be an exact multiple of HASHSHIFT, that would make the distribution
-   a LOT worse, once is not multiple of HASHSHIFT it can be anything */
-#if ((HASHSIZE%HASHSHIFT)==0)
-#error "Please set HASHSIZE to something not multiple of HASHSHIFT"
-#endif
-
-/* What type of integer do we need in our computations ? the largest
-   value we need to work on is (HASHSIZE+HASHSHIFT+1), for memory
-   operations we want to keep the tables compact (the cache will work
-   better and we will run faster) while for work variables we prefer
-   to roundup to 'int' if it is the case: on platforms where int!=short
-   int arithmetic is often faster than short arithmetic, we prefer signed
-   types if they are big enough since on some architectures they are faster
-   than unsigned, but we always keep signedness of mem and regs the same,
-   to avoid sign conversions that sometimes require time, the following 
-   precompile stuff will set HASHMEMS to an appropriate integer type for 
-   the tables stored in memory and HASHREGS to an appropriate int type
-   for the work registers/variables/return types. Everything of type
-   HASH???S will remain internal to this source file so I placed this stuff
-   here and not in the header file. */
-
-#undef HASHMEMS
-#undef HASHREGS
-
-#if ((!defined(HASHMEMS)) && (HASHSIZE < (SHRT_MAX-HASHSHIFT)))
-#define HASHMEMS short
-#define HASHREGS int
-#endif
-
-#if ((!defined(HASHMEMS)) && (HASHSIZE < (USHRT_MAX-HASHSHIFT)))
-#define HASHMEMS unsigned short
-#define HASHREGS unsigned int
-#endif
-
-#if ((!defined(HASHMEMS)) && (HASHSIZE < (INT_MAX-HASHSHIFT)))
-#define HASHMEMS int
-#define HASHREGS int
-#endif
-
-#if ((!defined(HASHMEMS)) && (HASHSIZE < (UINT_MAX-HASHSHIFT)))
-#define HASHMEMS unsigned int
-#define HASHREGS unsigned int
-#endif
-
-#if ((!defined(HASHMEMS)) && (HASHSIZE < (LONG_MAX-HASHSHIFT)))
-#define HASHMEMS long
-#define HASHREGS long
-#endif
-
-#if ((!defined(HASHMEMS)) && (HASHSIZE < (ULONG_MAX-HASHSHIFT)))
-#define HASHMEMS unsigned long
-#define HASHREGS unsigned long
-#endif
-
-#if (!defined(HASHMEMS))
-#error "Uh oh... I have a problem, do you want a 16GB hash table ? !"
-#endif
-
-/* Now we are sure that HASHMEMS and HASHREGS can contain the following */
-#define HASHMAPSIZE (HASHSIZE+HASHSHIFT+1)
-
-/* Static memory structures */
-
-/* We need a first function that, given an integer h between 1 and
-   HASHSIZE+HASHSHIFT, returns ( (h * HASHSHIFT) % HASHSIZE ) )
-   We'll map this function in this table */
-static HASHMEMS hash_map[HASHMAPSIZE];
-
-/* Then we need a second function that "maps" a char to its weitgh,
-   changed to a table this one too, with this macro we can use a char
-   as index and not care if it is signed or not, no.. this will not
-   cause an addition to take place at each access, trust me, the
-   optimizer takes it out of the actual code and passes "label+shift"
-   to the linker, and the linker does the addition :) */
-static HASHMEMS hash_weight_table[CHAR_MAX - CHAR_MIN + 1];
-#define hash_weight(ch) hash_weight_table[ch-CHAR_MIN]
-
-/* The actual hash tables, both MUST be of the same HASHSIZE, variable
-   size tables could be supported but the rehash routine should also
-   rebuild the transformation maps, I kept the tables of equal size 
-   so that I can use one hash function and one transformation map */
+/** Hash table for clients. */
 static struct Client *clientTable[HASHSIZE];
-static aChannel *channelTable[HASHSIZE];
-#if defined(WATCH)
-static aWatch *watchTable[HASHSIZE];
-#endif /* WATCH */
+/** Hash table for channels. */
+static struct Channel *channelTable[HASHSIZE];
+/** Hash table for watchs. */
+static struct Watch *watchTable[HASHSIZE];
+/** CRC-32 update table. */
+static uint32_t crc32hash[256];
 
-/* This is what the hash function will consider "equal" chars, this function 
-   MUST be transitive, if HASHEQ(y,x)&&HASHEQ(y,z) then HASHEQ(y,z), and MUST
-   be symmetric, if HASHEQ(a,b) then HASHEQ(b,a), obvious ok but... :) */
-#define HASHEQ(x,y) (((char) ToLower((char) x)) == ((char) ToLower((char) y)))
-
-/* hash_init
- * Initialize the maps used by hash functions and clear the tables */
-void hash_init(void)
+/** Initialize the map used by the hash function. */
+void init_hash(void)
 {
-  int i, j;
-  unsigned long l, m;
+  unsigned int ii, jj, rand, poly;
 
-  /* Clear the hash tables first */
-  for (l = 0; l < HASHSIZE; l++)
+  /* First calculate a normal CRC-32 table. */
+  for (ii = 0, poly = 0xedb88320; ii < 256; ii++)
   {
-    channelTable[l] = (aChannel *)NULL;
-    clientTable[l] = (struct Client *)NULL;
-#if defined(WATCH)
-    watchTable[l] = (aWatch *) NULL;
-#endif
-  };
+    rand = ii;
+    for (jj = 0; jj < 8; jj++)
+      rand = (rand & 1) ? poly ^ (rand >> 1) : rand >> 1;
+    crc32hash[ii] = rand;
+  }
 
-  /* Here is to what we "map" a char before working on it */
-  for (i = CHAR_MIN; i <= CHAR_MAX; i++)
-    hash_weight(i) = (HASHMEMS) (HASHSTEP * ((unsigned char)i));
-
-  /* Make them equal for case-independently equal chars, it's
-     lame to do it this way but I wanted the code flexible, it's
-     possible to change the HASHEQ macro and not touch here. 
-     I don't actually care about the 32768 loops since it happens 
-     only once at startup */
-  for (i = CHAR_MIN; i <= CHAR_MAX; i++)
-    for (j = CHAR_MIN; j < i; j++)
-      if (HASHEQ(i, j))
-        hash_weight(i) = hash_weight(j);
-
-  /* And this is our hash-loop "transformation" function, 
-     basically it will be hash_map[x] == ((x*HASHSHIFT)%HASHSIZE)
-     defined for 0<=x<=(HASHSIZE+HASHSHIFT) */
-  for (m = 0; m < (unsigned long)HASHMAPSIZE; m++)
+  /* Now reorder the hash table. */
+  for (ii = 0, rand = 0; ii < 256; ii++)
   {
-    l = m;
-    l *= (unsigned long)HASHSHIFT;
-    l %= (unsigned long)HASHSIZE;
-    hash_map[m] = (HASHMEMS) l;
-  };
+    if (!rand)
+      rand = ircrandom();
+    poly = ii + rand % (256 - ii);
+    jj = crc32hash[ii];
+    crc32hash[ii] = crc32hash[poly];
+    crc32hash[poly] = jj;
+    rand >>= 8;
+  }
 }
 
-/* These are the actual hash functions, since they are static
-   and very short any decent compiler at a good optimization level
-   WILL inline these in the following functions */
+/** Output type of hash function. */
+typedef unsigned int HASHREGS;
 
-/* This is the string hash function,
-   WARNING: n must be a valid pointer to a _non-null_ string
-   this means that not only strhash(NULL) but also
-   strhash("") _will_ coredump, it's responsibility
-   the caller to eventually check BadPtr(nick). */
-
-static HASHREGS strhash(char *n)
+/** Calculate hash value for a string.
+ * @param[in] n String to hash.
+ * @return Hash value for string.
+ */
+static HASHREGS strhash(const char *n)
 {
-  HASHREGS hash = hash_weight(*n++);
+  HASHREGS hash = crc32hash[ToLower(*n++) & 255];
   while (*n)
-    hash = hash_map[hash] + hash_weight(*n++);
-  return hash_map[hash];
+    hash = (hash >> 8) ^ crc32hash[(hash ^ ToLower(*n++)) & 255];
+  return hash % HASHSIZE;
 }
-
-/* And this is the string hash function for limited lenght strings
-   WARNING: n must be a valid pointer to a non-null string
-   and i must be > 0 ! */
-
-/* REMOVED
-
-   The time taken to decrement i makes the function
-   slower than strhash for the average of channel names (tested
-   on 16000 real channel names, 1000 loops. I left the code here
-   as a bookmark if a strnhash is evetually needed in the future.
-
-   static HASHREGS strnhash(char *n, int i) {
-   HASHREGS hash = hash_weight(*n++);
-   i--;
-   while(*n && i--)
-   hash = hash_map[hash] + hash_weight(*n++);
-   return hash_map[hash];
-   }
-
-   #define CHANHASHLEN 30
-
-   !REMOVED */
 
 /************************** Externally visible functions ********************/
 
@@ -276,175 +113,226 @@ static HASHREGS strhash(char *n)
  * I avoided introducing new variables to do the work myself and I did let
  * the optimizer play with more free registers, actual tests proved this
  * solution to be faster than doing things like tmp2=tmp->hnext... and then
- * use tmp2 myself wich would have given less freedom to the optimizer.
+ * use tmp2 myself which would have given less freedom to the optimizer.
  */
 
-/*
- * hAddClient
- * Adds a client's name in the proper hash linked list, can't fail,
- * cptr must have a non-null name or expect a coredump, the name is
- * infact taken from cptr->name
+/** Prepend a client to the appropriate hash bucket.
+ * @param[in] cptr Client to add to hash table.
+ * @return Zero.
  */
 int hAddClient(struct Client *cptr)
 {
-  HASHREGS hashv = strhash(cptr->name);
+  HASHREGS hashv = strhash(cli_name(cptr));
 
-  cptr->cli_hnext = clientTable[hashv];
+  cli_hnext(cptr) = clientTable[hashv];
   clientTable[hashv] = cptr;
 
   return 0;
 }
 
-/*
- * hAddChannel
- * Adds a channel's name in the proper hash linked list, can't fail.
- * chptr must have a non-null name or expect a coredump.
- * As before the name is taken from chptr->name, we do hash its entire
- * lenght since this proved to be statistically faster
+/** Prepend a channel to the appropriate hash bucket.
+ * @param[in] chptr Channel to add to hash table.
+ * @return Zero.
  */
-int hAddChannel(aChannel *chptr)
+int hAddChannel(struct Channel *chptr)
 {
   HASHREGS hashv = strhash(chptr->chname);
 
-  chptr->hnextch = channelTable[hashv];
+  chptr->hnext = channelTable[hashv];
   channelTable[hashv] = chptr;
 
   return 0;
 }
 
-/*
- * hRemClient
- * Removes a Client's name from the hash linked list
+/** Prepend a watch's nick  to the appropriate hash bucket.
+ * @param[in] chptr Watch to add to hash table.
+ * @return Zero.
+ */
+int hAddWatch(struct Watch *wptr)
+{
+  register HASHREGS hashv = strhash(wt_nick(wptr));
+
+  wt_next(wptr) = watchTable[hashv];
+  watchTable[hashv] = wptr;
+
+  return 0;
+
+}
+
+/** Remove a client from its hash bucket.
+ * @param[in] cptr Client to remove from hash table.
+ * @return Zero if the client is found and removed, -1 if not found.
  */
 int hRemClient(struct Client *cptr)
 {
-  HASHREGS hashv = strhash(PunteroACadena(cptr->name));
+  HASHREGS hashv = strhash(cli_name(cptr));
   struct Client *tmp = clientTable[hashv];
 
-  if (tmp == cptr)
-  {
-    clientTable[hashv] = cptr->cli_hnext;
+  if (tmp == cptr) {
+    clientTable[hashv] = cli_hnext(cptr);
+    cli_hnext(cptr) = cptr;
     return 0;
   }
-  while (tmp)
-  {
-    if (tmp->cli_hnext == cptr)
-    {
-      tmp->cli_hnext = tmp->cli_hnext->cli_hnext;
+
+  while (tmp) {
+    if (cli_hnext(tmp) == cptr) {
+      cli_hnext(tmp) = cli_hnext(cli_hnext(tmp));
+      cli_hnext(cptr) = cptr;
       return 0;
     }
-    tmp = tmp->cli_hnext;
+    tmp = cli_hnext(tmp);
   }
   return -1;
 }
 
-/*
- * hChangeClient
- * Removes the old name of a client from a linked list and adds
- * the new one to another linked list, there is a slight chanche
- * that this is useless if the two hashes are the same but it still
- * would need to move the name to the top of the list.
- * As always it's responsibility of the caller to check that
- * both newname and cptr->name are valid names (not "" or NULL).
- * Typically, to change the nick of an already hashed client:
- * if (!BadPtr(newname) && ClearTheNameSomeHow(newname)) {
- *   hChangeClient(cptr, newname);
- *   strcpy(cptr->name, newname);
- *   };
- * There isn't an equivalent function for channels since they
- * don't change name.
+/** Rename a client in the hash table.
+ * @param[in] cptr Client whose nickname is changing.
+ * @param[in] newname New nickname for client.
+ * @return Zero.
  */
-int hChangeClient(struct Client *cptr, char *newname)
+int hChangeClient(struct Client *cptr, const char *newname)
 {
   HASHREGS newhash = strhash(newname);
 
+  assert(0 != cptr);
   hRemClient(cptr);
 
-  cptr->cli_hnext = clientTable[newhash];
+  cli_hnext(cptr) = clientTable[newhash];
   clientTable[newhash] = cptr;
   return 0;
 }
 
-/*
- * hRemChannel
- * Removes the channel's name from the corresponding hash linked list
+/** Remove a channel from its hash bucket.
+ * @param[in] chptr Channel to remove from hash table.
+ * @return Zero if the channel is found and removed, -1 if not found.
  */
-int hRemChannel(aChannel *chptr)
+int hRemChannel(struct Channel *chptr)
 {
   HASHREGS hashv = strhash(chptr->chname);
-  aChannel *tmp = channelTable[hashv];
+  struct Channel *tmp = channelTable[hashv];
 
-  if (tmp == chptr)
-  {
-    channelTable[hashv] = chptr->hnextch;
+  if (tmp == chptr) {
+    channelTable[hashv] = chptr->hnext;
+    chptr->hnext = chptr;
     return 0;
-  };
+  }
 
-  while (tmp)
-  {
-    if (tmp->hnextch == chptr)
-    {
-      tmp->hnextch = tmp->hnextch->hnextch;
+  while (tmp) {
+    if (tmp->hnext == chptr) {
+      tmp->hnext = tmp->hnext->hnext;
+      chptr->hnext = chptr;
       return 0;
-    };
-    tmp = tmp->hnextch;
-  };
+    }
+    tmp = tmp->hnext;
+  }
 
   return -1;
 }
 
-/*
- * hSeekClient
- * New semantics: finds a client whose name is 'name' and whose
- * status is one of those marked in TMask, if can't find one
- * returns NULL. If it finds one moves it to the top of the list
- * and returns it.
+/** Remove a watch from its hash bucket.
+ * @param[in] chptr Watch to remove from hash table.
+ * @return Zero if the watch is found and removed, -1 if not found.
  */
-struct Client *hSeekClient(char *name, int TMask)
+int hRemWatch(struct Watch *wptr)
 {
-  HASHREGS hashv = strhash(name);
-  struct Client *cptr = clientTable[hashv];
-  struct Client *prv;
+  HASHREGS hashv = strhash(wt_nick(wptr));
+  struct Watch *tmp = watchTable[hashv];
 
-  if (cptr)
-    if ((!IsStatMask(cptr, TMask)) || ircd_strcmp(name, cptr->name))
-      while (prv = cptr, cptr = cptr->cli_hnext)
-        if (IsStatMask(cptr, TMask) && (!ircd_strcmp(name, cptr->name)))
-        {
-          prv->cli_hnext = cptr->cli_hnext;
-          cptr->cli_hnext = clientTable[hashv];
+  if (tmp == wptr) {
+    watchTable[hashv] = wt_next(wptr);
+    wt_next(wptr) = wptr;
+    return 0;
+  }
+
+  while (tmp) {
+    if (wt_next(tmp) == wptr) {
+      wt_next(tmp) = wt_next(wt_next(tmp));
+      wt_next(wptr) = wptr;
+      return 0;
+    }
+    tmp = wt_next(tmp);
+  }
+  return -1;
+}
+
+/** Find a client by name, filtered by status mask.
+ * If a client is found, it is moved to the top of its hash bucket.
+ * @param[in] name Client name to search for.
+ * @param[in] TMask Bitmask of status bits, any of which are needed to match.
+ * @return Matching client, or NULL if none.
+ */
+struct Client* hSeekClient(const char *name, int TMask)
+{
+  HASHREGS hashv      = strhash(name);
+  struct Client *cptr = clientTable[hashv];
+
+  if (cptr) {
+    if (0 == (cli_status(cptr) & TMask) || 0 != ircd_strcmp(name, cli_name(cptr))) {
+      struct Client* prev;
+      while (prev = cptr, cptr = cli_hnext(cptr)) {
+        if ((cli_status(cptr) & TMask) && (0 == ircd_strcmp(name, cli_name(cptr)))) {
+          cli_hnext(prev) = cli_hnext(cptr);
+          cli_hnext(cptr) = clientTable[hashv];
           clientTable[hashv] = cptr;
           break;
-        };
-
+        }
+      }
+    }
+  }
   return cptr;
+}
+
+/** Find a channel by name.
+ * If a channel is found, it is moved to the top of its hash bucket.
+ * @param[in] name Channel name to search for.
+ * @return Matching channel, or NULL if none.
+ */
+struct Channel* hSeekChannel(const char *name)
+{
+  HASHREGS hashv = strhash(name);
+  struct Channel *chptr = channelTable[hashv];
+
+  if (chptr) {
+    if (0 != ircd_strcmp(name, chptr->chname)) {
+      struct Channel* prev;
+      while (prev = chptr, chptr = chptr->hnext) {
+        if (0 == ircd_strcmp(name, chptr->chname)) {
+          prev->hnext = chptr->hnext;
+          chptr->hnext = channelTable[hashv];
+          channelTable[hashv] = chptr;
+          break;
+        }
+      }
+    }
+  }
+  return chptr;
 
 }
 
-/*
- * hSeekChannel
- * New semantics: finds a channel whose name is 'name', 
- * if can't find one returns NULL, if can find it moves
- * it to the top of the list and returns it.
+/** Find a watch by nick.
+ * If a watch's nick is found, it is moved to the top of its hash bucket.
+ * @param[in] name Watch nick to search for.
+ * @return Matching watch, or NULL if none.
  */
-aChannel *hSeekChannel(char *name)
+struct Watch *hSeekWatch(const char *nick)
 {
-  HASHREGS hashv = strhash(name);
-  aChannel *chptr = channelTable[hashv];
-  aChannel *prv;
+  HASHREGS hashv = strhash(nick);   
+  struct Watch *wptr = watchTable[hashv];
 
-  if (chptr)
-    if (ircd_strcmp(name, chptr->chname))
-      while (prv = chptr, chptr = chptr->hnextch)
-        if (!ircd_strcmp(name, chptr->chname))
-        {
-          prv->hnextch = chptr->hnextch;
-          chptr->hnextch = channelTable[hashv];
-          channelTable[hashv] = chptr;
+  if (wptr) {
+    if (0 != ircd_strcmp(nick, wt_nick(wptr))) {
+      struct Watch* prev;
+      while (prev = wptr, wptr = wt_next(wptr)) {
+        if (0 == ircd_strcmp(nick, wt_nick(wptr))) {
+          wt_next(prev) = wt_next(wptr);
+          wt_next(wptr) = watchTable[hashv];
+          watchTable[hashv] = wptr;
           break;
-        };
-
-  return chptr;
+        }
+      }       
+    }
+  }
+  return wptr;
 
 }
 
@@ -453,119 +341,245 @@ aChannel *hSeekChannel(char *name)
    coders are able to SIGCORE the server and look into what goes
    on themselves :-) */
 
-int m_hash(struct Client *UNUSED(cptr), struct Client *sptr, int UNUSED(parc), char *parv[])
+/** Report hash table statistics to a client.
+ * @param[in] cptr Client that sent us this message.
+ * @param[in] sptr Client that originated the message.
+ * @param[in] parc Number of arguments.
+ * @param[in] parv Argument array.
+ * @return Zero.
+ */
+int m_hash(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 {
-  sendto_one(sptr, "NOTICE %s :[04283    71] [61380   152]", parv[0]);
-  sendto_one(sptr, "NOTICE %s :[22394    38] [37722    25]", parv[0]);
-  sendto_one(sptr, "NOTICE %s :[35180   183] [32020    23]", parv[0]);
-  sendto_one(sptr, "NOTICE %s :[15592    19] [54292     5]", parv[0]);
-  sendto_one(sptr, "NOTICE %s :[53346    27] [95c29949]", parv[0]);
+  int max_chain = 0;
+  int buckets   = 0;
+  int count     = 0;
+  struct Client*  cl;
+  struct Channel* ch;
+  int i;
+  
+  sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Hash Table Statistics", sptr);
+
+  for (i = 0; i < HASHSIZE; ++i) {
+    if ((cl = clientTable[i])) {
+      int len = 0;
+      ++buckets;
+      for ( ; cl; cl = cli_hnext(cl))
+        ++len; 
+      if (len > max_chain)
+        max_chain = len;
+      count += len;
+    }
+  } 
+
+  sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Client: entries: %d buckets: %d "
+		"max chain: %d", sptr, count, buckets, max_chain);
+
+  buckets = 0;
+  count   = 0;
+  max_chain = 0;
+
+  for (i = 0; i < HASHSIZE; ++i) {
+    if ((ch = channelTable[i])) {
+      int len = 0;
+      ++buckets;
+      for ( ; ch; ch = ch->hnext)
+        ++len; 
+      if (len > max_chain)
+        max_chain = len;
+      count += len;
+    }
+  } 
+
+  sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Channel: entries: %d buckets: %d "
+		"max chain: %d", sptr, count, buckets, max_chain);
   return 0;
 }
 
-/*
- * db_hash_registro (clave)
- *
- * calcula el hash de una clave ...
- *                                      1999/06/23 savage@apostols.org
+#if defined(DDB)
+
+/** Check whether a nickname is juped.
+ * @param[in] nick Nickname to check.
+ * @return Non-zero of the nickname is juped, zero if not.
  */
-int db_hash_registro(char *clave, int hash_size)
+int isNickJuped(const char *nick, char *reason)
 {
-  return (unsigned int)(strhash(clave) & (hash_size - 1));
-}
+  struct Ddb *ddb;
+  char resbuf[BUFSIZE];  
+#if defined(PCRE)
+  char nick_low[NICKLEN];
+  char *tmp;
 
-#if defined(WATCH)
-/*
- * FUNCIONES HASH de WATCH.
- *
- * 2002/05/20 zoltan <zoltan@irc-dev.net>
- *
- *
- * hAddWatch()
- *
- * Agrega un nick en la lista de watch's.
- * El wptr no puede ser NULL.
- */
-int hAddWatch(aWatch * wptr)
-{
-  HASHREGS hashv = strhash(wptr->nick);
+  /* Calculo el nick en minusculas por si hay que matchearlo en pcre */
+  strncpy(nick_low, nick, NICKLEN);
+  nick_low[NICKLEN]='\0';
+  tmp = nick_low;
 
-  wptr->next = watchTable[hashv];
-  watchTable[hashv] = wptr;
-
-  return 0;
-
-}
-
-
-/*
- * hRemWatch()
- *
- * Borra el nick de la lista de watch's.
- */
-int hRemWatch(aWatch * wptr)
-{
-  HASHREGS hashv = strhash(wptr->nick);
-  aWatch *tmp = watchTable[hashv];
-
-  if (tmp == wptr)
-  {
-    watchTable[hashv] = wptr->next;
-    return 0;
+  while (*tmp) {
+    *tmp = toLower(*tmp);
+    *tmp++;
   }
-  while (tmp)
-  {
-    if (tmp->next == wptr)
-    {
-      tmp->next = tmp->next->next;
-      return 0;
-    };
-    tmp = tmp->next;
-  };
-  return -1;
+#endif
+
+  /* Al usar match, hay que iterar */
+  for (ddb = ddb_iterator_first(DDB_JUPEDB); ddb;
+       ddb = ddb_iterator_next()) {
+
+    if (!match(ddb_key(ddb), nick)) {
+      strncpy(resbuf, ddb_content(ddb), BUFSIZE);
+      reason = resbuf;
+      return 1;
+    }
+
+#if defined(PCRE)
+    /* Si es un digito matcheo por PCRE */
+    if (isDigit(ddb_key(ddb)[0])) {
+      char *regexp;
+
+      regexp = strchr(ddb_content(ddb), ':');
+      if (regexp && *(regexp + 1) && !match_pcre_str(regexp + 1, nick_low))
+      {
+        /* Corto la cadena para mostrar el mensaje, luego la restauro */
+        *regexp='\0';
+        strncpy(resbuf, ddb_content(ddb), BUFSIZE);
+        *regexp=':';
+        reason = resbuf;
+        return 1;
+      }
+    }
+#endif
+  }
+  return 0;
 }
 
+#else  /* !defined(DDB) */
+/* Nick jupe utilities, these are in a static hash table with entry/bucket
+   ratio of one, collision shift up and roll in a circular fashion, the 
+   lowest 12 bits of the hash value are used, deletion is not supported,
+   only addition, test for existence and cleanup of the table are.. */
 
-/*
- * hSeekWatch()
- *
- * Busca un nick en la lista de watch.
+/** Number of bits in jupe hash value. */
+#define JUPEHASHBITS 12         /* 4096 entries, 64 nick jupes allowed */
+/** Size of jupe hash table. */
+#define JUPEHASHSIZE (1<<JUPEHASHBITS)
+/** Bitmask to select into jupe hash table. */
+#define JUPEHASHMASK (JUPEHASHSIZE-1)
+/** Maximum number of jupes allowed. */
+#define JUPEMAX      (1<<(JUPEHASHBITS-6))
+
+/** Hash table for jupes. */
+static char jupeTable[JUPEHASHSIZE][NICKLEN + 1];       /* About 40k */
+/** Count of jupes. */
+static int jupesCount;
+
+/** Check whether a nickname is juped.
+ * @param[in] nick Nickname to check.
+ * @return Non-zero of the nickname is juped, zero if not.
  */
-aWatch *hSeekWatch(char *nick)
+int isNickJuped(const char *nick)
 {
-  HASHREGS hashv = strhash(nick);
-  aWatch *wptr = watchTable[hashv];
-  aWatch *prv;
+  int pos;
 
-  if (wptr)
-    if (ircd_strcmp(nick, wptr->nick))
-      while (prv = wptr, wptr = wptr->next)
-        if (!ircd_strcmp(nick, wptr->nick))
-        {
-          prv->next = wptr->next;
-          wptr->next = watchTable[hashv];
-          watchTable[hashv] = wptr;
-          break;
-        };
-
-  return wptr;
-
+  if (nick && *nick) {
+    for (pos = strhash(nick); (pos &= JUPEHASHMASK), jupeTable[pos][0]; pos++) {
+      if (0 == ircd_strcmp(nick, jupeTable[pos]))
+        return 1;
+    }
+  }
+  return 0;                     /* A bogus pointer is NOT a juped nick, right ? :) */
 }
 
-#endif /* WATCH */
+/** Add a comma-separated list of nick jupes.
+ * @param[in] nicks List of nicks to jupe, separated by commas.
+ * @return Zero on success, non-zero on error.
+ */
+int addNickJupes(const char *nicks)
+{
+  static char temp[BUFSIZE + 1];
+  char* one;
+  char* p;
+  int   pos;
 
+  if (nicks && *nicks)
+  {
+    ircd_strncpy(temp, nicks, BUFSIZE);
+    temp[BUFSIZE] = '\0';
+    p = NULL;
+    for (one = ircd_strtok(&p, temp, ","); one; one = ircd_strtok(&p, NULL, ","))
+    {
+      if (!*one)
+        continue;
+      pos = strhash(one);
+loop:
+      pos &= JUPEHASHMASK;
+      if (!jupeTable[pos][0])
+      {
+        if (jupesCount == JUPEMAX)
+          return 1;             /* Error: Jupe table is full ! */
+        jupesCount++;
+        ircd_strncpy(jupeTable[pos], one, NICKLEN);
+        jupeTable[pos][NICKLEN] = '\000';       /* Better safe than sorry :) */
+        continue;
+      }
+      if (0 == ircd_strcmp(one, jupeTable[pos]))
+        continue;
+      ++pos;
+      goto loop;
+    }
+  }
+  return 0;
+}
+
+/** Empty the table of juped nicknames. */
+void clearNickJupes(void)
+{
+  int i;
+  jupesCount = 0;
+  for (i = 0; i < JUPEHASHSIZE; i++)
+    jupeTable[i][0] = '\000';
+}
+
+#endif /* DDB */
+
+/** Report all nick jupes to a user.
+ * @param[in] to Client requesting statistics.
+ * @param[in] sd Stats descriptor for request (ignored).
+ * @param[in] param Extra parameter from user (ignored).
+ */
+void
+stats_nickjupes(struct Client* to, const struct StatDesc* sd, char* param)
+{
+#if defined(DDB)
+  struct Ddb *ddb;
+
+  for (ddb = ddb_iterator_first(DDB_JUPEDB); ddb;
+       ddb = ddb_iterator_next())
+    send_reply(to, SND_EXPLICIT | RPL_STATSJLINE, "J %s :%s",
+               ddb_key(ddb), ddb_content(ddb));
+#else
+  int i;
+  for (i = 0; i < JUPEHASHSIZE; i++)
+    if (jupeTable[i][0])
+      send_reply(to, RPL_STATSJLINE, jupeTable[i]);
+      
+#endif      
+}
+
+/** Send more channels to a client in mid-LIST.
+ * @param[in] cptr Client to send the list to.
+ */
 void list_next_channels(struct Client *cptr)
 {
-  aListingArgs *args;
-  aChannel *chptr;
+  struct ListingArgs *args;
+  struct Channel *chptr;
 
   /* Walk consecutive buckets until we hit the end. */
   for (args = cli_listing(cptr); args->bucket < HASHSIZE; args->bucket++)
   {
     /* Send all the matching channels in the bucket. */
-    for (chptr = channelTable[args->bucket]; chptr; chptr = chptr->hnextch)
+    for (chptr = channelTable[args->bucket]; chptr; chptr = chptr->hnext)
     {
-      if (chptr->users > args->min_users
+      /* Zoltan: es para que liste los canales con 0 usuarios (+r) */
+      if (chptr->users >= args->min_users
           && chptr->users < args->max_users
           && chptr->creationtime > args->min_time
           && chptr->creationtime < args->max_time
@@ -585,20 +599,17 @@ void list_next_channels(struct Client *cptr)
           char parabuf[MODEBUFLEN];
 
           modebuf[0] = modebuf[1] = parabuf[0] = '\0';
-          channel_modes(cptr, modebuf, parabuf, chptr);
-
-          sendto_one(cptr, ":%s %d %s %s %u :[%s%s%s] %s",
-                     me.name, RPL_LIST, cptr->name, chptr->chname, chptr->users,
-                     modebuf, parabuf ? "" : " ", parabuf, PunteroACadena(chptr->topic)); 
+          channel_modes(cptr, modebuf, parabuf, sizeof(parabuf), chptr, NULL);
+          send_reply(cptr, RPL_LIST | SND_EXPLICIT, "%s %u %s %s :%s",
+                     chptr->chname, chptr->users, modebuf, parabuf, chptr->topic);
         } else {
-          sendto_one(cptr, rpl_str(RPL_LIST), me.name, cptr->name,
-            chptr->chname, chptr->users, PunteroACadena(chptr->topic));
+          send_reply(cptr, RPL_LIST, chptr->chname, chptr->users, chptr->topic);
         }
       }
     }
     /* If, at the end of the bucket, client sendq is more than half
      * full, stop. */
-    if (DBufLength(&cptr->cli_connect->sendQ) > get_sendq(cptr) / 2)
+    if (MsgQLength(&cli_sendQ(cptr)) > cli_max_sendq(cptr) / 2)
       break;
   }
 
@@ -607,6 +618,17 @@ void list_next_channels(struct Client *cptr)
   {
     MyFree(cli_listing(cptr));
     cli_listing(cptr) = NULL;
-    sendto_one(cptr, rpl_str(RPL_LISTEND), me.name, cptr->name);
+    send_reply(cptr, RPL_LISTEND);
   }
 }
+
+#if defined(DDB)
+
+/** Calculates a hash of one key.
+ */
+int ddb_hash_register(char *key, int hash_size)
+{
+  return (unsigned int)(strhash(key) & (hash_size - 1));
+}
+
+#endif /* DDB */

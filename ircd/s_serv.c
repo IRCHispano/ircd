@@ -1,15 +1,13 @@
 /*
- * IRC - Internet Relay Chat, ircd/s_serv.c (formerly ircd/s_msg.c)
- * Copyright (C) 1990 Jarkko Oikarinen and
- *                    University of Oulu, Computing Center
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/s_serv.c
  *
- * See file AUTHORS in IRC package for additional names of
- * the programmers.
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,941 +16,151 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
+/** @file
+ * @brief Miscellaneous server support functions.
+ * @version $Id$
+ */
+#include "config.h"
 
-#include <assert.h>
-#include "sys.h"
-#include <stdlib.h>
-#include "h.h"
-#include "client.h"
-#include "s_debug.h"
-#include "struct.h"
-#include "ircd.h"
 #include "s_serv.h"
-#include "s_misc.h"
-#include "sprintf_irc.h"
-#include "send.h"
-#include "s_err.h"
+#include "IPcheck.h"
+#include "channel.h"
+#include "client.h"
+#if defined(DDB)
+#include "ddb.h"
+#endif
+#include "gline.h"
+#include "hash.h"
+#include "ircd.h"
+#include "ircd_alloc.h"
+#include "ircd_crypt.h"
+#include "ircd_log.h"
+#include "ircd_reply.h"
+#include "ircd_string.h"
+#include "ircd_snprintf.h"
+#include "jupe.h"
+#include "list.h"
+#include "match.h"
+#include "msg.h"
+#include "msgq.h"
 #include "numeric.h"
+#include "numnicks.h"
+#include "parse.h"
+#include "querycmds.h"
 #include "s_bsd.h"
 #include "s_conf.h"
-#include "hash.h"
-#include "common.h"
-#include "s_bdd.h"
-#include "msg.h"
-#if defined(ESNET_NEG)
-#include "m_config.h"
-#if defined(ZLIB_ESNET)
-#include "dbuf.h"
-#endif
-#endif
-#include "match.h"
-#include "crule.h"
-#include "parse.h"
-#include "numnicks.h"
-#include "userload.h"
+#include "s_debug.h"
+#include "s_misc.h"
 #include "s_user.h"
-#include "channel.h"
-#include "querycmds.h"
-#include "IPcheck.h"
-#include "slab_alloc.h"
-#include "opercmds.h"
-#include "ircd_alloc.h"
-#include "ircd_string.h"
+#include "send.h"
+#include "struct.h"
+#include "userload.h"
 
-RCSTAG_CC("$Id$");
+/* #include <assert.h> -- Now using assert in ircd_log.h */
+#include <stdlib.h>
+#include <string.h>
 
-static int exit_new_server(struct Client *cptr, struct Client *sptr,
-    char *host, time_t timestamp, char *fmt, ...)
-    __attribute__ ((format(printf, 5, 6)));
-
-unsigned int max_connection_count = 0, max_client_count = 0;
-unsigned int max_global_count;
-
+/** Maximum connection count since last restart. */
+unsigned int max_connection_count = 0;
+/** Maximum (local) client count since last restart. */
+unsigned int max_client_count = 0;
+/** Maximum (global) client count since last restart. */
+unsigned int max_global_count = 0;
+/** Timestamp maximum (local) client count since last restart. */
 time_t max_client_count_TS = 0;
+/** Timestamp maximum (global) client count since last restart. */
 time_t max_global_count_TS = 0;
 
-static int exit_new_server(struct Client *cptr, struct Client *sptr,
-    char *host, time_t timestamp, char *fmt, ...)
+/** Squit a new (pre-burst) server.
+ * @param cptr Local client that tried to introduce the server.
+ * @param sptr Server to disconnect.
+ * @param host Name of server being disconnected.
+ * @param timestamp Link time of server being disconnected.
+ * @param pattern Format string for squit message.
+ * @return CPTR_KILLED if cptr == sptr, else 0.
+ */
+int exit_new_server(struct Client *cptr, struct Client *sptr, const char *host,
+                    time_t timestamp, const char *pattern, ...)
 {
-  va_list vl;
-  char *buf =
-      (char *)MyMalloc(strlen(me.name) + strlen(host) + 22 + strlen(fmt));
-  va_start(vl, fmt);
-  if (!IsServer(sptr))
-    return vexit_client_msg(cptr, cptr, &me, fmt, vl);
+  struct VarData vd;
+  int retval = 0;
 
-  sprintf_irc(buf, ":%s SQUIT %s " TIME_T_FMT " :", me.name, host, timestamp);
-  strcat(buf, fmt);
-  vsendto_one(cptr, buf, vl);
-  va_end(vl);
-  MyFree(buf);
-  return 0;
+  vd.vd_format = pattern;
+  va_start(vd.vd_args, pattern);
+
+  if (!IsServer(sptr))
+    retval = vexit_client_msg(cptr, cptr, &me, pattern, vd.vd_args);
+  else
+    sendcmdto_one(&me, CMD_SQUIT, cptr, "%s %Tu :%v", host, timestamp, &vd);
+
+  va_end(vd.vd_args);
+
+  return retval;
 }
 
-static int a_kills_b_too(struct Client *a, struct Client *b)
+/** Indicate whether \a a is between \a b and #me (that is, \a b would
+ * be killed if \a a squits).
+ * @param a A server that may be between us and \a b.
+ * @param b A client that may be on the far side of \a a.
+ * @return Non-zero if \a a is between \a b and #me.
+ */
+int a_kills_b_too(struct Client *a, struct Client *b)
 {
-  for (; b != a && b != &me; b = b->cli_serv->up);
+  for (; b != a && b != &me; b = cli_serv(b)->up);
   return (a == b ? 1 : 0);
 }
 
-static void set_server_flags(struct Client *cptr, const char *flags)
-{
-    while (*flags) switch (*flags++) {
-      case 'h': SetHub(cptr); break;
-      case 's': SetService(cptr); break;
-      case '6': SetIPv6(cptr); break;
-    }
-}
-
-extern unsigned short server_port;
-
-/*
- *  m_server
- *
- *    parv[0] = sender prefix
- *    parv[1] = servername
- *    parv[2] = hopcount
- *    parv[3] = start timestamp
- *    parv[4] = link timestamp
- *    parv[5] = major protocol version: P09/P10
- *    parv[parc-1] = serverinfo
- *  If cptr is P10:
- *    parv[6] = "YMM", where 'Y' is the server numeric and "MM" is the
- *              numeric nick mask of this server.
- *    parv[7] = +h: Hub +s: Service +6: IPv6
+/** Handle a connection that has sent a valid PASS and SERVER.
+ * @param cptr New peer server.
+ * @param aconf Connect block for \a cptr.
+ * @return Zero.
  */
-int m_server(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
+int server_estab(struct Client *cptr, struct ConfItem *aconf)
 {
-  Reg1 char *ch;
-  Reg2 int i;
-  char info[REALLEN + 1], *inpath, *host, *s;
-  struct Client *acptr, *bcptr, *LHcptr = NULL;
-  aConfItem *aconf = NULL, *bconf = NULL, *cconf = NULL, *lhconf = NULL;
-  int hop, ret, active_lh_line = 0;
-  unsigned short int prot;
-  time_t start_timestamp, timestamp = 0, recv_time, ghost = 0;
-#if defined(CHECK_TS_LINKS)
-  time_t desfase;
-#endif
+  struct Client* acptr = 0;
+  const char*    inpath;
+  int            i;
 
-  if (IsUser(cptr))
-  {
-    sendto_one(cptr, err_str(ERR_ALREADYREGISTRED), me.name, parv[0]);
-    return 0;
-  }
+  assert(0 != cptr);
+  assert(0 != cli_local(cptr));
 
-  if (IsUserPort(cptr))
-    return exit_client_msg(cptr, cptr, &me,
-        "You cannot connect a server to a user port; connect to %s port %u",
-        me.name, server_port);
+  inpath = cli_name(cptr);
 
-  recv_time = TStime();
-  info[0] = '\0';
+  if (IsUnknown(cptr)) {
 
-  inpath = PunteroACadena(cptr->name);
-
-  if (parc < 7)
-  {
-    sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "SERVER");
-    return exit_client(cptr, cptr, &me, "Need more parameters");
-  }
-  host = parv[1];
-  
-  {
-    struct db_reg *reg;
-   
-    reg = db_buscar_registro(BDD_JUPEDB, host);
-    if (reg)
-      return exit_client_msg(cptr, sptr, &me, "Juped: %s", reg->valor);
-  }
-
-  /* Detect protocol */
-  if (strlen(parv[5]) != 3 || (parv[5][0] != 'P' && parv[5][0] != 'J'))
-    return exit_client_msg(cptr, sptr, &me, "Bogus protocol (%s)", parv[5]);
-  if (!IsServer(cptr))          /* Don't allow silently connecting a server */
-    *parv[5] = 'J';
-  prot = atoi(parv[5] + 1);
-  if (prot > atoi(MAJOR_PROTOCOL))
-    prot = atoi(MAJOR_PROTOCOL);
-  /* Because the previous test is only in 2.10, the following is needed
-   * till all servers are 2.10: */
-  if (IsServer(cptr) && prot > Protocol(cptr))
-    prot = Protocol(cptr);
-
-  hop = atoi(parv[2]);
-  start_timestamp = atoi(parv[3]);
-  timestamp = atoi(parv[4]);
-  Debug((DEBUG_INFO, "Got SERVER %s with timestamp [%s] age " TIME_T_FMT " ("
-      TIME_T_FMT ")", host, parv[4], start_timestamp, cli_serv(&me)->timestamp));
-  if ((timestamp < 780000000 || (hop == 1 && start_timestamp < 780000000)))
-  {
-    return exit_client_msg(cptr, sptr, &me,
-        "Bogus timestamps (%s %s)", parv[3], parv[4]);
-  }
-
-#if defined(CHECK_TS_LINKS)
-  desfase = abs(recv_time - timestamp);
-
-/*
-** Debemos comprobar solo los enlace locales directos,
-** no toda la red.
-*/
-  if (!IsServer(cptr) && (desfase > CHECK_TS_MAX_LINKS))
-  {
-/*
-** Mandamos aviso a los OPs locales
-*/
-    sendto_ops_butone(NULL, &me,
-        ":%s WALLOPS :Link with %s dropped, excessive TS difference"
-        " (mine TS=%ld, theirs TS=%ld, difference=%ld)",
-        me.name, host, recv_time, timestamp, desfase);
-
-/*
-** Mandamos el aviso a toda la red
-*/
-#if !defined(NO_PROTOCOL9)
-    sendto_lowprot_butone(cptr, 9,
-        ":%s WALLOPS :Link with %s dropped, excessive TS difference"
-        " (mine TS=%ld, theirs TS=%ld, difference=%ld)",
-        me.name, host, recv_time, timestamp, desfase);
-#endif
-    sendto_highprot_butone(cptr, 10,
-        "%s " TOK_WALLOPS " :Link with %s dropped, excessive TS difference"
-        " (mine TS=%ld, theirs TS=%ld, difference=%ld)",
-        NumServ(&me), host, recv_time, timestamp, desfase);
-
-    return exit_new_server(cptr, sptr, host, timestamp,
-        "Excessive TS difference");
-  }
-#endif
-
-  strncpy(info, parv[parc - 1], REALLEN);
-  info[REALLEN] = 0;
-  if (prot < atoi(MINOR_PROTOCOL))
-  {
-    sendto_ops("Got incompatible protocol version (%s) from %s",
-        parv[5], cptr->name);
-    return exit_new_server(cptr, sptr, host, timestamp,
-        "Incompatible protocol: %s", parv[5]);
-  }
-  /*
-   * Check for "FRENCH " infection ;-) (actually this should
-   * be replaced with routine to check the hostname syntax in
-   * general). [ This check is still needed, even after the parse
-   * is fixed, because someone can send "SERVER :foo bar " ].
-   * Also, changed to check other "difficult" characters, now
-   * that parse lets all through... --msa
-   */
-  if (strlen(host) > HOSTLEN)
-    host[HOSTLEN] = '\0';
-  for (ch = host; *ch; ch++)
-    if (*ch <= ' ' || *ch > '~')
-      break;
-  if (*ch || !strchr(host, '.'))
-  {
-    sendto_ops("Bogus server name (%s) from %s", host, cptr->name);
-    return exit_client_msg(cptr, cptr, &me, "Bogus server name (%s)", host);
-  }
-
-  if (IsServer(cptr))
-  {
-    /*
-     * A local server introduces a new server behind this link.
-     * Check if this is allowed according L:, H: and Q: lines.
-     */
-    if (info[0] == '\0')
-      return exit_client_msg(cptr, cptr, &me,
-          "No server info specified for %s", host);
-
-    /*
-     * See if the newly found server is behind a guaranteed
-     * leaf (L-line). If so, close the link.
-     */
-    if ((lhconf = find_conf_host(cli_confs(cptr), host, CONF_LEAF)) &&
-        (!lhconf->port || (hop > lhconf->port)))
-    {
-      /*
-       * L: lines normally come in pairs, here we try to
-       * make sure that the oldest link is squitted, not
-       * both.
-       */
-      active_lh_line = 1;
-      if (timestamp <= cptr->cli_serv->timestamp)
-        LHcptr = NULL;          /* Kill incoming server */
-      else
-        LHcptr = cptr;          /* Squit ourselfs */
-    }
-    else if (!(lhconf = find_conf_host(cli_confs(cptr), host, CONF_HUB)) ||
-        (lhconf->port && (hop > lhconf->port)))
-    {
-      struct Client *ac3ptr;
-      active_lh_line = 2;
-      /* Look for net junction causing this: */
-      LHcptr = NULL;            /* incoming server */
-      if (*parv[5] != 'J')
-        for (ac3ptr = sptr; ac3ptr != &me; ac3ptr = ac3ptr->cli_serv->up)
-          if (IsJunction(ac3ptr))
-          {
-            LHcptr = ac3ptr;
-            break;
-          }
-    }
-  }
-
-  if (IsUnknown(cptr) || IsHandshake(cptr))
-  {
-    char *encr;
-
-    /*
-     * A local link that is still in undefined state wants
-     * to be a SERVER. Check if this is allowed and change
-     * status accordingly...
-     */
-    /*
-     * If there is more then one server on the same machine
-     * that we try to connect to, it could be that the /CONNECT
-     * <mask> caused this connect to be put at the wrong place
-     * in the hashtable.        --Run
-     * Same thing for Unknown connections that first send NICK.
-     *                          --Xorath
-     * Better check if the two strings are (caseless) identical 
-     * and not mess with hash internals. 
-     *                          --Nemesi
-     */
-    if ((!(BadPtr(cptr->name)))
-        && (IsUnknown(cptr) || IsHandshake(cptr))
-        && cptr->name && strCasediff(cptr->name, host))
-      hChangeClient(cptr, host);
-
-    SlabStringAllocDup(&(cptr->name), host, HOSTLEN);
-
-    SlabStringAllocDup(&(cptr->info), info[0] ? info : me.name, REALLEN);
-    cptr->cli_hopcount = hop;
-
-    /* check connection rules */
-    for (cconf = conf; cconf; cconf = cconf->next)
-      if ((cconf->status == CONF_CRULEALL) && (match(cconf->host, host) == 0))
-        if (crule_eval(cconf->passwd))
-        {
-          ircstp->is_ref++;
-          sendto_ops("Refused connection from %s.", cptr->name);
-          return exit_client(cptr, cptr, &me, "Disallowed by connection rule");
-        }
-
-    if (check_server(cptr))
-    {
-      ircstp->is_ref++;
-      sendto_ops("Received unauthorized connection from %s.", cptr->name);
-      return exit_client(cptr, cptr, &me, "No C conf line");
-    }
-
-    host = cptr->name;
-
-    update_load();
-
-    if (!(aconf = bconf = find_conf(cli_confs(cptr), host, CONF_CONNECT_SERVER)))
-    {
-      ircstp->is_ref++;
-      sendto_ops("Access denied. No C line for server %s", inpath);
-      return exit_client_msg(cptr, cptr, &me,
-          "Access denied. No C line for server %s", inpath);
-    }
-
-    encr = PunteroACadena(cptr->cli_connect->passwd);
-#if !defined(GODMODE)
-    if (*aconf->passwd && !!strcmp(aconf->passwd, encr))
-    {
-      ircstp->is_ref++;
-      sendto_ops("Access denied (passwd mismatch) %s", inpath);
-      return exit_client_msg(cptr, cptr, &me,
-          "No Access (passwd mismatch) %s", inpath);
-    }
-#endif /* not GODMODE */
-    if (cptr->cli_connect->passwd)
-    {
-      MyFree(cptr->cli_connect->passwd);
-      cptr->cli_connect->passwd = NULL;
-    }
-#if !defined(HUB)
-    for (i = 0; i <= highest_fd; i++)
-      if (loc_clients[i] && IsServer(loc_clients[i]))
-      {
-        active_lh_line = 3;
-        LHcptr = NULL;
-        break;
-      }
-#endif
-    if (!IsUnknown(cptr))
-    {
-      s = strchr(aconf->host, '@');
-      *s = '\0';                /* should never be NULL */
-      Debug((DEBUG_INFO, "Check Usernames [%s]vs[%s]",
-          aconf->host, PunteroACadena(cptr->username)));
-      if (match(aconf->host, PunteroACadena(cptr->username)))
-      {
-        *s = '@';
-        ircstp->is_ref++;
-        sendto_ops("Username mismatch [%s]v[%s] : %s",
-            aconf->name, PunteroACadena(cptr->username), cptr->name);
-        return exit_client(cptr, cptr, &me, "Bad Username");
-      }
-      *s = '@';
-    }
-  }
-
-  /*
-   *  We want to find IsConnecting() and IsHandshake() too,
-   *  use FindClient().
-   *  The second finds collisions with numeric representation of existing
-   *  servers - these shouldn't happen anymore when all upgraded to 2.10.
-   *  -- Run
-   */
-  while ((acptr = FindClient(host)) ||
-      (parc > 7 && (acptr = FindNServer(parv[6]))))
-  {
-    /*
-     *  This link is trying feed me a server that I already have
-     *  access through another path
-     *
-     *  Do not allow Uworld to do this.
-     *  Do not allow servers that are juped.
-     *  Do not allow servers that have older link timestamps
-     *    then this try.
-     *  Do not allow servers that use the same numeric as an existing
-     *    server, but have a different name.
-     *
-     *  If my ircd.conf sucks, I can try to connect to myself:
-     */
-    if (acptr == &me)
-      return exit_client_msg(cptr, cptr, &me,
-          "nick collision with me (%s)", host);
-    /*
-     * Detect wrong numeric.
-     */
-    if (strCasediff(acptr->name, host))
-    {
-#if !defined(NO_PROTOCOL9)
-      sendto_lowprot_butone(cptr, 9,
-          ":%s WALLOPS :SERVER Numeric Collision: %s != %s",
-          me.name, acptr->name, host);
-#endif
-      sendto_highprot_butone(cptr, 10, 
-          "%s WALLOPS :SERVER Numeric Collision: %s != %s",
-          NumServ(&me), acptr->name, host);
-      return exit_client_msg(cptr, cptr, &me,
-          "NUMERIC collision between %s and %s."
-          " Is your server numeric correct ?", host, acptr->name);
-    }
-    /*
-     *  Kill our try, if we had one.
-     */
-    if (IsConnecting(acptr))
-    {
-      if (!active_lh_line && exit_client(cptr, acptr, &me,
-          "Just connected via another link") == CPTR_KILLED)
-        return CPTR_KILLED;
-      /*
-       * We can have only ONE 'IsConnecting', 'IsHandshake' or
-       * 'IsServer', because new 'IsConnecting's are refused to
-       * the same server if we already had it.
-       */
-      break;
-    }
-    /*
-     * Avoid other nick collisions...
-     * This is a doubtfull test though, what else would it be
-     * when it has a server.name ?
-     */
-    else if (!IsServer(acptr) && !IsHandshake(acptr))
-      return exit_client_msg(cptr, cptr, &me,
-          "Nickname %s already exists!", host);
-    /*
-     * Our new server might be a juped server,
-     * or someone trying abuse a second Uworld:
-     */
-    else if (IsServer(acptr)
-        && (ircd_strncmp(PunteroACadena(acptr->info), "JUPE", 4) == 0
-        || buscar_uline(cli_confs(cptr), acptr->name)))
-    {
-      if (!IsServer(sptr))
-        return exit_client(cptr, sptr, &me, PunteroACadena(acptr->info));
-#if !defined(NO_PROTOCOL9)
-      if (Protocol(cptr) < 10)
-        sendto_one(cptr, ":%s WALLOPS :Received :%s SERVER %s from %s !?!",
-            me.name, parv[0], parv[1], cptr->name);
-      else
-#endif
-        sendto_one(cptr, "%s " TOK_WALLOPS " :Received :%s SERVER %s from %s !?!",
-            NumServ(&me), parv[0], parv[1], cptr->name);
-      return exit_new_server(cptr, sptr, host, timestamp, "%s",
-          PunteroACadena(acptr->info));
-    }
-    /*
-     * Of course we find the handshake this link was before :)
-     */
-    else if (IsHandshake(acptr) && acptr == cptr)
-      break;
-    /*
-     * Here we have a server nick collision...
-     * We don't want to kill the link that was last /connected,
-     * but we neither want to kill a good (old) link.
-     * Therefor we kill the second youngest link.
-     */
-    if (1)
-    {
-      struct Client *c2ptr = NULL, *c3ptr = acptr;
-      struct Client *ac2ptr, *ac3ptr;
-
-      /* Search youngest link: */
-      for (ac3ptr = acptr; ac3ptr != &me; ac3ptr = ac3ptr->cli_serv->up)
-        if (ac3ptr->cli_serv->timestamp > c3ptr->cli_serv->timestamp)
-          c3ptr = ac3ptr;
-      if (IsServer(sptr))
-      {
-        for (ac3ptr = sptr; ac3ptr != &me; ac3ptr = ac3ptr->cli_serv->up)
-          if (ac3ptr->cli_serv->timestamp > c3ptr->cli_serv->timestamp)
-            c3ptr = ac3ptr;
-      }
-      if (timestamp > c3ptr->cli_serv->timestamp)
-      {
-        c3ptr = NULL;
-        c2ptr = acptr;          /* Make sure they differ */
-      }
-      /* Search second youngest link: */
-      for (ac2ptr = acptr; ac2ptr != &me; ac2ptr = ac2ptr->cli_serv->up)
-        if (ac2ptr != c3ptr &&
-            ac2ptr->cli_serv->timestamp >
-            (c2ptr ? c2ptr->cli_serv->timestamp : timestamp))
-          c2ptr = ac2ptr;
-      if (IsServer(sptr))
-      {
-        for (ac2ptr = sptr; ac2ptr != &me; ac2ptr = ac2ptr->cli_serv->up)
-          if (ac2ptr != c3ptr &&
-              ac2ptr->cli_serv->timestamp >
-              (c2ptr ? c2ptr->cli_serv->timestamp : timestamp))
-            c2ptr = ac2ptr;
-      }
-      if (c3ptr && timestamp > (c2ptr ? c2ptr->cli_serv->timestamp : timestamp))
-        c2ptr = NULL;
-      /* If timestamps are equal, decide which link to break
-       *  by name.
-       */
-      if ((c2ptr ? c2ptr->cli_serv->timestamp : timestamp) ==
-          (c3ptr ? c3ptr->cli_serv->timestamp : timestamp))
-      {
-        char *n2, *n2up;
-        char *n3, *n3up;
-        if (c2ptr)
-        {
-          n2 = c2ptr->name;
-          n2up = MyConnect(c2ptr) ? me.name : c2ptr->cli_serv->up->name;
-        }
-        else
-        {
-          n2 = host;
-          n2up = IsServer(sptr) ? sptr->name : me.name;
-        }
-        if (c3ptr)
-        {
-          n3 = c3ptr->name;
-          n3up = MyConnect(c3ptr) ? me.name : c3ptr->cli_serv->up->name;
-        }
-        else
-        {
-          n3 = host;
-          n3up = IsServer(sptr) ? sptr->name : me.name;
-        }
-        if (strcmp(n2, n2up) > 0)
-          n2 = n2up;
-        if (strcmp(n3, n3up) > 0)
-          n3 = n3up;
-        if (strcmp(n3, n2) > 0)
-        {
-          ac2ptr = c2ptr;
-          c2ptr = c3ptr;
-          c3ptr = ac2ptr;
-        }
-      }
-      /* Now squit the second youngest link: */
-      if (!c2ptr)
-        return exit_new_server(cptr, sptr, host, timestamp,
-            "server %s already exists and is %ld seconds younger.",
-            host, (long)acptr->cli_serv->timestamp - (long)timestamp);
-      else if (cli_from(c2ptr) == cptr || IsServer(sptr))
-      {
-        struct Client *killedptrfrom = cli_from(c2ptr);
-        if (active_lh_line)
-        {
-          /*
-           * If the L: or H: line also gets rid of this link,
-           * we sent just one squit.
-           */
-          if (LHcptr && a_kills_b_too(LHcptr, c2ptr))
-            break;
-          /*
-           * If breaking the loop here solves the L: or H:
-           * line problem, we don't squit that.
-           */
-          if (cli_from(c2ptr) == cptr || (LHcptr && a_kills_b_too(c2ptr, LHcptr)))
-            active_lh_line = 0;
-          else
-          {
-            /*
-             * If we still have a L: or H: line problem,
-             * we prefer to squit the new server, solving
-             * loop and L:/H: line problem with only one squit.
-             */
-            LHcptr = NULL;
-            break;
-          }
-        }
-        /*
-         * If the new server was introduced by a server that caused a
-         * Ghost less then 20 seconds ago, this is probably also
-         * a Ghost... (20 seconds is more then enough because all
-         * SERVER messages are at the beginning of a net.burst). --Run
-         */
-        if (now - cptr->cli_serv->ghost < 20)
-        {
-          killedptrfrom = cli_from(acptr);
-          if (exit_client(cptr, acptr, &me, "Ghost loop") == CPTR_KILLED)
-            return CPTR_KILLED;
-        }
-        else if (exit_client_msg(cptr, c2ptr, &me,
-            "Loop <-- %s (new link is %ld seconds younger)", host,
-            (c3ptr ? (long)c3ptr->cli_serv->timestamp : timestamp) -
-            (long)c2ptr->cli_serv->timestamp) == CPTR_KILLED)
-          return CPTR_KILLED;
-        /*
-         * Did we kill the incoming server off already ?
-         */
-        if (killedptrfrom == cptr)
-          return 0;
-      }
-      else
-      {
-        if (active_lh_line)
-        {
-          if (LHcptr && a_kills_b_too(LHcptr, acptr))
-            break;
-          if (cli_from(acptr) == cptr || (LHcptr && a_kills_b_too(acptr, LHcptr)))
-            active_lh_line = 0;
-          else
-          {
-            LHcptr = NULL;
-            break;
-          }
-        }
-        /*
-         * We can't believe it is a lagged server message
-         * when it directly connects to us...
-         * kill the older link at the ghost, rather then
-         * at the second youngest link, assuming it isn't
-         * a REAL loop.
-         */
-        ghost = now;            /* Mark that it caused a ghost */
-        if (exit_client(cptr, acptr, &me, "Ghost") == CPTR_KILLED)
-          return CPTR_KILLED;
-        break;
-      }
-    }
-  }
-
-  if (active_lh_line)
-  {
-    if (LHcptr == NULL)
-      return exit_new_server(cptr, sptr, host, timestamp,
-          (active_lh_line == 2) ?
-          "Non-Hub link %s <- %s(%s)" : "Leaf-only link %s <- %s(%s)",
-          cptr->name, host, lhconf ? (lhconf->host ? lhconf->host : "*") : "!");
-    else
-    {
-      int killed = a_kills_b_too(LHcptr, sptr);
-      if (active_lh_line < 3)
-      {
-        if (exit_client_msg(cptr, LHcptr, &me,
-            (active_lh_line == 2) ?
-            "Non-Hub link %s <- %s(%s)" : "Leaf-only link %s <- %s(%s)",
-            cptr->name, host,
-            lhconf ? (lhconf->host ? lhconf->host : "*") : "!") == CPTR_KILLED)
-          return CPTR_KILLED;
-      }
-      else
-      {
-        ircstp->is_ref++;
-        if (exit_client(cptr, LHcptr, &me, "I'm a leaf") == CPTR_KILLED)
-          return CPTR_KILLED;
-      }
-      /*
-       * Did we kill the incoming server off already ?
-       */
-      if (killed)
-        return 0;
-    }
-  }
-
-  if (IsServer(cptr))
-  {
-    /*
-     * Server is informing about a new server behind
-     * this link. Create REMOTE server structure,
-     * add it to list and propagate word to my other
-     * server links...
-     */
-
-    acptr = make_client(cptr, STAT_SERVER);
-    make_server(acptr);
-    acptr->cli_serv->prot = prot;
-    acptr->cli_serv->timestamp = timestamp;
-    acptr->cli_hopcount = hop;
-
-    SlabStringAllocDup(&(acptr->name), host, HOSTLEN);
-    SlabStringAllocDup(&(acptr->info), info, REALLEN);
-
-    acptr->cli_serv->up = sptr;
-    acptr->cli_serv->updown = add_dlink(&sptr->cli_serv->down, acptr);
-    /* Use cptr, because we do protocol 9 -> 10 translation
-       for numeric nicks ! */
-    SetServerYXX(cptr, acptr, parv[6]);
-    Count_newremoteserver(nrof);
-    if (Protocol(acptr) < 10)
-      acptr->flags |= FLAGS_TS8;
-    add_client_to_list(acptr);
-    hAddClient(acptr);
-
-    if (Protocol(acptr) > 9)
-    {    
-      if (*parv[7] == '+')
-        set_server_flags(acptr, parv[7] + 1);
-    }
-    
-    /* Si recibimos un P09, ponemos +hs ya que siempre es un service y hub */
-    if (Protocol(acptr) < 10)
-    {
-      SetHub(acptr);
-      SetService(acptr);
-    }
-    
-    if (*parv[5] == 'J')
-    {
-      if (Protocol(acptr) > 9)
-        SetBurst(acptr);
-      sendto_op_mask(SNO_NETWORK, "Net junction: %s %s",
-          sptr->name, acptr->name);
-      SetJunction(acptr);
-    }
-    /*
-     * Old sendto_serv_but_one() call removed because we now need to send
-     * different names to different servers (domain name matching).
-     */
-    for (i = 0; i <= highest_fd; i++)
-    {
-      if (!(bcptr = loc_clients[i]) || !IsServer(bcptr) ||
-          bcptr == cptr || IsMe(bcptr))
-        continue;
-      if (!(cconf = bcptr->cli_serv->cline))
-      {
-        sendto_ops("Lost C-line for %s on %s. Closing", PunteroACadena(cptr->name), host);
-        return exit_client(cptr, cptr, &me, "Lost N line");
-      }
-      if (match(my_name_for_link(me.name, cconf), PunteroACadena(acptr->name)) == 0)
-        continue;
-      if (Protocol(bcptr) > 9)
-        sendto_one(bcptr, "%s " TOK_SERVER " %s %d 0 %s %s %s%s +%s%s%s :%s",
-            NumServ(sptr), PunteroACadena(acptr->name), hop + 1, parv[4], parv[5],
-            NumServCap(acptr), IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", 
-            IsIPv6(acptr) ? "6" : "", PunteroACadena(acptr->info));
-#if !defined(NO_PROTOCOL9)
-      else
-        sendto_one(bcptr, ":%s SERVER %s %d 0 %s %s %s%s 0 :%s",
-            parv[0], PunteroACadena(acptr->name), hop + 1, parv[4], parv[5],
-            NumServCap(acptr), PunteroACadena(acptr->info));
-#endif
-    }
-    return 0;
-  }
-
-  if (IsUnknown(cptr) || IsHandshake(cptr))
-  {
-#if defined(NO_PROTOCOL9)
-   if (prot == 9)
-     return exit_client(cptr, cptr, &me,
-         "To link a P09 server disable NO_PROTOCOL9");
-#endif
-#if !defined(NO_PROTOCOL9)
-   if (prot == 9)
-   {
-      char buffer[1024];
-
-      strcpy(buffer, "p09:");
-      strcat(buffer, parv[1]);
-      
-      if (!db_buscar_registro(BDD_CONFIGDB, buffer))
-      {
-/*
-** Mandamos aviso a los OPs locales
-*/
-        sendto_ops_butone(NULL, &me,
-            ":%s WALLOPS :To link a P09 server you need an entry in the Distributed DataBase: %s",
-            me.name, parv[1]);
-
-/*
-** Mandamos el aviso a toda la red
-*/
-        sendto_lowprot_butone(cptr, 9,
-            ":%s WALLOPS :To link a P09 server you need an entry in the Distributed DataBase: %s",
-            me.name, parv[1]);
-        sendto_highprot_butone(cptr, 10,
-            "%s " TOK_WALLOPS " :To link a P09 server you need an entry in the Distributed DataBase: %s",
-            NumServ(&me), parv[1]);
-
-        return exit_client(cptr, cptr, &me,
-            "To link a P09 server you need an entry in the Distributed DataBase");
-      }
-    }
-#endif
-
-    make_server(cptr);
-    cptr->cli_serv->timestamp = timestamp;
-    cptr->cli_serv->prot = prot;
-    cptr->cli_serv->ghost = ghost;
-    cptr->cli_serv->esnet_db = 0;   /* De momento exigimos un BURST de la base de datos */
-    SetServerYXX(cptr, cptr, parv[6]);
-    
-#if !defined(NO_PROTOCOL9)
-    /* Si recibimos un P09, ponemos +hs ya que siempre es un service y hub */
-    if (Protocol(cptr) < 10)
-    {
-      SetHub(cptr);
-      SetService(cptr);
-    }
-    else 
-#endif
-    {
-      if (*parv[7] == '+')
-        set_server_flags(cptr, parv[7] + 1);
-    }
-                                          
-    if (start_timestamp > 780000000)
-    {
-#if !defined(RELIABLE_CLOCK)
-      sendto_ops("Debug: my start time: " TIME_T_FMT " ; others start time: "
-          TIME_T_FMT, cli_serv(&me)->timestamp, start_timestamp);
-      sendto_ops("Debug: receive time: " TIME_T_FMT " ; received timestamp: "
-          TIME_T_FMT " ; difference %ld",
-          recv_time, timestamp, timestamp - recv_time);
-
-      if (start_timestamp < cli_serv(&me)->timestamp)
-      {
-        sendto_ops("got earlier start time: " TIME_T_FMT " < " TIME_T_FMT,
-            start_timestamp, cli_serv(&me)->timestamp);
-        cli_serv(&me)->timestamp = start_timestamp;
-        TSoffset += timestamp - recv_time;
-        sendto_ops("clock adjusted by adding %d", (int)(timestamp - recv_time));
-      }
-      else if ((start_timestamp > cli_serv(&me)->timestamp) && IsUnknown(cptr))
-        cptr->cli_serv->timestamp = TStime();
-
-      else if (timestamp != recv_time)
-        /* Equal start times, we have a collision.  Let the connected-to server
-           decide. This assumes leafs issue more than half of the connection
-           attempts. */
-      {
-        if (IsUnknown(cptr))
-          cptr->cli_serv->timestamp = TStime();
-        else if (IsHandshake(cptr))
-        {
-          sendto_ops("clock adjusted by adding %d",
-              (int)(timestamp - recv_time));
-          TSoffset += timestamp - recv_time;
-        }
-      }
-#else /* RELIABLE CLOCK IS TRUE, we _always_ use our own clock */
-      if (start_timestamp < cli_serv(&me)->timestamp)
-        cli_serv(&me)->timestamp = start_timestamp;
-      if (IsUnknown(cptr))
-        cptr->cli_serv->timestamp = TStime();
-#endif
-    }
-
-    ret = m_server_estab(cptr, aconf, bconf, start_timestamp);
-  }
-  else
-    ret = 0;
-#if defined(RELIABLE_CLOCK)
-  if (abs(cptr->cli_serv->timestamp - recv_time) > 30)
-  {
-    sendto_ops("Connected to a net with a timestamp-clock"
-        " difference of " STIME_T_FMT " seconds! Used SETTIME to correct"
-        " this.", timestamp - recv_time);
-#if !defined(NO_PROTOCOL9)
-    if (Protocol(cptr) < 10)
-      sendto_one(cptr, ":%s SETTIME " TIME_T_FMT " :%s",
-          me.name, TStime(), me.name);
-    else
-#endif
-      sendto_one(cptr, "%s " TOK_SETTIME " " TIME_T_FMT " :%s",
-          NumServ(&me), TStime(), me.name);
-  }
-#endif
-
-  return ret;
-}
-
-/*
- * m_server_estab
- *
- * May only be called after a SERVER was received from cptr,
- * and thus make_server was called, and serv->prot set. --Run
- */
-int m_server_estab(struct Client *cptr, aConfItem *aconf, aConfItem *bconf, time_t start_timestamp)
-{
-  Reg3 struct Client *acptr;
-  char *inpath, *host;
-  int split, i;
-
-  split = (strCasediff(cptr->name, PunteroACadena(cptr->cli_connect->sockhost))
-      && ircd_strncmp(PunteroACadena(cptr->info), "JUPE", 4));
-  inpath = cptr->name;
-  host = cptr->name;
-  
-  if (IsUnknown(cptr))
-  {
 #if defined(ESNET_NEG)
     envia_config_req(cptr);
 #endif
-    if (bconf->passwd[0])
-      sendto_one(cptr, "PASS :%s", bconf->passwd);
+    if (aconf->passwd[0])
+      sendrawto_one(cptr, MSG_PASS " :%s", aconf->passwd);
     /*
      *  Pass my info to the new server
      */
-    if (Protocol(cptr) > 9)
-      sendto_one(cptr,
-          "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s +%s :%s",
-          my_name_for_link(me.name, aconf), cli_serv(&me)->timestamp,
-          cptr->cli_serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
-#if defined(HUB)
-          "h",
-#else        
-          "", 
-#endif        
-          me.info ? me.info : "IRCers United");
+#if defined(P09_SUPPORT)
+    if (Protocol(cptr) < 10)
+      sendrawto_one(cptr, MSG_SERVER " %s 1 %Tu %Tu J%s %s%s 0 :%s",
+          cli_name(&me), cli_serv(&me)->timestamp,
+          cli_serv(cptr)->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
+          *(cli_info(&me)) ? cli_info(&me) : "IRCers United");
     else
-      sendto_one(cptr,
-          "SERVER %s 1 " TIME_T_FMT " " TIME_T_FMT " J%s %s%s 0 :%s",
-           my_name_for_link(me.name, aconf), cli_serv(&me)->timestamp,
-           cptr->cli_serv->timestamp, MAJOR_PROTOCOL, NumServCap(&me), 
-           me.info ? me.info : "IRCers United");
 
-    tx_num_serie_dbs(cptr);
+#else
+      sendrawto_one(cptr, MSG_SERVER " %s 1 %Tu %Tu J%s %s%s +%s6 :%s",
+		  cli_name(&me), cli_serv(&me)->timestamp,
+		  cli_serv(cptr)->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
+		  feature_bool(FEAT_HUB) ? "h" : "",
+		  *(cli_info(&me)) ? cli_info(&me) : "IRCers United");
+#endif
 
-    IPcheck_connect_fail(cptr); /* Don't charge this IP# for connecting */
+#if defined(DDB)
+    ddb_burst(cptr);
+#endif
   }
 
-  det_confs_butmask(cptr,
-      CONF_LEAF | CONF_HUB | CONF_CONNECT_SERVER | CONF_UWORLD);
+  det_confs_butmask(cptr, CONF_SERVER);
 
   if (!IsHandshake(cptr))
     hAddClient(cptr);
@@ -962,38 +170,44 @@ int m_server_estab(struct Client *cptr, aConfItem *aconf, aConfItem *bconf, time
   config_resolve_speculative(cptr);
 #endif
 
-  Count_unknownbecomesserver(nrof);
+  cli_handler(cptr) = SERVER_HANDLER;
+  Count_unknownbecomesserver(UserStats);
+#if defined(P09_SUPPORT)
   if (Protocol(cptr) > 9)
-    SetBurst(cptr);
-#if !defined(NO_PROTOCOL9)
-  else
-    cptr->flags |= FLAGS_TS8;
-#endif  
-  
-  UpdateCheckPing(cptr, get_client_ping(cptr));
-  //nextping = now;
-  if (cptr->cli_serv->user && cptr->cli_serv->by &&
-      (acptr = findNUser(cptr->cli_serv->by)) && acptr->cli_user == cptr->cli_serv->user)
-  {
-    if (MyUser(acptr) 
-#if !defined(NO_PROTOCOL9)
-        || Protocol(cli_from(acptr)) < 10
 #endif
-    )
-      sendto_one(acptr, ":%s NOTICE %s :Link with %s established.",
-          me.name, acptr->name, inpath);
-    else
-      sendto_one(acptr, "%s " TOK_NOTICE " %s%s :Link with %s established.",
-          NumServ(&me), NumNick(acptr), inpath);
+  SetBurst(cptr);
+
+/*    nextping = CurrentTime; */
+
+  /*
+   * NOTE: check for acptr->user == cptr->serv->user is necessary to insure
+   * that we got the same one... bleah
+   */
+  if (cli_serv(cptr)->user && *(cli_serv(cptr))->by &&
+      (acptr = findNUser(cli_serv(cptr)->by))) {
+    if (cli_user(acptr) == cli_serv(cptr)->user) {
+      sendcmdto_one(&me, CMD_NOTICE, acptr, "%C :Link with %s established.",
+                    acptr, inpath);
+    }
+    else {
+      /*
+       * if not the same client, set by to empty string
+       */
+      acptr = 0;
+      *(cli_serv(cptr))->by = '\0';
+    }
   }
-  else
-    acptr = NULL;
-  sendto_lops_butone(acptr, "Link with %s established.", inpath);
-  cptr->cli_serv->up = &me;
-  cptr->cli_serv->updown = add_dlink(&cli_serv(&me)->down, cptr);
-  cptr->cli_serv->cline = aconf;
-  sendto_op_mask(SNO_NETWORK, "Net junction: %s %s", me.name, cptr->name);
+
+  sendto_opmask(acptr, SNO_OLDSNO, "Link with %s established.", inpath);
+  cli_serv(cptr)->up = &me;
+  cli_serv(cptr)->updown = add_dlink(&(cli_serv(&me))->down, cptr);
+  sendto_opmask(0, SNO_NETWORK, "Net junction: %s %s", cli_name(&me),
+                cli_name(cptr));
   SetJunction(cptr);
+
+#if defined(DDB)
+  //ddb_burst(cptr);
+#endif
 
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
   inicia_microburst();
@@ -1004,56 +218,43 @@ int m_server_estab(struct Client *cptr, aConfItem *aconf, aConfItem *bconf, time
    * need to send different names to different servers
    * (domain name matching) Send new server to other servers.
    */
-  for (i = 0; i <= highest_fd; i++)
+  for (i = 0; i <= HighestFd; i++)
   {
-    if (!(acptr = loc_clients[i]) || !IsServer(acptr) ||
+    if (!(acptr = LocalClientArray[i]) || !IsServer(acptr) ||
         acptr == cptr || IsMe(acptr))
       continue;
-    if ((aconf = acptr->cli_serv->cline) &&
-        !match(my_name_for_link(me.name, aconf), PunteroACadena(cptr->name)))
+    if (!match(cli_name(&me), cli_name(cptr)))
       continue;
-    if (split)
-    {
-      if (Protocol(acptr) > 9)
-        sendto_one(acptr,
-            "%s " TOK_SERVER " %s 2 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
-            NumServ(&me), cptr->name, cptr->cli_serv->timestamp,
-            (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr), NumServCap(cptr),
-            IsHub(cptr) ? "h" : "", IsService(cptr) ? "s" : "", IsIPv6(cptr) ? "6" : "",
-            PunteroACadena(cptr->info));
-#if !defined(NO_PROTOCOL9)
-      else
-        sendto_one(acptr,
-            ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s 0 :%s", me.name,
-            cptr->name, cptr->cli_serv->timestamp,
-            (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr), NumServCap(cptr),
-            PunteroACadena(cptr->info));
-#endif
-    }
+#if defined(P09_SUPPORT)
+    if (Protocol(acptr) < 10)
+      sendcmdto_one(&me, CMD_SERVER, acptr,
+          "%s 2 0 %Tu J%02u %s%s 0 :%s", cli_name(cptr),
+          cli_serv(cptr)->timestamp, Protocol(cptr), NumServCap(cptr),
+          cli_info(cptr));
     else
-    {
-      if (Protocol(acptr) > 9)
-        sendto_one(acptr, "%s " TOK_SERVER " %s 2 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
-            NumServ(&me), cptr->name, cptr->cli_serv->timestamp,
-            (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr),
-            NumServCap(cptr), IsHub(cptr) ? "h" : "", IsService(cptr) ? "s" : "", 
-            IsIPv6(cptr) ? "6" : "", PunteroACadena(cptr->info));
-#if !defined(NO_PROTOCOL9)
-      else
-        sendto_one(acptr, ":%s SERVER %s 2 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
-            me.name, cptr->name, cptr->cli_serv->timestamp,
-            (Protocol(cptr) > 9) ? "J" : "J0", Protocol(cptr),
-            NumServCap(cptr), PunteroACadena(cptr->info));
 #endif
-    }
+      sendcmdto_one(&me, CMD_SERVER, acptr,
+		  "%s 2 0 %Tu J%02u %s%s +%s%s%s :%s", cli_name(cptr),
+		  cli_serv(cptr)->timestamp, Protocol(cptr), NumServCap(cptr),
+		  IsHub(cptr) ? "h" : "", IsService(cptr) ? "s" : "",
+		  IsIPv6(cptr) ? "6" : "", cli_info(cptr));
   }
+
+  /* Send these as early as possible so that glined users/juped servers can
+   * be removed from the network while the remote server is still chewing
+   * our burst.
+   */
+  sendto_opmask(0, SNO_NETWORK, "Bursting glines");
+  gline_burst(cptr);
+  sendto_opmask(0, SNO_NETWORK, "Bursting jupes");
+  jupe_burst(cptr);
 
   /*
    * Pass on my client information to the new server
    *
    * First, pass only servers (idea is that if the link gets
-   * cancelled beacause the server was already there,
-   * there are no NICK's to be cancelled...). Of course,
+   * canceled because the server was already there,
+   * there are no NICK's to be canceled...). Of course,
    * if cancellation occurs, all this info is sent anyway,
    * and I guess the link dies when a read is attempted...? --msa
    *
@@ -1062,282 +263,113 @@ int m_server_estab(struct Client *cptr, aConfItem *aconf, aConfItem *bconf, time
    * up connection this other fragment at the same time, it's
    * a race condition, not the normal way of operation...
    */
-
-  aconf = cptr->cli_serv->cline;
-  for (acptr = &me; acptr; acptr = acptr->cli_prev)
-  {
-    /* cli_from(acptr) == acptr for acptr == cptr */
+  sendto_opmask(0, SNO_NETWORK, "Bursting servers");
+  for (acptr = &me; acptr; acptr = cli_prev(acptr)) {
+    /* acptr->from == acptr for acptr == cptr */
     if (cli_from(acptr) == cptr)
       continue;
-    if (IsServer(acptr))
-    {
-      char *protocol_str =
-          (Protocol(acptr) > 9) ? (IsBurst(acptr) ? "J" : "P") : "P0";
-      if (match(my_name_for_link(me.name, aconf), acptr->name) == 0)
-        continue;
-      split = (MyConnect(acptr)
-          && strCasediff(acptr->name, PunteroACadena(acptr->cli_connect->sockhost))
-          && ircd_strncmp(PunteroACadena(acptr->info), "JUPE", 4));
-      if (split)
-      {
-        if (Protocol(cptr) > 9)
-          sendto_one(cptr,
-              "%s " TOK_SERVER " %s %d 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
-              NumServ(acptr->cli_serv->up), acptr->name,
-              acptr->cli_hopcount + 1, acptr->cli_serv->timestamp,
-              protocol_str, Protocol(acptr), NumServCap(acptr),
-              IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", IsIPv6(acptr) ? "6" : "",
-              PunteroACadena(acptr->info));
-        else
-          sendto_one(cptr,
-              ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
-              acptr->cli_serv->up->name, acptr->name,
-              acptr->cli_hopcount + 1, acptr->cli_serv->timestamp,
-              protocol_str, Protocol(acptr), NumServCap(acptr),
-              PunteroACadena(acptr->info));
-      }
+    if (IsServer(acptr)) {
+      const char* protocol_str;
+
+      if (Protocol(acptr) > 9)
+        protocol_str = IsBurst(acptr) ? "J" : "P";
       else
-      {
-        if (Protocol(cptr) > 9)
-          sendto_one(cptr,
-              "%s " TOK_SERVER " %s %d 0 " TIME_T_FMT " %s%u %s%s +%s%s%s :%s",
-              NumServ(acptr->cli_serv->up), acptr->name,
-              acptr->cli_hopcount + 1, acptr->cli_serv->timestamp,
-              protocol_str, Protocol(acptr), NumServCap(acptr),
-              IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "", IsIPv6(acptr) ? "6" : "",
-              PunteroACadena(acptr->info));
-#if !defined(NO_PROTOCOL9)
-        else
-          sendto_one(cptr,
-              ":%s SERVER %s %d 0 " TIME_T_FMT " %s%u %s%s 0 :%s",
-              acptr->cli_serv->up->name, acptr->name,
-              acptr->cli_hopcount + 1, acptr->cli_serv->timestamp,
-              protocol_str, Protocol(acptr), NumServCap(acptr),
-              PunteroACadena(acptr->info));
+        protocol_str = IsBurst(acptr) ? "J0" : "P0";
+
+      if (0 == match(cli_name(&me), cli_name(acptr)))
+        continue;
+#if defined(P09_SUPPORT)
+      if (Protocol(cptr) < 10)
+        sendcmdto_one(cli_serv(acptr)->up, CMD_SERVER, cptr,
+            "%s %d 0 %Tu %s%u %s%s 0 :%s", cli_name(acptr),
+            cli_hopcount(acptr) + 1, cli_serv(acptr)->timestamp,
+            protocol_str, Protocol(acptr), NumServCap(acptr),
+            cli_info(acptr));
+      else
 #endif
-      }
+        sendcmdto_one(cli_serv(acptr)->up, CMD_SERVER, cptr,
+		    "%s %d 0 %Tu %s%u %s%s +%s%s%s :%s", cli_name(acptr),
+		    cli_hopcount(acptr) + 1, cli_serv(acptr)->timestamp,
+		    protocol_str, Protocol(acptr), NumServCap(acptr),
+		    IsHub(acptr) ? "h" : "", IsService(acptr) ? "s" : "",
+		    IsIPv6(acptr) ? "6" : "", cli_info(acptr));
     }
   }
 
-  for (acptr = &me; acptr; acptr = acptr->cli_prev)
+  sendto_opmask(0, SNO_NETWORK, "Bursting nicks");
+  for (acptr = &me; acptr; acptr = cli_prev(acptr))
   {
-    /* acptr->cli_from == acptr for acptr == cptr */
+    /* acptr->from == acptr for acptr == cptr */
     if (cli_from(acptr) == cptr)
       continue;
     if (IsUser(acptr))
     {
-#if !defined(NO_PROTOCOL9)
+#if defined(P09_SUPPORT)
       if (Protocol(cptr) < 10)
       {
-        /*
-         * IsUser(x) is true only *BOTH* NICK and USER have
-         * been received. -avalon
-         * Or only NICK in new format. --Run
-         */
 #ifdef MIGRACION_DEEPSPACE_P10
         char xxx_buf[25];
 
-        sendto_one(cptr, ":%s NICK %s %d " TIME_T_FMT " %s %s %s %s :%s",
-            acptr->cli_user->server->name,
-            acptr->name, acptr->cli_hopcount + 1, acptr->cli_lastnick,
-            PunteroACadena(acptr->cli_user->username),
-            PunteroACadena(acptr->cli_user->host), acptr->cli_user->server->name,
-            iptobase64(xxx_buf, &acptr->ip, sizeof(xxx_buf), IsIPv6(cptr)), 
-            PunteroACadena(acptr->info));
+        sendcmdto_one(cli_user(acptr)->server, CMD_NICK, cptr,
+              "%s %d %Tu %s %s %s %s :%s",
+              cli_name(acptr), cli_hopcount(acptr) + 1, cli_lastnick(acptr),
+              cli_user(acptr)->username, cli_user(acptr)->realhost,
+              cli_server(acptr)->name,
+              iptobase64(xxx_buf, &cli_ip(acptr), sizeof(xxx_buf), IsIPv6(cptr)),
+              cli_info(acptr));
 #else
-        sendto_one(cptr, ":%s NICK %s %d " TIME_T_FMT " %s %s %s :%s",
-            acptr->cli_user->server->name,
-            acptr->name, acptr->cli_hopcount + 1, acptr->cli_lastnick,
-            PunteroACadena(acptr->cli_user->username),
-            PunteroACadena(acptr->cli_user->host), acptr->cli_user->server->name,
-            PunteroACadena(acptr->info));
+        sendcmdto_one(cli_user(acptr)->server, CMD_NICK, cptr,
+              "%s %d %Tu %s %s %s :%s",
+              cli_name(acptr), cli_hopcount(acptr) + 1, cli_lastnick(acptr),
+              cli_user(acptr)->username, cli_user(acptr)->realhost,
+              cli_user(acptr)->server->cli_name, cli_info(acptr));
 #endif
-        send_umode(cptr, acptr, 0, SEND_UMODES, 0, SEND_HMODES);
+        send_umode(cptr, acptr, 0, SEND_UMODES);
         send_user_joins(cptr, acptr);
-      }
-      else
-#endif
-      {
+      } else {
         char xxx_buf[25];
-        char *s = umode_str(acptr, NULL);
-        sendto_one(cptr, *s ?
-            "%s " TOK_NICK " %s %d " TIME_T_FMT " %s %s +%s %s %s%s :%s" :
-            "%s " TOK_NICK " %s %d " TIME_T_FMT " %s %s %s%s %s%s :%s",
-            NumServ(acptr->cli_user->server),
-            acptr->name, acptr->cli_hopcount + 1, acptr->cli_lastnick,
-            PunteroACadena(acptr->cli_user->username),
-            PunteroACadena(acptr->cli_user->host), s, iptobase64(xxx_buf,
-#ifdef HISPANO_WEBCHAT
-            MyUser(acptr) ? &acptr->cli_ip_real : &acptr->cli_ip,
-#else
-            &acptr->cli_ip,
-#endif
-            sizeof(xxx_buf), IsIPv6(cptr)), NumNick(acptr), PunteroACadena(acptr->info));
+        char *s = umode_str(acptr);
+        sendcmdto_one(cli_user(acptr)->server, CMD_NICK, cptr,
+              "%s %d %Tu %s %s %s%s%s%s %s%s :%s",
+              cli_name(acptr), cli_hopcount(acptr) + 1, cli_lastnick(acptr),
+              cli_user(acptr)->username, cli_user(acptr)->realhost,
+              *s ? "+" : "", s, *s ? " " : "",
+              iptobase64(xxx_buf, &cli_ip(acptr), sizeof(xxx_buf), IsIPv6(cptr)),
+              NumNick(acptr), cli_info(acptr));
+
+
       }
+#else
+      char xxx_buf[25];
+      char *s = umode_str(acptr);
+      sendcmdto_one(cli_user(acptr)->server, CMD_NICK, cptr,
+		    "%s %d %Tu %s %s %s%s%s%s %s%s :%s",
+		    cli_name(acptr), cli_hopcount(acptr) + 1, cli_lastnick(acptr),
+		    cli_user(acptr)->username, cli_user(acptr)->realhost,
+		    *s ? "+" : "", s, *s ? " " : "",
+		    iptobase64(xxx_buf, &cli_ip(acptr), sizeof(xxx_buf), IsIPv6(cptr)),
+		    NumNick(acptr), cli_info(acptr));
+#endif
     }
   }
-  
-
   /*
    * Last, send the BURST.
    * (Or for 2.9 servers: pass all channels plus statuses)
    */
+  sendto_opmask(0, SNO_NETWORK, "Bursting channels");
   {
-    Reg1 aChannel *chptr;
-    for (chptr = channel; chptr; chptr = chptr->nextch)
+    struct Channel *chptr;
+    for (chptr = GlobalChannelList; chptr; chptr = chptr->next)
       send_channel_modes(cptr, chptr);
   }
 
-#if defined(HUB)
-  /*
-   * Propago todas las glines
-   * 
-   * 1) Si el servidor que linka tiene menos tiempo de vida que GLINE_BURST le envio TODAS mis glines
-   * 2) En caso contrario solo envio las glines que tengan de tiempo de modificacion menos que GLINE_BURST
-   *
-   */
-  {
-    Reg1 aGline *agline;
-    if(Protocol(cptr) > 9 && !IsService(cptr))
-      for (agline = gline; agline; agline = agline->next)
-      {        
-        if(!GlineIsLocal(agline) && agline->lastmod &&
-            agline->expire >= TStime() && 
-            ((TStime() - agline->lastmod) < GLINE_BURST_TIME || 
-                (TStime() - start_timestamp) < GLINE_BURST_TIME))
-          sendto_one(cptr, "%s " TOK_GLINE " %s +%s " TIME_T_FMT 
-              " " TIME_T_FMT " " TIME_T_FMT " :%s", 
-              NumServ(&me), NumServ(cptr), agline->host,
-              agline->expire - TStime(), agline->lastmod,
-              agline->lifetime - TStime(), agline->reason);
-      }
-  }
-#endif
-  
 #if defined(ESNET_NEG) && defined(ZLIB_ESNET)
   completa_microburst();
 #endif
 
+#if defined(P09_SUPPORT)
   if (Protocol(cptr) > 9)
-    sendto_one(cptr, "%s " TOK_END_OF_BURST, NumServ(&me));
-  return 0;
-}
-
-/*
- * m_error
- *
- * parv[0] = sender prefix
- * parv[parc-1] = text
- */
-int m_error(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
-{
-  Reg1 char *para;
-
-  para = (parc > 1 && *parv[parc - 1] != '\0') ? parv[parc - 1] : "<>";
-
-  Debug((DEBUG_ERROR, "Received ERROR message from %s: %s", sptr->name, para));
-  /*
-   * Ignore error messages generated by normal user clients
-   * (because ill-behaving user clients would flood opers
-   * screen otherwise). Pass ERROR's from other sources to
-   * the local operator...
-   */
-  if (IsUser(cptr))
-    return 0;
-  if (IsUnknown(cptr))
-    return exit_client_msg(cptr, cptr, &me, "Register first");
-
-  if (cptr == sptr)
-    sendto_ops("ERROR :from %s -- %s", cptr->name, para);
-  else
-    sendto_ops("ERROR :from %s via %s -- %s", sptr->name, cptr->name, para);
-
-  if (sptr->cli_serv)
-  {
-    MyFree(sptr->cli_serv->last_error_msg);
-    DupString(sptr->cli_serv->last_error_msg, para);
-  }
-
-  return 0;
-}
-
-/*
- * m_end_of_burst  - Added Xorath 6-14-96, rewritten by Run 24-7-96
- *                 - and fixed by record and Kev 8/1/96
- *                 - and really fixed by Run 15/8/96 :p
- * This the last message in a net.burst.
- * It clears a flag for the server sending the burst.
- *
- * parv[0] - sender prefix
- */
-int m_end_of_burst(struct Client *cptr, struct Client *sptr, int UNUSED(parc),
-    char **UNUSED(parv))
-{
-  if (!IsServer(sptr))
-    return 0;
-
-  sendto_op_mask(SNO_NETWORK, "Completed net.burst from %s.", sptr->name);
-#if defined(NO_PROTOCOL9)
-  sendto_serv_butone(cptr, "%s " TOK_END_OF_BURST, NumServ(sptr));
-#else
-  sendto_highprot_butone(cptr, 10, "%s " TOK_END_OF_BURST, NumServ(sptr));
 #endif
-  ClearBurst(sptr);
-  SetBurstAck(sptr);
-  if (MyConnect(sptr))
-    sendto_one(sptr, "%s " TOK_END_OF_BURST_ACK, NumServ(&me));
-
-  return 0;
-}
-
-/*
- * m_end_of_burst_ack
- *
- * This the acknowledge message of the `END_OF_BURST' message.
- * It clears a flag for the server receiving the burst.
- *
- * parv[0] - sender prefix
- */
-int m_end_of_burst_ack(struct Client *cptr, struct Client *sptr, int UNUSED(parc),
-    char **UNUSED(parv))
-{
-  if (!IsServer(sptr))
-    return 0;
-
-  sendto_op_mask(SNO_NETWORK, "%s acknowledged end of net.burst.", sptr->name);
-#if defined(NO_PROTOCOL9)
-  sendto_serv_butone(cptr, "%s EOB_ACK", NumServ(sptr));
-#else
-  sendto_highprot_butone(cptr, 10, "%s EOB_ACK", NumServ(sptr));
-#endif
-  ClearBurstAck(sptr);
-
-  return 0;
-}
-
-/*
- * m_desynch
- *
- * Writes to all +g users; for sending wall type debugging/anti-hack info.
- * Added 23 Apr 1998  --Run
- *
- * parv[0] - sender prefix
- * parv[parc-1] - message text
- */
-int m_desynch(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
-{
-  if (IsServer(sptr) && parc >= 2)
-  {
-    int i;
-    struct Client *acptr;
-    /* Send message to local +g clients as if it were a wallops */
-    sprintf_irc(sendbuf, ":%s WALLOPS :%s", parv[0], parv[parc - 1]);
-    for (i = 0; i <= highest_fd; i++)
-      if ((acptr = loc_clients[i]) && !IsServer(acptr) && !IsMe(acptr) &&
-          SendDebug(acptr))
-        sendbufto_one(acptr);
-    /* Send message to remote +g clients */
-    sendto_g_serv_butone(cptr, "%s DESYNCH :%s", NumServ(sptr), parv[parc - 1]);
-  }
+  sendcmdto_one(&me, CMD_END_OF_BURST, cptr, "");
   return 0;
 }

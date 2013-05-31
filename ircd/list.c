@@ -1,12 +1,13 @@
 /*
- * IRC - Internet Relay Chat, ircd/list.c
- * Copyright (C) 1990 Jarkko Oikarinen and
- *                    University of Oulu, Finland
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/list.c
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,48 +16,48 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
+/** @file
+ * @brief Singly and doubly linked list manipulation implementation.
+ * @version $Id$
+ */
+#include "config.h"
 
-#include "sys.h"
-#include "client.h"
-#include "h.h"
-#include "s_debug.h"
-#include "struct.h"
-#include "numeric.h"
-#include "send.h"
-#include "s_conf.h"
-#include "class.h"
-#include "match.h"
-#include "ircd.h"
-#include "s_serv.h"
-#include "support.h"
-#include "s_misc.h"
-#include "s_bsd.h"
-#include "whowas.h"
-#include "res.h"
-#include "common.h"
 #include "list.h"
-#include "s_user.h"
-#include "opercmds.h"
-#include "m_watch.h"
-#include "hash.h"
-#include "slab_alloc.h"
+#include "client.h"
+#include "ircd.h"
 #include "ircd_alloc.h"
-#include "ircd_chattr.h"
+#include "ircd_events.h"
+#include "ircd_log.h"
+#include "ircd_reply.h"
 #include "ircd_string.h"
-#include "pcre_match.h"
-#include <assert.h>
+#include "listener.h"
+#include "match.h"
+#include "numeric.h"
+#include "res.h"
+#include "s_auth.h"
+#include "s_bsd.h"
+#include "s_conf.h"
+#include "s_debug.h"
+#include "s_misc.h"
+#include "s_user.h"
+#include "send.h"
+#include "struct.h"
+#include "whowas.h"
 
-RCSTAG_CC("$Id$");
+/* #include <assert.h> -- Now using assert in ircd_log.h */
+#include <stddef.h>  /* offsetof */
+#include <unistd.h>  /* close */
+#include <string.h>
 
 /** Stores linked list statistics for various types of lists. */
 static struct liststats {
   size_t alloc; /**< Number of structures ever allocated. */
   size_t inuse; /**< Number of structures currently in use. */
   size_t mem;   /**< Memory used by in-use structures. */
-//} clients, connections, servs, links;
-} clients, connections, servs, links, classs, aconfs, watchs;
+} clients, connections, servs, links;
 
 /** Linked list of currently unused Client structures. */
 static struct Client* clientFreeList;
@@ -66,6 +67,10 @@ static struct Connection* connectionFreeList;
 
 /** Linked list of currently unused SLink structures. */
 static struct SLink* slinkFreeList;
+
+static
+void send_liststats(struct Client *cptr, const struct liststats *lstats,
+                    const char *itemname, struct liststats *totals);
 
 /** Initialize the list manipulation support system.
  * @arg[in] maxconn Number of Client and Connection structures to preallocate.
@@ -90,20 +95,6 @@ void init_list(int maxconn)
     connections.alloc++;
   }
 }
-
-#if defined(DEBUGMODE)
-void initlists(void)
-{
-  memset(&servs, 0, sizeof(servs));
-  memset(&links, 0, sizeof(links));
-  memset(&classs, 0, sizeof(classs));
-  memset(&aconfs, 0, sizeof(aconfs));
-#if defined(WATCH)
-  memset(&watchs, 0, sizeof(watchs));
-#endif
-}
-
-#endif
 
 /** Allocate a new Client structure.
  * If #clientFreeList != NULL, use the head of that list.
@@ -161,7 +152,7 @@ static struct Connection* alloc_connection(void)
   connections.inuse++;
 
   memset(con, 0, sizeof(struct Connection));
-//  timer_init(&(con_proc(con)));
+  timer_init(&(con_proc(con)));
 
   return con;
 }
@@ -175,18 +166,18 @@ static struct Connection* alloc_connection(void)
 static void dealloc_connection(struct Connection* con)
 {
   assert(con_verify(con));
-//  assert(!t_active(&(con_proc(con))));
-//  assert(!t_onqueue(&(con_proc(con))));
+  assert(!t_active(&(con_proc(con))));
+  assert(!t_onqueue(&(con_proc(con))));
 
   Debug((DEBUG_LIST, "Deallocating connection %p", con));
 
-//  if (-1 < con_fd(con))
-//    close(con_fd(con));
-//  MsgQClear(&(con_sendQ(con)));
-//  client_drop_sendq(con);
-//  DBufClear(&(con_recvQ(con)));
-//  if (con_listener(con))
-//    release_listener(con_listener(con));
+  if (-1 < con_fd(con))
+    close(con_fd(con));
+  MsgQClear(&(con_sendQ(con)));
+  client_drop_sendq(con);
+  DBufClear(&(con_recvQ(con)));
+  if (con_listener(con))
+    release_listener(con_listener(con));
 
   --connections.inuse;
 
@@ -224,15 +215,15 @@ struct Client* make_client(struct Client *from, int status)
     assert(!con_magic(con));
 
     con_magic(con) = CONNECTION_MAGIC;
-//    con_fd(con) = -1; /* initialize struct Connection */
+    con_fd(con) = -1; /* initialize struct Connection */
     con_freeflag(con) = 0;
-    con_nextnick(con) = now - NICK_DELAY;
-    con_nexttarget(con) = now - (TARGET_DELAY * (STARTTARGETS - 1));
-//    con_handler(con) = UNREGISTERED_HANDLER;
+    con_nextnick(con) = CurrentTime - NICK_DELAY;
+    con_nexttarget(con) = CurrentTime - (TARGET_DELAY * (STARTTARGETS - 1));
+    con_handler(con) = UNREGISTERED_HANDLER;
     con_client(con) = cptr;
 
     cli_connect(cptr) = con; /* set the connection and other fields */
-    cli_since(cptr) = cli_lasttime(cptr) = cli_firsttime(cptr) = now;
+    cli_since(cptr) = cli_lasttime(cptr) = cli_firsttime(cptr) = CurrentTime;
     cli_lastnick(cptr) = TStime();
   } else
     cli_connect(cptr) = cli_connect(from); /* use 'from's connection */
@@ -242,8 +233,7 @@ struct Client* make_client(struct Client *from, int status)
   cli_magic(cptr) = CLIENT_MAGIC;
   cli_status(cptr) = status;
   cli_hnext(cptr) = cptr;
-  //strcpy(cli_username(cptr), "unknown");
-  SlabStringAllocDup(&(cptr->username), "unknown", 0);
+  strcpy(cli_username(cptr), "unknown");
 
   return cptr;
 }
@@ -282,10 +272,10 @@ void free_client(struct Client* cptr)
   assert(cli_prev(cptr) == 0);
 
   Debug((DEBUG_LIST, "Freeing client %s [%p], connection %p", cli_name(cptr),
-     cptr, cli_connect(cptr)));
+	 cptr, cli_connect(cptr)));
 
-//  if (cli_auth(cptr))
-//    destroy_auth_request(cli_auth(cptr));
+  if (cli_auth(cptr))
+    destroy_auth_request(cli_auth(cptr));
 
   /* Make sure we didn't magically get re-added to the list */
   assert(cli_next(cptr) == 0);
@@ -294,59 +284,13 @@ void free_client(struct Client* cptr)
   if (cli_from(cptr) == cptr) { /* in other words, we're local */
     cli_from(cptr) = 0;
     /* timer must be marked as not active */
-//    if (!cli_freeflag(cptr) && !t_active(&(cli_proc(cptr))))
-//      dealloc_connection(cli_connect(cptr)); /* connection not open anymore */
-//    else {
-//      if (-1 < cli_fd(cptr) && cli_freeflag(cptr) & FREEFLAG_SOCKET)
-//    socket_del(&(cli_socket(cptr))); /* queue a socket delete */
-//      if (cli_freeflag(cptr) & FREEFLAG_TIMER)
-//    timer_del(&(cli_proc(cptr))); /* queue a timer delete */
-//    }
-  }
-
-  if (cptr->name)
-    SlabStringFree(cptr->name);
-
-  if (cptr->username)
-    SlabStringFree(cptr->username);
-
-  if (cptr->info)
-    SlabStringFree(cptr->info);
-
-  if (MyConnect(cptr))
-  {
-    if (cptr->cli_connect->sockhost)
-      SlabStringFree(cptr->cli_connect->sockhost);
-
-    if (cptr->cli_connect->cookie)
-      SlabStringFree(cptr->cli_connect->cookie);
-
-    DelClientEvent(cptr);
-    DelRWAuthEvent(cptr);
-
-    if(cptr->cli_connect->evread)
-      MyFree(cptr->cli_connect->evread);
-
-    if(cptr->cli_connect->evwrite)
-      MyFree(cptr->cli_connect->evwrite);
-
-    if(cptr->cli_connect->evauthread)
-      MyFree(cptr->cli_connect->evauthread);
-
-    if(cptr->cli_connect->evauthwrite)
-      MyFree(cptr->cli_connect->evauthwrite);
-
-    if(cptr->cli_connect->evtimer)
-    {
-      MyFree(cptr->cli_connect->evtimer);
-      assert(cptr->cli_connect->tm_timer);
-      MyFree(cptr->cli_connect->tm_timer);
-    }
-    if(cptr->cli_connect->evcheckping)
-    {
-      MyFree(cptr->cli_connect->evcheckping);
-      assert(cptr->cli_connect->tm_checkping);
-      MyFree(cptr->cli_connect->tm_checkping);
+    if (!cli_freeflag(cptr) && !t_active(&(cli_proc(cptr))))
+      dealloc_connection(cli_connect(cptr)); /* connection not open anymore */
+    else {
+      if (-1 < cli_fd(cptr) && cli_freeflag(cptr) & FREEFLAG_SOCKET)
+	socket_del(&(cli_socket(cptr))); /* queue a socket delete */
+      if (cli_freeflag(cptr) & FREEFLAG_TIMER)
+	timer_del(&(cli_proc(cptr))); /* queue a timer delete */
     }
   }
 
@@ -355,161 +299,132 @@ void free_client(struct Client* cptr)
   dealloc_client(cptr); /* actually destroy the client */
 }
 
-
-/*
- * 'make_user' add's an User information block to a client
- * if it was not previously allocated.
+/** Allocate a new Server object for a client.
+ * If Client::cli_serv == NULL, allocate a Server structure for it and
+ * initialize it.
+ * @param[in] cptr %Client to make into a server.
+ * @return The value of cli_serv(\a cptr).
  */
-anUser *make_user(struct Client *cptr)
+struct Server *make_server(struct Client *cptr)
 {
-  Reg1 anUser *user;
+  struct Server *serv = cli_serv(cptr);
 
-  user = cptr->cli_user;
-  if (!user)
-  {
-    if (!(user = (anUser *)MyMalloc(sizeof(anUser))))
-      outofmemory();
-    memset(user, 0, sizeof(anUser));  /* All variables are 0 by default */
-#if defined(DEBUGMODE)
-//    users.inuse++;
-#endif
-    user->refcnt = 1;
-    cptr->cli_user = user;
-  }
-  return user;
-}
-
-aServer *make_server(struct Client *cptr)
-{
-  Reg1 aServer *serv = cptr->cli_serv;
+  assert(cli_verify(cptr));
 
   if (!serv)
   {
-    if (!(serv = (aServer *)MyMalloc(sizeof(aServer))))
-      outofmemory();
-    memset(serv, 0, sizeof(aServer)); /* All variables are 0 by default */
-
-#if defined(DEBUGMODE)
+    serv = (struct Server*) MyMalloc(sizeof(struct Server));
+    assert(0 != serv);
+    memset(serv, 0, sizeof(struct Server)); /* All variables are 0 by default */
     servs.inuse++;
-#endif
-    cptr->cli_serv = serv;
-    DupString(serv->last_error_msg, "<>");  /* String must be non-empty */
+    servs.alloc++;
+    cli_serv(cptr) = serv;
+    cli_serv(cptr)->lag = 60000;
+    *serv->by = '\0';
+    DupString(serv->last_error_msg, "<>");      /* String must be non-empty */
   }
-  return cptr->cli_serv;
+  return cli_serv(cptr);
 }
 
-/*
- * free_user
- *
- * Decrease user reference count by one and realease block, if count reaches 0.
- */
-void free_user(anUser *user)
-{
-  if (--user->refcnt == 0)
-  {
-    assert(!(user->joined || user->channel || (MyConnect(user->server)
-        && user->server->cli_connect->invited)));
-
-    if (user->away)
-      MyFree(user->away);
-
-    if (user->username)
-      SlabStringFree(user->username);
-    if (user->virtualhost)
-      SlabStringFree(user->virtualhost);
-    if (user->host)
-      SlabStringFree(user->host);
-
-    MyFree(user);
-#if defined(DEBUGMODE)
-//    users.inuse--;
-#endif
-  }
-}
-
-/*
- * Taken the code from ExitOneClient() for this and placed it here.
- * - avalon
+/** Remove \a cptr from lists that it is a member of.
+ * Specifically, this delinks \a cptr from #GlobalClientList, updates
+ * the whowas history list, frees its Client::cli_user and
+ * Client::cli_serv fields, and finally calls free_client() on it.
+ * @param[in] cptr Client to remove from lists and free.
  */
 void remove_client_from_list(struct Client *cptr)
 {
-  checklist();
-  if (cptr->cli_prev)
-    cptr->cli_prev->cli_next = cptr->cli_next;
-  else
+  assert(cli_verify(cptr));
+  assert(con_verify(cli_connect(cptr)));
+  assert(!cli_prev(cptr) || cli_verify(cli_prev(cptr)));
+  assert(!cli_next(cptr) || cli_verify(cli_next(cptr)));
+  assert(!IsMe(cptr));
+
+  /* Only try remove cptr from the list if it IS in the list.
+   * cli_next(cptr) cannot be NULL here, as &me is always the end
+   * the list, and we never remove &me.    -GW 
+   */
+  if(cli_next(cptr))
   {
-    client = cptr->cli_next;
-    client->cli_prev = NULL;
+    if (cli_prev(cptr))
+      cli_next(cli_prev(cptr)) = cli_next(cptr);
+    else {
+      GlobalClientList = cli_next(cptr);
+      cli_prev(GlobalClientList) = 0;
+    }
+    cli_prev(cli_next(cptr)) = cli_prev(cptr);
   }
-  if (cptr->cli_next)
-    cptr->cli_next->cli_prev = cptr->cli_prev;
-  if (IsUser(cptr) && cptr->cli_user)
-  {
+  cli_next(cptr) = cli_prev(cptr) = 0;
+
+  if (IsUser(cptr) && cli_user(cptr)) {
     add_history(cptr, 0);
     off_history(cptr);
   }
-  if (cptr->cli_user)
-  {
-    free_user(cptr->cli_user);
+  if (cli_user(cptr)) {
+    free_user(cli_user(cptr));
+    cli_user(cptr) = 0;
   }
 
-  if (cptr->cli_serv)
-  {
-    if (cptr->cli_serv->user)
-      free_user(cptr->cli_serv->user);
-    if (cptr->cli_serv->client_list)
-      MyFree(cptr->cli_serv->client_list);
-    MyFree(cptr->cli_serv->last_error_msg);
-    if (cptr->cli_serv->by)
-      SlabStringFree(cptr->cli_serv->by);
-    MyFree(cptr->cli_serv);
-#if defined(DEBUGMODE)
-    servs.inuse--;
-#endif
+  if (cli_serv(cptr)) {
+    if (cli_serv(cptr)->user) {
+      free_user(cli_serv(cptr)->user);
+      cli_serv(cptr)->user = 0;
+    }
+    if (cli_serv(cptr)->client_list)
+      MyFree(cli_serv(cptr)->client_list);
+    MyFree(cli_serv(cptr)->last_error_msg);
+    MyFree(cli_serv(cptr));
+    --servs.inuse;
+    --servs.alloc;
   }
-#if defined(DEBUGMODE1)
-  if (cptr->fd == -2)
-    cloc.inuse--;
-  else
-    crem.inuse--;
-#endif
   free_client(cptr);
-  return;
 }
 
-/*
- * Although only a small routine, it appears in a number of places
- * as a collection of a few lines...functions like this *should* be
- * in this file, shouldnt they ?  after all, this is list.c, isn't it ?
- * -avalon
+/** Link \a cptr into #GlobalClientList.
+ * @param[in] cptr Client to link into the global list.
  */
 void add_client_to_list(struct Client *cptr)
 {
+  assert(cli_verify(cptr));
+  assert(cli_next(cptr) == 0);
+  assert(cli_prev(cptr) == 0);
+
   /*
    * Since we always insert new clients to the top of the list,
    * this should mean the "me" is the bottom most item in the list.
+   * XXX - don't always count on the above, things change
    */
-  cptr->cli_next = client;
-  client = cptr;
-  if (cptr->cli_next)
-    cptr->cli_next->cli_prev = cptr;
-  return;
+  cli_prev(cptr) = 0;
+  cli_next(cptr) = GlobalClientList;
+  GlobalClientList = cptr;
+  if (cli_next(cptr))
+    cli_prev(cli_next(cptr)) = cptr;
 }
 
-/*
- * Look for ptr in the linked listed pointed to by link.
+#if 0
+/** Perform a very CPU-intensive verification of %GlobalClientList.
+ * This checks the Client::cli_magic and Client::cli_prev field for
+ * each element in the list, and also checks that there are no loops.
+ * Any detected error will lead to an assertion failure.
  */
-Link *find_user_link(Link *lp, struct Client *ptr)
+void verify_client_list(void)
 {
-  if (ptr)
-    while (lp)
-    {
-      if (lp->value.cptr == ptr)
-        return (lp);
-      lp = lp->next;
-    }
-  return NULL;
+  struct Client *client, *prev = 0;
+  unsigned int visited = 0;
+
+  for (client = GlobalClientList; client; client = cli_next(client), ++visited) {
+    /* Verify that this is a valid client, not a free'd one */
+    assert(cli_verify(client));
+    /* Verify that the list hasn't suddenly jumped around */
+    assert(cli_prev(client) == prev);
+    /* Verify that the list hasn't become circular */
+    assert(cli_next(client) != GlobalClientList);
+    assert(visited <= clients.alloc);
+    /* Remember what should precede us */
+    prev = client;
+  }
 }
+#endif /* DEBUGMODE */
 
 /** Allocate a new SLink element.
  * Pulls from #slinkFreeList if it contains anything, else it
@@ -581,317 +496,55 @@ void remove_dlink(struct DLink **lpp, struct DLink *lp)
   MyFree(lp);
 }
 
-aConfClass *make_class(void)
-{
-  Reg1 aConfClass *tmp;
-
-  tmp = (aConfClass *) MyMalloc(sizeof(aConfClass));
-#if defined(DEBUGMODE)
-  classs.inuse++;
-#endif
-  return tmp;
-}
-
-void free_class(aConfClass * tmp)
-{
-  MyFree(tmp);
-#if defined(DEBUGMODE)
-  classs.inuse--;
-#endif
-}
-
-aConfItem *make_conf(void)
-{
-  Reg1 aConfItem *aconf;
-
-  aconf = (struct ConfItem *)MyMalloc(sizeof(aConfItem));
-#if defined(DEBUGMODE)
-  aconfs.inuse++;
-#endif
-  memset(&aconf->ipnum, 0, sizeof(struct in_addr));
-  aconf->next = NULL;
-  aconf->host = aconf->passwd = aconf->name = NULL;
-  aconf->status = CONF_ILLEGAL;
-  aconf->clients = 0;
-  aconf->port = 0;
-  aconf->hold = 0;
-  aconf->confClass = NULL;
-  return (aconf);
-}
-
-void delist_conf(aConfItem *aconf)
-{
-  if (aconf == conf)
-    conf = conf->next;
-  else
-  {
-    aConfItem *bconf;
-
-    for (bconf = conf; aconf != bconf->next; bconf = bconf->next);
-    bconf->next = aconf->next;
-  }
-  aconf->next = NULL;
-}
-
-void free_conf(aConfItem *aconf)
-{
-  del_queries((char *)aconf);
-  MyFree(aconf->host);
-  if (aconf->passwd)
-    memset(aconf->passwd, 0, strlen(aconf->passwd));
-  MyFree(aconf->passwd);
-  MyFree(aconf->name);
-  MyFree(aconf);
-#if defined(DEBUGMODE)
-  aconfs.inuse--;
-#endif
-  return;
-}
-
-aGline *make_gline(int is_ipmask, char *host, char *reason,
-    char *name, time_t expire, time_t lastmod, time_t lifetime)
-{
-  Reg4 aGline *agline;
-  const char *error_str;
-  int erroffset;
-#if defined(BADCHAN)
-  int gtype = 0;
-  if (*host == '#' || *host == '&' || *host == '+')
-    gtype = 1;                  /* BAD CHANNEL GLINE */
-#endif
-
-  agline = (struct Gline *)MyMalloc(sizeof(aGline)); /* alloc memory */
-  DupString(agline->host, host);  /* copy vital information */
-  DupString(agline->reason, reason);
-  DupString(agline->name, name);
-  agline->expire = expire;
-  agline->lastmod = lastmod;
-  agline->lifetime = lifetime;
-  agline->re = NULL; /* Inicializo a NULL, para saber si hacer free luego */
-  agline->gflags = GLINE_ACTIVE;  /* gline is active */
-  if (is_ipmask)
-    SetGlineIsIpMask(agline);
-  
-  /* Si empieza por $R o $r es de tipo RealName */
-  if(*host == '$' && (*(host+1) == 'R' || *(host+1) == 'r')) {
-    SetGlineRealName(agline); /* REALNAME GLINE */
-    if(*(host+1) == 'r')
-      SetGlineRealNameCI(agline);
-    agline->re=pcre_compile((host+2), 0, &error_str, &erroffset, NULL);
-  }
-
-#if defined(BADCHAN)
-  if (gtype)
-  {
-    agline->next = badchan;     /* link it into the list */
-    return (badchan = agline);
-  }
-#endif
-  agline->next = gline;         /* link it into the list */
-  return (gline = agline);
-}
-
-aGline *find_gline(struct Client *cptr, aGline **pgline)
-{
-  Reg3 aGline *agline = gline, *a2gline = NULL;
-  char cptr_info_low[REALLEN+1];
-  char *tmp;
-
-  /* Paso el realname a minusculas para matcheo en pcre */
-  strncpy(cptr_info_low, PunteroACadena(cptr->info), REALLEN);
-  cptr_info_low[REALLEN]='\0';
-
-  tmp=cptr_info_low;
-  
-  while (*tmp) {
-    *tmp=ToLower(*tmp);
-    *tmp++;
-  }
-  
-  while (agline)
-  {                             /* look through all glines */
-    if (agline->expire <= TStime())
-    {                           /* handle expired glines */
-      free_gline(agline, a2gline);
-      agline = a2gline ? a2gline->next : gline;
-      if (!agline)
-        break;                  /* agline == NULL means gline == NULL */
-      continue;
-    }
-
-    if(GlineIsRealNameCI(agline))
-      tmp=cptr_info_low;
-    else if(GlineIsRealName(agline))
-      tmp=PunteroACadena(cptr->info);
-
-    /* Does gline match? */
-    /* Added a check against the user's IP address as well -Kev */
-        
-    if ((GlineIsIpMask(agline) ? match(agline->host, ircd_ntoa(client_addr(cptr))) :
-    	(GlineIsRealName(agline) ? match_pcre(agline->re, tmp) :
-#ifdef HISPANO_WEBCHAT
-    	  match(agline->host, PunteroACadena(cptr->cli_user->host)))) == 0 &&
-#else
-    	  match(agline->host, PunteroACadena(cptr->cli_connect->sockhost)))) == 0 &&
-#endif
-    	  match(agline->name, PunteroACadena(cptr->cli_user->username)) == 0)
-    {
-      if (pgline)
-        *pgline = a2gline;      /* If they need it, give them the previous gline
-                                   entry (probably for free_gline, below) */
-      return agline;
-    }
-
-    a2gline = agline;
-    agline = agline->next;
-  }
-
-  return NULL;                  /* found no glines */
-}
-
-void free_gline(aGline *agline, aGline *pgline)
-{
-  if (pgline)
-    pgline->next = agline->next;  /* squeeze agline out */
-  else
-  {
-#if defined(BADCHAN)
-    if (*agline->host == '#' || *agline->host == '&' || *agline->host == '+')
-    {
-      badchan = agline->next;
-    }
-    else
-#endif
-      gline = agline->next;
-  }
-
-  MyFree(agline->host);        /* and free up the memory */
-  MyFree(agline->reason);
-  MyFree(agline->name);
-  if(agline->re)
-    MyFree(agline->re);
-  
-  MyFree(agline);
-}
-
-#if defined(BADCHAN)
-int bad_channel(char *name)
-{
-  aGline *agline;
-
-  agline = badchan;
-  while (agline)
-  {
-    if ((agline->gflags & GLINE_ACTIVE) && (agline->expire > TStime()) &&
-        !mmatch(agline->host, name))
-    {
-      return 1;
-    }
-    agline = agline->next;
-  }
-  return 0;
-}
-
-#endif /* BADCHAN */
-
-#if defined(WATCH)
-/*
- * Listas de WATCH
- *
- * make_watch()  Reserva una entrada en la lista de Watch.
- * free_watch()  Libera una entrada de la lista de Watch.
- *
- * 2002/05/20 zoltan <zoltan@irc-dev.net>
+/** Report memory usage of a list to \a cptr.
+ * @param[in] cptr Client requesting information.
+ * @param[in] lstats List statistics descriptor.
+ * @param[in] itemname Plural name of item type.
+ * @param[in,out] totals If non-null, accumulates item counts and memory usage.
  */
-
-aWatch *make_watch(char *nick)
+static
+void send_liststats(struct Client *cptr, const struct liststats *lstats,
+                    const char *itemname, struct liststats *totals)
 {
-  Reg1 aWatch *wptr;
-
-  if (BadPtr(nick))
-    return NULL;
-
-  wptr = (aWatch *) MyMalloc(sizeof(aWatch));
-  if (!wptr)
-    outofmemory();
-  memset(wptr, 0, sizeof(aWatch));
-
-  DupString(wptr->nick, nick);
-
-  hAddWatch(wptr);
-
-#if defined(DEBUGMODE)
-  watchs.inuse++;
-#endif
-
-  return (wptr);
-
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG, ":%s: inuse %zu(%zu) alloc %zu",
+	     itemname, lstats->inuse, lstats->mem, lstats->alloc);
+  if (totals)
+  {
+    totals->inuse += lstats->inuse;
+    totals->alloc += lstats->alloc;
+    totals->mem += lstats->mem;
+  }
 }
 
-void free_watch(aWatch * wptr)
-{
-
-  hRemWatch(wptr);
-  MyFree(wptr->nick);
-  MyFree(wptr);
-
-#if defined(DEBUGMODE)
-  watchs.inuse--;
-#endif
-
-}
-
-#endif /* WATCH */
-
-#if defined(DEBUGMODE)
+/** Report memory usage of list elements to \a cptr.
+ * @param[in] cptr Client requesting information.
+ * @param[in] name Unused pointer.
+ */
 void send_listinfo(struct Client *cptr, char *name)
 {
-  int inuse = 0, mem = 0, tmp = 0;
-#if 0
-  sendto_one(cptr, ":%s %d %s :Local: inuse: %d(%d)",
-      me.name, RPL_STATSDEBUG, name, inuse += cloc.inuse,
-      tmp = cloc.inuse * CLIENT_LOCAL_SIZE);
-  mem += tmp;
-  sendto_one(cptr, ":%s %d %s :Remote: inuse: %d(%d)",
-      me.name, RPL_STATSDEBUG, name,
-      crem.inuse, tmp = crem.inuse * CLIENT_REMOTE_SIZE);
-  mem += tmp;
-  inuse += crem.inuse;
-  sendto_one(cptr, ":%s %d %s :Users: inuse: %d(%d)",
-      me.name, RPL_STATSDEBUG, name, users.inuse,
-      tmp = users.inuse * sizeof(anUser));
-  mem += tmp;
-  inuse += users.inuse,
-      sendto_one(cptr, ":%s %d %s :Servs: inuse: %d(%d)",
-      me.name, RPL_STATSDEBUG, name, servs.inuse,
-      tmp = servs.inuse * sizeof(aServer));
-  mem += tmp;
-#endif
-  inuse += servs.inuse,
-      sendto_one(cptr, ":%s %d %s :Links: inuse: %d(%d)",
-      me.name, RPL_STATSDEBUG, name, links.inuse,
-      tmp = links.inuse * sizeof(Link));
-  mem += tmp;
-  inuse += links.inuse,
-      sendto_one(cptr, ":%s %d %s :Classes: inuse: %d(%d)",
-      me.name, RPL_STATSDEBUG, name, classs.inuse,
-      tmp = classs.inuse * sizeof(aConfClass));
-  mem += tmp;
-  inuse += classs.inuse,
-      sendto_one(cptr, ":%s %d %s :Confs: inuse: %d(%d)",
-      me.name, RPL_STATSDEBUG, name, aconfs.inuse,
-      tmp = aconfs.inuse * sizeof(aConfItem));
-  mem += tmp;
-  inuse += aconfs.inuse,
-#if defined(WATCH)
-      sendto_one(cptr, ":%s %d %s :Watchs: inuse: %d(%d)",
-      me.name, RPL_STATSDEBUG, name, watchs.inuse,
-      tmp = watchs.inuse * sizeof(aWatch));
-  mem += tmp;
-  inuse += watchs.inuse,
-#endif /* WATCH */
-      sendto_one(cptr, ":%s %d %s :Totals: inuse %d %d",
-      me.name, RPL_STATSDEBUG, name, inuse, mem);
-}
+  struct liststats total;
+  struct liststats confs;
+  struct ConfItem *conf;
 
-#endif
+  memset(&total, 0, sizeof(total));
+
+  clients.mem = clients.inuse * sizeof(struct Client);
+  send_liststats(cptr, &clients, "Clients", &total);
+
+  connections.mem = connections.inuse * sizeof(struct Connection);
+  send_liststats(cptr, &connections, "Connections", &total);
+
+  servs.mem = servs.inuse * sizeof(struct Server);
+  send_liststats(cptr, &servs, "Servers", &total);
+
+  links.mem = links.inuse * sizeof(struct SLink);
+  send_liststats(cptr, &links, "Links", &total);
+
+  confs.alloc = GlobalConfCount;
+  confs.mem = confs.alloc * sizeof(GlobalConfCount);
+  for (confs.inuse = 0, conf = GlobalConfList; conf; conf = conf->next)
+    confs.inuse++;
+  send_liststats(cptr, &confs, "Confs", &total);
+
+  send_liststats(cptr, &total, "Totals", NULL);
+}

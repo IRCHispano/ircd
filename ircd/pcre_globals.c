@@ -46,7 +46,7 @@ indirection. These values can be changed by the caller, but are shared between
 all threads. However, when compiling for Virtual Pascal, things are done
 differently, and global variables are not used (see pcre.in). */
 
-#include "sys.h"
+#include "config.h"
 #include "ircd_alloc.h"
 
 #ifdef HAVE_CONFIG_H

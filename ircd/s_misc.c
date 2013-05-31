@@ -1,15 +1,13 @@
 /*
- * IRC - Internet Relay Chat, ircd/s_misc.c (formerly ircd/date.c)
- * Copyright (C) 1990 Jarkko Oikarinen and
- *                    University of Oulu, Computing Center
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/s_err.c
  *
- * See file AUTHORS in IRC package for additional names of
- * the programmers.
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,107 +16,98 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
+/** @file
+ * @brief Miscellaneous support functions.
+ * @version $Id$
+ */
+#include "config.h"
 
-#include "sys.h"
-#include <sys/stat.h>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-#if HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#if defined(USE_SYSLOG)
-#include <syslog.h>
-#endif
-#include "h.h"
-#include "client.h"
-#include "s_debug.h"
-#include "struct.h"
-#include "s_serv.h"
-#include "numeric.h"
-#include "send.h"
-#include "s_conf.h"
 #include "s_misc.h"
-#include "common.h"
-#include "match.h"
-#include "hash.h"
-#include "s_bsd.h"
-#include "res.h"
-#include "list.h"
-#include "ircd.h"
-#include "s_ping.h"
-#include "channel.h"
-#include "s_err.h"
-#include "support.h"
-#include "userload.h"
-#include "parse.h"
-#include "s_user.h"
-#include "numnicks.h"
-#include "sprintf_irc.h"
-#include "querycmds.h"
 #include "IPcheck.h"
-#include "m_watch.h"
-#include "slab_alloc.h"
-#include "s_bdd.h"
-#include "msg.h"
+#include "channel.h"
+#include "client.h"
+#include "hash.h"
+#include "ircd.h"
 #include "ircd_alloc.h"
+#include "ircd_features.h"
+#include "ircd_log.h"
+#include "ircd_reply.h"
+#include "ircd_snprintf.h"
+#include "ircd_string.h"
+#include "list.h"
+#include "match.h"
+#include "msg.h"
+#include "numeric.h"
+#include "numnicks.h"
+#include "parse.h"
+#include "querycmds.h"
+#include "res.h"
+#include "s_auth.h"
+#include "s_bsd.h"
+#include "s_conf.h"
+#include "s_debug.h"
+#include "s_stats.h"
+#include "s_user.h"
+#include "send.h"
+#include "struct.h"
+#include "uping.h"
+#include "userload.h"
+#include "watch.h"
 
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-#include "dbuf.h"
-#endif
+/* #include <assert.h> -- Now using assert in ircd_log.h */
+#include <fcntl.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#include <assert.h>
-
-RCSTAG_CC("$Id$");
-
-static void exit_one_client(struct Client *, char *);
-
-#if 0
+/** Array of English month names (0 = January). */
 static char *months[] = {
   "January", "February", "March", "April",
   "May", "June", "July", "August",
   "September", "October", "November", "December"
 };
 
+/** Array of English day names (0 = Sunday). */
 static char *weekdays[] = {
   "Sunday", "Monday", "Tuesday", "Wednesday",
   "Thursday", "Friday", "Saturday"
 };
-#else
-static char *months[] = {
-  "Enero", "Febrero", "Marzo", "Abril",
-  "Mayo", "Junio", "Julio", "Agosto",
-  "Septiembre", "Octubre", "Noviembre", "Diciembre"
-};
-
-static char *weekdays[] = {
-  "Dom", "Lun", "Mar", "Mie",
-  "Jue", "Vie", "Sab"
-};
-#endif
-
 
 /*
  * stats stuff
  */
-struct stats ircst, *ircstp = &ircst;
+/** Global statistics structure. */
+static struct ServerStatistics ircst;
+/** Public pointer to global statistics structure. */
+struct ServerStatistics* ServerStats = &ircst;
 
+/** Formats a Unix time as a readable string.
+ * @param clock Unix time to format (0 means #CurrentTime).
+ * @return Pointer to a static buffer containing something like
+ * "Sunday January 1 2000 -- 09:30 +01:00"
+ */
 char *date(time_t clock)
 {
   static char buf[80], plus;
-  Reg1 struct tm *lt, *gm;
+  struct tm *lt, *gm;
   struct tm gmbuf;
   int minswest;
 
   if (!clock)
-    clock = now;
+    clock = CurrentTime;
   gm = gmtime(&clock);
   memcpy(&gmbuf, gm, sizeof(gmbuf));
   gm = &gmbuf;
   lt = localtime(&clock);
 
+  /* There is unfortunately no clean portable way to extract time zone
+   * offset information, so do ugly things.
+   */
   minswest = (gm->tm_hour - lt->tm_hour) * 60 + (gm->tm_min - lt->tm_min);
   if (lt->tm_yday != gm->tm_yday)
   {
@@ -133,29 +122,26 @@ char *date(time_t clock)
   if (minswest < 0)
     minswest = -minswest;
 
-  sprintf(buf, "%s, %d/%02d/%d %02d:%02d:%02d %c%02d%02d",
-      weekdays[lt->tm_wday], lt->tm_mday, lt->tm_mon+1,
-      1900 + lt->tm_year, lt->tm_hour, lt->tm_min, lt->tm_sec,
+  sprintf(buf, "%s %s %d %d -- %02d:%02d %c%02d:%02d",
+      weekdays[lt->tm_wday], months[lt->tm_mon], lt->tm_mday,
+      1900 + lt->tm_year, lt->tm_hour, lt->tm_min,
       plus, minswest / 60, minswest % 60);
 
   return buf;
 }
 
-/*
- * myctime
- *
- * This is like standard ctime()-function, but it zaps away
- * the newline from the end of that string. Also, it takes
+/** Like ctime() but with no trailing newline. Also, it takes
  * the time value as parameter, instead of pointer to it.
- * Note that it is necessary to copy the string to alternate
- * buffer (who knows how ctime() implements it, maybe it statically
- * has newline there and never 'refreshes' it -- zapping that
- * might break things in other places...)
+ * @param value Unix time to format.
+ * @return Pointer to a static buffer containing formatted time.
  */
 char *myctime(time_t value)
 {
+  /* Use a secondary buffer in case ctime() would not replace an
+   * overwritten newline.
+   */
   static char buf[28];
-  Reg1 char *p;
+  char *p;
 
   strcpy(buf, ctime(&value));
   if ((p = strchr(buf, '\n')) != NULL)
@@ -164,192 +150,187 @@ char *myctime(time_t value)
   return buf;
 }
 
-/*
- *  get_client_name
- *       Return the name of the client for various tracking and
- *       admin purposes. The main purpose of this function is to
- *       return the "socket host" name of the client, if that
- *    differs from the advertised name (other than case).
- *    But, this can be used to any client structure.
- *
- *    Returns:
- *      "name[user@ip#.port]" if 'showip' is true;
- *      "name[sockethost]", if name and sockhost are different and
- *      showip is false; else
- *      "name".
- *
- *  NOTE 1:
- *    Watch out the allocation of "nbuf", if either sptr->name
- *    or sptr->cli_connect->sockhost gets changed into pointers instead of
- *    directly allocated within the structure...
- *
- *  NOTE 2:
- *    Function return either a pointer to the structure (sptr) or
- *    to internal buffer (nbuf). *NEVER* use the returned pointer
- *    to modify what it points!!!
+/** Return the name of the client for various tracking and admin
+ * purposes. The main purpose of this function is to return the
+ * "socket host" name of the client, if that differs from the
+ * advertised name (other than case).  But, this can be used on any
+ * client structure.
+ * @param sptr Client to operate on.
+ * @param showip If non-zero, append [username\@text-ip] to name.
+ * @return Either cli_name(\a sptr) or a static buffer.
  */
-const char *get_client_name(const struct Client *sptr, int showip)
+const char* get_client_name(const struct Client* sptr, int showip)
 {
   static char nbuf[HOSTLEN * 2 + USERLEN + 5];
 
-  if (MyConnect(sptr))
-  {
-    if (IsUnixSocket(sptr))
-    {
-      if (showip)
-        sprintf_irc(nbuf, "%s[%s]", PunteroACadena(sptr->name),
-            PunteroACadena(sptr->cli_connect->sockhost));
-      else
-        sprintf_irc(nbuf, "%s[%s]", PunteroACadena(sptr->name),
-            me.name);
+  if (!MyConnect(sptr) || !showip)
+    return cli_name(sptr);
+  ircd_snprintf(0, nbuf, sizeof(nbuf), "%s[%s@%s]", cli_name(sptr),
+                IsIdented(sptr) ? cli_username(sptr) : "",
+                cli_sock_ip(sptr));
+  return nbuf;
+}
+
+/**
+ * Exit one client, local or remote. Assuming for local client that
+ * all dependents already have been removed, and socket is closed.
+ * @param bcptr Client being (s)quitted.
+ * @param comment The QUIT comment to send.
+ */
+/* Rewritten by Run - 24 sept 94 */
+static void exit_one_client(struct Client* bcptr, const char* comment)
+{
+  struct Invite *ip;
+  struct Ban *bp;
+
+#if defined(USE_ZLIB)
+  if (MyConnect(bcptr))
+    zlib_microburst_delete(bcptr);
+#endif
+
+  if (cli_serv(bcptr) && cli_serv(bcptr)->client_list)  /* Was SetServerYXX called ? */
+    ClearServerYXX(bcptr);      /* Removes server from server_list[] */
+  if (IsUser(bcptr)) {
+    /*
+     * clear out uping requests
+     */
+    if (IsUPing(bcptr))
+      uping_cancel(bcptr, 0);
+    /*
+     * Stop a running /LIST clean
+     */
+    if (MyUser(bcptr) && cli_listing(bcptr)) {
+      MyFree(cli_listing(bcptr));
+      cli_listing(bcptr) = NULL;
     }
+    /*
+     * If a person is on a channel, send a QUIT notice
+     * to every client (person) on the same channel (so
+     * that the client can show the "**signoff" message).
+     * (Note: The notice is to the local clients *only*)
+     */
+    sendcmdto_common_channels(bcptr, CMD_QUIT, NULL, ":%s", comment);
+
+    remove_user_from_all_channels(bcptr);
+
+    /* Clean up invitefield */
+    while ((ip = cli_user(bcptr)->invited))
+      del_invite(bcptr, ip->channel);
+
+    /* Clean up silencefield */
+    while ((bp = cli_user(bcptr)->silence)) {
+      cli_user(bcptr)->silence = bp->next;
+      free_ban(bp);
+    }
+
+    /* Clean up watch lists */
+    if (MyUser(bcptr))
+      del_list_watch(bcptr);
+    /* Notify Logout */
+    check_status_watch(bcptr, RPL_LOGOFF);
+
+    /* Clean up snotice lists */
+    if (MyUser(bcptr))
+      set_snomask(bcptr, ~0, SNO_DEL);
+
+    if (IsInvisible(bcptr)) {
+      assert(UserStats.inv_clients > 0);
+      --UserStats.inv_clients;
+    }
+    if (IsOper(bcptr)) {
+      assert(UserStats.opers > 0);
+      --UserStats.opers;
+    }
+    if (MyConnect(bcptr))
+      Count_clientdisconnects(bcptr, UserStats);
     else
-    {
-      if (showip)
-      {
-        if (sptr->flags & FLAGS_GOTID)
-          assert(sptr->username);
+      Count_remoteclientquits(UserStats, bcptr);
+  }
+  else if (IsServer(bcptr))
+  {
+    /* Remove downlink list node of uplink */
+    remove_dlink(&(cli_serv(cli_serv(bcptr)->up))->down, cli_serv(bcptr)->updown);
+    cli_serv(bcptr)->updown = 0;
 
-        sprintf_irc(nbuf, "%s[%s@%s]", PunteroACadena(sptr->name),
-            (sptr->flags & FLAGS_GOTID) ? sptr->username : "",
-            ircd_ntoa_c(sptr));
-      }
-      else
-      {
-#if defined(BDD_VIP)
-        return PunteroACadena(sptr->name);
+    if (MyConnect(bcptr))
+      Count_serverdisconnects(UserStats);
+    else
+      Count_remoteserverquits(UserStats);
+  }
+  else if (IsMe(bcptr))
+  {
+    sendto_opmask(0, SNO_OLDSNO, "ERROR: tried to exit me! : %s", comment);
+    return;                     /* ...must *never* exit self! */
+  }
+  else if (IsUnknown(bcptr) || IsConnecting(bcptr) || IsHandshake(bcptr))
+    Count_unknowndisconnects(UserStats);
+
+  /*
+   * Update IPregistry
+   */
+  if (IsIPChecked(bcptr))
+    IPcheck_disconnect(bcptr);
+
+  /* 
+   * Remove from serv->client_list
+   * NOTE: user is *always* NULL if this is a server
+   */
+  if (cli_user(bcptr)) {
+    assert(!IsServer(bcptr));
+    /* bcptr->user->server->serv->client_list[IndexYXX(bcptr)] = NULL; */
+    RemoveYXXClient(cli_user(bcptr)->server, cli_yxx(bcptr));
+  }
+
+  /* Remove bcptr from the client list */
+#ifdef DEBUGMODE
+  if (hRemClient(bcptr) != 0)
+    Debug((DEBUG_ERROR, "%p !in tab %s[%s] %p %p %p %d %d %p",
+          bcptr, cli_name(bcptr), cli_from(bcptr) ? cli_sockhost(cli_from(bcptr)) : "??host",
+          cli_from(bcptr), cli_next(bcptr), cli_prev(bcptr), cli_fd(bcptr),
+          cli_status(bcptr), cli_user(bcptr)));
 #else
-        if (sptr->name
-            && strCasediff(sptr->name, PunteroACadena(sptr->cli_connect->sockhost)))
-          sprintf_irc(nbuf, "%s[%s]", sptr->name,
-              PunteroACadena(sptr->cli_connect->sockhost));
-        else
-          return PunteroACadena(sptr->name);
+  hRemClient(bcptr);
 #endif
-      }
-    }
-    return nbuf;
-  }
-  return PunteroACadena(sptr->name);
+  remove_client_from_list(bcptr);
 }
 
-#if defined(BDD_VIP)
-/* Devuelve la ip virtual/real de la siguiente forma segun corresponda:
- * user[QwErTy.AsDfGh.virtual] 
- * user[hostname.com]
- */
-char *get_visible_name(struct Client *sptr, struct Client *acptr)
-{
-  static char nbuf[HOSTLEN * 2 + USERLEN + 5];
-  sprintf_irc(nbuf, "%s[%s]", PunteroACadena(acptr->name),
-      get_visiblehost(acptr, sptr));
-  return nbuf;
-}
-#endif
-
-char *get_client_host(struct Client *cptr)
-{
-  static char nbuf[HOSTLEN * 2 + USERLEN + 5];
-
-  if (!MyConnect(cptr))
-    return cptr->name;
-  if (!cptr->cli_connect->hostp)
-    return get_client_name(cptr, FALSE);
-  if (IsUnixSocket(cptr))
-    sprintf_irc(nbuf, "%s[%s]", cptr->name, me.name);
-  else
-  {
-    if (cptr->flags & FLAGS_GOTID)
-      assert(cptr->username);
-
-    sprintf(nbuf, "%s[%-.*s@%-.*s]", cptr->name, USERLEN,
-        (cptr->flags & FLAGS_GOTID) ? cptr->username : "",
-        HOSTLEN, cptr->cli_connect->hostp->h_name);
-  }
-  return nbuf;
-}
-
-/*
- * Form sockhost such that if the host is of form user@host, only the host
- * portion is copied.
- */
-void get_sockhost(struct Client *cptr, char *host)
-{
-  Reg3 char *s;
-  if ((s = strchr(host, '@')))
-    s++;
-  else
-    s = host;
-  SlabStringAllocDup(&(cptr->cli_connect->sockhost), s, HOSTLEN);
-}
-
-/*
- * Return wildcard name of my server name according to given config entry
- * --Jto
- */
-char *my_name_for_link(char *name, aConfItem *aconf)
-{
-  static char namebuf[HOSTLEN];
-  int count = aconf->port;
-  char *start = name;
-
-  if (count <= 0 || count > 5)
-    return start;
-
-  while (count-- && name)
-  {
-    name++;
-    name = strchr(name, '.');
-  }
-  if (!name)
-    return start;
-
-  namebuf[0] = '*';
-  strncpy(&namebuf[1], name, HOSTLEN - 1);
-  namebuf[HOSTLEN - 1] = '\0';
-
-  return namebuf;
-}
-
-/*
- * exit_downlinks - added by Run 25-9-94
- *
+/* exit_downlinks - added by Run 25-9-94 */
+/**
  * Removes all clients and downlinks (+clients) of any server
  * QUITs are generated and sent to local users.
- *
- * cptr    : server that must have all dependents removed
- * sptr    : source who thought that this was a good idea
- * comment : comment sent as sign off message to local clients
+ * @param cptr server that must have all dependents removed
+ * @param sptr source who thought that this was a good idea
+ * @param comment comment sent as sign off message to local clients
  */
 static void exit_downlinks(struct Client *cptr, struct Client *sptr, char *comment)
 {
-  Reg1 struct Client *acptr;
-  Reg2 struct DLink *next;
-  Reg3 struct DLink *lp;
+  struct Client *acptr;
+  struct DLink *next;
+  struct DLink *lp;
   struct Client **acptrp;
-  int i;
+  unsigned int i;
 
   /* Run over all its downlinks */
-  for (lp = cptr->cli_serv->down; lp; lp = next)
+  for (lp = cli_serv(cptr)->down; lp; lp = next)
   {
     next = lp->next;
     acptr = lp->value.cptr;
     /* Remove the downlinks and client of the downlink */
     exit_downlinks(acptr, sptr, comment);
     /* Remove the downlink itself */
-    exit_one_client(acptr, me.name);
+    exit_one_client(acptr, cli_name(&me));
   }
   /* Remove all clients of this server */
-  acptrp = cptr->cli_serv->client_list;
-  for (i = 0; i <= cptr->cli_serv->nn_mask; ++acptrp, ++i)
+  acptrp = cli_serv(cptr)->client_list;
+  for (i = 0; i <= cli_serv(cptr)->nn_mask; ++acptrp, ++i) {
     if (*acptrp)
       exit_one_client(*acptrp, comment);
+  }
 }
 
-/*
- * exit_client, rewritten 25-9-94 by Run
- *
- * This function exits a client of *any* type (user, server, etc)
+/* exit_client, rewritten 25-9-94 by Run */
+/**
+ * Exits a client of *any* type (user, server, etc)
  * from this server. Also, this generates all necessary prototol
  * messages that this exit may cause.
  *
@@ -357,13 +338,13 @@ static void exit_downlinks(struct Client *cptr, struct Client *sptr, char *comme
  * this connection.
  *
  * For convenience, this function returns a suitable value for
- * m_funtion return value:
+ * m_function return value:
  *
  *   CPTR_KILLED     if (cptr == bcptr)
  *   0                if (cptr != bcptr)
  *
  * This function can be called in two ways:
- * 1) From before or in parse(), exitting the 'cptr', in which case it was
+ * 1) From before or in parse(), exiting the 'cptr', in which case it was
  *    invoked as exit_client(cptr, cptr, &me,...), causing it to always
  *    return CPTR_KILLED.
  * 2) Via parse from a m_function call, in which case it was invoked as
@@ -374,465 +355,267 @@ static void exit_downlinks(struct Client *cptr, struct Client *sptr, char *comme
  *    exit_client(cptr, acptr/sptr, &me, ...) when WE decide this one should
  *    be removed.
  * In general: No generated SQUIT or QUIT should be sent to source link
- * cli_from(sptr). And CPTR_KILLED should be returned if cptr got removed (too).
+ * sptr->from. And CPTR_KILLED should be returned if cptr got removed (too).
  *
  * --Run
+ * @param cptr Connection currently being handled by read_message.
+ * @param victim Client being killed.
+ * @param killer Client that made the decision to remove \a victim.
+ * @param comment Reason for the exit.
+ * @return CPTR_KILLED if cptr == bcptr, else 0.
  */
-int exit_client(struct Client *cptr,  /* Connection being handled by
-                                   read_message right now */
-    struct Client *bcptr,             /* Client being killed */
-    struct Client *sptr,              /* The client that made the decision
-                                   to remove this one, never NULL */
-    char *comment)              /* Reason for the exit */
+int exit_client(struct Client *cptr,
+    struct Client* victim,
+    struct Client* killer,
+    const char* comment)
 {
-  Reg1 struct Client *acptr;
-  Reg3 struct DLink *dlp;
-#if defined(FNAME_USERLOG)
+  struct Client* acptr = 0;
+  struct DLink *dlp;
   time_t on_for;
-#endif
+
   char comment1[HOSTLEN + HOSTLEN + 2];
-
-  if (!IsServer(bcptr) && IsHelpOp(bcptr))
+  assert(killer);
+  if (MyConnect(victim))
   {
-    --nrof.helpers;
-    ClearHelpOp(bcptr);
-  }
+    SetFlag(victim, FLAG_CLOSING);
 
-  if (MyConnect(bcptr))
-  {
-    bcptr->flags |= FLAGS_CLOSING;
-#if defined(ALLOW_SNO_CONNEXIT)
-#if defined(SNO_CONNEXIT_IP)
-    if (IsUser(bcptr))
-    {
-      sprintf_irc(sendbuf,
-          ":%s NOTICE * :*** Notice -- Client exiting: %s (%s@%s) [%s] [%s]",
-          me.name, bcptr->name, PunteroACadena(cli_user(bcptr)->username),
-          cli_user(bcptr)->host, comment, ircd_ntoa_c(bcptr));
-      sendbufto_op_mask(SNO_CONNEXIT);
-    }
-#else /* SNO_CONNEXIT_IP */
-    if (IsUser(bcptr))
-    {
-      sprintf_irc(sendbuf,
-          ":%s NOTICE * :*** Notice -- Client exiting: %s (%s@%s) [%s]",
-          me.name, bcptr->name, PunteroACadena(cli_user(bcptr)->username),
-          cli_user(bcptr)->host, comment);
-      sendbufto_op_mask(SNO_CONNEXIT);
-    }
-#endif /* SNO_CONNEXIT_IP */
-#endif /* ALLOW_SNO_CONNEXIT */
+    if (feature_bool(FEAT_CONNEXIT_NOTICES) && IsUser(victim))
+      sendto_opmask(0, SNO_CONNEXIT,
+                    "Client exiting: %s (%s@%s) [%s] [%s] <%s%s>",
+                    cli_name(victim), cli_user(victim)->username,
+                    cli_user(victim)->host, comment,
+                    ircd_ntoa(&cli_ip(victim)),
+                    NumNick(victim) /* two %s's */);
     update_load();
-#if defined(FNAME_USERLOG)
-    on_for = now - cli_firsttime(bcptr);
-#if defined(USE_SYSLOG) && defined(SYSLOG_USERS)
-    if (IsUser(bcptr))
-      syslog(LOG_NOTICE, "%s (%3d:%02d:%02d): %s@%s (%s)\n",
-          myctime(cli_firsttime(bcptr)), on_for / 3600, (on_for % 3600) / 60,
-          on_for % 60, PunteroACadena(cli_user(bcptr)->username),
-          PunteroACadena(bcptr->cli_connect->sockhost), bcptr->name);
+
+    on_for = CurrentTime - cli_firsttime(victim);
+
+    if (IsUser(victim) || IsUserPort(victim))
+      auth_send_exit(victim);
+
+    if (IsUser(victim))
+      log_write(LS_USER, L_TRACE, 0, "%Tu %i %s@%s %s %s %s%s %s :%s",
+		cli_firsttime(victim), on_for,
+		cli_user(victim)->username, cli_sockhost(victim),
+                ircd_ntoa(&cli_ip(victim)),
+#if defined(UNDERNET)
+                IsAccount(victim) ? cli_username(victim) : "0",
 #else
-    if (IsUser(bcptr))
-      write_log(FNAME_USERLOG,
-          "%s (%3d:%02d:%02d): %s@%s [%s]\n",
-          myctime(cli_firsttime(bcptr)),
-          on_for / 3600, (on_for % 3600) / 60,
-          on_for % 60,
-          PunteroACadena(cli_user(bcptr)->username), cli_user(bcptr)->host,
-          PunteroACadena(bcptr->username));
+                "0",
 #endif
-#endif
-    if (bcptr != cli_from(sptr)     /* The source knows already */
-        && IsClient(bcptr))     /* Not a Ping struct or Log file */
+                NumNick(victim), /* two %s's */
+                cli_name(victim), cli_info(victim));
+
+    if (victim != cli_from(killer)  /* The source knows already */
+        && IsClient(victim))    /* Not a Ping struct or Log file */
     {
-      if (IsServer(bcptr) || IsHandshake(bcptr))
-      {
-#if !defined(NO_PROTOCOL9)
-        if (Protocol(bcptr) < 10)
-          sendto_one(bcptr, ":%s SQUIT %s 0 :%s", sptr->name, me.name, comment);
-        else
-#endif
-          sendto_one(bcptr, "%s " TOK_SQUIT " %s 0 :%s", NumServ(sptr), me.name, comment);
-        update_nextconnect(0);
+      if (IsServer(victim) || IsHandshake(victim))
+	sendcmdto_one(killer, CMD_SQUIT, victim, "%s 0 :%s", cli_name(&me), comment);
+      else if (!IsConnecting(victim)) {
+        if (!IsDead(victim)) {
+	  if (IsServer(victim))
+	    sendcmdto_one(killer, CMD_ERROR, victim,
+			  ":Closing Link: %s by %s (%s)", cli_name(victim),
+			  cli_name(killer), comment);
+	  else
+	    sendrawto_one(victim, MSG_ERROR " :Closing Link: %s by %s (%s)",
+			  cli_name(victim),
+                          cli_name(IsServer(killer) ? &his : killer),
+			  comment);
+	}
       }
-      else if (!IsConnecting(bcptr))
-        sendto_one(bcptr, "ERROR :Closing Link: %s by %s (%s)",
-            get_client_name(bcptr, FALSE), sptr->name, comment);
-      if ((IsServer(bcptr) || IsHandshake(bcptr) || IsConnecting(bcptr)) &&
-          (sptr == &me || (IsServer(sptr) &&
+      if ((IsServer(victim) || IsHandshake(victim) || IsConnecting(victim)) &&
+          (killer == &me || (IsServer(killer) &&
           (strncmp(comment, "Leaf-only link", 14) ||
           strncmp(comment, "Non-Hub link", 12)))))
       {
-        if (cli_serv(bcptr)->user && cli_serv(bcptr)->by &&
-            (acptr = findNUser(cli_serv(bcptr)->by)) &&
-            acptr->cli_user == cli_serv(bcptr)->user)
-        {
-          if (MyUser(acptr) 
-#if !defined(NO_PROTOCOL9)
-              || Protocol(cli_from(acptr)) < 10
-#endif
-          )
-            sendto_one(acptr,
-                ":%s NOTICE %s :Link with %s cancelled: %s",
-                me.name, acptr->name, bcptr->name, comment);
-          else
-            sendto_one(acptr,
-                "%s " TOK_NOTICE " %s%s :Link with %s cancelled: %s",
-                NumServ(&me), NumNick(acptr), bcptr->name, comment);
+        /*
+         * Note: check user == user needed to make sure we have the same
+         * client
+         */
+        if (cli_serv(victim)->user && *(cli_serv(victim))->by &&
+            (acptr = findNUser(cli_serv(victim)->by))) {
+          if (cli_user(acptr) == cli_serv(victim)->user) {
+	    sendcmdto_one(&me, CMD_NOTICE, acptr,
+			  "%C :Link with %s canceled: %s", acptr,
+			  cli_name(victim), comment);
+          }
+          else {
+            /*
+             * not right client, set by to empty string
+             */
+            acptr = 0;
+            *(cli_serv(victim))->by = '\0';
+          }
         }
-        else
-          acptr = NULL;
-        if (sptr == &me)
-          sendto_lops_butone(acptr, "Link with %s cancelled: %s",
-              bcptr->name, comment);
+        if (killer == &me)
+	  sendto_opmask(acptr, SNO_OLDSNO, "Link with %s canceled: %s",
+                        cli_name(victim), comment);
       }
     }
     /*
      *  Close the Client connection first.
      */
-    close_connection(bcptr);
+    close_connection(victim);
   }
 
-  if (IsServer(bcptr))
+  if (IsServer(victim))
   {
-    if (ocultar_servidores)
-    {
+    if (feature_bool(FEAT_HIS_NETSPLIT))
       strcpy(comment1, "*.net *.split");
-    }
     else
     {
-      strcpy(comment1, cli_serv(bcptr)->up->name);
+      strcpy(comment1, cli_name(cli_serv(victim)->up));
       strcat(comment1, " ");
-      strcat(comment1, bcptr->name);
+      strcat(comment1, cli_name(victim));
     }
 
-    if (IsUser(sptr))
-      sendto_lops_butone(sptr, "%s SQUIT by %s [%s]:",
-          (sptr->cli_user->server == bcptr ||
-          sptr->cli_user->server == cli_serv(bcptr)->up) ? "Local" : "Remote",
-#if defined(BDD_VIP)
-          IsHidden(sptr) ? sptr->name :
-#endif
-          get_client_name(sptr, FALSE), sptr->cli_user->server->name);
-    else if (sptr != &me && cli_serv(bcptr)->up != sptr)
-      sendto_ops("Received SQUIT %s from %s :", bcptr->name,
-          IsServer(sptr) ? sptr->name : get_client_name(sptr, FALSE));
-    sendto_op_mask(SNO_NETWORK, "Net break: %s %s (%s)",
-                   cli_serv(bcptr)->up->name, bcptr->name, comment);    
+    if (IsUser(killer))
+      sendto_opmask(killer, SNO_OLDSNO, "%s SQUIT by %s [%s]:",
+                    (cli_user(killer)->server == victim ||
+                     cli_user(killer)->server == cli_serv(victim)->up) ?
+                    "Local" : "Remote",
+                    get_client_name(killer, HIDE_IP),
+                    cli_name(cli_user(killer)->server));
+    else if (killer != &me && cli_serv(victim)->up != killer)
+      sendto_opmask(0, SNO_OLDSNO, "Received SQUIT %s from %s :",
+                    cli_name(victim), IsServer(killer) ? cli_name(killer) :
+                    get_client_name(killer, HIDE_IP));
+    sendto_opmask(0, SNO_NETWORK, "Net break: %C %C (%s)",
+                  cli_serv(victim)->up, victim, comment);
   }
 
   /*
    * First generate the needed protocol for the other server links
    * except the source:
    */
-  for (dlp = cli_serv(&me)->down; dlp; dlp = dlp->next)
-    if (dlp->value.cptr != cli_from(sptr) && dlp->value.cptr != bcptr)
+  for (dlp = cli_serv(&me)->down; dlp; dlp = dlp->next) {
+    if (dlp->value.cptr != cli_from(killer) && dlp->value.cptr != victim)
     {
-#if !defined(NO_PROTOCOL9)
-      if (Protocol(dlp->value.cptr) < 10)
-      {
-        if (IsServer(bcptr))
-          sendto_one(dlp->value.cptr, ":%s SQUIT %s " TIME_T_FMT " :%s",
-              sptr->name, bcptr->name, cli_serv(bcptr)->timestamp, comment);
-        else if (IsUser(bcptr) && (bcptr->flags & FLAGS_KILLED) == 0)
-          sendto_one(dlp->value.cptr, ":%s QUIT :%s", bcptr->name, comment);
-      }
-      else
-#endif
-      {
-        if (IsServer(bcptr))
-          sendto_one(dlp->value.cptr, "%s " TOK_SQUIT " %s " TIME_T_FMT " :%s",
-              NumServ(sptr), bcptr->name, cli_serv(bcptr)->timestamp, comment);
-        else if (IsUser(bcptr) && (bcptr->flags & FLAGS_KILLED) == 0)
-          sendto_one(dlp->value.cptr, "%s%s " TOK_QUIT " :%s", NumNick(bcptr), comment);
-      }
+      if (IsServer(victim))
+	sendcmdto_one(killer, CMD_SQUIT, dlp->value.cptr, "%s %Tu :%s",
+		      cli_name(victim), cli_serv(victim)->timestamp, comment);
+      else if (IsUser(victim) && !HasFlag(victim, FLAG_KILLED))
+	sendcmdto_one(victim, CMD_QUIT, dlp->value.cptr, ":%s", comment);
     }
-
+  }
   /* Then remove the client structures */
-  if (IsServer(bcptr))
-    exit_downlinks(bcptr, sptr, comment1);
-  exit_one_client(bcptr, comment);
+  if (IsServer(victim))
+    exit_downlinks(victim, killer, comment1);
+  exit_one_client(victim, comment);
 
   /*
    *  cptr can only have been killed if it was cptr itself that got killed here,
-   *  because cptr can never have been a dependant of bcptr    --Run
+   *  because cptr can never have been a dependent of victim    --Run
    */
-  return (cptr == bcptr) ? CPTR_KILLED : 0;
+  return (cptr == victim) ? CPTR_KILLED : 0;
 }
 
-/*
- * Exit client with formatted message, added 25-9-94 by Run
+/**
+ * Exit client with formatted va_list message.
+ * Thin wrapper around exit_client().
+ * @param cptr Connection being processed.
+ * @param bcptr Connection being closed.
+ * @param sptr Connection who asked to close the victim.
+ * @param pattern Format string for message.
+ * @param vl Stdargs argument list.
+ * @return Has a tail call to exit_client().
  */
+/* added 25-9-94 by Run */
 int vexit_client_msg(struct Client *cptr, struct Client *bcptr, struct Client *sptr,
-    char *pattern, va_list vl)
+    const char *pattern, va_list vl)
 {
   char msgbuf[1024];
-  vsprintf_irc(msgbuf, pattern, vl);
+  ircd_vsnprintf(0, msgbuf, sizeof(msgbuf), pattern, vl);
   return exit_client(cptr, bcptr, sptr, msgbuf);
 }
 
+/**
+ * Exit client with formatted message using a variable-length argument list.
+ * Thin wrapper around exit_client().
+ * @param cptr Connection being processed.
+ * @param bcptr Connection being closed.
+ * @param sptr Connection who asked to close the victim.
+ * @param pattern Format string for message.
+ * @return Has a tail call to exit_client().
+ */
 int exit_client_msg(struct Client *cptr, struct Client *bcptr,
-    struct Client *sptr, char *pattern, ...)
+    struct Client *sptr, const char *pattern, ...)
 {
   va_list vl;
   char msgbuf[1024];
 
   va_start(vl, pattern);
-  vsprintf_irc(msgbuf, pattern, vl);
+  ircd_vsnprintf(0, msgbuf, sizeof(msgbuf), pattern, vl);
   va_end(vl);
 
   return exit_client(cptr, bcptr, sptr, msgbuf);
 }
 
-/*
- * Exit one client, local or remote. Assuming for local client that
- * all dependants already have been removed, and socket is closed.
- *
- * Rewritten by Run - 24 sept 94
- *
- * bcptr : client being (s)quitted
- * sptr : The source (prefix) of the QUIT or SQUIT
- *
- * --Run
- */
-static void exit_one_client(struct Client *bcptr, char *comment)
-{
-  Link *lp;
-
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-  if (MyConnect(bcptr))
-    elimina_cptr_microburst(bcptr);
-#endif
-
-  if (bcptr->cli_serv && cli_serv(bcptr)->client_list)  /* Was SetServerYXX called ? */
-    ClearServerYXX(bcptr);      /* Removes server from server_list[] */
-  if (IsUser(bcptr))
-  {
-    /* Stop a running /LIST clean */
-    if (MyUser(bcptr) && cli_listing(bcptr))
-    {
-      MyFree(cli_listing(bcptr));
-      cli_listing(bcptr) = NULL;
-    }
-
-    if (AskedPing(bcptr))
-      cancel_ping(bcptr, NULL);
-    /*
-     * If a person is on a channel, send a QUIT notice
-     * to every client (person) on the same channel (so
-     * that the client can show the "**signoff" message).
-     * (Note: The notice is to the local clients *only*)
-     */
-#if defined(ESNET_NEG)
-    sendto_common_notok_channels(bcptr, ":%s QUIT :%s", bcptr->name, comment);
-    sendto_common_tok_channels(bcptr, ":%s Q", bcptr->name);
-#else
-    sendto_common_channels(bcptr, ":%s QUIT :%s", bcptr->name, comment);
-#endif
-    
-    while ((lp = cli_user(bcptr)->channel))
-      remove_user_from_channel(bcptr, lp->value.chptr);
-
-    /* Clean up invitefield */
-    if (MyConnect(bcptr))
-    {
-      while ((lp = bcptr->cli_connect->invited))
-        del_invite(bcptr, lp->value.chptr);
-    }
-
-    /* Clean up silencefield */
-    while ((lp = cli_user(bcptr)->silence))
-      del_silence(bcptr, lp->value.cp);
-
-#if defined(WATCH)
-    /*
-     * Eliminamos su lista de watch.
-     * Y ademas avisamos a sus contactos de su salida :)
-     */
-    borra_lista_watch(bcptr);
-    chequea_estado_watch(bcptr, RPL_LOGOFF, NULL, NULL);
-
-#endif /* WATCH */
-
-    if (MyConnect(bcptr) && bcptr->cli_connect->passwd)
-      MyFree(bcptr->cli_connect->passwd);
-    if (MyConnect(bcptr) && bcptr->cli_connect->passbdd)
-      MyFree(bcptr->cli_connect->passbdd);
-
-    if (IsInvisible(bcptr))
-      --nrof.inv_clients;
-
-    if (IsHelpOp(bcptr))
-      --nrof.helpers;
-    if (IsServicesBot(bcptr))
-      --nrof.bots_oficiales;
-    if (IsOper(bcptr))
-      --nrof.opers;
-
-    if (MyConnect(bcptr))
-      Count_clientdisconnects(bcptr, nrof);
-    else
-      Count_remoteclientquits(nrof, bcptr);
-  }
-  else if (IsServer(bcptr))
-  {
-    /* Remove downlink list node of uplink */
-    remove_dlink(&cli_serv(bcptr)->up->cli_serv->down, cli_serv(bcptr)->updown);
-
-    if (MyConnect(bcptr))
-      Count_serverdisconnects(nrof);
-    else
-      Count_remoteserverquits(nrof);
-  }
-  else if (IsPing(bcptr))       /* Apperently, we are closing ALL links */
-  {
-    del_queries((char *)bcptr);
-    end_ping(bcptr);
-    return;
-  }
-  else if (IsMe(bcptr))
-  {
-    sendto_ops("ERROR: tried to exit me! : %s", comment);
-    return;                     /* ...must *never* exit self! */
-  }
-  else if (IsUnknown(bcptr) || IsConnecting(bcptr) || IsHandshake(bcptr))
-    Count_unknowndisconnects(nrof);
-
-  /* Update IPregistry */
-  if (IsIPChecked(bcptr))
-    IPcheck_disconnect(bcptr);
-
-  /* 
-   * Remove from serv->client_list
-   * NOTE: user is *always* NULL if this is a server
-   */
-  if (bcptr->cli_user)
-  {
-    assert(!IsServer(bcptr));
-    /* cli_user(bcptr)->server->serv->client_list[IndexYXX(bcptr)] = NULL; */
-    RemoveYXXClient(cli_user(bcptr)->server, bcptr->cli_yxx);
-  }
-
-  /* Remove bcptr from the client list */
-#if defined(DEBUGMODE)
-  if (hRemClient(bcptr) != 0)
-    Debug((DEBUG_ERROR, "%p !in tab %s[%s] %p %p %p %d %d %p",
-        bcptr, bcptr->name,
-        cli_from(bcptr) ? PunteroACadena(cli_from(bcptr)->cli_connect->sockhost) : "??host",
-        cli_from(bcptr), bcptr->cli_next, bcptr->cli_prev, bcptr->fd, bcptr->cli_status,
-        bcptr->cli_user));
-#else
-  hRemClient(bcptr);
-#endif
-  remove_client_from_list(bcptr);
-  return;
-}
-
-void checklist(void)
-{
-  Reg1 struct Client *acptr;
-  Reg2 int i, j;
-
-  if (!(bootopt & BOOT_AUTODIE))
-    return;
-  for (j = i = 0; i <= highest_fd; i++)
-    if (!(acptr = loc_clients[i]))
-      continue;
-    else if (IsUser(acptr))
-      j++;
-  if (!j)
-  {
-#if defined(USE_SYSLOG)
-    syslog(LOG_WARNING, "ircd exiting: autodie");
-#endif
-    exit(0);
-  }
-  return;
-}
-
+/** Initialize global server statistics. */
+/* (Kind of pointless since C guarantees it's already zero'ed, but... */
 void initstats(void)
 {
   memset(&ircst, 0, sizeof(ircst));
 }
 
-void tstats(struct Client *cptr, char *name)
+/** Report server statistics to a client.
+ * @param cptr Client who wants statistics.
+ * @param sd StatDesc structure being looked up (unused).
+ * @param param Extra parameter passed by user (unused).
+ */
+void tstats(struct Client *cptr, const struct StatDesc *sd, char *param)
 {
-  Reg1 struct Client *acptr;
-  Reg2 int i;
-  Reg3 struct stats *sp;
-  struct stats tmp;
+  struct Client *acptr;
+  int i;
+  struct ServerStatistics *sp;
+  struct ServerStatistics tmp;
 
   sp = &tmp;
-  memcpy(sp, ircstp, sizeof(*sp));
-  for (i = 0; i < MAXCONNECTIONS; i++)
+  memcpy(sp, ServerStats, sizeof(struct ServerStatistics));
+  for (i = 0; i < HighestFd; i++)
   {
-    if (!(acptr = loc_clients[i]))
+    if (!(acptr = LocalClientArray[i]))
       continue;
     if (IsServer(acptr))
     {
-      sp->is_sbs += acptr->cli_connect->sendB;
-      sp->is_sbr += acptr->cli_connect->receiveB;
-      sp->is_sks += acptr->cli_connect->sendK;
-      sp->is_skr += acptr->cli_connect->receiveK;
-      sp->is_sti += now - acptr->cli_firsttime;
+      sp->is_sbs += cli_sendB(acptr);
+      sp->is_sbr += cli_receiveB(acptr);
+      sp->is_sti += CurrentTime - cli_firsttime(acptr);
       sp->is_sv++;
-      if (sp->is_sbs > 1023)
-      {
-        sp->is_sks += (sp->is_sbs >> 10);
-        sp->is_sbs &= 0x3ff;
-      }
-      if (sp->is_sbr > 1023)
-      {
-        sp->is_skr += (sp->is_sbr >> 10);
-        sp->is_sbr &= 0x3ff;
-      }
     }
     else if (IsUser(acptr))
     {
-      sp->is_cbs += acptr->cli_connect->sendB;
-      sp->is_cbr += acptr->cli_connect->receiveB;
-      sp->is_cks += acptr->cli_connect->sendK;
-      sp->is_ckr += acptr->cli_connect->receiveK;
-      sp->is_cti += now - acptr->cli_firsttime;
+      sp->is_cbs += cli_sendB(acptr);
+      sp->is_cbr += cli_receiveB(acptr);
+      sp->is_cti += CurrentTime - cli_firsttime(acptr);
       sp->is_cl++;
-      if (sp->is_cbs > 1023)
-      {
-        sp->is_cks += (sp->is_cbs >> 10);
-        sp->is_cbs &= 0x3ff;
-      }
-      if (sp->is_cbr > 1023)
-      {
-        sp->is_ckr += (sp->is_cbr >> 10);
-        sp->is_cbr &= 0x3ff;
-      }
     }
     else if (IsUnknown(acptr))
       sp->is_ni++;
   }
 
-  sendto_one(cptr, ":%s %d %s :accepts %u refused %u",
-      me.name, RPL_STATSDEBUG, name, sp->is_ac, sp->is_ref);
-  sendto_one(cptr, ":%s %d %s :unknown commands %u prefixes %u",
-      me.name, RPL_STATSDEBUG, name, sp->is_unco, sp->is_unpf);
-  sendto_one(cptr, ":%s %d %s :nick collisions %u unknown closes %u",
-      me.name, RPL_STATSDEBUG, name, sp->is_kill, sp->is_ni);
-  sendto_one(cptr, ":%s %d %s :wrong direction %u empty %u",
-      me.name, RPL_STATSDEBUG, name, sp->is_wrdi, sp->is_empt);
-  sendto_one(cptr, ":%s %d %s :numerics seen %u mode fakes %u",
-      me.name, RPL_STATSDEBUG, name, sp->is_num, sp->is_fake);
-  sendto_one(cptr, ":%s %d %s :auth successes %u fails %u",
-      me.name, RPL_STATSDEBUG, name, sp->is_asuc, sp->is_abad);
-  sendto_one(cptr, ":%s %d %s :local connections %u udp packets %u",
-      me.name, RPL_STATSDEBUG, name, sp->is_loc, sp->is_udp);
-  sendto_one(cptr, ":%s %d %s :Client Server", me.name, RPL_STATSDEBUG, name);
-  sendto_one(cptr, ":%s %d %s :connected %u %u",
-      me.name, RPL_STATSDEBUG, name, sp->is_cl, sp->is_sv);
-  sendto_one(cptr, ":%s %d %s :bytes sent %u.%uK %u.%uK",
-      me.name, RPL_STATSDEBUG, name,
-      sp->is_cks, sp->is_cbs, sp->is_sks, sp->is_sbs);
-  sendto_one(cptr, ":%s %d %s :bytes recv %u.%uK %u.%uK",
-      me.name, RPL_STATSDEBUG, name,
-      sp->is_ckr, sp->is_cbr, sp->is_skr, sp->is_sbr);
-  sendto_one(cptr, ":%s %d %s :time connected " TIME_T_FMT " " TIME_T_FMT,
-      me.name, RPL_STATSDEBUG, name, sp->is_cti, sp->is_sti);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG, ":accepts %u refused %u",
+	     sp->is_ac, sp->is_ref);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG,
+	     ":unknown commands %u prefixes %u", sp->is_unco, sp->is_unpf);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG,
+	     ":nick collisions %u unknown closes %u", sp->is_kill, sp->is_ni);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG,
+	     ":wrong direction %u empty %u", sp->is_wrdi, sp->is_empt);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG,
+	     ":numerics seen %u mode fakes %u", sp->is_num, sp->is_fake);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG,
+	     ":auth successes %u fails %u", sp->is_asuc, sp->is_abad);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG, ":local connections %u",
+	     sp->is_loc);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG, ":Client server");
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG, ":connected %u %u",
+	     sp->is_cl, sp->is_sv);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG, ":bytes sent %Lu %Lu",
+	     sp->is_cbs, sp->is_sbs);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG, ":bytes recv %Lu %Lu",
+	     sp->is_cbr, sp->is_sbr);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG, ":time connected %Lu %Lu",
+	     sp->is_cti, sp->is_sti);
 }

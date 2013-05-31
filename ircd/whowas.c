@@ -1,12 +1,13 @@
-
 /*
- * IRC - Internet Relay Chat, ircd/whowas.c
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/whowas.c
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Markku Savela
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,77 +16,75 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
 /*
  * --- avalon --- 6th April 1992
  * rewritten to scrap linked lists and use a table of structures which
  * is referenced like a circular loop. Should be faster and more efficient.
- */
-
-/*
+ *
  * --- comstud --- 25th March 1997
  * Everything rewritten from scratch.  Avalon's code was bad.  My version
  * is faster and more efficient.  No more hangs on /squits and you can
  * safely raise NICKNAMEHISTORYLENGTH to a higher value without hurting
  * performance.
- */
-
-/*
+ *
  * --- comstud --- 5th August 1997
  * Fixed for Undernet..
- */
-
-/*
+ *
  * --- Run --- 27th August 1997
  * Speeded up the code, added comments.
  */
+#include "config.h"
 
-#include "sys.h"
-#include <stdlib.h>
-#include "client.h"
-#include "common.h"
-#include "h.h"
-#include "s_debug.h"
-#include "struct.h"
-#include "numeric.h"
-#include "send.h"
-#include "s_misc.h"
-#include "s_err.h"
 #include "whowas.h"
+#include "client.h"
 #include "ircd.h"
-#include "list.h"
-#include "msg.h"
-#include "s_user.h"
-#include "support.h"
-#include "s_bsd.h"
-#include "s_bdd.h"
-#include "network.h"
 #include "ircd_alloc.h"
 #include "ircd_chattr.h"
+#include "ircd_features.h"
+#include "ircd_log.h"
 #include "ircd_string.h"
+#include "list.h"
+#include "numeric.h"
+#include "s_debug.h"
+#include "s_misc.h"
+#include "s_user.h"
+#include "send.h"
+#include "struct.h"
+#include "msg.h"
 
-RCSTAG_CC("$Id$");
+/* #include <assert.h> -- Now using assert in ircd_log.h */
+#include <stdlib.h>
+#include <string.h>
 
-static aWhowas whowas[NICKNAMEHISTORYLENGTH];
-static aWhowas *whowashash[WW_MAX];
-static aWhowas *whowas_next = whowas;
 
-static unsigned int hash_whowas_name(const char *name);
+/** Keeps track of whowas least-recently-used list. */
+static struct wwList_s {
+  struct Whowas *ww_list;	/**< list of whowas structures */
+  struct Whowas *ww_tail;	/**< tail of list for getting structures */
+  unsigned int	 ww_alloc;	/**< alloc count */
+} wwList = { 0, 0, 0 };
 
-extern char *canonize(char *);
+/** Hash table of Whowas entries by nickname. */
+struct Whowas* whowashash[WW_MAX];
 
-/*
+/** @file
+ * @brief Manipulation functions for the whowas list.
+ * @version $Id$
+ *
  * Since the introduction of numeric nicks (at least for upstream messages,
- * like MODE +o <nick>, KICK #chan <nick>, KILL <nick> etc), there is no
+ * like MODE +o \<nick\>, KICK \#chan \<nick\>, KILL \<nick\> etc), there is no
  * real important reason for a nick history anymore.
  * Nevertheless, there are two reason why we might want to keep it:
- * 1) The /WHOWAS command, which is often usefull to catch harrashing
+ * @li The /WHOWAS command, which is often useful to catch harassing
  *    users or abusers in general.
- * 2) Clients still use the normal nicks in the client-server protocol,
+ * @li Clients still use the normal nicks in the client-server protocol,
  *    and it might be considered a nice feature that here we still have
  *    nick chasing.
+ *
  * Note however that BOTH reasons make it redundant to keep a whowas history
  * for users that split off.
  *
@@ -95,7 +94,7 @@ extern char *canonize(char *);
  * But - it was written anyway.  So lets look at the structure of the
  * whowas history now:
  *
- * We still have a static table of 'aWhowas' structures in which we add
+ * We still have a static table of 'struct Whowas' structures in which we add
  * new nicks (plus info) as in a rotating buffer.  We keep a global pointer
  * `whowas_next' that points to the next entry to be overwritten - or to
  * the oldest entry in the table (which is the same).
@@ -108,35 +107,35 @@ extern char *canonize(char *);
  * is not anymore maintained (and hopefully not used anymore either ;).
  *
  * So now we have two ways of accessing this database:
- * 1) Given a <nick> we can calculate a hashv and then whowashash[hashv] will
+ * @li Given a \<nick\> we can calculate a hashv and then whowashash[hashv] will
  *    point to the start of the 'hash list': all entries with the same hashv.
- *    We'll have to search this list to find the entry with the correct <nick>.
+ *    We'll have to search this list to find the entry with the correct \<nick\>.
  *    Once we found the correct whowas entry, we have a pointer to the
- *    corresponding client - if still online - for nich chasing purposes.
+ *    corresponding client - if still online - for nick chasing purposes.
  *    Note that the same nick can occur multiple times in the whowas history,
  *    each of these having the same hash value of course.  While a /WHOWAS on
  *    just a nick will return all entries, nick chasing will only find the
  *    first in the list.  Because new entries are added at the start of the
  *    'hash list' we will always find the youngest entry, which is what we want.
- * 2) Given an online client we have a pointer to the first whowas entry
+ * @li Given an online client we have a pointer to the first whowas entry
  *    of the linked list of whowas entries that all belong to this client.
  *    We ONLY need this to reset all `online' pointers when this client
  *    signs off.
  *
- * 27/8/79:
+ * 27/8/97:
  *
  * Note that following:
  *
- * a) We *only* (need to) change the 'hash list' and the 'online' list
+ * @li We *only* (need to) change the 'hash list' and the 'online' list
  *    in add_history().
- * b) There we always ADD an entry to the BEGINNING of the 'hash list'
+ * @li There we always ADD an entry to the BEGINNING of the 'hash list'
  *    and the 'online list': *new* entries are at the start of the lists.
  *    The oldest entries are at the end of the lists.
- * c) We always REMOVE the oldest entry we have (whowas_next), this means
+ * @li We always REMOVE the oldest entry we have (whowas_next), this means
  *    that this is always an entry that is at the *end* of the 'hash list'
  *    and 'online list' that it is a part of: the next pointer will
  *    always be NULL.
- * d) The previous pointer is *only* used to update the next pointer of the
+ * @li The previous pointer is *only* used to update the next pointer of the
  *    previous entry, therefore we could better use a pointer to this
  *    next pointer: That is faster - saves us a 'if' test (it will never be
  *    NULL because the last added entry will point to the pointer that
@@ -148,266 +147,249 @@ extern char *canonize(char *);
  * --Run
  */
 
-typedef union {
-  aWhowas *newww;
-  aWhowas *oldww;
-} Current;
+/** Unlink a Whowas structure and free everything inside it.
+ * @param[in,out] ww The whowas record to free.
+ * @return The pointer \a ww.
+ */
+static struct Whowas *
+whowas_clean(struct Whowas *ww)
+{
+  if (!ww)
+    return 0;
 
-#define WHOWAS_UNUSED ((unsigned int)-1)
+  Debug((DEBUG_LIST, "Cleaning whowas structure for %s", ww->name));
 
-/*
- * add_history
- *
- * Add a client (cptr) that just changed nick (still_on == true), or
- * just signed off (still_on == false) to the `whowas' table.
- *
- * If the entry used was already in use, then this entry is
- * freed (lost).
+  if (ww->online) { /* unlink from client */
+    if (ww->cnext) /* shouldn't happen, but I'm not confident of that */
+      ww->cnext->cprevnextp = ww->cprevnextp;
+    *ww->cprevnextp = ww->cnext;
+  }
+
+  if (ww->hnext) /* now unlink from hash table */
+    ww->hnext->hprevnextp = ww->hprevnextp;
+  *ww->hprevnextp = ww->hnext;
+
+  if (ww->wnext) /* unlink from whowas linked list... */
+    ww->wnext->wprev = ww->wprev;
+  if (ww->wprev)
+    ww->wprev->wnext = ww->wnext;
+
+  if (wwList.ww_tail == ww) /* update tail pointer appropriately */
+    wwList.ww_tail = ww->wprev;
+
+  /* Free old info */
+  if (ww->name)
+    MyFree(ww->name);
+  if (ww->username)
+    MyFree(ww->username);
+  if (ww->hostname)
+    MyFree(ww->hostname);
+  if (ww->realhost)
+    MyFree(ww->realhost);
+  if (ww->servername)
+    MyFree(ww->servername);
+  if (ww->realname)
+    MyFree(ww->realname);
+  if (ww->away)
+    MyFree(ww->away);
+
+  return ww;
+}
+
+/** Clean and free a whowas record.
+ * @param[in] ww Whowas record to free.
+ */
+static void
+whowas_free(struct Whowas *ww)
+{
+  if (!ww)
+    return;
+
+  Debug((DEBUG_LIST, "Destroying whowas structure for %s", ww->name));
+
+  whowas_clean(ww);
+  MyFree(ww);
+
+  wwList.ww_alloc--;
+}
+
+/** Return a fresh Whowas record.
+ * If the total number of records is smaller than determined by
+ * FEAT_NICKNAMEHISTORYLENGTH, allocate a new one.  Otherwise,
+ * reuse the oldest record in use.
+ * @return A pointer to a clean Whowas.
+ */
+static struct Whowas *
+whowas_alloc(void)
+{
+  struct Whowas *ww;
+
+  if (wwList.ww_alloc >= feature_uint(FEAT_NICKNAMEHISTORYLENGTH)) {
+    /* reclaim the oldest whowas entry */
+    ww = whowas_clean(wwList.ww_tail);
+  } else {
+    /* allocate a new one */
+    wwList.ww_alloc++;
+    ww = (struct Whowas *) MyMalloc(sizeof(struct Whowas));
+  }
+
+  assert(ww != NULL);
+  memset(ww, 0, sizeof(*ww));
+  return ww;
+}
+
+/** If necessary, trim the whowas list.
+ * This function trims the whowas list until it contains no more than
+ * FEAT_NICKNAMEHISTORYLENGTH records.
+ */
+void
+whowas_realloc(void)
+{
+  Debug((DEBUG_LIST, "whowas_realloc() called with alloc count %d, "
+	 "history length %u, tail pointer %p", wwList.ww_alloc,
+	 feature_uint(FEAT_NICKNAMEHISTORYLENGTH), wwList.ww_tail));
+
+  while (wwList.ww_alloc > feature_uint(FEAT_NICKNAMEHISTORYLENGTH)) {
+    if (!wwList.ww_tail) { /* list is empty... */
+      Debug((DEBUG_LIST, "whowas list emptied with alloc count %d",
+	     wwList.ww_alloc));
+      return;
+    }
+
+    whowas_free(wwList.ww_tail); /* free oldest element of whowas list */
+  }
+}
+
+/** Add a client to the whowas list.
+ * @param[in] cptr Client to add.
+ * @param[in] still_on If non-zero, link the record to the client's personal history.
  */
 void add_history(struct Client *cptr, int still_on)
 {
-  Current ww;
-  ww.newww = whowas_next;
+  struct Whowas *ww;
 
-  /* If this entry has already been used, remove it from the lists */
-  if (ww.newww->hashv != WHOWAS_UNUSED)
-  {
-    if (ww.oldww->online)       /* No need to update cnext/cprev when offline! */
-    {
-      /* Remove ww.oldww from the linked list with the same `online' pointers */
-      *ww.oldww->cprevnextp = ww.oldww->cnext;
+  if (!(ww = whowas_alloc()))
+    return; /* couldn't get a structure */
 
-      if (ww.oldww->cnext)
-        MyCoreDump;
-#if 0
-      if (ww.oldww->cnext)      /* Never true, we always catch the
-                                   oldwwest nick of this client first */
-        ww.oldww->cnext->cprevnextp = ww.oldww->cprevnextp;
-#endif
+  ww->hashv = hash_whowas_name(cli_name(cptr)); /* initialize struct */
+  ww->logoff = CurrentTime;
+  DupString(ww->name, cli_name(cptr));
+  DupString(ww->username, cli_user(cptr)->username);
+  DupString(ww->hostname, cli_user(cptr)->host);
+  if (HasHiddenHost(cptr))
+    DupString(ww->realhost, cli_user(cptr)->realhost);
+  DupString(ww->servername, cli_name(cli_user(cptr)->server));
+  DupString(ww->realname, cli_info(cptr));
+  if (cli_user(cptr)->away)
+    DupString(ww->away, cli_user(cptr)->away);
 
-    }
-    /* Remove ww.oldww from the linked list with the same `hashv' */
-    *ww.oldww->hprevnextp = ww.oldww->hnext;
+  if (still_on) { /* user changed nicknames... */
+    ww->online = cptr;
+    if ((ww->cnext = cli_whowas(cptr)))
+      ww->cnext->cprevnextp = &ww->cnext;
+    ww->cprevnextp = &(cli_whowas(cptr));
+    cli_whowas(cptr) = ww;
+  } else /* user quit */
+    ww->online = 0;
 
-    if (ww.oldww->hnext)
-      MyCoreDump;
-#if 0
-    if (ww.oldww->hnext)
-      ww.oldww->hnext->hprevnextp = ww.oldww->hprevnextp;
-#endif
+  /* link new whowas structure to list */
+  ww->wnext = wwList.ww_list;
+  if (wwList.ww_list)
+    wwList.ww_list->wprev = ww;
+  wwList.ww_list = ww;
 
-    if (ww.oldww->name)
-      MyFree(ww.oldww->name);
-    if (ww.oldww->username)
-      MyFree(ww.oldww->username);
-    if (ww.oldww->hostname)
-      MyFree(ww.oldww->hostname);
-#if defined(BDD_VIP)
-    if (ww.oldww->virtualhost)
-      MyFree(ww.oldww->virtualhost);
-#endif
-    if (ww.oldww->servername)
-      MyFree(ww.oldww->servername);
-    if (ww.oldww->realname)
-      MyFree(ww.oldww->realname);
-    if (ww.oldww->away)
-      MyFree(ww.oldww->away);
-  }
+  if (!wwList.ww_tail) /* update the tail pointer... */
+    wwList.ww_tail = ww;
 
-  /* Initialize aWhoWas struct `newww' */
-  ww.newww->hashv = hash_whowas_name(cptr->name);
-  ww.newww->logoff = now;
-  DupString(ww.newww->name, cptr->name);
-  DupString(ww.newww->username, PunteroACadena(cptr->cli_user->username));
-  DupString(ww.newww->hostname, cptr->cli_user->host);
-#if defined(BDD_VIP)
-  DupString(ww.newww->virtualhost, get_virtualhost(cptr));
-#endif
-  /* Should be changed to server numeric */
-  DupString(ww.newww->servername, cptr->cli_user->server->name);
-  DupString(ww.newww->realname, PunteroACadena(cptr->info));
-  if (cptr->cli_user->away)
-    DupString(ww.newww->away, cptr->cli_user->away);
-  else
-    ww.newww->away = NULL;
-
-  /* Update/initialize online/cnext/cprev: */
-  if (still_on)                 /* User just changed nicknames */
-  {
-    ww.newww->online = cptr;
-    /* Add aWhowas struct `newww' to start of 'online list': */
-    if ((ww.newww->cnext = cli_whowas(cptr)))
-      ww.newww->cnext->cprevnextp = &ww.newww->cnext;
-    ww.newww->cprevnextp = &cli_whowas(cptr);
-    cli_whowas(cptr) = ww.newww;
-  }
-  else                          /* User quitting */
-    ww.newww->online = NULL;
-
-  /* Add aWhowas struct `newww' to start of 'hashv list': */
-  if ((ww.newww->hnext = whowashash[ww.newww->hashv]))
-    ww.newww->hnext->hprevnextp = &ww.newww->hnext;
-  ww.newww->hprevnextp = &whowashash[ww.newww->hashv];
-  whowashash[ww.newww->hashv] = ww.newww;
-
-  /* Advance `whowas_next' to next entry in the `whowas' table: */
-  if (++whowas_next == &whowas[NICKNAMEHISTORYLENGTH])
-    whowas_next = whowas;
+  /* Now link it into the hash table */
+  if ((ww->hnext = whowashash[ww->hashv]))
+    ww->hnext->hprevnextp = &ww->hnext;
+  ww->hprevnextp = &whowashash[ww->hashv];
+  whowashash[ww->hashv] = ww;
 }
 
-/*
- * off_history
- *
- * Client `cptr' signed off: Set all `online' pointers
- * corresponding to this client to NULL.
+/** Clear all Whowas::online pointers that point to a client.
+ * @param[in] cptr Client who is going offline.
  */
 void off_history(const struct Client *cptr)
 {
-  aWhowas *temp;
+  struct Whowas *temp;
 
   for (temp = cli_whowas(cptr); temp; temp = temp->cnext)
     temp->online = NULL;
 }
 
-/*
- * get_history
- *
- * Return a pointer to a client that had nick `nick' not more then
- * `timelimit' seconds ago, if still on line.  Otherwise return NULL.
- *
- * This function is used for "nick chasing"; since the use of numeric
- * nicks for "upstream" messages in ircu2.10, this is only used for
- * looking up non-existing nicks in client->server messages.
+/** Find a client who has recently used a particular nickname.
+ * @param[in] nick Nickname to find.
+ * @param[in] timelimit Maximum age for entry.
+ * @return User's online client, or NULL if none is found.
  */
 struct Client *get_history(const char *nick, time_t timelimit)
 {
-  aWhowas *temp = whowashash[hash_whowas_name(nick)];
-  timelimit = now - timelimit;
+  struct Whowas *temp = whowashash[hash_whowas_name(nick)];
+  timelimit = CurrentTime - timelimit;
 
   for (; temp; temp = temp->hnext)
-    if (!ircd_strcmp(nick, temp->name) && temp->logoff > timelimit)
+    if (0 == ircd_strcmp(nick, temp->name) && temp->logoff > timelimit)
       return temp->online;
 
   return NULL;
 }
 
+/** Count memory used by whowas list.
+ * @param[out] wwu Number of entries in whowas list.
+ * @param[out] wwum Total number of bytes used by nickname, username,
+ * hostname and servername fields.
+ * @param[out] wwa Number of away strings in whowas list.
+ * @param[out] wwam Total number of bytes used by away strings.
+ */
 void count_whowas_memory(int *wwu, size_t *wwum, int *wwa, size_t *wwam)
 {
-  aWhowas *tmp;
-  int i;
-  int u = 0, a = 0;
-  size_t um = 0, am = 0;
+  struct Whowas *tmp;
+  int u = 0;
+  int a = 0;
+  size_t um = 0;
+  size_t am = 0;
+  assert(0 != wwu);
+  assert(0 != wwum);
+  assert(0 != wwa);
+  assert(0 != wwam);
 
-  for (i = 0, tmp = whowas; i < NICKNAMEHISTORYLENGTH; i++, tmp++)
-    if (tmp->hashv != WHOWAS_UNUSED)
-    {
-      u++;
-      um += (strlen(tmp->name) + 1);
-      um += (strlen(tmp->username) + 1);
-      um += (strlen(tmp->hostname) + 1);
-#ifdef BDD_VIP
-      um += (strlen(tmp->virtualhost) + 1);
-#endif
-      um += (strlen(tmp->servername) + 1);
-      if (tmp->away)
-      {
-        a++;
-        am += (strlen(tmp->away) + 1);
-      }
+  for (tmp = wwList.ww_list; tmp; tmp = tmp->wnext) {
+    u++;
+    um += (strlen(tmp->name) + 1);
+    um += (strlen(tmp->username) + 1);
+    um += (strlen(tmp->hostname) + 1);
+    um += (strlen(tmp->servername) + 1);
+    if (tmp->away) {
+      a++;
+      am += (strlen(tmp->away) + 1);
     }
-
+  }
   *wwu = u;
   *wwum = um;
   *wwa = a;
   *wwam = am;
 }
 
-/*
- * m_whowas
- *
- * parv[0] = sender prefix
- * parv[1] = nickname queried
- * parv[2] = maximum returned items (optional, default is unlimitted)
- * parv[3] = remote server target (Opers only, max returned items 20)
- */
-int m_whowas(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
-{
-  aWhowas *temp;
-  int cur = 0;
-  int max = -1, found = 0;
-  char *p, *nick, *s;
-
-  if (parc < 2)
-  {
-    sendto_one(sptr, err_str(ERR_NONICKNAMEGIVEN), me.name, parv[0]);
-    return 0;
-  }
-  if (parc > 2)
-    max = atoi(parv[2]);
-  if (parc > 3)
-    if (hunt_server(1, cptr, sptr, MSG_WHOWAS, TOK_WHOWAS, "%s %s :%s", 3, parc, parv))
-      return 0;
-
-  parv[1] = canonize(parv[1]);
-  if (!MyConnect(sptr) && (max > 20))
-    max = 20;                   /* Set max replies at 20 */
-  for (s = parv[1]; (nick = strtoken(&p, s, ",")); s = NULL)
-  {
-    /* Search through bucket, finding all nicknames that match */
-    found = 0;
-    for (temp = whowashash[hash_whowas_name(nick)]; temp; temp = temp->hnext)
-    {
-      if (!ircd_strcmp(nick, temp->name))
-      {
-#ifdef BDD_VIP
-        sendto_one(sptr, rpl_str(RPL_WHOWASUSER),
-            me.name, parv[0], temp->name, temp->username,
-            temp->virtualhost, temp->realname);
-#else
-        sendto_one(sptr, rpl_str(RPL_WHOWASUSER),
-            me.name, parv[0], temp->name, temp->username,
-            temp->hostname, temp->realname);
-#endif
-       if (IsHiddenViewer(sptr))
-          sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY), me.name, parv[0],
-            temp->name, temp->username, temp->hostname, "<untracked>");
-
-        sendto_one(sptr, rpl_str(RPL_WHOISSERVER), me.name, parv[0],
-            temp->name,
-            (ocultar_servidores && !(IsOper(sptr) || IsHelpOp(sptr))) ? his.name : temp->servername,
-            myctime(temp->logoff));
-        if (temp->away)
-          sendto_one(sptr, rpl_str(RPL_AWAY),
-              me.name, parv[0], temp->name, temp->away);
-        cur++;
-        found++;
-      }
-      if (max >= 0 && cur >= max)
-        break;
-    }
-    if (!found)
-      sendto_one(sptr, err_str(ERR_WASNOSUCHNICK), me.name, parv[0], nick);
-    /* To keep parv[1] intact for ENDOFWHOWAS */
-    if (p)
-      p[-1] = ',';
-  }
-  sendto_one(sptr, rpl_str(RPL_ENDOFWHOWAS), me.name, parv[0], parv[1]);
-  return 0;
-}
-
+/** Initialize whowas table. */
 void initwhowas(void)
 {
   int i;
 
-  for (i = 0; i < NICKNAMEHISTORYLENGTH; i++)
-    whowas[i].hashv = WHOWAS_UNUSED;
+  for (i = 0; i < WW_MAX; i++)
+    whowashash[i] = 0;
 }
 
-static unsigned int hash_whowas_name(const char *name)
+/** Calculate a hash value for a string.
+ * @param[in] name Nickname to calculate hash over.
+ * @return Calculated hash value.
+ */
+unsigned int hash_whowas_name(const char *name)
 {
   unsigned int hash = 0;
   unsigned int hash2 = 0;
-  char lower;
+  unsigned char lower;
 
   do
   {

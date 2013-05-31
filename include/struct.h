@@ -1,13 +1,14 @@
 /*
- * IRC - Internet Relay Chat, include/struct.h
- * Copyright (C) 1990 Jarkko Oikarinen and
- *                    University of Oulu, Computing Center
- * Copyright (C) 1996 -1997 Carlo Wood
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/struct.h
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1996-1997 Carlo Wood
+ * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,55 +17,101 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
+/** @file
+ * @brief Structure definitions for users and servers.
+ * @version $Id: struct.h,v 1.13 2007-04-26 21:17:11 zolty Exp $
+ */
+#ifndef INCLUDED_struct_h
+#define INCLUDED_struct_h
 
-#if !defined(STRUCT_H)
-#define STRUCT_H
-
-#include <netinet/in.h>         /* Needed for struct in_addr */
-#include "whowas.h"             /* Needed for whowas struct */
-
-#if !defined(INCLUDED_dbuf_h)
-#include "dbuf.h"
+#ifndef INCLUDED_sys_types_h
+#include <sys/types.h>      /* time_t */
+#define INCLUDED_sys_types_h
+#endif
+#ifndef INCLUDED_ircd_defs_h
+#include "ircd_defs.h"       /* sizes */
 #endif
 
-#include "ircd_defs.h"
-#include "event.h"
-#include "res.h"
+struct DLink;
+struct Client;
+struct User;
+struct Membership;
+struct Invite;
+struct SLink;
 
-/*=============================================================================
- * General defines
- */
+/** Describes a server on the network. */
+struct Server {
+  struct Client*  up;           /**< Server one closer to me */
+  struct DLink*   down;         /**< List with downlink servers */
+  struct DLink*   updown;       /**< own Dlink in up->serv->down struct */
+  struct Client** client_list;  /**< List with client pointers on this server */
+  struct User*    user;         /**< who activated this connection */
+  time_t          timestamp;    /**< Remotely determined connect try time */
+  time_t          ghost;        /**< Local time at which a new server
+                                   caused a Ghost */
+  int             lag;          /**< Approximation of the amount of lag to this server */
+  unsigned int    clients;      /**< Number of clients on the server */
+#if defined(P09_SUPPORT)
+  unsigned short nn_last;       /**< Last numeric nick for p9 servers only */
+#endif
+  unsigned short  prot;         /**< Major protocol */
+  unsigned int    nn_mask;      /**< Number of clients supported by server, minus 1 */
+  char          nn_capacity[4]; /**< Numeric representation of server capacity */
+  int             flags;        /**< Server flags (SFLAG_*) */
+
+  int            asll_rtt;      /**< AsLL round-trip time */
+  int            asll_to;       /**< AsLL upstream lag */
+  int            asll_from;     /**< AsLL downstream lag */
+  time_t         asll_last;     /**< Last time we sent or received an AsLL ping */
+
+#if defined(DDB)
+  unsigned long  ddb_open;      /**< DDB database open */
+#endif
+
+  char *last_error_msg;         /**< Allocated memory with last message receive with an ERROR */
+  char by[NICKLEN + 1];         /**< Numnick of client who requested the link */
+};
+
+#define SFLAG_UWORLD         0x0001  /**< Server has UWorld privileges */
+
+/** Describes a user on the network. */
+struct User {
+  struct Client*     server;         /**< client structure of server */
+  struct Membership* channel;        /**< chain of channel pointer blocks */
+  struct Invite*     invited;        /**< chain of invite pointer blocks */
+  struct Ban*        silence;        /**< chain of silence pointer blocks */
+  struct SLink*      watch;          /**< chain of watch pointer blocks */
+  char*              away;           /**< pointer to away message */
+  time_t             last;           /**< last time user sent a message */
+  unsigned int       refcnt;         /**< Number of times this block is referenced */
+  unsigned int       joined;         /**< number of channels joined */
+  unsigned int       watches;        /**< Number of entrances in the watch list */
+  /** Remote account name.  Before registration is complete, this is
+   * either empty or contains the username from the USER command.
+   * After registration, that may be prefixed with ~ or it may be
+   * overwritten with the ident response.
+   */
+  char               username[USERLEN + 1];
+  char               host[HOSTLEN + 1];       /**< displayed hostname */
+  char               realhost[HOSTLEN + 1];   /**< actual hostname */
+#if defined(DDB)
+  char               virtualhost[HOSTLEN + 1]; /**< virtualhost */
+#endif
+#if defined(UNDERNET)
+  char               account[ACCOUNTLEN + 1]; /**< IRC account name */
+  time_t	     acc_create;              /**< IRC account timestamp */
+#endif
+};
+
+
+
+/* PROVISIONAL */
 
 #define MAXLEN         490
 #define QUITLEN        300      /* Hispano extension */
-#define COOKIELEN      16       /* Hispano extension */
-#define COOKIECRYPTLEN 44       /* Hispano extension */
-
-/*-----------------------------------------------------------------------------
- * Macro's
- */
-
-#define COOKIE_PLAIN     0x02 /* Cookie enviada sin encriptar */
-#define COOKIE_ENCRYPTED 0x04 /* Cookie enviada encriptada */
-#define COOKIE_VERIFIED  0x08 /* Cookie verificada correctamente */
-
-#define IsCookiePlain(x)     ((x)->cli_connect->cookie_status & COOKIE_PLAIN)
-#define IsCookieEncrypted(x) ((x)->cli_connect->cookie_status & COOKIE_ENCRYPTED)
-#define IsCookieVerified(x)  ((x)->cli_connect->cookie_status & COOKIE_VERIFIED)
-
-#define SetCookiePlain(x)     ((x)->cli_connect->cookie_status |= COOKIE_PLAIN)
-#define SetCookieEncrypted(x) ((x)->cli_connect->cookie_status |= COOKIE_ENCRYPTED)
-#define SetCookieVerified(x)  ((x)->cli_connect->cookie_status |= COOKIE_VERIFIED)
-
-/*=============================================================================
- * Structures
- *
- * Only put structures here that are being used in a very large number of
- * source files. Other structures go in the header file of there corresponding
- * source file, or in the source file itself (when only used in that file).
- */
 
 #if defined(ZLIB_ESNET)
 #include "zlib.h"
@@ -78,56 +125,4 @@
 #define USER_TOK  0x8
 #endif
 
-struct Server {
-  struct Server *nexts;
-  struct Client *up;            /* Server one closer to me */
-  struct DLink *down;          /* List with downlink servers */
-  struct DLink *updown;        /* own Dlink in up->serv->down struct */
-  aClient **client_list;        /* List with client pointers on this server */
-  struct User *user;            /* who activated this connection */
-  struct ConfItem *cline;       /* C-line pointer for this server */
-  time_t timestamp;             /* Remotely determined connect try time */
-  time_t ghost;                 /* Local time at which a new server
-                                   caused a Ghost */
-
-  int lag;                      /* Approximation of the amount of lag to this server */
-  unsigned int clients;         /* Number of clients on the server */
-
-  unsigned short prot;          /* Major protocol */
-  unsigned short nn_last;       /* Last numeric nick for p9 servers only */
-  unsigned int nn_mask;         /* [Remote] FD_SETSIZE - 1 */
-  char nn_capacity[4];          /* numeric representation of server capacity */
-  unsigned long esnet_db;       /* Mascara de grifo abierto para cada BDD */
-#if defined(LIST_DEBUG)
-  struct Client *bcptr;
-#endif
-  char *last_error_msg;         /* Allocated memory with last message receive with an ERROR */
-  char *by;
-};
-
-struct User {
-  struct User *nextu;
-  struct Client *server;        /* client structure of server */
-  struct SLink *channel;        /* chain of channel pointer blocks */
-  struct SLink *silence;        /* chain of silence pointer blocks */
-#if defined(WATCH)
-  struct SLink *watch;          /* Cadena de punteros a lista aWatch */
-  int cwatch;                   /* Contador de entradas de lista WATCH */
-#endif                          /* WATCH */
-  char *away;                   /* pointer to away message */
-  time_t last;
-  unsigned int refcnt;          /* Number of times this block is referenced */
-  unsigned int joined;          /* number of channels joined */
-  char *username;
-  char *host;
-#if defined(BDD_VIP)
-  char *virtualhost;
-#endif
-#if defined(LIST_DEBUG)
-  struct Client *bcptr;
-#endif
-};
-
-#define PunteroACadena(x)      ((x) ? (x) : "")
-
-#endif /* STRUCT_H */
+#endif /* INCLUDED_struct_h */

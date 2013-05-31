@@ -1,11 +1,13 @@
 /*
- * IRC - Internet Relay Chat, common/dbuf.c
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/dbuf.c
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Markku Savela
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,28 +16,25 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
+/** @file
+ * @brief Implementation of functions dealing with data buffers.
+ * @version $Id$
+ */
+#include "config.h"
 
-#include "sys.h"
-#include "client.h"
-#include "h.h"
-#include "s_debug.h"
-#include "common.h"
-#include "struct.h"
 #include "dbuf.h"
+#include "ircd.h"
 #include "ircd_alloc.h"
-#include "s_serv.h"
-#include "list.h"
-
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-#include "send.h"
-#endif
 #include "ircd_chattr.h"
-#include <assert.h>
-#include <string.h>
+#include "ircd_features.h"
+#include "ircd_log.h"
+#include "send.h"
 
-RCSTAG_CC("$Id$");
+/* #include <assert.h> -- Now using assert in ircd_log.h */
+#include <string.h>
 
 /*
  * dbuf is a collection of functions which can be used to
@@ -45,20 +44,33 @@ RCSTAG_CC("$Id$");
  * this package maintaining the buffer on disk, either]
  */
 
-int DBufAllocCount = 0;
-int DBufUsedCount = 0;
+/** Number of dbufs allocated.
+ * This should only be modified by dbuf.c.
+ */
+unsigned int DBufAllocCount = 0;
+/** Number of dbufs in use.
+ * This should only be modified by dbuf.c.
+ */
+unsigned int DBufUsedCount = 0;
 
+/** List of allocated but unused DBuf structures. */
 static struct DBufBuffer *dbufFreeList = 0;
 
+/** Size of data for a single DBufBuffer. */
 #define DBUF_SIZE 2048
 
+/** Single data buffer in a DBuf. */
 struct DBufBuffer {
-  struct DBufBuffer *next;      /* Next data buffer, NULL if last */
-  char *start;                  /* data starts here */
-  char *end;                    /* data ends here */
-  char data[DBUF_SIZE];         /* Actual data stored here */
+  struct DBufBuffer *next;      /**< Next data buffer, NULL if last */
+  char *start;                  /**< data starts here */
+  char *end;                    /**< data ends here */
+  char data[DBUF_SIZE];         /**< Actual data stored here */
 };
 
+/** Return memory used by allocated data buffers.
+ * @param[out] allocated Receives number of bytes allocated to DBufs.
+ * @param[out] used Receives number of bytes for currently used DBufs.
+ */
 void dbuf_count_memory(size_t *allocated, size_t *used)
 {
   assert(0 != allocated);
@@ -67,32 +79,30 @@ void dbuf_count_memory(size_t *allocated, size_t *used)
   *used = DBufUsedCount * sizeof(struct DBufBuffer);
 }
 
-/*
- * dbuf_alloc - allocates a DBufBuffer structure from the free list or
- * creates a new one.
+/** Allocate a new DBufBuffer.
+ * If #dbufFreeList != NULL, use the head of that list; otherwise,
+ * allocate a new buffer.
+ * @return Newly allocated buffer list.
  */
 static struct DBufBuffer *dbuf_alloc(void)
 {
-  struct DBufBuffer *db = dbufFreeList;
+  struct DBufBuffer* db = dbufFreeList;
 
-  if (db)
-  {
-    ++DBufUsedCount;
+  if (db) {
     dbufFreeList = db->next;
+    ++DBufUsedCount;
   }
-  else if (DBufAllocCount * DBUF_SIZE < BUFFERPOOL)
-  {
-    if ((db = (struct DBufBuffer *)MyMalloc(sizeof(struct DBufBuffer))))
-    {
-      ++DBufAllocCount;
-      ++DBufUsedCount;
-    }
+  else if (DBufAllocCount * DBUF_SIZE < feature_uint(FEAT_BUFFERPOOL)) {
+    db = (struct DBufBuffer*) MyMalloc(sizeof(struct DBufBuffer));
+    assert(0 != db);
+    ++DBufAllocCount;
+    ++DBufUsedCount;
   }
   return db;
 }
 
-/*
- * dbuf_free - return a struct DBufBuffer structure to the freelist
+/** Release a DBufBuffer back to the free list.
+ * @param[in] db Data buffer to release.
  */
 static void dbuf_free(struct DBufBuffer *db)
 {
@@ -102,11 +112,11 @@ static void dbuf_free(struct DBufBuffer *db)
   dbufFreeList = db;
 }
 
-/*
- * This is called when malloc fails. Scrap the whole content
- * of dynamic buffer. (malloc errors are FATAL, there is no
- * reason to continue this buffer...).
- * After this the "dbuf" has consistent EMPTY status.
+/** Handle a memory allocation error on a DBuf.
+ * This frees all the buffers owned by the DBuf, since we have to
+ * close the associated connection.
+ * @param[in] dyn DBuf to clean out.
+ * @return Zero.
  */
 static int dbuf_malloc_error(struct DBuf *dyn)
 {
@@ -123,107 +133,17 @@ static int dbuf_malloc_error(struct DBuf *dyn)
   return 0;
 }
 
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-static int microburst = 0;
-
-struct p_mburst {
-  struct Client *cptr;
-  struct DBuf *dyn;
-  struct p_mburst *next;
-};
-
-static struct p_mburst *p_microburst = NULL;
-static struct p_mburst *p_microburst_cache = NULL;
-
-void inicia_microburst(void)
-{
-  microburst++;
-}
-
-void completa_microburst(void)
-{
-  struct p_mburst *p, *p2;
-  static int ciclos_mburst = 0;
-
-/* Deberian estar anidados, pero por si acaso */
-  if (!microburst)
-    return;
-
-  if (!(--microburst))
-  {
-    for (p = p_microburst; p; p = p2)
-    {
-/*
-** p->cptr puede ser NULL si la
-** conexion se ha cerrado durante
-** la "microrafaga".
-*/
-      if ((p->cptr != NULL) && MyConnect(p->cptr)
-          && (p->cptr->cli_connect->negociacion & ZLIB_ESNET_OUT) && (p->dyn != NULL))
-      {
-        dbuf_put(p->cptr, p->dyn, NULL, 0);
-        UpdateWrite(p->cptr);
-      }
-      p2 = p->next;
-      if (++ciclos_mburst >= 937)
-      {                         /* Numero primo */
-        ciclos_mburst = 1;
-        MyFree(p);
-      }
-      else
-      {
-        p->next = p_microburst_cache;
-        p_microburst_cache = p;
-      }
-    }
-    p_microburst = NULL;
-  }
-}
-
-void inicializa_microburst(void)
-{
-  if (!microburst)
-    return;                     /* Esto es lo ideal */
-/*
-** Si quedan rafagas abiertas, hay que investigarlo
-*/
-  microburst = 1;
-  completa_microburst();
-}
-
-void elimina_cptr_microburst(struct Client *cptr)
-{
-  struct p_mburst *p;
-
-  for (p = p_microburst; p; p = p->next)
-  {
-    if (p->cptr == cptr)
-    {                           /* Lo ideal seria eliminar el registro */
-      p->cptr = NULL;
-    }
-  }
-}
-
-#endif
-
-
-/*
- * dbuf_put - Append the number of bytes to the buffer, allocating memory 
- * as needed. Bytes are copied into internal buffers from users buffer.
- *
- * Returns > 0, if operation successful
- *         < 0, if failed (due memory allocation problem)
- *
- * dyn:         Dynamic buffer header
- * buf:         Pointer to data to be stored
- * length:      Number of bytes to store
+/** Append bytes to a data buffer.
+ * @param[in] dyn Buffer to append to.
+ * @param[in] buf Data to append.
+ * @param[in] length Number of bytes to append.
+ * @return Non-zero on success, or zero on failure.
  */
-static int dbuf_put2(struct Client *cptr, struct DBuf *dyn, const char *buf,
-    size_t length)
+static int dbuf_put_native(struct DBuf *dyn, const char *buf, unsigned int length)
 {
-  struct DBufBuffer **h;
-  struct DBufBuffer *db;
-  size_t chunk;
+  struct DBufBuffer** h;
+  struct DBufBuffer*  db;
+  unsigned int chunk;
 
   assert(0 != dyn);
   assert(0 != buf);
@@ -242,32 +162,32 @@ static int dbuf_put2(struct Client *cptr, struct DBuf *dyn, const char *buf,
    */
   dyn->length += length;
 
-  for (; length > 0; h = &(db->next))
-  {
-    if (0 == (db = *h))
-    {
+  for (; length > 0; h = &(db->next)) {
+    if (0 == (db = *h)) {
       if (0 == (db = dbuf_alloc())) {
-#if defined(FERGUSON_FLUSHER)
-        /*
-         * from "Married With Children" episode were Al bought a REAL toilet
-         * on the black market because he was tired of the wimpy water
-         * conserving toilets they make these days --Bleep
-         */
-        /*
-         * Apparently this doesn't work, the server _has_ to
-         * dump a few clients to handle the load. A fully loaded
-         * server cannot handle a net break without dumping some
-         * clients. If we flush the connections here under a full
-         * load we may end up starving the kernel for mbufs and
-         * crash the machine
-         */
-        /*
-         * attempt to recover from buffer starvation before
-         * bailing this may help servers running out of memory
-         */
-        flush_sendq_except(dyn);
-        if (0 == (db = dbuf_alloc()))
-#endif
+	if (feature_bool(FEAT_HAS_FERGUSON_FLUSHER)) {
+	  /*
+	   * from "Married With Children" episode were Al bought a REAL toilet
+	   * on the black market because he was tired of the wimpy water
+	   * conserving toilets they make these days --Bleep
+	   */
+	  /*
+	   * Apparently this doesn't work, the server _has_ to
+	   * dump a few clients to handle the load. A fully loaded
+	   * server cannot handle a net break without dumping some
+	   * clients. If we flush the connections here under a full
+	   * load we may end up starving the kernel for mbufs and
+	   * crash the machine
+	   */
+	  /*
+	   * attempt to recover from buffer starvation before
+	   * bailing this may help servers running out of memory
+	   */
+	  flush_connections(0);
+	  db = dbuf_alloc();
+	}
+
+        if (0 == db)
           return dbuf_malloc_error(dyn);
       }
       dyn->tail = db;
@@ -276,8 +196,7 @@ static int dbuf_put2(struct Client *cptr, struct DBuf *dyn, const char *buf,
       db->start = db->end = db->data;
     }
     chunk = (db->data + DBUF_SIZE) - db->end;
-    if (chunk)
-    {
+    if (chunk) {
       if (chunk > length)
         chunk = length;
 
@@ -291,143 +210,31 @@ static int dbuf_put2(struct Client *cptr, struct DBuf *dyn, const char *buf,
   return 1;
 }
 
-int dbuf_put(struct Client *cptr, struct DBuf *dyn, const char *buf,
-    size_t length)
+/** Append bytes to a data buffer.
+ * @param[in] cptr .
+ * @param[in] dyn Buffer to append to.
+ * @param[in] buf Data to append.
+ * @param[in] length Number of bytes to append.
+ * @return Non-zero on success, or zero on failure.
+ */
+int dbuf_put(struct Client *cptr, struct DBuf *dyn, const char *buf, unsigned int length)
 {
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-  static void *tmp = NULL;
-  int flag = Z_NO_FLUSH;
-  int compresion = 0;
-  int estado, f;
-
-/*
-** Pongo BUFSIZE*3, pero si hago el
-** "include" tengo un monton de problemas,
-** asi que lo hago a mano.
-*/
-  if (!tmp)
-  {
-    tmp = MyMalloc(512 * 3);
-    if (!tmp)
-      return dbuf_malloc_error(dyn);
-  }
-  if ((cptr != NULL) && MyConnect(cptr) && (cptr->cli_connect->negociacion & ZLIB_ESNET_OUT))
-  {
-    struct p_mburst *p = p_microburst;
-    long length_out = cptr->cli_connect->comp_out->total_out;
-
-    compresion = !0;
-    cptr->cli_connect->comp_out->next_in = (void *)buf;
-    cptr->cli_connect->comp_out->avail_in = length;
-    cptr->cli_connect->comp_out_total_in += length;
-    cptr->cli_connect->comp_out->next_out = tmp;
-    cptr->cli_connect->comp_out->avail_out = 512 * 3;  /* Ojo con esta cifra */
-    if (microburst)
-    {
-      estado = deflate(cptr->cli_connect->comp_out, Z_NO_FLUSH);
-      length_out -= cptr->cli_connect->comp_out->total_out;
-      if (length_out < 0)
-        length_out = -length_out;
-      cptr->cli_connect->comp_out_total_out += length_out;
-      while (p && (cptr != p->cptr))
-        p = p->next;
-      if (p == NULL)
-      {
-        p = p_microburst_cache;
-        if (p)
-        {
-          p_microburst_cache = p->next;
-        }
-        else
-        {
-          p = MyMalloc(sizeof(struct p_mburst));
-          if (!p)
-          {
-            outofmemory();
-            assert(0);
-          }
-        }
-        p->next = p_microburst;
-        p->cptr = cptr;
-        p->dyn = dyn;
-        p_microburst = p;
-      }
-      assert(p->dyn == dyn);
-    }
-    else
-    {
-      estado = deflate(cptr->cli_connect->comp_out, Z_PARTIAL_FLUSH);
-      flag = Z_PARTIAL_FLUSH;
-      length_out -= cptr->cli_connect->comp_out->total_out;
-      if (length_out < 0)
-        length_out = -length_out;
-      cptr->cli_connect->comp_out_total_out += length_out;
-    }
-    assert(Z_OK == estado);
-    buf = tmp;
-    length = (cptr->cli_connect->comp_out->next_out) - (Bytef *) tmp;
-    if (!length)
-      return 1;
-  }
-
-  while (!0)
-  {
-    long length_out;
-
-    f = dbuf_put2(cptr, dyn, buf, length);
-    if (!compresion || (f < 0) || cptr->cli_connect->comp_out->avail_out)
-      return f;
-
-    /* Queda mas */
-    send_queued(cptr);
-    cptr->cli_connect->comp_out->next_out = tmp;
-    cptr->cli_connect->comp_out->avail_out = 512 * 3;  /* Ojo con esta cifra */
-    length_out = cptr->cli_connect->comp_out->total_out;
-    estado = deflate(cptr->cli_connect->comp_out, flag);
-    length_out -= cptr->cli_connect->comp_out->total_out;
-    if (length_out < 0)
-      length_out = -length_out;
-    cptr->cli_connect->comp_out_total_out += length_out;
-    assert(Z_OK == estado);
-    buf = tmp;
-    length = (cptr->cli_connect->comp_out->next_out) - (Bytef *) tmp;
-    if (!length)
-      return f;
-  }
+#if defined(USE_ZLIB)
+  return dbuf_put_zlib(cptr, dyn, buf, length);
 #else
-  return dbuf_put2(cptr, dyn, buf, length);
+  return dbuf_put_native(dyn, buf, length);
 #endif
 }
 
-/*
- * dbuf_map, dbuf_delete
- *
- * These functions are meant to be used in pairs and offer a more efficient
- * way of emptying the buffer than the normal 'dbuf_get' would allow--less
- * copying needed.
- *
- *    map     returns a pointer to a largest contiguous section
- *            of bytes in front of the buffer, the length of the
- *            section is placed into the indicated "long int"
- *            variable. Returns NULL *and* zero length, if the
- *            buffer is empty.
- *
- *    delete  removes the specified number of bytes from the
- *            front of the buffer releasing any memory used for them.
- *
- *    Example use (ignoring empty condition here ;)
- *
- *            buf = dbuf_map(&dyn, &count);
- *            <process N bytes (N <= count) of data pointed by 'buf'>
- *            dbuf_delete(&dyn, N);
- *
- *    Note:   delete can be used alone, there is no real binding
- *            between map and delete functions...
- *
- * dyn:         Dynamic buffer header
- * length:      Return number of bytes accessible
+/** Get the first contiguous block of data from a DBuf.
+ * Generally a call to dbuf_map(dyn, &count) will be followed with a
+ * call to dbuf_delete(dyn, count).
+ * @param[in] dyn DBuf to retrieve data from.
+ * @param[out] length Receives number of bytes in block.
+ * @return Pointer to start of block (or NULL if the first block is empty).
  */
-const char *dbuf_map(const struct DBuf *dyn, size_t *length)
+static
+const char *dbuf_map(const struct DBuf* dyn, unsigned int* length)
 {
   assert(0 != dyn);
   assert(0 != length);
@@ -443,16 +250,14 @@ const char *dbuf_map(const struct DBuf *dyn, size_t *length)
   return dyn->head->start;
 }
 
-/*
- * dbuf_delete - delete length bytes from DBuf
- *
- * dyn:         Dynamic buffer header
- * length:      Number of bytes to delete
+/** Discard data from a DBuf.
+ * @param[in,out] dyn DBuf to drop data from.
+ * @param[in] length Number of bytes to discard.
  */
-void dbuf_delete(struct DBuf *dyn, size_t length)
+void dbuf_delete(struct DBuf *dyn, unsigned int length)
 {
   struct DBufBuffer *db;
-  size_t chunk;
+  unsigned int chunk;
 
   if (length > dyn->length)
     length = dyn->length;
@@ -482,26 +287,16 @@ void dbuf_delete(struct DBuf *dyn, size_t length)
   }
 }
 
-/*
- * dbuf_get
- *
- * Remove number of bytes from the buffer, releasing dynamic memory,
- * if applicaple. Bytes are copied from internal buffers to users buffer.
- *
- * Returns the number of bytes actually copied to users buffer,
- * if >= 0, any value less than the size of the users
- * buffer indicates the dbuf became empty by this operation.
- *
- * Return 0 indicates that buffer was already empty.
- *
- * dyn:         Dynamic buffer header
- * buf:         Pointer to buffer to receive the data
- * length:      Max amount of bytes that can be received
+/** Copy data from a buffer and remove what was copied.
+ * @param[in,out] dyn Buffer to copy from.
+ * @param[out] buf Buffer to write to.
+ * @param[in] length Maximum number of bytes to copy.
+ * @return Number of bytes actually copied.
  */
-size_t dbuf_get(struct DBuf *dyn, char *buf, size_t length)
+unsigned int dbuf_get(struct DBuf *dyn, char *buf, unsigned int length)
 {
-  size_t moved = 0;
-  size_t chunk;
+  unsigned int moved = 0;
+  unsigned int chunk;
   const char *b;
 
   assert(0 != dyn);
@@ -522,7 +317,11 @@ size_t dbuf_get(struct DBuf *dyn, char *buf, size_t length)
   return moved;
 }
 
-static size_t dbuf_flush(struct DBuf *dyn)
+/** Flush empty lines from a buffer.
+ * @param[in,out] dyn Data buffer to flush.
+ * @return Number of bytes in first available block (or zero if none).
+ */
+static unsigned int dbuf_flush(struct DBuf *dyn)
 {
   struct DBufBuffer *db = dyn->head;
 
@@ -551,20 +350,21 @@ static size_t dbuf_flush(struct DBuf *dyn)
   return dyn->length;
 }
 
-
-/*
- * dbuf_getmsg - Check the buffers to see if there is a string which is
- * terminated with either a \r or \n present.  If so, copy as much as 
- * possible (determined by length) into buf and return the amount copied 
- * else return 0.
+/** Copy a single line from a data buffer.
+ * If the output buffer cannot hold the whole line, or if there is no
+ * EOL in the buffer, return 0.
+ * @param[in,out] dyn Data buffer to copy from.
+ * @param[out] buf Buffer to copy to.
+ * @param[in] length Maximum number of bytes to copy.
+ * @return Number of bytes copied to \a buf.
  */
-size_t dbuf_getmsg(struct DBuf *dyn, char *buf, size_t length)
+unsigned int dbuf_getmsg(struct DBuf *dyn, char *buf, unsigned int length)
 {
   struct DBufBuffer *db;
   char *start;
   char *end;
-  size_t count;
-  size_t copied = 0;
+  unsigned int count;
+  unsigned int copied = 0;
 
   assert(0 != dyn);
   assert(0 != buf);
@@ -586,7 +386,7 @@ size_t dbuf_getmsg(struct DBuf *dyn, char *buf, size_t length)
    */
   while (length > 0)
   {
-    end = MIN(db->end, (start + length));
+    end = IRCD_MIN(db->end, (start + length));
     while (start < end && !IsEol(*start))
       *buf++ = *start++;
 

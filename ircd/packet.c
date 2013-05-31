@@ -1,12 +1,13 @@
 /*
- * IRC - Internet Relay Chat, common/packet.c
- * Copyright (C) 1990  Jarkko Oikarinen and
- *                     University of Oulu, Computing Center
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/packet.c
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,105 +16,83 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
+/** @file
+ * @brief Input packet handling functions.
+ * @version $Id$
+ */
+#include "config.h"
 
-#include "sys.h"
-#include "h.h"
-#include "s_debug.h"
-#include "struct.h"
-#include "s_misc.h"
-#include "s_bsd.h"
-#include "ircd.h"
-#include "msg.h"
-#include "parse.h"
-#include "send.h"
 #include "packet.h"
-#include "s_serv.h"
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-#include "dbuf.h"
+#include "client.h"
+#include "ircd.h"
+#include "ircd_chattr.h"
+#include "ircd_log.h"
+#if defined(USE_ZLIB)
+#include "ircd_zlib.h"
 #endif
+#include "parse.h"
+#include "s_bsd.h"
+#include "s_misc.h"
+#include "send.h"
 
-#include <assert.h>
+/* #include <assert.h> -- Now using assert in ircd_log.h */
 
-RCSTAG_CC("$Id$");
-
-void actualiza_contadores(aClient *cptr, int length)
+/** Add a certain number of bytes to a client's received statistics.
+ * @param[in,out] cptr Client to update.
+ * @param[in] length Number of newly received bytes to add.
+ */
+static void update_bytes_received(struct Client* cptr, unsigned int length)
 {
-  aClient *acpt = cptr->cli_connect->acpt;
-
-  me.cli_connect->receiveB += length;        /* Update bytes received */
-  cptr->cli_connect->receiveB += length;
-  if (cptr->cli_connect->receiveB > 1023)
-  {
-    cptr->cli_connect->receiveK += (cptr->cli_connect->receiveB >> 10);
-    cptr->cli_connect->receiveB &= 0x03ff;   /* 2^10 = 1024, 3ff = 1023 */
-  }
-  if (acpt != &me)
-  {
-    acpt->cli_connect->receiveB += length;
-    if (acpt->cli_connect->receiveB > 1023)
-    {
-      acpt->cli_connect->receiveK += (acpt->cli_connect->receiveB >> 10);
-      acpt->cli_connect->receiveB &= 0x03ff;
-    }
-  }
-  else if (me.cli_connect->receiveB > 1023)
-  {
-    me.cli_connect->receiveK += (me.cli_connect->receiveB >> 10);
-    me.cli_connect->receiveB &= 0x03ff;
-  }
+  cli_receiveB(&me)  += length;     /* Update bytes received */
+  cli_receiveB(cptr) += length;
 }
 
-/*
- * dopacket
- *
- *    cptr - pointer to client structure for which the buffer data
- *           applies.
- *    buffer - pointer to the buffer containing the newly read data
- *    length - number of valid bytes of data in the buffer
- *
- *  Note:
- *    It is implicitly assumed that dopacket is called only
- *    with cptr of "local" variation, which contains all the
- *    necessary fields (buffer etc..)
+/** Add one message to a client's received statistics.
+ * @param[in,out] cptr Client to update.
  */
-int dopacket(aClient *cptr, char *buffer, int length)
+static void update_messages_received(struct Client* cptr)
 {
-  Reg1 char *ch1;
-  Reg2 char *ch2;
-  char *cptrbuf;
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-  int microburst = 0;
-  char buf_comp[BUFSIZE];
-  int compr = cptr->cli_connect->negociacion & ZLIB_ESNET_IN;
+  ++(cli_receiveM(&me));
+  ++(cli_receiveM(cptr));
+}
 
-  inicializa_microburst();
-#endif
+#if defined(USE_ZLIB_1)
+/** Handle received data from a directly connected server.
+ * @param[in] cptr Peer server that sent us data.
+ * @param[in] buffer Input buffer.
+ * @param[in] length Number of bytes in input buffer.
+ * @return 1 on success or CPTR_KILLED if the client is squit.
+ */
+int server_dopacket(struct Client* cptr, const char* buffer, int length)
+{
+  const char* src;
+  char*       endp;
+  char*       client_buffer;
+  int         microburst = 0;
+  char        buf_comp[BUFSIZE];
+  int         compr = cptr->cli_connect->negociacion & ZLIB_ESNET_IN;
 
-  actualiza_contadores(cptr, length);
+  assert(0 != cptr);
+  zlib_microburst_init();
 
-  ch2 = buffer;
-  cptrbuf = cptr->cli_connect->buffer;
+  update_bytes_received(cptr, length);
 
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-  if (compr)
-  {
+  client_buffer = cli_buffer(cptr);
+  if (compr) {
     cptr->cli_connect->comp_in->avail_in = length;
     cptr->cli_connect->comp_in_total_in += length;
     cptr->cli_connect->comp_in->next_in = buffer;
   }
-#endif
 
-  do
-  {                             /* Bucle de compresion */
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-    if (compr)
-    {
-      long length_out = cptr->cli_connect->comp_in->total_out;
+  do {       /* Bucle de compresion */
+    if (compr) {
+      uint64_t length_out = cptr->cli_connect->comp_in->total_out;
 
       cptr->cli_connect->comp_in->avail_out = BUFSIZE;
-      ch2 = cptr->cli_connect->comp_in->next_out = buf_comp;
+      src = cptr->cli_connect->comp_in->next_out = buf_comp;
       if (inflate(cptr->cli_connect->comp_in, Z_SYNC_FLUSH) != Z_OK)
         return exit_client(cptr, cptr, &me, "Error compresion");
       length = BUFSIZE - cptr->cli_connect->comp_in->avail_out;
@@ -123,15 +102,12 @@ int dopacket(aClient *cptr, char *buffer, int length)
         length_out = -length_out;
       cptr->cli_connect->comp_in_total_out += length_out;
     }
-#endif
 
-    ch1 = cptrbuf + cli_count(cptr);
+    endp = client_buffer + cli_count(cptr);
+    src = buffer;
 
-    while (--length >= 0)
-    {
-      char g;
-
-      g = (*ch1 = *ch2++);
+    while (length-- > 0) {
+      *endp = *src++;
       /*
        * Yuck.  Stuck.  To make sure we stay backward compatible,
        * we must assume that either CR or LF terminates the message
@@ -139,113 +115,183 @@ int dopacket(aClient *cptr, char *buffer, int length)
        * of messages, backward compatibility is lost and major
        * problems will arise. - Avalon
        */
-      if (g < '\16' && (g == '\n' || g == '\r'))
-      {
-        if (ch1 == cptrbuf)
-          continue;             /* Skip extra LF/CR's */
-        *ch1 = '\0';
-        me.cli_connect->receiveM += 1;       /* Update messages received */
-        cptr->cli_connect->receiveM += 1;
-        if (cptr->cli_connect->acpt != &me)
-          cptr->cli_connect->acpt->cli_connect->receiveM += 1;
+      if (IsEol(*endp)) {
+        if (endp == client_buffer)
+          continue;               /* Skip extra LF/CR's */
+        *endp = '\0';
 
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-        if (length && !microburst)
-        {
+        update_messages_received(cptr);
+
+        if (length && !microburst) {
           microburst = !0;
-          inicia_microburst();
+          zlib_microburst_init();
         }
-#endif
 
-        if (IsServer(cptr))
-        {
-          if (parse_server(cptr, cptr->cli_connect->buffer, ch1) == CPTR_KILLED)
-          {
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-            if (microburst)
-              completa_microburst();
-#endif
-            return CPTR_KILLED;
-          }
-        }
-        else if (parse_client(cptr, cptr->cli_connect->buffer, ch1) == CPTR_KILLED)
-        {
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
+        if (parse_server(cptr, cli_buffer(cptr), endp) == CPTR_KILLED) {
           if (microburst)
-            completa_microburst();
-#endif
+            zlib_microburst_complet();
           return CPTR_KILLED;
         }
         /*
          *  Socket is dead so exit
          */
-        if (IsDead(cptr))
-        {
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
+        if (IsDead(cptr)) {
           if (microburst)
-            completa_microburst();
-#endif
-          return exit_client(cptr, cptr, &me, LastDeadComment(cptr));
+            zlib_microburst_complet();
+          return exit_client(cptr, cptr, &me, cli_info(cptr));
         }
-        ch1 = cptrbuf;
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-/* Se empieza a recibir comprimido aqui */
+        endp = client_buffer;
         if ((!compr) && (cptr->cli_connect->negociacion & ZLIB_ESNET_IN))
         {
           compr = !0;
-          while ((--length >= 0) && ((*ch2 == '\n') || (*ch2 == '\r')))
-            ch2++;
+          while ((--length >= 0) && ((*src == '\n') || (*src == '\r')))
+            src++;
           cptr->cli_connect->comp_in->avail_in = ++length;
-          cptr->cli_connect->comp_in->next_in = ch2;
+          cptr->cli_connect->comp_in->next_in = src;
           length = 0;           /* Fuerza una nueva pasada */
         }
-#endif
       }
-      else if (ch1 < cptrbuf + (sizeof(cptr->cli_connect->buffer) - 1))
-        ch1++;                  /* There is always room for the null */
+      else if (endp < client_buffer + BUFSIZE)
+        ++endp;                   /* There is always room for the null */
     }
-    cli_count(cptr) = ch1 - cptr->cli_connect->buffer;
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
+    cli_count(cptr) = endp - cli_buffer(cptr);
   }
   while (compr && (cptr->cli_connect->comp_in->avail_in > 0)); /* Bucle de compresion */
+
   if (microburst)
-    completa_microburst();
-#else
-  }
-  while (0);
-#endif
-  return 0;
+    zlib_microburst_completed();
+  return 1;
 }
 
-/*
- * client_dopacket - handle client messages
+#else
+/** Handle received data from a directly connected server.
+ * @param[in] cptr Peer server that sent us data.
+ * @param[in] buffer Input buffer.
+ * @param[in] length Number of bytes in input buffer.
+ * @return 1 on success or CPTR_KILLED if the client is squit.
  */
-int client_dopacket(aClient *cptr, size_t length)
+int server_dopacket(struct Client* cptr, const char* buffer, int length)
+{
+  const char* src;
+  char*       endp;
+  char*       client_buffer;
+
+  assert(0 != cptr);
+
+  update_bytes_received(cptr, length);
+
+  client_buffer = cli_buffer(cptr);
+  endp = client_buffer + cli_count(cptr);
+  src = buffer;
+
+  while (length-- > 0) {
+    *endp = *src++;
+    /*
+     * Yuck.  Stuck.  To make sure we stay backward compatible,
+     * we must assume that either CR or LF terminates the message
+     * and not CR-LF.  By allowing CR or LF (alone) into the body
+     * of messages, backward compatibility is lost and major
+     * problems will arise. - Avalon
+     */
+    if (IsEol(*endp)) {
+      if (endp == client_buffer)
+        continue;               /* Skip extra LF/CR's */
+      *endp = '\0';
+
+      update_messages_received(cptr);
+
+      if (parse_server(cptr, cli_buffer(cptr), endp) == CPTR_KILLED)
+        return CPTR_KILLED;
+      /*
+       *  Socket is dead so exit
+       */
+      if (IsDead(cptr))
+        return exit_client(cptr, cptr, &me, cli_info(cptr));
+      endp = client_buffer;
+    }
+    else if (endp < client_buffer + BUFSIZE)
+      ++endp;                   /* There is always room for the null */
+  }
+  cli_count(cptr) = endp - cli_buffer(cptr);
+  return 1;
+}
+#endif
+
+/** Handle received data from a new (unregistered) connection.
+ * @param[in] cptr Unregistered connection that sent us data.
+ * @param[in] buffer Input buffer.
+ * @param[in] length Number of bytes in input buffer.
+ * @return 1 on success or CPTR_KILLED if the client is squit.
+ */
+int connect_dopacket(struct Client *cptr, const char *buffer, int length)
+{
+  const char* src;
+  char*       endp;
+  char*       client_buffer;
+
+  assert(0 != cptr);
+
+  update_bytes_received(cptr, length);
+
+  client_buffer = cli_buffer(cptr);
+  endp = client_buffer + cli_count(cptr);
+  src = buffer;
+
+  while (length-- > 0)
+  {
+    *endp = *src++;
+    /*
+     * Yuck.  Stuck.  To make sure we stay backward compatible,
+     * we must assume that either CR or LF terminates the message
+     * and not CR-LF.  By allowing CR or LF (alone) into the body
+     * of messages, backward compatibility is lost and major
+     * problems will arise. - Avalon
+     */
+    if (IsEol(*endp))
+    {
+      /* Skip extra LF/CR's */
+      if (endp == client_buffer)
+        continue;
+      *endp = '\0';
+
+      update_messages_received(cptr);
+
+      if (parse_client(cptr, cli_buffer(cptr), endp) == CPTR_KILLED)
+        return CPTR_KILLED;
+      /* Socket is dead so exit */
+      if (IsDead(cptr))
+        return exit_client(cptr, cptr, &me, cli_info(cptr));
+      else if (IsServer(cptr))
+      {
+        cli_count(cptr) = 0;
+        return server_dopacket(cptr, src, length);
+      }
+      endp = client_buffer;
+    }
+    else if (endp < client_buffer + BUFSIZE)
+      /* There is always room for the null */
+      ++endp;
+  }
+  cli_count(cptr) = endp - cli_buffer(cptr);
+  return 1;
+}
+
+/** Handle received data from a local client.
+ * @param[in] cptr Local client that sent us data.
+ * @param[in] length Total number of bytes in client's input buffer.
+ * @return 1 on success or CPTR_KILLED if the client is squit.
+ */
+int client_dopacket(struct Client *cptr, unsigned int length)
 {
   assert(0 != cptr);
 
-  me.cli_connect->receiveB += length;        /* Update bytes received */
-  cptr->cli_connect->receiveB += length;
+  update_bytes_received(cptr, length);
+  update_messages_received(cptr);
 
-  if (cptr->cli_connect->receiveB > 1023)
-  {
-    cptr->cli_connect->receiveK += (cptr->cli_connect->receiveB >> 10);
-    cptr->cli_connect->receiveB &= 0x03ff;   /* 2^10 = 1024, 3ff = 1023 */
-  }
-  if (me.cli_connect->receiveB > 1023)
-  {
-    me.cli_connect->receiveK += (me.cli_connect->receiveB >> 10);
-    me.cli_connect->receiveB &= 0x03ff;
-  }
-  cli_count(cptr) = 0;
-
-  ++me.cli_connect->receiveM;                /* Update messages received */
-  ++cptr->cli_connect->receiveM;
-
-  if (CPTR_KILLED == parse_client(cptr, cptr->cli_connect->buffer, cptr->cli_connect->buffer + length))
+  if (CPTR_KILLED == parse_client(cptr, cli_buffer(cptr), cli_buffer(cptr) + length))
     return CPTR_KILLED;
   else if (IsDead(cptr))
-    return exit_client(cptr, cptr, &me, LastDeadComment(cptr));
+    return exit_client(cptr, cptr, &me, cli_info(cptr));
 
-  return 0;
+  return 1;
 }

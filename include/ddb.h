@@ -33,6 +33,8 @@
 
 #include <sys/stat.h>
 
+struct StatDesc;
+
 #if defined(DDB)
 
 /*
@@ -41,7 +43,7 @@
 /** Maxium number of tables */
 #define DDB_TABLE_MAX      256
 /** Number of keys is caching */
-#define DDB_BUF_CACHE  32
+#define DDB_BUF_CACHE      32
 
 /*
  * Distributed DataBases Tables
@@ -49,7 +51,7 @@
 /** First table of %DDB Distributed Databases. */
 #define DDB_INIT        'a'
 /** Bots table of %DDB Distributed Databases. */
-#define DDB_BOTSDB      'b'
+#define DDB_BOTDB       'b'
 /** Channels table of %DDB Distributed Databases. */
 #define DDB_CHANDB      'c'
 /** Channels table (nicks) of %DDB Distributed Databases. */
@@ -67,7 +69,7 @@
 /** Operators table of %DDB Distributed Databases. */
 #define DDB_OPERDB      'o'
 /** Privileges table of %DDB Distributed Databases. */
-#define DDB_PRIVSDB     'p'
+#define DDB_PRIVDB      'p'
 /** Channel redirections table of %DDB Distributed Databases. */
 #define DDB_CHANREDIRECTDB 'r'
 /** Uworld table of %DDB Distributed Databases. */
@@ -89,7 +91,9 @@
 /** Message to clients with too many clones from your ip */
 #define DDB_CONFIGDB_MSG_TOO_MANY_FROM_IP   "msgmanyperip"
 /** Key to crypt ips */
-#define DDB_CONFIGDB_IP_CRYPT_KEY       "ipcryptkey"
+#define DDB_CONFIGDB_IP_CRYPT_KEY           "ipcryptkey"
+/** Key to crypt cookies */
+#define DDB_CONFIGDB_COOKIE_CRYPT_KEY       "cookiecryptkey"
 
 /*
  * PseudoBots
@@ -114,61 +118,96 @@ struct Ddb {
 /** Get next key on the table. */
 #define ddb_next(ddb)       ((ddb)->ddb_next)
 
+#define DDBPWDLEN	12
+
+/** An copy of kernel structure stat.
+ */
+struct ddb_stat {
+  dev_t  dev;       /**< ID of device containing a directory entry for this file */
+  ino_t  ino;       /**< Inode number */
+  off_t  size;      /**< File size in bytes */
+  time_t mtime;     /**< Time of last data modification */
+};
+
+/** DDB Macro for allocations. */
+#define DdbMalloc(x)    MyMalloc(x)
+/** DDB Macro for freeing memory. */
+#define DdbFree(x)      MyFree(x)
+
+/*
+ * Prototypes
+ */
+extern struct Ddb **ddb_data_table[DDB_TABLE_MAX];
+extern struct ddb_stat ddb_stats_table[DDB_TABLE_MAX];
+extern unsigned int ddb_resident_table[DDB_TABLE_MAX];
+extern unsigned int ddb_count_table[DDB_TABLE_MAX];
+extern unsigned int ddb_id_table[DDB_TABLE_MAX];
+typedef void (*ddb_events_table_td)(char *, char *, int);
+extern ddb_events_table_td ddb_events_table[DDB_TABLE_MAX];
+extern unsigned int ddb_hashtable_hi[DDB_TABLE_MAX];
+extern unsigned int ddb_hashtable_lo[DDB_TABLE_MAX];
+extern int ddb_hash_register(char *key, int hash_size);
+
+extern int ddb_table_is_resident(unsigned char table);
+extern unsigned int ddb_id_in_table(unsigned char table);
+extern unsigned int ddb_count_in_table(unsigned char table);
+
+extern void ddb_init(void);
+extern void ddb_events_init(void);
+extern void ddb_end(void);
+
+extern void ddb_new_register(char *regist, unsigned char table, struct Client *cptr, struct Client *sptr);
+extern void ddb_drop(unsigned char table);
+extern void ddb_drop_memory(unsigned char table, int events);
+extern void ddb_compact(char *regist, unsigned char table);
+extern void ddb_burst(struct Client *cptr);
+extern int ddb_table_burst(struct Client *cptr, unsigned char table, unsigned int id);
 
 extern struct Ddb *ddb_iterator_first(unsigned char table);
 extern struct Ddb *ddb_iterator_next(void);
 extern struct Ddb *ddb_find_key(unsigned char table, char *key);
 extern char *ddb_get_botname(char *botname);
 
-#define DDBPWDLEN	12
+extern void ddb_splithubs(struct Client *cptr, unsigned char table, char *exitmsg);
+extern void ddb_reload(void);
+extern void ddb_die(const char *pattern, ...);
+extern void ddb_report_stats(struct Client* to, const struct StatDesc* sd, char* param);
+extern void ddb_count_memory(size_t* count_out, size_t* bytes_out);
 
-/*
-** Registros de configuracion en la tabla 'z'
-*/
-#define BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO	"numero.maximo.de.clones.por.defecto"
-#define BDD_MENSAJE_DE_DEMASIADOS_CLONES	"mensaje.de.demasiados.clones"
-#define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA	"mensaje.de.capacidad.superada"
-#define BDD_CLAVE_DE_CIFRADO_DE_IPS		"clave.de.cifrado.de.ips"
-#define BDD_AUTOINVISIBLE    "auto.invisible"
-#define BDD_CLAVE_DE_CIFRADO_DE_COOKIES "clave.de.cifrado.de.cookies"
-#define BDD_COMPRESION_ZLIB_CLIENTE "compresion.zlib.cliente"
+/* ddb_db_*.c externs */
+extern void ddb_db_init(void);
+extern void ddb_cache(void);
+extern int ddb_db_read(struct Client *cptr, unsigned char table, unsigned int id, int count);
+extern void ddb_db_write(unsigned char table, unsigned int id, char *mask, char *key, char *content);
+extern void ddb_db_drop(unsigned char table);
+extern void ddb_db_compact(unsigned char table);
+extern void ddb_db_hash_read(unsigned char table, unsigned int *hi, unsigned int *lo);
+extern void ddb_db_hash_write(unsigned char table);
+extern void ddb_db_end(void);
+
+/* */
+extern int max_clones;
+extern char *msg_many_clones;
+extern char *ip_crypt_key;
+extern unsigned int binary_ip_crypt_key[2];
+#if defined(WEBCHAT)
+extern int cookie_crypt_key;
+extern unsigned char binary_cookie_crypt_key[32];
+#endif
+extern int invis_exception;
+extern int channel_redirections;
+extern char *perso_quit;
+
 #define BDD_CANAL_DEBUG "debugchan"
-/* Para las features de los pseudoBOTS */
-#define BDD_CHANSERV      "ChanServ"
-#define BDD_NICKSERV      "NickServ"
-
 
 void reload_db(void);
 void initdb(void);
-struct DB_nick *find_db_nick(char *nick);
-void tx_num_serie_dbs(struct Client *cptr);
-int m_db(struct Client *cptr, struct Client *sptr, int parc, char *parv[]);
-
-int db_es_miembro(unsigned char tabla, char *clave, char *subcadena);
-int db_es_residente(unsigned char tabla);
-unsigned int db_num_serie(unsigned char tabla);
-unsigned int db_cuantos(unsigned char tabla);
 
 #if defined(BDD_MMAP)
 int db_persistent_hit(void);
 void db_persistent_commit(void);
 #endif
 
-int m_dbq(struct Client *cptr, struct Client *sptr, int parc, char *parv[]);
+#endif /* defined(DDB) */
 
-extern int numero_maximo_de_clones_por_defecto;
-extern char *clave_de_cifrado_de_ips;
-extern unsigned int clave_de_cifrado_binaria[2];
-extern unsigned char clave_de_cifrado_de_cookies[32];
-extern int cifrado_cookies;
-extern int ocultar_servidores;
-extern int activar_ident;
-extern int auto_invisible;
-extern int excepcion_invisible;
-extern int activar_redireccion_canales;
-extern char *mensaje_quit_personalizado;
-extern int compresion_zlib_cliente;
-
-
-#endif
-#endif /* S_BDD_H */
+#endif /* INCLUDED_ddb_h */

@@ -1,18 +1,14 @@
 /*
- * Userload module by Michael L. VanLoon (mlv) <michaelv@iastate.edu>
- * Written 2/93.  Originally grafted into irc2.7.2g 4/93.
- * 
- * Rewritten 9/97 by Carlo Wood (Run) <carlo@runaway.xs4all.nl>
- * because previous version used ridiculous amounts of memory
- * (stored all loads of the passed three days ~ 8 megs).
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/userload.c
  *
- * IRC - Internet Relay Chat, ircd/userload.c
- * Copyright (C) 1990 University of Oulu, Computing Center
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1997 Carlo Wood <carlo@runaway.xs4all.nl>
+ * Copyright (C) 1993 Michael L. VanLoon (mlv) <michaelv@iastate.edu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,42 +17,43 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-#include "sys.h"
-#include <stdio.h>
-#include <signal.h>
-#include <sys/resource.h>
-#include "h.h"
-#include "s_debug.h"
-#include "struct.h"
-#include "send.h"
-#include "s_misc.h"
-#include "userload.h"
-#include "ircd.h"
-#include "numnicks.h"
-#include "msg.h"
-#include "s_serv.h"
-#include "querycmds.h"
-
-RCSTAG_CC("$Id$");
-
-struct current_load_st current_load;  /* The current load */
-
-static struct current_load_st cspm_sum; /* Number of connections times number
-                                           of seconds per minute. */
-static struct current_load_st csph_sum; /* Number of connections times number
-                                           of seconds per hour. */
-static struct current_load_st cspm[60]; /* Last 60 minutes */
-static struct current_load_st csph[72]; /* Last 72 hours */
-
-static int m_index, h_index;    /* Array indexes */
-
-/*
- * update_load
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * A new connection was added or removed.
+ */
+/** @file
+ * @brief Userload tracking and statistics.
+ * @version $Id$
+ */
+#include "config.h"
+
+#include "userload.h"
+#include "client.h"
+#include "ircd.h"
+#include "msg.h"
+#include "numnicks.h"
+#include "querycmds.h"
+#include "s_misc.h"
+#include "s_stats.h"
+#include "send.h"
+#include "struct.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
+struct current_load_st current_load;    /**< The current load */
+
+static struct current_load_st cspm_sum; /**< Number of connections times number
+                                           of seconds per minute. */
+static struct current_load_st csph_sum; /**< Number of connections times number
+                                           of seconds per hour. */
+static struct current_load_st cspm[60]; /**< Last 60 minutes */
+static struct current_load_st csph[72]; /**< Last 72 hours */
+
+static int m_index; /**< Next entry to use in #cspm. */
+static int h_index; /**< Next entry to use in #csph. */
+
+/** Update load average to reflect a change in the local client count.
  */
 void update_load(void)
 {
@@ -65,18 +62,18 @@ void update_load(void)
                                    update_load() called. */
   static time_t last_min;
   static time_t last;           /* Last time that update_load() was called. */
-  static struct current_load_st last_load;  /* The load last time that
-                                               update_load() was called. */
+  static struct current_load_st last_load;      /* The load last time that
+                                                   update_load() was called. */
   static int initialized;       /* Boolean, set when initialized. */
-  int diff_time;       /* Temp. variable used to hold time intervals
+  int diff_time;        /* Temp. variable used to hold time intervals
                                    in seconds, minutes or hours. */
 
   /* Update `current_load' */
-  current_load.client_count = nrof.local_clients;
-  current_load.conn_count = nrof.local_clients + nrof.local_servers;
+  current_load.client_count = UserStats.local_clients;
+  current_load.conn_count = UserStats.local_clients + UserStats.local_servers;
 
   /* Nothing needed when still in the same second */
-  if (!(diff_time = now - last))
+  if (!(diff_time = CurrentTime - last))
   {
     last_load = current_load;   /* Update last_load to be the load last
                                    time that update_load() was called. */
@@ -100,7 +97,7 @@ void update_load(void)
       tm_now.tm_min -= 60 * diff_time;
       if ((tm_now.tm_hour += diff_time) > 23)
       {
-        tm_now = *localtime(&now);  /* Only called once a day */
+        tm_now = *localtime(&CurrentTime);      /* Only called once a day */
         if (!initialized)
         {
           initialized = 1;
@@ -197,10 +194,16 @@ void update_load(void)
   }
   last_load = current_load;     /* Update last_load to be the load last
                                    time that update_load() was called. */
-  last = now;
+  last = CurrentTime;
 }
 
-void calc_load(aClient *sptr)
+/** Statistics callback to display userload.
+ * @param[in] sptr Client requesting statistics.
+ * @param[in] sd Stats descriptor for request (ignored).
+ * @param[in] param Extra parameter from user (ignored).
+ */
+void
+calc_load(struct Client *sptr, const struct StatDesc *sd, char *param)
 {
   /* *INDENT-OFF* */
   static const char *header =
@@ -208,7 +211,7 @@ void calc_load(aClient *sptr)
       "Minute  Hour    Day   Yest. YYest. Userload for:";
   /* *INDENT-ON* */
   static const char *what[3] = {
-    DOMAINNAME " clients",
+    "local clients",
     "total clients",
     "total connections"
   };
@@ -246,34 +249,16 @@ void calc_load(aClient *sptr)
     times[i][2] /= 86400;
   }
 
-  if (MyUser(sptr) 
-#if !defined(NO_PROTOCOL9)
-      || Protocol(cli_from(sptr)) < 10
-#endif
-  )
-  {
-    sendto_one(sptr, ":%s NOTICE %s :%s", me.name, sptr->name, header);
-    for (i = 0; i < 3; ++i)
-      sendto_one(sptr,
-          ":%s NOTICE %s :%4d.%1d  %4d.%1d  %4d  %4d  %4d   %s",
-          me.name, sptr->name,
-          times[0][i] / 10, times[0][i] % 10,
-          times[1][i] / 10, times[1][i] % 10,
-          times[2][i], times[3][i], times[4][i], what[i]);
-  }
-  else
-  {
-    sendto_one(sptr, "%s " TOK_NOTICE " %s%s :%s", NumServ(&me), NumNick(sptr), header);
-    for (i = 0; i < 3; ++i)
-      sendto_one(sptr,
-          "%s " TOK_NOTICE " %s%s :%4d.%1d  %4d.%1d  %4d  %4d  %4d   %s",
-          NumServ(&me), NumNick(sptr),
-          times[0][i] / 10, times[0][i] % 10,
-          times[1][i] / 10, times[1][i] % 10,
-          times[2][i], times[3][i], times[4][i], what[i]);
-  }
+  sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :%s", sptr, header);
+  for (i = 0; i < 3; ++i)
+    sendcmdto_one(&me, CMD_NOTICE, sptr,
+		  "%C :%4d.%1d  %4d.%1d  %4d  %4d  %4d   %s", sptr,
+		  times[0][i] / 10, times[0][i] % 10,
+		  times[1][i] / 10, times[1][i] % 10,
+		  times[2][i], times[3][i], times[4][i], what[i]);
 }
 
+/** Initialize the userload statistics. */
 void initload(void)
 {
   memset(&current_load, 0, sizeof(current_load));

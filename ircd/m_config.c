@@ -18,7 +18,7 @@
  */
 
 
-#include "sys.h"
+#include "config.h"
 
 #if defined(ESNET_NEG)
 

@@ -1,11 +1,14 @@
 /*
- * IRC - Internet Relay Chat, include/hash.h 
- * Copyright (C) 1998 by Andrea "Nemesi" Cocito
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/hash.h
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1998 Andrea Cocito
+ * Copyright (C) 1991 Darren Reed
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,30 +17,39 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
+/** @file
+ * @brief Hash table management APIs.
+ * @version $Id: hash.h,v 1.9 2007-04-19 22:53:46 zolty Exp $
+ */
+#ifndef INCLUDED_hash_h
+#define INCLUDED_hash_h
 
-#if !defined(HASH_H)
-#define HASH_H
+struct Client;
+struct Channel;
+struct StatDesc;
+struct Watch;
 
-#include "s_serv.h"             /* For STAT_* values and StatusMask() macro */
-
-/*=============================================================================
+/*
  * general defines
  */
 
-/* Now client and channel hash table must be of the same size */
-#define HASHSIZE		32768
+/** Size of client and channel hash tables.
+ * Both must be of the same size.
+ */
+#define HASHSIZE                32768
 
-/*=============================================================================
+/*
  * Structures
  */
 
-/*=============================================================================
+/*
  * Macros for internal use
  */
 
-/*=============================================================================
+/*
  * Externally visible pseudofunctions (macro interface to internal functions)
  */
 
@@ -50,40 +62,53 @@
 #define SeekUser(name)          hSeekClient((name), (STAT_USER))
 /** Search for a server by name. */
 #define SeekServer(name)        hSeekClient((name), (STAT_ME | STAT_SERVER))
+/** Search for a watch by name. */
+#define SeekWatch(name)         hSeekWatch((name))
 
 /* Safer macros with sanity check on name, WARNING: these are _macros_,
    no side effects allowed on <name> ! */
-#define FindChannel(name)	(BadPtr((name))?NULL:SeekChannel(name))
-#define FindClient(name)	(BadPtr((name))?NULL:SeekClient(name))
-#define FindUser(name)		(BadPtr((name))?NULL:SeekUser(name))
-#define FindServer(name)	(BadPtr((name))?NULL:SeekServer(name))
+/** Search for a channel by name. */
+#define FindChannel(name)       (BadPtr((name)) ? 0 : SeekChannel(name))
+/** Search for any client by name. */
+#define FindClient(name)        (BadPtr((name)) ? 0 : SeekClient(name))
+/** Search for a registered user by name. */
+#define FindUser(name)          (BadPtr((name)) ? 0 : SeekUser(name))
+/** Search for a server by name. */
+#define FindServer(name)        (BadPtr((name)) ? 0 : SeekServer(name))
+/** Search for a wach by name. */
+#define FindWatch(name)         (BadPtr((name)) ? 0 : SeekWatch(name))
 
-/*=============================================================================
+/*
  * Proto types
  */
 
-extern void hash_init(void);    /* Call me on startup */
-extern int hAddClient(aClient *cptr);
-extern int hAddChannel(aChannel *chptr);
-extern int hRemClient(aClient *cptr);
-extern int hChangeClient(aClient *cptr, char *newname);
-extern int hRemChannel(aChannel *chptr);
-extern aClient *hSeekClient(char *name, int TMask);
-extern aChannel *hSeekChannel(char *name);
+extern void init_hash(void);    /* Call me on startup */
+extern int hAddClient(struct Client *cptr);
+extern int hAddChannel(struct Channel *chptr);
+extern int hAddWatch(struct Watch *wptr);
+extern int hRemClient(struct Client *cptr);
+extern int hChangeClient(struct Client *cptr, const char *newname);
+extern int hRemChannel(struct Channel *chptr);
+extern int hRemWatch(struct Watch *wptr);
+extern struct Client *hSeekClient(const char *name, int TMask);
+extern struct Channel *hSeekChannel(const char *name);
+extern struct Watch *hSeekWatch(const char *name);
 
-extern int m_hash(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+extern int m_hash(struct Client *cptr, struct Client *sptr, int parc, char *parv[]);
 
-int db_hash_registro(char *clave, int hash_size);
-
-#if defined(WATCH)
-extern int hAddWatch(aWatch * wptr);
-extern int hRemWatch(aWatch * wptr);
-extern aWatch *hSeekWatch(char *nick);
-
-#define SeekWatch(nick)          hSeekWatch((nick))
-#define FindWatch(nick)          (BadPtr((nick))?NULL:SeekWatch(nick))
-#endif /* WATCH */
-
+#if defined(DDB)
+extern int isNickJuped(const char *nick, char *reason);
+#else
+extern int isNickJuped(const char *nick);
+extern int addNickJupes(const char *nicks);
+extern void clearNickJupes(void);
+#endif
+extern void stats_nickjupes(struct Client* to, const struct StatDesc* sd,
+			    char* param);
 extern void list_next_channels(struct Client *cptr);
 
-#endif /* HASH_H */
+#if defined(DDB)
+extern int ddb_hash_register(char *key, int hash_size);
+#endif
+
+#endif /* INCLUDED_hash_h */

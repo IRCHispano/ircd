@@ -1,278 +1,93 @@
-#if !defined(S_BSD_H)
-#define S_BSD_H
-
-#include <netdb.h>
-#include "s_conf.h"
-#include "../libevent/event.h"
-
-/*=============================================================================
- * Macro's
- */
-
-#define FLAGS_PINGSENT	 0x0001 /* Unreplied ping sent */
-#define FLAGS_DEADSOCKET 0x0002 /* Local socket is dead--Exiting soon */
-#define FLAGS_KILLED	 0x0004   /* Prevents "QUIT" from being sent for this */
-#define FLAGS_OPER	 0x0008     /* Operator */
-#define FLAGS_LOCOP	 0x0010     /* Local operator -- SRB */
-#define FLAGS_INVISIBLE	 0x0020 /* makes user invisible */
-#define FLAGS_WALLOP	 0x0040   /* send wallops to them */
-#define FLAGS_SERVNOTICE 0x0080 /* server notices such as kill */
-#define FLAGS_BLOCKED	 0x0100   /* socket is in a blocked condition */
-#define FLAGS_UNIX	 0x0200     /* socket is in the unix domain, not inet */
-#define FLAGS_CLOSING	 0x0400   /* set when closing to suppress errors */
-#define FLAGS_LISTEN	 0x0800   /* used to mark clients which we listen() on */
-#define FLAGS_CHKACCESS	 0x1000 /* ok to check clients access if set */
-#define FLAGS_GOTID     0x00020000  /* successful ident lookup achieved */
-#define FLAGS_DOID      0x00040000  /* I-lines say must use ident return */
-#define FLAGS_NONL      0x00080000  /* No \n in buffer */
-#define FLAGS_TS8       0x00100000  /* Why do you want to know? */
-#define FLAGS_PING      0x00200000  /* Socket needs to send udp pings */
-#define FLAGS_ASKEDPING 0x00400000  /* Client asked for udp ping */
-#define FLAGS_MAP       0x00800000  /* Show server on the map */
-#define FLAGS_JUNCTION  0x01000000  /* Junction causing the net.burst */
-#define FLAGS_DEAF      0x02000000  /* Makes user deaf */
-#define FLAGS_CHSERV    0x04000000  /* Disallow KICK or MODE -o on the user;
-                                       don't display channels in /whois */
-#define FLAGS_BURST     0x08000000  /* Server is receiving a net.burst */
-#define FLAGS_BURST_ACK 0x10000000  /* Server is waiting for eob ack */
-#define FLAGS_DEBUG     0x20000000  /* send global debug/anti-hack info */
-#define FLAGS_IPCHECK   0x40000000  /* Added or updated IPregistry data */
-
-#define MODE_ISWATCH    0x80000000  /* Se enviara WATCH para este nick */
-
-#define SERVER_HUB      0x2000
-#define SERVER_SERVICE  0x4000
-#define SERVER_IPV6     0x8000
-
-#define IsHub(x)      ((x)->flags & SERVER_HUB)
-#define IsService(x)  ((x)->flags & SERVER_SERVICE)
-#define IsIPv6(x)     ((x)->flags & SERVER_IPV6)
-
-#define SetHub(x)     ((x)->flags |= SERVER_HUB)
-#define SetService(x) ((x)->flags |= SERVER_SERVICE)
-#define SetIPv6(x)    ((x)->flags |= SERVER_IPV6)
-
-
-
-/* Flags LOCALES */
-#define FLAGS_DOINGDNS  0x00002000  /* client is waiting for a DNS response */
-#define FLAGS_AUTH      0x00004000  /* client is waiting on rfc931 response */
-#define FLAGS_WRAUTH    0x00008000  /* set if we havent writen to ident server */
-
-
-
-#define SEND_UMODES \
-    (FLAGS_INVISIBLE|FLAGS_OPER|FLAGS_WALLOP|FLAGS_DEAF|FLAGS_CHSERV|FLAGS_DEBUG)
-
-#define ALL_UMODES (SEND_UMODES|FLAGS_SERVNOTICE|FLAGS_LOCOP)
-#define FLAGS_ID (FLAGS_DOID|FLAGS_GOTID)
-
 /*
- * flags macros.
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/s_bsd.h
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1990 Jarkko Oikarinen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
-#define IsOper(x)		((x)->flags & FLAGS_OPER)
-#define IsLocOp(x)		((x)->flags & FLAGS_LOCOP)
-#define IsInvisible(x)		((x)->flags & FLAGS_INVISIBLE)
-#define IsDeaf(x)		((x)->flags & FLAGS_DEAF)
-#define IsChannelService(x)	((x)->flags & FLAGS_CHSERV)
-#define IsAnOper(x)		((x)->flags & (FLAGS_OPER|FLAGS_LOCOP))
-#define IsPrivileged(x)		(IsAnOper(x) || IsServer(x))
-#define SendWallops(x)		((x)->flags & FLAGS_WALLOP)
-#define SendDebug(x)            ((x)->flags & FLAGS_DEBUG)
-#define SendServNotice(x)	((x)->flags & FLAGS_SERVNOTICE)
-#define IsUnixSocket(x)		((x)->flags & FLAGS_UNIX)
-#define IsListening(x)		((x)->flags & FLAGS_LISTEN)
-#define DoAccess(x)		((x)->flags & FLAGS_CHKACCESS)
-#define IsDead(x)		((x)->flags & FLAGS_DEADSOCKET)
-#define IsJunction(x)		((x)->flags & FLAGS_JUNCTION)
-#define IsBurst(x)		((x)->flags & FLAGS_BURST)
-#define IsBurstAck(x)		((x)->flags & FLAGS_BURST_ACK)
-#define IsBurstOrBurstAck(x)	((x)->flags & (FLAGS_BURST|FLAGS_BURST_ACK))
-#define IsIPChecked(x)		((x)->flags & FLAGS_IPCHECK)
-
-#define IsWatch(x)             ((x)->flags & MODE_ISWATCH)
-
-#define SetOper(x)		((x)->flags |= FLAGS_OPER)
-#define SetLocOp(x)		((x)->flags |= FLAGS_LOCOP)
-#define SetInvisible(x)		((x)->flags |= FLAGS_INVISIBLE)
-#define SetWallops(x)		((x)->flags |= FLAGS_WALLOP)
-#define SetDebug(x)             ((x)->flags |= FLAGS_DEBUG)
-#define SetUnixSock(x)		((x)->flags |= FLAGS_UNIX)
-#define SetDNS(x)		((x)->cli_connect->flags_local |= FLAGS_DOINGDNS)
-#define DoingDNS(x)		((x)->cli_connect->flags_local & FLAGS_DOINGDNS)
-#define SetAuth(x)              ((x)->cli_connect->flags_local |= FLAGS_AUTH)
-#define SetWRAuth(x)            ((x)->cli_connect->flags_local |= FLAGS_WRAUTH)
-#define SetAccess(x)		do { \
-                                  (x)->flags |= FLAGS_CHKACCESS; \
-                                  UpdateTimer(x,0); \
-                                } while (0)
-#define DoingAuth(x)		((x)->flags & FLAGS_AUTH)
-#define DoingWRAuth(x)		((x)->flags & FLAGS_WRAUTH)
-#define NoNewLine(x)		((x)->flags & FLAGS_NONL)
-#define DoPing(x)		((x)->flags & FLAGS_PING)
-#define SetAskedPing(x)		((x)->flags |= FLAGS_ASKEDPING)
-#define AskedPing(x)		((x)->flags & FLAGS_ASKEDPING)
-#define SetJunction(x)		((x)->flags |= FLAGS_JUNCTION)
-#define SetBurst(x)		((x)->flags |= FLAGS_BURST)
-#define SetBurstAck(x)		((x)->flags |= FLAGS_BURST_ACK)
-#define SetIPChecked(x)		((x)->flags |= FLAGS_IPCHECK)
-
-#define SetWatch(x)            ((x)->flags |= MODE_ISWATCH)
-
-#define ClearOper(x)		((x)->flags &= ~FLAGS_OPER)
-#define ClearLocOp(x)		((x)->flags &= ~FLAGS_LOCOP)
-#define ClearInvisible(x)	((x)->flags &= ~FLAGS_INVISIBLE)
-#define ClearWallops(x)		((x)->flags &= ~FLAGS_WALLOP)
-#define ClearDebug(x)           ((x)->flags &= ~FLAGS_DEBUG)
-#define ClearDNS(x)		((x)->cli_connect->flags_local &= ~FLAGS_DOINGDNS)
-#define ClearAuth(x)		((x)->cli_connect->flags_local &= ~FLAGS_AUTH)
-#define ClearWRAuth(x)          ((x)->cli_connect->flags_local &= ~FLAGS_WRAUTH)
-#define ClearAccess(x)		((x)->flags &= ~FLAGS_CHKACCESS)
-#define ClearPing(x)		((x)->flags &= ~FLAGS_PING)
-#define ClearAskedPing(x)	((x)->flags &= ~FLAGS_ASKEDPING)
-#define ClearBurst(x)		((x)->flags &= ~FLAGS_BURST)
-#define ClearBurstAck(x)	((x)->flags &= ~FLAGS_BURST_ACK)
-
-#define ClearWatch(x)          ((x)->flags &= ~MODE_ISWATCH)
-
-/* used for async dns values */
-
-#define ASYNC_NONE	0
-#define ASYNC_CLIENT	1
-#define ASYNC_CONNECT	2
-#define ASYNC_CONF	3
-#define ASYNC_PING	4
-
-
-
-/*
- * simple defines to differentiate between a tty and socket for
- * add_connection()  -Simon
+/** @file s_bsd.h
+ * @brief Wrapper functions to avoid direct use of BSD APIs.
+ * @version $Id: s_bsd.h,v 1.12 2007-11-11 21:53:06 zolty Exp $
  */
+#ifndef INCLUDED_s_bsd_h
+#define INCLUDED_s_bsd_h
 
-#define ADCON_TTY 0
-#define ADCON_SOCKET 1
-
-/*=============================================================================
- * Proto types
- */
-
-extern int setsnomask(aClient *cptr, snomask_t newmask, int what);
-extern snomask_t umode_make_snomask(snomask_t oldmask, char *arg, int what);
-extern int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp);
-extern void report_error(char *text, aClient *cptr);
-extern int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual);
-extern int add_listener(aConfItem *aconf);
-extern void close_listeners(void);
-extern void init_sys(void);
-extern void write_pidfile(void);
-extern enum AuthorizationCheckResult check_client(aClient *cptr);
-extern int check_server(aClient *cptr);
-extern void close_connection(aClient *cptr);
-extern int get_sockerr(aClient *cptr);
-extern void set_non_blocking(int fd, aClient *cptr);
-extern aClient *add_connection(aClient *cptr, int fd, int type);
-extern void get_my_name(aClient *cptr);
-extern int setup_ping(void);
-extern void event_async_dns_callback(int fd, short event, void *arg);
-extern void event_udp_callback(int fd, short event, void *arg);
-extern void event_ping_callback(int fd, short event, aClient *cptr);
-extern void event_auth_callback(int fd, short event, aClient *cptr);
-extern void event_client_read_callback(int fd, short event, aClient *cptr);
-extern void event_client_write_callback(int fd, short event, aClient *cptr);
-extern void event_connection_callback(int fd, short event, aClient *cptr);
-extern void event_checkping_callback(int fd, short event, aClient *cptr);
-
-extern int highest_fd, resfd;
-extern unsigned int readcalls;
-extern aClient *loc_clients[MAXCONNECTIONS];
-#if defined(VIRTUAL_HOST)
-extern struct sockaddr_in vserv;
+#ifndef INCLUDED_sys_types_h
+#include <sys/types.h>         /* size_t, time_t */
+#define INCLUDED_sys_types_h
+#endif
+#ifndef INCLUDED_netinet_in_h
+#include <netinet/in.h>
+#define INCLUDED_netinet_in_h
 #endif
 
-/* Bits de los modos hispano */
-#define HMODE_NICKREGISTERED          0x00000001  /* Nick is registered (HISPANO/ESNET) */
-#define HMODE_HIDDENVIEWER            0x00000002  /* Ver IP Oculta */
-#define HMODE_NICKSUSPENDED           0x00000004  /* Nick Suspendido */
-#define HMODE_MSGONLYREG              0x00000008  /* Solo recibir mensajes de usuarios con +r */
-#define HMODE_HELPOP                  0x00000010  /* Es un oper con modo +h */
-#define HMODE_SERVICESBOT             0x00000020  /* Es un bot de canales */
-#define HMODE_HIDDEN                  0x00000040  /* IP Oculta */
-#define HFLAG_IPVIRTUAL_PERSONALIZADA 0x00000080  /* IP virtual personalizada */
-#define HMODE_USERDEAF                0x00000100  /* Usuario no puede recibir privados */
-#define HMODE_STRIPCOLOR              0x00000200  /* El usuario no recibe colores en +c */
-#define HMODE_USERBLIND               0x00000400  /* El resto de usuarios no ven lo que este dice en un canal */
-#define HMODE_USERNOJOIN              0x00000800  /* Al intentar entrar a un canal entra siempre a uno de debug */
+struct Client;
+struct ConfItem;
+struct Listener;
+struct MsgQ;
+struct irc_in_addr;
 
+/*
+ * TCP window sizes
+ * Set server window to a large value for fat pipes,
+ * set client to a smaller size to allow TCP flow control
+ * to reduce flooding
+ */
+/** Default TCP window size for server connections. */
+#define SERVER_TCP_WINDOW 61440
+/** Default TCP window size for client connections. */
+#define CLIENT_TCP_WINDOW 2048
 
-/* Modos hispano  a propagar */
-#define SEND_HMODES \
-    (HMODE_NICKREGISTERED | HMODE_HELPOP | HMODE_SERVICESBOT | HMODE_HIDDEN | HMODE_HIDDENVIEWER \
-       | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG | HMODE_USERDEAF | HMODE_STRIPCOLOR | HMODE_USERBLIND \
-       | HMODE_USERNOJOIN)
+extern void report_error(const char* text, const char* who, int err);
+/*
+ * text for report_error
+ */
+extern const char* const BIND_ERROR_MSG;
+extern const char* const LISTEN_ERROR_MSG;
+extern const char* const NONB_ERROR_MSG;
+extern const char* const REUSEADDR_ERROR_MSG;
+extern const char* const SOCKET_ERROR_MSG;
+extern const char* const CONNLIMIT_ERROR_MSG;
+extern const char* const SETBUFS_ERROR_MSG;
+extern const char* const TOS_ERROR_MSG;
 
-/* Modos hispano TODOS */
-#define ALL_HMODES \
-    (SEND_HMODES)
+extern int                 HighestFd;
+extern struct Client**     LocalClientArray;
+extern struct irc_sockaddr VirtualHost_v4;
+extern struct irc_sockaddr VirtualHost_v6;
+extern struct irc_sockaddr VirtualHost_dns_v4;
+extern struct irc_sockaddr VirtualHost_dns_v6;
 
-#define HMODES_HIDDEN \
-    (HMODE_USERDEAF | HMODE_USERBLIND | HMODE_USERNOJOIN)
+/*
+ * Proto types
+ */
+extern unsigned int deliver_it(struct Client *cptr, struct MsgQ *buf);
+extern int connect_server(struct ConfItem* aconf, struct Client* by);
+extern int  net_close_unregistered_connections(struct Client* source);
+extern void close_connection(struct Client *cptr);
+#if defined(USE_SSL)
+extern void add_connection(struct Listener* listener, int fd, void *ssl);
+#else
+extern void add_connection(struct Listener* listener, int fd);
+#endif
+extern int  read_message(time_t delay);
+extern void init_server_identity(void);
+extern void close_connections(int close_stderr);
+extern int  init_connection_limits(int maxconn);
+extern void update_write(struct Client* cptr);
 
-/* Macros comprobacion modos hispano */
-#define IsNickRegistered(x)     ((x)->hmodes & HMODE_NICKREGISTERED)
-#define IsHelpOp(x)             ((x)->hmodes & HMODE_HELPOP)
-#define IsServicesBot(x)        ((x)->hmodes & HMODE_SERVICESBOT)
-#define IsHidden(x)             ((x)->hmodes & HMODE_HIDDEN)
-#define IsHiddenViewer(x)       ((x)->hmodes & HMODE_HIDDENVIEWER)
-#define IsNickSuspended(x)      ((x)->hmodes & HMODE_NICKSUSPENDED)
-#define IsMsgOnlyReg(x)         ((x)->hmodes & HMODE_MSGONLYREG)
-#define IsUserDeaf(x)           ((x)->hmodes & HMODE_USERDEAF)
-#define IsStripColor(x)         ((x)->hmodes & HMODE_STRIPCOLOR)
-#define IsUserBlind(x)          ((x)->hmodes & HMODE_USERBLIND)
-#define IsUserNoJoin(x)         ((x)->hmodes & HMODE_USERNOJOIN)
-
-#define TieneIpVirtualPersonalizada(x)  ((x)->hmodes & HFLAG_IPVIRTUAL_PERSONALIZADA)
-
-
-/* Macros para poner modos hispano */
-#define SetNickRegistered(x)    ((x)->hmodes |= HMODE_NICKREGISTERED)
-#define SetHelpOp(x)            ((x)->hmodes |= HMODE_HELPOP)
-#define SetServicesBot(x)       ((x)->hmodes |= HMODE_SERVICESBOT)
-#define SetHidden(x)            ((x)->hmodes |= HMODE_HIDDEN)
-#define SetHiddenViewer(x)      ((x)->hmodes |= HMODE_HIDDENVIEWER)
-#define SetNickSuspended(x)     ((x)->hmodes |= HMODE_NICKSUSPENDED)
-#define SetMsgOnlyReg(x)        ((x)->hmodes |= HMODE_MSGONLYREG)
-#define SetUserDeaf(x)          ((x)->hmodes |= HMODE_USERDEAF)
-#define SetStripColor(x)        ((x)->hmodes |= HMODE_STRIPCOLOR)
-#define SetUserBlind(x)         ((x)->hmodes |= HMODE_USERBLIND)
-#define SetUserNoJoin(x)        ((x)->hmodes |= HMODE_USERNOJOIN)
-
-#define SetIpVirtualPersonalizada(x)    ((x)->hmodes |= HFLAG_IPVIRTUAL_PERSONALIZADA)
-
-
-/* Macros para borrar modos hispano */
-#define ClearNickRegistered(x)  ((x)->hmodes &= ~HMODE_NICKREGISTERED)
-#define ClearHelpOp(x)          ((x)->hmodes &= ~HMODE_HELPOP)
-#define ClearNickSuspended(x)   ((x)->hmodes &= ~HMODE_NICKSUSPENDED)
-#define ClearMsgOnlyReg(x)      ((x)->hmodes &= ~HMODE_MSGONLYREG)
-
-#define ClearServicesBot(x)     ((x)->hmodes &= ~HMODE_SERVICESBOT)
-#define ClearHidden(x)          ((x)->hmodes &= ~HMODE_HIDDEN)
-#define ClearHiddenViewer(x)    ((x)->hmodes &= ~HMODE_HIDDENVIEWER)
-#define ClearUserDeaf(x)        ((x)->hmodes &= ~HMODE_USERDEAF)
-#define ClearStripColor(x)      ((x)->hmodes &= ~HMODE_STRIPCOLOR)
-#define ClearUserBlind(x)       ((x)->hmodes &= ~HMODE_USERBLIND)
-#define ClearUserNoJoin(x)      ((x)->hmodes &= ~HMODE_USERNOJOIN)
-
-#define ClearIpVirtualPersonalizada(x)  ((x)->hmodes &= ~HFLAG_IPVIRTUAL_PERSONALIZADA)
-
-
-#define BorraIpVirtual(x)      do { \
-                                 assert(IsUser(x)); \
-                                 if((x)->cli_user->virtualhost) \
-                                   SlabStringFree((x)->cli_user->virtualhost); \
-                                 (x)->cli_user->virtualhost=NULL; \
-                                 ClearIpVirtualPersonalizada(x); \
-                               } while (0)
-
-#endif /* S_BSD_H */
+#endif /* INCLUDED_s_bsd_h */

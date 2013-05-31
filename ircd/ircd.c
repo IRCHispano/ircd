@@ -1,12 +1,13 @@
 /*
- * IRC - Internet Relay Chat, ircd/ircd.c
- * Copyright (C) 1990 Jarkko Oikarinen and
- *                    University of Oulu, Computing Center
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd.c
+ *
+ * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,767 +16,973 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
-
+/** @file
+ * @brief Entry point and other initialization functions for the daemon.
+ * @version $Id$
+ */
 #include "config.h"
-#include "sys.h"
-#include "client.h"
-#if HAVE_SYS_FILE_H
-#include <sys/file.h>
-#endif
-#include <sys/stat.h>
-#include <pwd.h>
-#include <signal.h>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-#if defined(HPUX)
-#define _KERNEL
-#endif
-#include <sys/resource.h>
-#if defined(HPUX)
-#undef _KERNEL
-#endif
-#if HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include <stdlib.h>
-#include <stdio.h>
-#if defined(USE_SYSLOG)
-#include <syslog.h>
-#endif
-#if defined(CHROOTDIR)
-#include <netinet/in.h>
-#include <arpa/nameser.h>
-#include <resolv.h>
-#endif
-#if defined(VIRTUAL_HOST)
-#include <sys/socket.h>         /* Needed for AF_INET on some OS */
-#endif
 
-#include <assert.h>
-
-#include "h.h"
-#include "s_debug.h"
-#include "res.h"
-#include "struct.h"
-#include "s_serv.h"
-#include "send.h"
 #include "ircd.h"
-#include "s_conf.h"
+#include "IPcheck.h"
 #include "class.h"
-#include "s_misc.h"
-#include "parse.h"
-#include "match.h"
-#include "s_bsd.h"
+#include "client.h"
 #include "crule.h"
-#include "userload.h"
-#include "numeric.h"
+#if defined(DDB)
+#include "ddb.h"
+#endif
+#include "destruct_event.h"
 #include "hash.h"
-#include "bsd.h"
+#include "ircd_alloc.h"
+#include "ircd_crypt.h"
+#include "ircd_events.h"
+#include "ircd_features.h"
+#include "ircd_log.h"
+#include "ircd_reply.h"
+#include "ircd_signal.h"
+#include "ircd_snprintf.h"
+#include "ircd_ssl.h"
+#include "ircd_string.h"
+#include "jupe.h"
+#include "list.h"
+#include "match.h"
+#include "msg.h"
+#include "numeric.h"
+#include "numnicks.h"
+#include "opercmds.h"
+#include "parse.h"
+#include "res.h"
+#include "s_auth.h"
+#include "s_bsd.h"
+#include "s_conf.h"
+#include "s_debug.h"
+#include "s_misc.h"
+#include "s_stats.h"
+#include "send.h"
+#include "uping.h"
+#include "userload.h"
 #include "version.h"
 #include "whowas.h"
-#include "numnicks.h"
-#include "IPcheck.h"
-#include "s_bdd.h"
-#include "slab_alloc.h"
-#include "network.h"
-#include "msg.h"
-#include "random.h"
 
-RCSTAG_CC("$Id$");
+/* #include <assert.h> -- Now using assert in ircd_log.h */
+#include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
+
+
+/*----------------------------------------------------------------------------
+ * External stuff
+ *--------------------------------------------------------------------------*/
 extern void init_counters(void);
+extern void init_isupport(void);
+extern void mem_dbg_initialise(void);
 
-aClient me;                     /* That's me */
-aClient his;			/* me con ocultacion */
-aClient *client = &me;          /* Pointer to beginning of Client list */
-time_t TSoffset = 0;            /* Global variable; Offset of timestamps to
-                                   system clock */
-
-char **myargv;
-unsigned short int portnum = 0; /* Server port number, listening this */
-char *configfile = CPATH;       /* Server configuration file */
-int debuglevel = -1;            /* Server debug level */
-unsigned int bootopt = 0;       /* Server boot option flags */
-char *debugmode = "";           /*  -"-    -"-   -"-  */
-int dorehash = 0;
-int restartFlag = 0;
-static char *dpath = DPATH;
-int nicklen = 9; /* Nicklen Original */
-
-struct event   ev_nextconnect;
-struct event   ev_nextdnscheck;
-struct event   ev_nextexpire;
-struct timeval tm_nextconnect;
-struct timeval tm_nextdnscheck;
-struct timeval tm_nextexpire;
-
-time_t now;                     /* Updated every time we leave select(),
-
-                                   and used everywhere else */
-
-struct event ev_sighup;
-struct event ev_sigterm;
-struct event ev_sigint;
+/*----------------------------------------------------------------------------
+ * Constants / Enums
+ *--------------------------------------------------------------------------*/
+enum {
+  BOOT_DEBUG = 1,  /**< Enable debug output. */
+  BOOT_TTY   = 2,  /**< Stay connected to TTY. */
+  BOOT_CHKCONF = 4 /**< Exit after reading configuration file. */
+};
 
 
-RETSIGTYPE s_die(HANDLER_ARG(int UNUSED(sig)))
-{
-#if defined(USE_SYSLOG)
-  syslog(LOG_CRIT, "Server Killed By SIGTERM");
-#endif
-  flush_connections(me.fd);
-  exit(-1);
-}
+/*----------------------------------------------------------------------------
+ * Global data (YUCK!)
+ *--------------------------------------------------------------------------*/
+struct Client  me;                      /**< That's me */
+struct Connection me_con;		/**< That's me too */
+struct Client *GlobalClientList  = &me; /**< Pointer to beginning of
+					   Client list */
+time_t         TSoffset          = 0;   /**< Offset of timestamps to system clock */
+time_t         CurrentTime;             /**< Updated every time we leave select() */
 
-RETSIGTYPE s_die2(HANDLER_ARG(int UNUSED(sig)))
-{
-#if defined(BDD_MMAP)
-  db_persistent_commit();
-#endif
+char          *configfile        = CPATH; /**< Server configuration file */
+int            debuglevel        = -1;    /**< Server debug level  */
+char          *debugmode         = "";    /**< Server debug level */
+int            maxconnections    = MAXCONNECTIONS; /**< Maximum number of open files */
+int            refuse            = 0;     /**< Refuse new connecting clients */
+int            maxclients        = -1;    /**< Maximum number of clients */
+static char   *dpath             = DPATH; /**< Working directory for daemon */
+static char   *dbg_client;                /**< Client specifier for chkconf */
 
-#if defined(__cplusplus)
-  s_die(0);
-#else
-  s_die();
-#endif
-}
+static struct Timer connect_timer; /**< timer structure for try_connections() */
+static struct Timer ping_timer; /**< timer structure for check_pings() */
+static struct Timer destruct_event_timer; /**< timer structure for exec_expired_destruct_events() */
+static struct Timer countdown_timer; /**< timer structure for exit_countdown() */
 
-static RETSIGTYPE s_rehash(HANDLER_ARG(int UNUSED(sig)))
-{
-  dorehash = 1;
-  event_loopbreak();
-}
+/** Daemon information. */
+static struct Daemon thisServer  = { 0, 0, 0, 0, 0, 0, -1 };
 
-#if defined(USE_SYSLOG)
-void restart(char *mesg)
-#else
-void restart(char *UNUSED(mesg))
-#endif
-{
-#if defined(USE_SYSLOG)
-  syslog(LOG_WARNING, "Restarting Server because: %s", mesg);
-#endif
-  server_reboot();
-}
+/** Non-zero until we want to exit. */
+int running = 1;
 
-RETSIGTYPE s_restart(HANDLER_ARG(int UNUSED(sig)))
-{
-  restartFlag = 1;
-  event_loopbreak();
-}
 
-void server_reboot(void)
-{
-  Reg1 int i;
-
-  sendto_ops("Aieeeee!!!  Restarting server...");
-  Debug((DEBUG_NOTICE, "Restarting server..."));
-  flush_connections(me.fd);
-
-#if defined(BDD_MMAP)
-  db_persistent_commit();
-#endif
-
-  /*
-   * fd 0 must be 'preserved' if either the -d or -i options have
-   * been passed to us before restarting.
-   */
-#if defined(USE_SYSLOG)
-  closelog();
-#endif
-  for (i = 3; i < MAXCONNECTIONS; i++)
-    close(i);
-  if (!(bootopt & (BOOT_TTY | BOOT_DEBUG)))
-    close(2);
-  close(1);
-  if ((bootopt & BOOT_CONSOLE) || isatty(0))
-    close(0);
-
-  if (!(bootopt & BOOT_INETD))
-    execv(SPATH, myargv);
-#if defined(USE_SYSLOG)
-  /* Have to reopen since it has been closed above */
-
-  openlog(myargv[0], LOG_PID | LOG_NDELAY, LOG_FACILITY);
-  syslog(LOG_CRIT, "execv(%s,%s) failed: %m\n", SPATH, myargv[0]);
-  closelog();
-#endif
-  Debug((DEBUG_FATAL, "Couldn't restart server \"%s\": %s",
-      SPATH, strerror(errno)));
-  exit(-1);
-}
-
-/*
- * try_connections
- *
- * Scan through configuration and try new connections.
- *
- * Returns the calendar time when the next call to this
- * function should be made latest. (No harm done if this
- * is called earlier or later...)
+/**
+ * Perform a restart or die, sending and logging all necessary messages.
+ * @param[in] pe Pointer to structure describing pending exit.
  */
-void event_try_connections_callback(int fd, short event, struct event *ev)
+static void pending_exit(struct PendingExit *pe)
 {
-  Reg1 aConfItem *aconf;
-  Reg2 aClient *cptr;
-  aConfItem **pconf;
-  int connecting, confrq;
-  time_t next = 0;
-  aConfClass *cltmp;
-  aConfItem *cconf, *con_conf = NULL;
-  unsigned int con_class = 0;
-  
-  Debug((DEBUG_DEBUG, "event_try_connections_callback event: %d", (int)event));
+  static int looping = 0;
+  enum LogLevel level = pe->restart ? L_WARNING : L_CRIT;
+  const char *what = pe->restart ? "restarting" : "terminating";
+      
+  if (looping++) /* increment looping to prevent looping */
+    return;
 
-  assert(event & EV_TIMEOUT);
-  
-  update_now();
-
-  connecting = FALSE;
-  Debug((DEBUG_NOTICE, "Connection check at   : %s", myctime(now)));
-  for (aconf = conf; aconf; aconf = aconf->next)
-  {
-    /* Also when already connecting! (update holdtimes) --SRB */
-    if (!(aconf->status & CONF_CONNECT_SERVER) || aconf->port == 0)
-      continue;
-    cltmp = aconf->confClass;
-    /*
-     * Skip this entry if the use of it is still on hold until
-     * future. Otherwise handle this entry (and set it on hold
-     * until next time). Will reset only hold times, if already
-     * made one successfull connection... [this algorithm is
-     * a bit fuzzy... -- msa >;) ]
-     */
-
-    if ((aconf->hold > now))
-    {
-      if ((next > aconf->hold) || (next == 0))
-        next = aconf->hold;
-      continue;
+  if (pe->message) {
+    sendto_lusers("Server %s: %s", what, pe->message);
+    
+    if (pe->who) { /* write notice to log */
+      log_write(LS_SYSTEM, level, 0, "%s %s server: %s", pe->who, what,
+        pe->message);
+      sendcmdto_serv(&me, CMD_SQUIT, 0, "%s 0 :%s %s server: %s",
+             cli_name(&me), pe->who, what, pe->message);
+    } else {
+      log_write(LS_SYSTEM, level, 0, "Server %s: %s", what, pe->message);
+      sendcmdto_serv(&me, CMD_SQUIT, 0, "%s 0 :Server %s: %s",
+             cli_name(&me), what, pe->message);
     }
+  } else { /* just notify of the restart/termination */
+      sendto_lusers("Server %s...", what);
 
-    confrq = get_con_freq(cltmp);
-    aconf->hold = now + confrq;
-    /*
-     * Found a CONNECT config with port specified, scan clients
-     * and see if this server is already connected?
-     */
-    cptr = FindServer(aconf->name);
-
-    if (!cptr && (Links(cltmp) < MaxLinks(cltmp)) &&
-        (!connecting || (ConClass(cltmp) > con_class)))
-    {
-      /* Check connect rules to see if we're allowed to try */
-      for (cconf = conf; cconf; cconf = cconf->next)
-        if ((cconf->status & CONF_CRULE) &&
-            (match(cconf->host, aconf->name) == 0))
-          if (crule_eval(cconf->passwd))
-            break;
-      if (!cconf)
-      {
-        con_class = ConClass(cltmp);
-        con_conf = aconf;
-        /* We connect only one at time... */
-        connecting = TRUE;
-      }
+    if (pe->who) { /* write notice to log */
+      log_write(LS_SYSTEM, level, 0, "%s %s server...", pe->who, what);
+      sendcmdto_serv(&me, CMD_SQUIT, 0, "%s 0 :%s %s server...",
+             cli_name(&me), pe->who, what);
+    } else {
+      log_write(LS_SYSTEM, level, 0, "Server %s...", what);
+      sendcmdto_serv(&me, CMD_SQUIT, 0, "%s 0 :Server %s...",
+             cli_name(&me), what);
     }
-    if ((next > aconf->hold) || (next == 0))
-      next = aconf->hold;
   }
-  if (connecting)
-  {
-    if (con_conf->next)         /* are we already last? */
-    {
-      /* Put the current one at the end and make sure we try all connections */
-      for (pconf = &conf; (aconf = *pconf); pconf = &(aconf->next))
-        if (aconf == con_conf)
-          *pconf = aconf->next;
-      (*pconf = con_conf)->next = 0;
-    }
-    if (connect_server(con_conf, (aClient *)NULL, (struct hostent *)NULL) == 0)
-      sendto_ops("Connection to %s activated.", con_conf->name);
-  }
-  Debug((DEBUG_NOTICE, "Next connection check : %s", myctime(next)));
+                                                      
+  /* now let's perform the restart or exit */
+  flush_connections(0);
   
-  update_nextconnect((next > now) ? (next - now) : (AR_TTL));
-}
-
-/*
- * bad_command
- *
- * This is called when the commandline is not acceptable.
- * Give error message and exit without starting anything.
- */
-static int bad_command(void)
-{
-  printf("Usage: ircd %s[-h servername] [-p portnumber] [-x loglevel] [-t] [-b]\n",
-#if defined(CMDLINE_CONFIG)
-      "[-f config] "
-#else
-      ""
+#if defined(DDB)
+//  ddb_end();
+    db_persistent_commit();
 #endif
-      );
-  printf("Server not started\n\n");
-  return (-1);
-}
-
-static void sigalrm_handler(int sig)
-{
-  // NO OP
-}
-
-static void setup_signals(void)
-{
-  struct sigaction act;
-
-  act.sa_handler = SIG_IGN;
-  act.sa_flags = 0;
-  sigemptyset(&act.sa_mask);
-  sigaddset(&act.sa_mask, SIGPIPE);
-  sigaddset(&act.sa_mask, SIGALRM);
-#ifdef  SIGWINCH
-  sigaddset(&act.sa_mask, SIGWINCH);
-  sigaction(SIGWINCH, &act, 0);
-#endif
-  sigaction(SIGPIPE, &act, 0);
-
-  act.sa_handler = sigalrm_handler;
-  sigaction(SIGALRM, &act, 0);
-  
-  signal_set(&ev_sighup,  SIGHUP,  (void *)s_rehash,  NULL);
-  signal_set(&ev_sigterm, SIGTERM, (void *)s_die2,    NULL);
-  signal_set(&ev_sigint,  SIGINT,  (void *)s_restart, NULL);
-
-  assert(signal_add(&ev_sighup,  NULL)!=-1);
-  assert(signal_add(&ev_sigterm, NULL)!=-1);
-  assert(signal_add(&ev_sigint,  NULL)!=-1);
-}
-
-/*
- * open_debugfile
- *
- * If the -t option is not given on the command line when the server is
- * started, all debugging output is sent to the file set by LPATH in config.h
- * Here we just open that file and make sure it is opened to fd 2 so that
- * any fprintf's to stderr also goto the logfile.  If the debuglevel is not
- * set from the command line by -x, use /dev/null as the dummy logfile as long
- * as DEBUGMODE has been defined, else dont waste the fd.
- */
-static void open_debugfile(void)
-{
-#if defined(DEBUGMODE)
-  int fd;
-  aClient *cptr;
-
-  if (debuglevel >= 0)
-  {
-    cptr = make_client(NULL, 0);
-    cptr->fd = 2;
-    cptr->cli_connect->port = debuglevel;
-    cptr->flags = 0;
-    cptr->cli_connect->acpt = cptr;
-    loc_clients[2] = cptr;
-
-    if (NULL != me.name)
-      SlabStringAllocDup(&(cptr->cli_connect->sockhost), me.name, HOSTLEN);
-
-    printf("isatty = %d ttyname = %#x\n", isatty(2), (unsigned int)ttyname(2));
-    if (!(bootopt & BOOT_TTY))  /* leave debugging output on fd 2 */
-    {
-      if ((fd = creat(LOGFILE, 0600)) < 0)
-        if ((fd = open("/dev/null", O_WRONLY)) < 0)
-          exit(-1);
-      if (fd != 2)
-      {
-        dup2(fd, 2);
-        close(fd);
-      }
-      SlabStringAllocDup(&(cptr->name), LOGFILE, 0);
-    }
-    else if (isatty(2) && ttyname(2))
-    {
-      SlabStringAllocDup(&(cptr->name), ttyname(2), 0);
-    }
-    else
-    {
-      SlabStringAllocDup(&(cptr->name), "FD2-Pipe", 0);
-    }
-    Debug((DEBUG_FATAL, "Debug: File <%s> Level: %u at %s",
-        cptr->name, cptr->cli_connect->port, myctime(now)));
+    
+  log_close();
+  close_connections(!pe->restart ||
+            !(thisServer.bootopt & (BOOT_TTY | BOOT_DEBUG | BOOT_CHKCONF)));
+            
+  if (!pe->restart) { /* just set running = 0 */
+    running = 0;
+    return;
   }
+
+  /* OK, so we're restarting... */
+  reap_children();
+    
+  execv(SPATH, thisServer.argv); /* restart the server */
+      
+  /* something failed; reopen the logs so we can complain */
+  log_reopen();
+          
+  log_write(LS_SYSTEM, L_CRIT,  0, "execv(%s,%s) failed: %m", SPATH,
+        *thisServer.argv);
+                  
+  Debug((DEBUG_FATAL, "Couldn't restart server \"%s\": %s", SPATH,
+     (strerror(errno)) ? strerror(errno) : ""));
+  exit(8);
+}
+
+/**
+ * Issue server notice warning about impending restart or die.
+ * @param[in] pe Pointer to structure describing pending exit.
+ * @param[in] until How long until the exit (approximately).
+ */
+static void countdown_notice(struct PendingExit *pe, time_t until)
+{
+  const char *what = pe->restart ? "restarting" : "terminating";
+  const char *units;
+  
+  if (until >= 60) { /* measure in minutes */
+    until /= 60; /* so convert it to minutes */
+    units = (until == 1) ? "minute" : "minutes";
+  } else
+    units = (until == 1) ? "second" : "seconds";
+                
+  /* send the message */
+  if (pe->message)
+    sendto_lusers("Server %s in %d %s: %s", what, until, units, pe->message);
   else
-    loc_clients[2] = NULL;
-#endif
-  return;
-}
+    sendto_lusers("Server %s in %d %s...", what, until, units);
+}  
 
-void update_nextdnscheck(int timeout) {
-  assert(timeout<now);
-  event_del(&ev_nextdnscheck);
-  evutil_timerclear(&tm_nextdnscheck);
-  tm_nextdnscheck.tv_usec=0;
-  tm_nextdnscheck.tv_sec=timeout;
-  Debug((DEBUG_DEBUG, "update_nextdnscheck timeout: %d", timeout));
-  assert(evtimer_add(&ev_nextdnscheck, &tm_nextdnscheck)!=-1);
-}
+static void exit_countdown(struct Event *ev);
 
-void update_nextconnect(int timeout) {
-  assert(timeout<now);
-  event_del(&ev_nextconnect);
-  evutil_timerclear(&tm_nextconnect);
-  tm_nextconnect.tv_usec=0;
-  tm_nextconnect.tv_sec=timeout;
-  Debug((DEBUG_DEBUG, "update_nextconnect timeout: %d", timeout));
-  assert(evtimer_add(&ev_nextconnect, &tm_nextconnect)!=-1);  
-}
-
-void update_nextexpire(int timeout) {
-  assert(timeout<now);
-  event_del(&ev_nextexpire);
-  evutil_timerclear(&tm_nextexpire);
-  tm_nextexpire.tv_usec=0;
-  tm_nextexpire.tv_sec=timeout;
-  Debug((DEBUG_DEBUG, "update_nextexpire timeout: %d", timeout));
-  assert(evtimer_add(&ev_nextexpire, &tm_nextexpire)!=-1);
-}
-
-void init_timers(void)
+/**
+ * Performs a delayed pending exit, issuing server notices as appropriate.
+ * Reschedules exit_countdown() as needed.
+ * @param[in] ev Timer event.
+ */
+static void _exit_countdown(struct PendingExit *pe, int do_notice)
 {
-  event_del(&ev_nextconnect);
-  event_del(&ev_nextdnscheck);
-  event_del(&ev_nextexpire);
-  evtimer_set(&ev_nextconnect,  (void *)event_try_connections_callback, (void *)&ev_nextconnect);
-  evtimer_set(&ev_nextdnscheck, (void *)event_timeout_query_list_callback, (void *)&ev_nextdnscheck);
-  evtimer_set(&ev_nextexpire,   (void *)event_expire_cache_callback, (void *)&ev_nextexpire);
-  update_nextdnscheck(0);
-  update_nextconnect(0);
-  update_nextexpire(0);
-}
-
-int main(int argc, char *argv[])
-{
-  unsigned short int portarg = 0;
-  uid_t uid;
-  uid_t euid;
-#if defined(HAVE_SETRLIMIT) && defined(RLIMIT_CORE)
-  struct rlimit corelim;
-#endif
-
-  uid = getuid();
-  euid = geteuid();
-  now = time(NULL);
-  autoseed();
+  time_t total, next, approx;
   
-#if defined(CHROOTDIR)
-  if (chdir(DPATH))
-  {
-    fprintf(stderr, "Fail: Cannot chdir(%s): %s\n", DPATH, strerror(errno));
-    exit(-1);
+  if (CurrentTime >= pe->time) { /* time to do the exit */
+    pending_exit(pe);
+    return;
   }
-  res_init();
-  if (chroot(DPATH))
-  {
-    fprintf(stderr, "Fail: Cannot chroot(%s): %s\n", DPATH, strerror(errno));
-    exit(5);
+  
+  /* OK, we need to figure out how long to the next message and approximate
+   * how long until the actual exit.
+   */
+  total = pe->time - CurrentTime; /* how long until exit */
+          
+#define t_adjust(interval, interval2)       \
+  do {                \
+    approx = next = total - (total % (interval));   \
+    if (next >= total - (interval2)) {        \
+      next -= (interval); /* have to adjust next... */    \
+      if (next < (interval)) /* slipped into next interval */ \
+        next = (interval) - (interval2);      \
+    } else /* have to adjust approx... */     \
+      approx += (interval);         \
+  } while (0)              
+  
+  if (total > PEND_INT_LONG) /* in the long interval regime */
+    t_adjust(PEND_INT_LONG, PEND_INT_MEDIUM);
+  else if (total > PEND_INT_MEDIUM) /* in the medium interval regime */
+    t_adjust(PEND_INT_MEDIUM, PEND_INT_SHORT);
+  else if (total > PEND_INT_SHORT) /* in the short interval regime */
+    t_adjust(PEND_INT_SHORT, PEND_INT_END);
+  else if (total > PEND_INT_END) /* in the end interval regime */
+    t_adjust(PEND_INT_END, PEND_INT_LAST);
+  else if (total > PEND_INT_LAST) /* in the last message interval */
+    t_adjust(PEND_INT_LAST, PEND_INT_LAST);
+  else { /* next event is to actually exit */
+    next = 0;
+    approx = PEND_INT_LAST;
   }
-  dpath = "/";
-#endif /*CHROOTDIR */
 
-  myargv = argv;
-  umask(077);                   /* better safe than sorry --SRB */
-  memset(&me, 0, sizeof(me));
-#if defined(VIRTUAL_HOST)
-  memset(&vserv, 0, sizeof(vserv));
+  /* convert next to an absolute timestamp */
+  next = pe->time - next;
+  assert(next > CurrentTime);
+
+  /* issue the warning notices... */
+  if (do_notice)
+    countdown_notice(pe, approx);
+        
+  /* reschedule the timer... */
+  timer_add(&countdown_timer, exit_countdown, pe, TT_ABSOLUTE, next);
+}
+
+/**
+ * Timer callback for _exit_countdown().
+ * @param[in] ev Timer event.
+ */
+static void exit_countdown(struct Event *ev)
+{
+  if (ev_type(ev) == ET_DESTROY)
+    return; /* do nothing with destroy events */
+      
+  assert(ET_EXPIRE == ev_type(ev));
+        
+  /* perform the event we were called to do */
+  _exit_countdown(t_data(&countdown_timer), 1);
+}
+
+/**
+ * Cancel a pending exit.
+ * @param[in] who Client cancelling the impending exit.
+ */
+void exit_cancel(struct Client *who)
+{
+  const char *what;
+  struct PendingExit *pe;
+
+  if (!t_onqueue(&countdown_timer))
+    return; /* it's not running... */
+      
+  pe = t_data(&countdown_timer); /* get the pending exit data */
+  timer_del(&countdown_timer); /* delete the timer */
+
+  if (who) { /* explicitly issued cancellation */
+    /* issue a notice about the exit being canceled */
+    sendto_lusers("Server %s CANCELED",
+          what = (pe->restart ? "restart" : "termination"));
+          
+     /* log the cancellation */
+     if (IsUser(who))
+       log_write(LS_SYSTEM, L_NOTICE, 0, "Server %s CANCELED by %s!%s@%s", what,
+         cli_name(who), cli_user(who)->username, cli_sockhost(who));
+     else
+       log_write(LS_SYSTEM, L_NOTICE, 0, "Server %s CANCELED by %s", what,
+         cli_name(who));
+  }               
+  
+  /* release the pending exit structure */
+  if (pe->who)
+    MyFree(pe->who);
+  if (pe->message)
+    MyFree(pe->message);
+  MyFree(pe);
+
+  /* Oh, and restore connections */
+  refuse = 0;
+}
+
+/**
+ * Schedule a pending exit.  Note that only real people issue delayed
+ * exits, so \a who should not be NULL if \a when is non-zero.
+ * @param[in] restart True if a restart is desired, false otherwise.
+ * @param[in] when Interval until the exit; 0 for immediate exit.
+ * @param[in] who Client issuing exit (or NULL).
+ * @param[in] message Message explaining exit.
+ */
+void exit_schedule(int restart, time_t when, struct Client *who,
+           const char *message)
+{
+  struct PendingExit *pe;
+
+  /* first, let's cancel any pending exit */
+  exit_cancel(0);
+    
+  /* now create a new pending exit */
+  pe = MyMalloc(sizeof(struct PendingExit));
+  pe->restart = restart;
+            
+  pe->time = when + CurrentTime; /* make time absolute */
+  if (who) { /* save who issued it... */
+    if (IsUser(who)) {
+      char nuhbuf[NICKLEN + USERLEN + HOSTLEN + 3];
+      ircd_snprintf(0, nuhbuf, sizeof(nuhbuf), "%s!%s@%s", cli_name(who),
+            cli_user(who)->username, cli_sockhost(who));
+      DupString(pe->who, nuhbuf);
+    } else
+      DupString(pe->who, cli_name(who));
+  } else
+    pe->who = 0;
+  if (message) /* also save the message */
+    DupString(pe->message, message);
+  else
+    pe->message = 0;
+
+  /* let's refuse new connections... */
+  refuse = 1;
+    
+  if (!when) { /* do it right now? */
+    pending_exit(pe);
+    return;
+  }
+
+  assert(who); /* only people issue delayed exits */
+  
+  /* issue a countdown notice... */
+  countdown_notice(pe, when);
+
+  /* log who issued the shutdown */
+  if (pe->message)
+    log_write(LS_SYSTEM, L_NOTICE, 0, "Delayed server %s issued by %s: %s",
+          restart ? "restart" : "termination", pe->who, pe->message);
+  else
+    log_write(LS_SYSTEM, L_NOTICE, 0, "Delayed server %s issued by %s...",
+          restart ? "restart" : "termination", pe->who);  
+  /* and schedule the timer */
+  _exit_countdown(pe, 0);
+}
+                          
+/*----------------------------------------------------------------------------
+ * API: server_panic
+ *--------------------------------------------------------------------------*/
+/** Immediately terminate the server with a message.
+ * @param[in] message Message to log, but not send to operators.
+ */
+void server_panic(const char *message)
+{
+  /* inhibit sending server notice--we may be panicking due to low memory */
+  log_write(LS_SYSTEM, L_CRIT, LOG_NOSNOTICE, "Server panic: %s", message);
+  flush_connections(0);
+  log_close();
+  close_connections(1);
+  exit(1);
+}
+
+
+/*----------------------------------------------------------------------------
+ * outofmemory:  Handler for out of memory conditions...
+ *--------------------------------------------------------------------------*/
+/** Handle out-of-memory condition. */
+static void outofmemory(void) {
+  Debug((DEBUG_FATAL, "Out of memory: restarting server..."));
+  exit_schedule(1, 0, 0, "Out of Memory");
+}
+
+
+/*----------------------------------------------------------------------------
+ * write_pidfile
+ *--------------------------------------------------------------------------*/
+/** Write process ID to PID file. */
+static void write_pidfile(void) {
+  char buff[20];
+
+  if (thisServer.pid_fd >= 0) {
+    memset(buff, 0, sizeof(buff));
+    sprintf(buff, "%5d\n", (int)getpid());
+    if (write(thisServer.pid_fd, buff, strlen(buff)) == -1)
+      log_write(LS_SYSTEM, L_WARNING, 0, "Error writing to pid file %s: %m",
+	     feature_str(FEAT_PPATH));
+    return;
+  }
+  log_write(LS_SYSTEM, L_WARNING, 0, "Error opening pid file %s: %m",
+	 feature_str(FEAT_PPATH));
+}
+
+/** Try to create the PID file.
+ * @return Zero on success; non-zero on any error.
+ */
+static int check_pid(void)
+{
+  struct flock lock;
+
+  lock.l_type = F_WRLCK;
+  lock.l_start = 0;
+  lock.l_whence = SEEK_SET;
+  lock.l_len = 0;
+
+  if ((thisServer.pid_fd = open(feature_str(FEAT_PPATH), O_CREAT | O_RDWR,
+				0600)) >= 0)
+    return fcntl(thisServer.pid_fd, F_SETLK, &lock) == -1;
+
+  return 1;
+}
+
+
+/** Look for any connections that we should try to initiate.
+ * Reschedules itself to run again at the appropriate time.
+ * @param[in] ev Timer event (ignored).
+ */
+static void try_connections(struct Event* ev) {
+  struct ConfItem*  aconf;
+  struct ConfItem** pconf;
+  time_t            next;
+  struct Jupe*      ajupe;
+  int               hold;
+  int               done;
+
+  assert(ET_EXPIRE == ev_type(ev));
+  assert(0 != ev_timer(ev));
+
+  Debug((DEBUG_NOTICE, "Connection check at   : %s", myctime(CurrentTime)));
+  next = CurrentTime + feature_int(FEAT_CONNECTFREQUENCY);
+  done = 0;
+
+  for (aconf = GlobalConfList; aconf; aconf = aconf->next) {
+    /* Only consider server items with non-zero port and non-zero
+     * connect times that are not actively juped.
+     */
+    if (!(aconf->status & CONF_SERVER)
+        || aconf->address.port == 0
+        || !(aconf->flags & CONF_AUTOCONNECT)
+        || ((ajupe = jupe_find(aconf->name)) && JupeIsActive(ajupe)))
+      continue;
+
+    /* Do we need to postpone this connection further? */
+    hold = aconf->hold > CurrentTime;
+
+    /* Update next possible connection check time. */
+    if (hold && next > aconf->hold)
+        next = aconf->hold;
+
+    /* Do not try to connect if its use is still on hold until future,
+     * we have already initiated a connection this try_connections(),
+     * too many links in its connection class, it is already linked,
+     * or if connect rules forbid a link now.
+     */
+    if (hold || done
+        || (ConfLinks(aconf) > ConfMaxLinks(aconf))
+        || FindServer(aconf->name)
+        || conf_eval_crule(aconf->name, CRULE_MASK))
+      continue;
+
+    /* Ensure it is at the end of the list for future checks. */
+    if (aconf->next) {
+      /* Find aconf's location in the list and splice it out. */
+      for (pconf = &GlobalConfList; *pconf; pconf = &(*pconf)->next)
+        if (*pconf == aconf)
+          *pconf = aconf->next;
+      /* Reinsert it at the end of the list (where pconf is now). */
+      *pconf = aconf;
+      aconf->next = 0;
+    }
+
+    /* Activate the connection itself. */
+    if (connect_server(aconf, 0))
+      sendto_opmask(0, SNO_OLDSNO, "Connection to %s activated.",
+                    aconf->name);
+
+    /* And stop looking for further candidates. */
+    done = 1;
+  }
+
+  Debug((DEBUG_NOTICE, "Next connection check : %s", myctime(next)));
+  timer_add(&connect_timer, try_connections, 0, TT_ABSOLUTE, next);
+}
+
+
+/** Check for clients that have not sent a ping response recently.
+ * Reschedules itself to run again at the appropriate time.
+ * @param[in] ev Timer event (ignored).
+ */
+static void check_pings(struct Event* ev) {
+  int expire     = 0;
+  int next_check = CurrentTime;
+  int max_ping   = 0;
+  int i;
+
+  assert(ET_EXPIRE == ev_type(ev));
+  assert(0 != ev_timer(ev));
+
+  next_check += feature_int(FEAT_PINGFREQUENCY);
+  
+  /* Scan through the client table */
+  for (i=0; i <= HighestFd; i++) {
+    struct Client *cptr = LocalClientArray[i];
+   
+    if (!cptr)
+      continue;
+     
+    assert(&me != cptr);  /* I should never be in the local client array! */
+   
+
+    /* Remove dead clients. */
+    if (IsDead(cptr)) {
+      exit_client(cptr, cptr, &me, cli_info(cptr));
+      continue;
+    }
+
+    max_ping = IsRegistered(cptr) ? client_get_ping(cptr) :
+      feature_int(FEAT_CONNECTTIMEOUT);
+   
+    Debug((DEBUG_DEBUG, "check_pings(%s)=status:%s limit: %d current: %d",
+	   cli_name(cptr),
+	   IsPingSent(cptr) ? "[Ping Sent]" : "[]", 
+	   max_ping, (int)(CurrentTime - cli_lasttime(cptr))));
+
+    /* If it's a server and we have not sent an AsLL lately, do so. */
+    if (IsServer(cptr)) {
+      if (CurrentTime - cli_serv(cptr)->asll_last >= max_ping) {
+        char *asll_ts;
+
+        SetPingSent(cptr);
+        cli_serv(cptr)->asll_last = CurrentTime;
+        expire = cli_serv(cptr)->asll_last + max_ping;
+        asll_ts = militime_float(NULL);
+        sendcmdto_prio_one(&me, CMD_PING, cptr, "!%s %s %s", asll_ts,
+                           cli_name(cptr), asll_ts);
+      }
+
+      expire = cli_serv(cptr)->asll_last + max_ping;
+      if (expire < next_check)
+        next_check = expire;
+    }
+
+    /* Ok, the thing that will happen most frequently, is that someone will
+     * have sent something recently.  Cover this first for speed.
+     * -- 
+     * If it's an unregistered client and hasn't managed to register within
+     * max_ping then it's obviously having problems (broken client) or it's
+     * just up to no good, so we won't skip it, even if its been sending
+     * data to us. 
+     * -- hikari
+     */
+    if ((CurrentTime-cli_lasttime(cptr) < max_ping) && IsRegistered(cptr)) {
+      expire = cli_lasttime(cptr) + max_ping;
+      if (expire < next_check) 
+	next_check = expire;
+      continue;
+    }
+
+    /* Unregistered clients pingout after max_ping seconds, they don't
+     * get given a second chance - if they were then people could not quite
+     * finish registration and hold resources without being subject to k/g
+     * lines
+     */
+    if (!IsRegistered(cptr)) {
+      assert(!IsServer(cptr));
+      /* If client authorization time has expired, ask auth whether they
+       * should be checked again later. */
+      if ((CurrentTime-cli_firsttime(cptr) >= max_ping)
+          && auth_ping_timeout(cptr))
+        continue;
+      /* OK, they still have enough time left, so we'll just skip to the
+       * next client.  Set the next check to be when their time is up, if
+       * that's before the currently scheduled next check -- hikari */
+      expire = cli_firsttime(cptr) + max_ping;
+      if (expire < next_check)
+        next_check = expire;
+      continue;
+    }
+
+    /* Quit the client after max_ping*2 - they should have answered by now */
+    if (CurrentTime-cli_lasttime(cptr) >= (max_ping*2) )
+    {
+      /* If it was a server, then tell ops about it. */
+      if (IsServer(cptr) || IsConnecting(cptr) || IsHandshake(cptr))
+        sendto_opmask(0, SNO_OLDSNO,
+                      "No response from %s, closing link",
+                      cli_name(cptr));
+      exit_client_msg(cptr, cptr, &me, "Ping timeout");
+      continue;
+    }
+    
+    if (!IsPingSent(cptr))
+    {
+      /* If we haven't PINGed the connection and we haven't heard from it in a
+       * while, PING it to make sure it is still alive.
+       */
+      SetPingSent(cptr);
+
+      /* If we're late in noticing don't hold it against them :) */
+      cli_lasttime(cptr) = CurrentTime - max_ping;
+      
+      if (IsUser(cptr))
+        sendrawto_one(cptr, MSG_PING " :%s", cli_name(&me));
+      else
+        sendcmdto_prio_one(&me, CMD_PING, cptr, ":%s", cli_name(&me));
+    }
+    
+    expire = cli_lasttime(cptr) + max_ping * 2;
+    if (expire < next_check)
+      next_check=expire;
+  }
+  
+  assert(next_check >= CurrentTime);
+  
+  Debug((DEBUG_DEBUG, "[%i] check_pings() again in %is",
+	 CurrentTime, next_check-CurrentTime));
+  
+  timer_add(&ping_timer, check_pings, 0, TT_ABSOLUTE, next_check);
+}
+
+
+/** Parse command line arguments.
+ * Global variables are updated to reflect the arguments.
+ * As a side effect, makes sure the process's effective user id is the
+ * same as the real user id.
+ * @param[in] argc Number of arguments on command line.
+ * @param[in,out] argv Command-line arguments.
+ */
+static void parse_command_line(int argc, char** argv) {
+  const char *options = "d:f:h:nktvx:c:m:M:";
+  int opt;
+
+  if (thisServer.euid != thisServer.uid)
+    setuid(thisServer.uid);
+
+  /* Do we really need to sanity check the non-NULLness of optarg?  That's
+   * getopt()'s job...  Removing those... -zs
+   */
+  while ((opt = getopt(argc, argv, options)) != EOF)
+    switch (opt) {
+    case 'k':  thisServer.bootopt |= BOOT_CHKCONF | BOOT_TTY; break;
+    case 'c':  dbg_client = optarg;                    break;
+    case 'n':
+    case 't':  thisServer.bootopt |= BOOT_TTY;         break;
+    case 'd':  dpath      = optarg;                    break;
+    case 'f':  configfile = optarg;                    break;
+    case 'h':  ircd_strncpy(cli_name(&me), optarg, HOSTLEN); break;
+    case 'm':  maxconnections = atoi(optarg);          break;
+    case 'M':  maxclients = atoi(optarg);              break;
+    case 'v':
+      printf("ircd %s\n", version);
+      printf("Event engines: ");
+#ifdef USE_KQUEUE
+      printf("kqueue() ");
+#endif
+#ifdef USE_DEVPOLL
+      printf("/dev/poll ");
+#endif
+#ifdef USE_EPOLL
+      printf("epoll_*() ");
+#endif
+#ifdef USE_POLL
+      printf("poll()");
+#else
+      printf("select()");
+#endif
+      printf("\nDefaulting to %d connections.\n", MAXCONNECTIONS);
+
+
+      exit(0);
+      break;
+
+    case 'x':
+      debuglevel = atoi(optarg);
+      if (debuglevel < 0)
+	debuglevel = 0;
+      debugmode = optarg;
+      thisServer.bootopt |= BOOT_DEBUG;
+#ifndef DEBUGMODE
+      printf("WARNING: DEBUGMODE disabled; -x has no effect.\n");
+#endif
+      break;
+
+    default:
+      printf("Usage: ircd [-f config] [-h servername] [-x loglevel] [-ntv] [-m maxconn] [-M maxclients] [-k [-c clispec]]\n"
+             "\n -f config\t specify explicit configuration file"
+             "\n -x loglevel\t set debug logging verbosity"
+             "\n -n or -t\t don't detach"
+             "\n -v\t\t display version"
+             "\n -m\t\t set maximum number of connections"
+             "\n -M\t\t set maximum number of clients"
+             "\n -k\t\t exit after checking config"
+             "\n -c clispec\t search for client/kill blocks matching client"
+             "\n\t\t clispec is comma-separated list of user@host,"
+             "\n\t\t user@ip, $Rrealname, and port number"
+             "\n\nServer not started.\n");
+      exit(1);
+    }
+}
+
+
+/** Become a daemon.
+ * @param[in] no_fork If non-zero, do not fork into the background.
+ */
+static void daemon_init(int no_fork) {
+  if (no_fork)
+    return;
+
+  if (fork())
+    exit(0);
+
+#ifdef TIOCNOTTY
+  {
+    int fd;
+    if ((fd = open("/dev/tty", O_RDWR)) > -1) {
+      ioctl(fd, TIOCNOTTY, 0);
+      close(fd);
+    }
+  }
 #endif
 
-  initload();
+  setsid();
+}
 
+/** Check that we have access to a particular file.
+ * If we do not have access to the file, complain on stderr.
+ * @param[in] path File name to check for access.
+ * @param[in] which Configuration character associated with file.
+ * @param[in] mode Bitwise combination of R_OK, W_OK, X_OK and/or F_OK.
+ * @return Non-zero if we have the necessary access, zero if not.
+ */
+static char check_file_access(const char *path, char which, int mode) {
+  if (!access(path, mode))
+    return 1;
+
+  fprintf(stderr, 
+	  "Check on %cPATH (%s) failed: %s\n"
+	  "Please create this file and/or rerun `configure' "
+	  "using --with-%cpath and recompile to correct this.\n",
+	  which, path, strerror(errno), which);
+
+  return 0;
+}
+
+
+/*----------------------------------------------------------------------------
+ * set_core_limit
+ *--------------------------------------------------------------------------*/
 #if defined(HAVE_SETRLIMIT) && defined(RLIMIT_CORE)
-  if (getrlimit(RLIMIT_CORE, &corelim))
-  {
+/** Set the core size soft limit to the same as the hard limit. */
+static void set_core_limit(void) {
+  struct rlimit corelim;
+
+  if (getrlimit(RLIMIT_CORE, &corelim)) {
     fprintf(stderr, "Read of rlimit core size failed: %s\n", strerror(errno));
-    corelim.rlim_max = RLIM_INFINITY; /* Try to recover */
+    corelim.rlim_max = RLIM_INFINITY;   /* Try to recover */
   }
+
   corelim.rlim_cur = corelim.rlim_max;
   if (setrlimit(RLIMIT_CORE, &corelim))
     fprintf(stderr, "Setting rlimit core size failed: %s\n", strerror(errno));
+}
 #endif
 
-  /*
-   * All command line parameters have the syntax "-fstring"
-   * or "-f string" (e.g. the space is optional). String may
-   * be empty. Flag characters cannot be concatenated (like
-   * "-fxyz"), it would conflict with the form "-fstring".
+
+
+/** Complain to stderr if any user or group ID belongs to the superuser.
+ * @return Non-zero if all IDs are okay, zero if some are 0.
+ */
+static int set_userid_if_needed(void) {
+  if (getuid() == 0 || geteuid() == 0 ||
+      getgid() == 0 || getegid() == 0) {
+    fprintf(stderr, "ERROR:  This server will not run as superuser.\n");
+    return 0;
+  }
+
+  return 1;
+}
+
+
+/*----------------------------------------------------------------------------
+ * main - entrypoint
+ *
+ * TODO:  This should set the basic environment up and start the main loop.
+ *        we're doing waaaaaaaaay too much server initialization here.  I hate
+ *        long and ugly control paths...  -smd
+ *--------------------------------------------------------------------------*/
+/** Run the daemon.
+ * @param[in] argc Number of arguments in \a argv.
+ * @param[in] argv Arguments to program execution.
+ */
+int main(int argc, char **argv) {
+  CurrentTime = time(NULL);
+
+  thisServer.argc = argc;
+  thisServer.argv = argv;
+  thisServer.uid  = getuid();
+  thisServer.euid = geteuid();
+
+#ifdef MDEBUG
+  mem_dbg_initialise();
+#endif
+
+#if defined(HAVE_SETRLIMIT) && defined(RLIMIT_CORE)
+  set_core_limit();
+#endif
+
+  umask(077);                   /* better safe than sorry --SRB */
+  memset(&me, 0, sizeof(me));
+  memset(&me_con, 0, sizeof(me_con));
+  cli_connect(&me) = &me_con;
+  cli_fd(&me) = -1;
+
+  parse_command_line(argc, argv);
+
+  if (maxconnections < 32) {
+    fprintf(stderr,
+            "Fewer than 32 connections are not supported.  Reconfigure or use -m 32.\n");
+    return 2;
+  } else if (maxclients > maxconnections) {
+    fprintf(stderr,
+            "Maxclients (%d) must not exceed maxconnections (%d).  Reconfigure or use -m %d.\n", maxclients, maxconnections, maxclients + 24);
+    return 2;
+  } else if (maxclients > maxconnections - 24) {
+    fprintf(stderr,
+            "Maxclients (%d) is within 24 of maxconnections (%d).  This may cause problems.\n", maxclients, maxconnections);
+  } else if (maxclients < 0)
+    maxclients = maxconnections - 24;
+
+  if (chdir(dpath)) {
+    fprintf(stderr, "Fail: Cannot chdir(%s): %s, check DPATH\n", dpath, strerror(errno));
+    return 2;
+  }
+
+  if (!set_userid_if_needed())
+    return 3;
+
+  /* Check paths for accessibility */
+  if (!check_file_access(SPATH, 'S', X_OK) ||
+      !check_file_access(configfile, 'C', R_OK))
+    return 4;
+
+  if (!init_connection_limits(maxconnections))
+    return 9;
+
+  close_connections(!(thisServer.bootopt & (BOOT_DEBUG | BOOT_TTY | BOOT_CHKCONF)));
+
+  /* daemon_init() must be before event_init() because kqueue() FDs
+   * are, perversely, not inherited across fork().
    */
-  while (--argc > 0 && (*++argv)[0] == '-')
-  {
-    char *p = argv[0] + 1;
-    int flag = *p++;
+  daemon_init(thisServer.bootopt & BOOT_TTY);
 
-    if (flag == '\0' || *p == '\0')
-    {
-      if (argc > 1 && argv[1][0] != '-')
-      {
-        p = *++argv;
-        argc -= 1;
-      }
-      else
-        p = "";
+#ifdef DEBUGMODE
+  /* Must reserve fd 2... */
+  if (debuglevel >= 0 && !(thisServer.bootopt & BOOT_TTY)) {
+    int fd;
+    if ((fd = open("/dev/null", O_WRONLY)) < 0) {
+      fprintf(stderr, "Unable to open /dev/null (to reserve fd 2): %s\n",
+	      strerror(errno));
+      return 8;
     }
-
-    switch (flag)
-    {
-      case 'a':
-        bootopt |= BOOT_AUTODIE;
-        break;
-      case 'b':
-        bootopt |= (BOOT_BDDCHECK | BOOT_TTY);
-        break;        
-      case 'c':
-        bootopt |= BOOT_CONSOLE;
-        break;
-      case 'q':
-        bootopt |= BOOT_QUICK;
-        break;
-      case 'd':
-        if (euid != uid)
-          setuid((uid_t) uid);
-        dpath = p;
-        break;
-#if defined(CMDLINE_CONFIG)
-      case 'f':
-        if (euid != uid)
-          setuid((uid_t) uid);
-        configfile = p;
-        break;
-#endif
-      case 'h':
-        /* El nombre propio es un valor que no cambiara a lo largo de la
-         * ejecucion del programa, por lo que le damos un valor fijo --RyDeN
-         */
-        SlabStringAllocDup(&(me.name), p, HOSTLEN);
-        break;
-      case 'i':
-        bootopt |= BOOT_INETD | BOOT_AUTODIE;
-        break;
-      case 'p':
-        if ((portarg = atoi(p)) > 0)
-          portnum = portarg;
-        break;
-      case 't':
-        if (euid != uid)
-          setuid((uid_t) uid);
-        bootopt |= BOOT_TTY;
-        break;
-      case 'v':
-        printf("ircd %s\n", version);
-        exit(0);
-#if defined(VIRTUAL_HOST)
-      case 'w':
-      {
-        struct hostent *hep;
-        if (!(hep = gethostbyname(p)))
-        {
-          fprintf(stderr, "%s: Error creating virtual host \"%s\": %d",
-              argv[0], p, h_errno);
-          return -1;
-        }
-        if (hep->h_addrtype == AF_INET && hep->h_addr_list[0] &&
-            !hep->h_addr_list[1])
-        {
-          memcpy(&vserv.sin_addr, hep->h_addr_list[0], sizeof(struct in_addr));
-          vserv.sin_family = AF_INET;
-        }
-        else
-        {
-          fprintf(stderr, "%s: Error creating virtual host \"%s\": "
-              "Use -w <IP-number of interface>\n", argv[0], p);
-          return -1;
-        }
-        break;
-      }
-#endif
-      case 'x':
-#if defined(DEBUGMODE)
-        if (euid != uid)
-          setuid((uid_t) uid);
-        debuglevel = atoi(p);
-        debugmode = *p ? p : "0";
-        bootopt |= BOOT_DEBUG;
-        break;
-#else
-        fprintf(stderr, "%s: DEBUGMODE must be defined for -x y\n", myargv[0]);
-        exit(0);
-#endif
-      default:
-        bad_command();
-        break;
-    }
-  }
-
-  if (chdir(dpath))
-  {
-    fprintf(stderr, "Fail: Cannot chdir(%s): %s\n", dpath, strerror(errno));
-    exit(-1);
-  }
-
-#if !defined(IRC_UID)
-  if ((uid != euid) && !euid)
-  {
-    fprintf(stderr,
-        "ERROR: do not run ircd setuid root. Make it setuid a normal user.\n");
-    exit(-1);
-  }
-#endif
-
-#if !defined(CHROOTDIR) || (defined(IRC_UID) && defined(IRC_GID))
-#if !defined(_AIX)
-  if (euid != uid)
-  {
-    setuid((uid_t) uid);
-    setuid((uid_t) euid);
-  }
-#endif
-
-  if ((int)getuid() == 0)
-  {
-#if defined(IRC_UID) && defined(IRC_GID)
-
-    /* run as a specified user */
-    fprintf(stderr, "WARNING: running ircd with uid = %d\n", IRC_UID);
-    fprintf(stderr, "	      changing to gid %d.\n", IRC_GID);
-    setgid(IRC_GID);
-    setuid(IRC_UID);
-#else
-    /* check for setuid root as usual */
-    fprintf(stderr,
-        "ERROR: do not run ircd setuid root. Make it setuid a normal user.\n");
-    exit(-1);
-#endif
-  }
-#endif /*CHROOTDIR/UID/GID */
-
-  if (argc > 0)
-    return bad_command();       /* This should exit out */
-
-#if HAVE_UNISTD_H
-  /* Sanity checks */
-  {
-    char c;
-    char *path;
-
-    c = 'S';
-    path = SPATH;
-    if (access(path, X_OK) == 0)
-    {
-      c = 'C';
-      path = CPATH;
-      if (access(path, R_OK) == 0)
-      {
-        c = 'M';
-        path = MPATH;
-        if (access(path, R_OK) == 0)
-        {
-          c = 'R';
-          path = RPATH;
-          if (access(path, R_OK) == 0)
-          {
-#if !defined(DEBUG)
-            c = 0;
-#else
-            c = 'L';
-            path = LPATH;
-            if (access(path, W_OK) == 0)
-              c = 0;
-#endif
-          }
-        }
-      }
-    }
-    if (c)
-    {
-      fprintf(stderr, "Check on %cPATH (%s) failed: %s\n",
-          c, path, strerror(errno));
-      fprintf(stderr,
-          "Please create file and/or rerun `make config' and recompile to correct this.\n");
-#if defined(CHROOTDIR)
-      fprintf(stderr,
-          "Keep in mind that all paths are relative to CHROOTDIR.\n");
-#endif
-      exit(-1);
+    if (fd != 2 && dup2(fd, 2) < 0) {
+      fprintf(stderr, "Unable to reserve fd 2; dup2 said: %s\n",
+	      strerror(errno));
+      return 8;
     }
   }
 #endif
 
-  
-  hash_init();
-#if defined(DEBUGMODE)
-  initlists();
-#endif
-  init_list(MAXCLIENTS+1);
-  initclass();
+  event_init(maxconnections);
+
+  setup_signals();
+  init_isupport();
+  feature_init(); /* initialize features... */
+  log_init(*argv);
+  set_nomem_handler(outofmemory);
+
+  initload();
+  init_list(maxconnections);
+  init_hash();
+  init_class();
   initwhowas();
   initmsgtree();
   initstats();
-  open_debugfile();
-  if (portnum == 0)
-    portnum = PORTNUM;
-  me.cli_connect->port = portnum;
-  init_sys();
-  setup_signals();
-  
-  me.flags = FLAGS_LISTEN;
-  if ((bootopt & BOOT_INETD))
-  {
-    me.fd = 0;
-    loc_clients[0] = &me;
-    me.flags = FLAGS_LISTEN;
-  }
-  else
-    me.fd = -1;
 
-#if defined(USE_SYSLOG)
-  openlog(myargv[0], LOG_PID | LOG_NDELAY, LOG_FACILITY);
+  /* we need this for now, when we're modular this 
+     should be removed -- hikari */
+  ircd_crypt_init();
+
+  if (!init_conf()) {
+    log_write(LS_SYSTEM, L_CRIT, 0, "Failed to read configuration file %s",
+	      configfile);
+    return 7;
+  }
+
+  if (thisServer.bootopt & BOOT_CHKCONF) {
+    if (dbg_client)
+      conf_debug_iline(dbg_client);
+    fprintf(stderr, "Configuration file %s checked okay.\n", configfile);
+    return 0;
+  }
+
+  debug_init(thisServer.bootopt & BOOT_TTY);
+  if (check_pid()) {
+    log_write(LS_SYSTEM, L_CRIT, 0, 
+		    "Failed to acquire PID file lock after fork");
+    return 2;
+  }
+
+  init_server_identity();
+
+  uping_init();
+
+#if defined(USE_SSL)
+  ssl_init();
 #endif
-  if (initconf(bootopt) == -1)
-  {
-    Debug((DEBUG_FATAL, "Failed in reading configuration file %s", configfile));
-    printf("Couldn't open configuration file %s\n", configfile);
-    exit(-1);
-  }
-  
-  if(!(bootopt & BOOT_BDDCHECK))
-  {
-    if (!(bootopt & BOOT_INETD))
-    {
-      static char star[] = "*";
-      aConfItem *aconf;
 
-      if ((aconf = find_me()) && portarg == 0 && aconf->port != 0)
-        portnum = aconf->port;
-      Debug((DEBUG_ERROR, "Port = %u", portnum));
-      if (inetport(&me, star, portnum, aconf->passwd))
-        exit(1);
-    }
-    else if (inetport(&me, "*", 0, NULL))
-      exit(1);
-  }
+  stats_init();
 
-  read_tlines();
-  rmotd = read_motd(RPATH);
-  motd = read_motd(MPATH);
-  setup_ping();
-  get_my_name(&me);
+  IPcheck_init();
+  timer_add(timer_init(&connect_timer), try_connections, 0, TT_RELATIVE, 1);
+  timer_add(timer_init(&ping_timer), check_pings, 0, TT_RELATIVE, 1);
+  timer_add(timer_init(&destruct_event_timer), exec_expired_destruct_events, 0, TT_PERIODIC, 60);
+  timer_init(&countdown_timer);
 
-  now = time(NULL);
-  me.cli_hopcount = 0;
-  me.cli_connect->authfd = -1;
-  cli_confs(&me) = NULL;
-  me.cli_next = NULL;
-  me.cli_user = NULL;
+  CurrentTime = time(NULL);
+
   SetMe(&me);
   cli_magic(&me) = CLIENT_MAGIC;
   cli_from(&me) = &me;
@@ -785,54 +992,26 @@ int main(int argc, char *argv[])
   cli_serv(&me)->prot      = atoi(MAJOR_PROTOCOL);
   cli_serv(&me)->up        = &me;
   cli_serv(&me)->down      = NULL;
-//  cli_handler(&me)         = SERVER_HANDLER;
+  cli_handler(&me)         = SERVER_HANDLER;
 
-  SetYXXCapacity(&me, MAXCLIENTS);
+  SetYXXCapacity(&me, maxclients);
 
-  cli_lasttime(&me) = cli_since(&me) = cli_firsttime(&me) = now;
+  cli_lasttime(&me) = cli_since(&me) = cli_firsttime(&me) = CurrentTime;
+
   hAddClient(&me);
 
-/* Ocultacion */
-
-  SlabStringAllocDup(&(his.name), SERVER_NAME, HOSTLEN);
-  SlabStringAllocDup(&(his.info), SERVER_INFO, REALLEN);
-
-  check_class();
   write_pidfile();
-
   init_counters();
-  
-  init_timers();
 
-  if(bootopt & BOOT_BDDCHECK)
-  {
+#if defined(DDB)
+//  ddb_init();
     initdb();
-    exit(0);
-  }
-  
-  Debug((DEBUG_NOTICE, "Server ready..."));
-#if defined(USE_SYSLOG)
-  syslog(LOG_NOTICE, "Server Ready");
 #endif
-  initdb();
-  
-  
 
-  for (;;)
-  {
-    event_dispatch();
-    update_now();
-    
-    assert(dorehash || restartFlag);
+  Debug((DEBUG_NOTICE, "Server ready..."));
+  log_write(LS_SYSTEM, L_NOTICE, 0, "Server Ready");
 
-    Debug((DEBUG_DEBUG, "Got message(s)"));
+  event_loop();
 
-    if (dorehash)
-    {
-      rehash(&me, 1);
-      dorehash = 0;
-    }
-    if (restartFlag)
-      server_reboot();
-  }
+  return 0;
 }

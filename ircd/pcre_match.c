@@ -1,9 +1,8 @@
+/* Hecho por FreeMind */
 #include "pcre_match.h"
-#include "sys.h"
-#include "h.h"
+#include "config.h"
 #include "s_debug.h"
 #include "struct.h"
-#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "ircd_alloc.h"
