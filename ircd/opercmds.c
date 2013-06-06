@@ -2027,7 +2027,7 @@ static void add_gline(aClient *cptr, aClient *sptr, char *host, char *comment,
 
   /* this can be inserted into the conf */
   if (!gtype)
-    write_log(GPATH, "%c:%s:%s:%s\n", ip_mask ? 'k' : 'K', host, comment, user);
+    write_log(GPATH, "%c:%s:%s:%s\n", 'K', host, comment, user);
 #endif /* GPATH */
 
   if(!lastmod)

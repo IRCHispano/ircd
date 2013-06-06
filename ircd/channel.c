@@ -974,6 +974,88 @@ int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   return 0;
 }
 
+
+/*
+ * m_botmode
+ * parv[0] - sender
+ * parv[1] - botname (ChanServ, ..)
+ * parv[2] - channel
+ *
+ * burda imitacion de m_mode
+ */
+
+int m_opmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  int badop, sendts;
+  aChannel *chptr;
+
+  if (!transicion_ircd) {
+    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+    return 0;
+  }
+
+  if (!IsServer(cptr) && !IsAnOper(sptr) && !IsHelpOp(sptr)) {
+    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+    return 0;
+  }
+
+  /* Now, try to find the channel in question */
+  if (parc > 2)
+  {
+    chptr = FindChannel(parv[1]);
+    if (chptr == NullChn)
+      return 0;                 /* m_botumode(cptr, sptr, parc, parv); */
+  }
+  else
+    return 0;
+
+  sptr->flags &= ~FLAGS_TS8;
+
+  if (MyUser(sptr))
+    clean_channelname(parv[1]);
+  else if (IsLocalChannel(parv[1]))
+    return 0;
+
+  /* sending an error wasnt good, lets just send an empty mode reply..  poptix */
+  if (IsModelessChannel(chptr->chname))
+    return 0;
+
+  if (!(sendts = set_mode(cptr, sptr, chptr, 1, parc - 2, parv + 2,
+      modebuf, parabuf, nparabuf, &badop)))
+  {
+    sendto_one(sptr, err_str(IsMember(sptr, chptr) ? ERR_CHANOPRIVSNEEDED :
+        ERR_NOTONCHANNEL), me.name, parv[0], chptr->chname);
+    return 0;
+  }
+
+  badop = 0;
+
+  if (strlen(modebuf) > (size_t)1 || sendts > 0)
+  {
+    if (strlen(modebuf) > (size_t)1) {
+#if defined(WEBCHAT)
+      sendto_channel_web2_butserv(chptr, sptr, "M%s%s %s %s",
+          chptr->webnumeric, sptr->webnumeric, modebuf, parabuf);
+#endif
+      sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s",
+          chptr->chname, modebuf, parabuf);
+    }
+    if (IsLocalChannel(chptr->chname))
+      return 0;
+#if defined(NO_PROTOCOL9)
+    sendto_serv_butone(cptr, ":%s " TOK_OPMODE " %s %s %s",
+        parv[0], chptr->chname, modebuf, parabuf);
+#else
+    sendto_lowprot_butone(cptr, 9, ":%s OPMODE %s %s %s",
+        parv[0], chptr->chname, modebuf, parabuf);
+    sendto_highprot_butone(cptr, 10, "%s " TOK_OPMODE " %s %s %s",
+        parv[0], chptr->chname, modebuf, nparabuf);
+#endif
+    send_hack_notice(IsServer(cptr) ? cptr : &me, sptr, parc, parv, badop, 1);
+  }
+  return 0;
+}
+
 /*
  * m_svsmode
  * parv[0] - sender
@@ -1689,7 +1771,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
          ** jcea@argo.es - 03/Feb/98
          */
 #if defined(OPER_XMODE_ESNET)
-        if (IsOper(sptr))
+        if (IsOper(sptr) && !transicion_ircd)
         {
           if (!is_chan_op(sptr, chptr))
             jcea_xmode_esnet = !0;
@@ -1713,7 +1795,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
 #if defined(BDD_OPER_HACK_ONLYREG)
               reg &&
 #endif
-              IsNickRegistered(sptr) && IsHelpOp(sptr))
+              IsNickRegistered(sptr) && IsHelpOp(sptr) && !transicion_ircd)
           {
             if (!is_chan_op(sptr, chptr))
               jcea_xmode_esnet = !0;
@@ -1726,7 +1808,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
            * El fundador de un canal puede usar los modos X en su canal
            *                              1999/06/30 savage@apostols.org
            */
-          if (IsNickRegistered(sptr) &&
+          if (IsNickRegistered(sptr) && !transicion_ircd &&
               db_es_miembro(BDD_CHANDB_OLD, chptr->chname, sptr->name) == 1)
           {
             if (!is_chan_op(sptr, chptr))
@@ -1781,7 +1863,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
 ** fijar parametros pase lo que pase.
 ** jcea@argo.es - 03/Feb/98
 */
-  if (!jcea_xmode_esnet
+  if (!jcea_xmode_esnet && !botmode
       && !IsServicesBot(sptr) && (!tmp || !(tmp->flags & CHFL_CHANOP)))
   {
     *badop = 0;
@@ -2651,7 +2733,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
          ** fijar parametros pase lo que pase.
          ** jcea@argo.es - 03/Feb/98
          */
-        if (IsOper(sptr))
+        if (IsOper(sptr) && !transicion_ircd)
         {
           if (!is_chan_op(sptr, chptr))
             jcea_xmode_esnet = !0;
@@ -2674,7 +2756,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
 #if defined(BDD_OPER_HACK_ONLYREG)
               reg &&
 #endif
-              IsNickRegistered(sptr) && IsHelpOp(sptr))
+              IsNickRegistered(sptr) && IsHelpOp(sptr) && !transicion_ircd)
           {
             if (!is_chan_op(sptr, chptr))
               jcea_xmode_esnet = !0;
@@ -2687,7 +2769,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
            * El fundador de un canal puede usar los modos X en su canal
            *                              1999/06/30 savage@apostols.org
            */
-          if (IsNickRegistered(sptr) &&
+          if (IsNickRegistered(sptr) && !transicion_ircd &&
               db_es_miembro(BDD_CHANDB_OLD, chptr->chname, sptr->name) == 1)
           {
             if (!is_chan_op(sptr, chptr))

@@ -102,6 +102,7 @@
 #define MsgOnlyRegChannel(x)   ((x) && ((x)->mode.mode & MODE_MSGNONREG))
 
 extern int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+extern int m_opmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 
 /*
  * mode flags which take another parameter (With PARAmeterS)

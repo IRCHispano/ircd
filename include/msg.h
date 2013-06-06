@@ -49,8 +49,13 @@
 #define CLASS_DBQ		LEVEL_PROPAGATE
 
 #define MSG_BMODE               "BMODE"         /* Base de Datos IRC-HISPANO */
-#define TOK_BMODE     		"BMODE"
+#define TOK_BMODE     		"BM"
 #define CLASS_BMODE		LEVEL_PROPAGATE
+
+#define MSG_OPMODE               "OPMODE"         /* Undernet */
+#define TOK_OPMODE               "OM"
+#define CLASS_OPMODE            LEVEL_PROPAGATE
+
 
 #define MSG_GHOST               "GHOST"         /* Comando GHOST para eliminar conexiones fantasma */
 #define TOK_GHOST               "GHOST"

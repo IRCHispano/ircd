@@ -89,6 +89,7 @@ int excepcion_invisible = 0;
 int activar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
 int compresion_zlib_cliente = 1;
+int transicion_ircd = 0;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -564,6 +565,10 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               activar_ident = 0;
             }
+            else if (!strcmp(c, BDD_TRANSICION_IRCD))
+            {
+              transicion_ircd = 0;
+            }
             else if (!strcmp(c, BDD_SERVER_NAME))
             {
               SlabStringAllocDup(&(his.name), SERVER_NAME, HOSTLEN);
@@ -915,6 +920,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         activar_ident = !0;
       }
 #endif
+      else if (!strcmp(c, BDD_TRANSICION_IRCD))
+      {
+        transicion_ircd = !0;
+      }
       else if (!strcmp(c, BDD_SERVER_NAME))
       {
         SlabStringAllocDup(&(his.name), v, HOSTLEN);

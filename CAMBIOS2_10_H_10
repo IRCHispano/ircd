@@ -1,3 +1,21 @@
+* 2013/06/06  zoltan@irc-dev.net (u2.10.H.10.190)             TRANSITION
+------------------------------------------------------------------------
+  Empezamos con la transicion al nuevo IRCD.
+
+  Definimos la clave "transicion.ircd" en la tabla z, que al principio
+  esta desactivado, una vez que todos los servidores tengan la ultima
+  version y cuando se quiere pasar al nuevo ircd, se activa.
+
+  El objetivo de la variable BDD es desactivar cosas incompatibles con
+  el nuevo y activar cosas compatibles. Tambien se puede utilizar para
+  features nuevas que necesitarian dos actualizaciones y con eso se
+  ahorra una actualizacion.
+
+  En este parche se incluye la primera transicion:
+
+  - Se desactiva el XMODE de Jcea y se activa el OPMODE de Undernet que
+    el funcionamiento es similar pero más limpio y con warning/logging.
+
 * 2013/04/08  zoltan@irc-dev.net (u2.10.H.10.189)                FEATURE
 ------------------------------------------------------------------------
   Cambio la restrccion para tener +X, ahora basta con tener nivel 5

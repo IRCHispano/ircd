@@ -60,6 +60,7 @@
 #define BDD_CLAVE_DE_CIFRADO_DE_COOKIES2 "clave.de.cifrado.de.cookies2"
 #define BDD_COMPRESION_ZLIB_CLIENTE "compresion.zlib.cliente"
 #define BDD_CANAL_DEBUG "debugchan"
+#define BDD_TRANSICION_IRCD	"transicion.ircd"
 /* Para las features de los pseudoBOTS */
 #define BDD_CHANSERV      "ChanServ"
 #define BDD_NICKSERV      "NickServ"
@@ -108,6 +109,7 @@ extern int excepcion_invisible;
 extern int activar_redireccion_canales;
 extern char *mensaje_quit_personalizado;
 extern int compresion_zlib_cliente;
+extern int transicion_ircd;
 
 /* -- mman.h no contiene algunas definicieones en plataformas antiguas -- */
 #if !defined(MAP_FAILED)

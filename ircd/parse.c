@@ -123,6 +123,7 @@ aMessage msgtab[] = {
     {CLASS_DB,          MSG_DB,         TOK_DB,         m_db,           0, MAXPARA,     MFLG_SLOW,      0L},
     {CLASS_DBQ,         MSG_DBQ,        TOK_DBQ,        m_dbq,          0, MAXPARA,     MFLG_SLOW,      0L},
     {CLASS_BMODE,       MSG_BMODE,      TOK_BMODE,      m_botmode,      0, MAXPARA,     MFLG_SLOW,      0L},
+    {CLASS_OPMODE,      MSG_OPMODE,     TOK_OPMODE,     m_opmode,       0, MAXPARA,     MFLG_SLOW,      0L},
     {CLASS_GHOST,       MSG_GHOST,      TOK_GHOST,      m_ghost,        0, MAXPARA,     MFLG_SLOW,      0L},
 #if defined(ESNET_NEG)
     {CLASS_CONFIG,       MSG_CONFIG,      TOK_CONFIG,      m_config,      0, MAXPARA,   MFLG_SLOW|MFLG_UNREG,      0L},
