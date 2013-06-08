@@ -1,3 +1,7 @@
+* 2013/06/08  zoltan@irc-dev.net (u2.10.H.10.191)                    FIX
+------------------------------------------------------------------------
+  Correcciones de nicks reservados para webchats.
+
 * 2013/06/06  zoltan@irc-dev.net (u2.10.H.10.190)             TRANSITION
 ------------------------------------------------------------------------
   Empezamos con la transicion al nuevo IRCD.

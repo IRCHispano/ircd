@@ -3929,7 +3929,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
         if (x[0] >= 4294000000ul)
           continue;
 
-#if defined(WEBCHAT_HTML)
+#if defined(WEBCHAT)
         sprintf_irc(resultado, "webchat-%.6d", (int)(x[0] % 1000000));
 #else
         sprintf_irc(resultado, "invitado-%.6d", (int)(x[0] % 1000000));
@@ -5995,7 +5995,7 @@ static char *nuevo_nick_aleatorio(aClient *cptr)
     if (x[0] >= 4294000000ul)
       continue;
 
-#if defined(WEBCHAT_HTML)
+#if defined(WEBCHAT)
     sprintf_irc(resultado, "webchat-%.6d", (int)(x[0] % 1000000));
 #else
     sprintf_irc(resultado, "invitado-%.6d", (int)(x[0] % 1000000));
