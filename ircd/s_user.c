@@ -4524,6 +4524,15 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
   }
 
+#if !defined(WEBCHAT)
+    if (!match("webchat-*", nick)) {
+      sendto_one(sptr, err_str(ERR_NICKNAMEINUSE), me.name,
+          /* parv[0] is empty when connecting */
+          BadPtr(parv[0]) ? "*" : parv[0], nick);
+      return 0;
+    }
+#endif
+
   /*
    * Check against nick name collisions.
    *

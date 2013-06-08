@@ -1,3 +1,9 @@
+* 2013/06/09  zoltan@irc-dev.net (u2.10.H.10.192)                    FIX
+------------------------------------------------------------------------
+  Por una limitacion debido por un requisito impresicindible de los
+  Webchats no se puede jupear la mascara "webchat-*", hago que si se
+  compila para clientes IRC no se pueda poner de ningun modo ese nick.
+
 * 2013/06/08  zoltan@irc-dev.net (u2.10.H.10.191)                    FIX
 ------------------------------------------------------------------------
   Correcciones de nicks reservados para webchats.
