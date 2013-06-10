@@ -1037,8 +1037,8 @@ int m_opmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_channel_web2_butserv(chptr, sptr, "M%s%s %s %s",
           chptr->webnumeric, sptr->webnumeric, modebuf, parabuf);
 #endif
-      sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s",
-          chptr->chname, modebuf, parabuf);
+      sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s %s",
+          parv[0], chptr->chname, modebuf, parabuf);
     }
     if (IsLocalChannel(chptr->chname))
       return 0;
@@ -6238,6 +6238,101 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
         me.name, parv[0], who->name, chptr->chname);
 
   return 0;
+}
+
+/*
+ * m_svskick
+ *
+ * parv[0] = sender prefix
+ * parv[1] = channel
+ * parv[2] = client to kick
+ * parv[parc-1] = kick comment
+ */
+int m_svskick(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  aClient *acptr;
+  aChannel *chptr;
+  char *name;
+  char *comment;
+  Link *lp, *lp2;
+
+  sptr->flags &= ~FLAGS_TS8;
+
+  if (!IsServer(cptr) || !IsServer(sptr) || parc < 4)
+    return 0;
+
+  if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
+  {
+    sendto_serv_butone(cptr,
+        ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
+        "kick en el canal '%s' para el nick '%s'", me.name, cptr->name,
+        sptr->name, parv[2], parv[1]);
+    sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
+        "HACK(4): El nodo '%s' dice que '%s' solicita "
+        "kick en el canal '%s' para el nick '%s'", cptr->name, sptr->name, parv[2], parv[1]);
+    return 0;
+  }
+
+  comment = (BadPtr(parv[parc - 1])) ? parv[0] : parv[parc - 1];
+  if (strlen(comment) > (size_t)KICKLEN)
+    comment[KICKLEN] = '\0';
+
+  acptr = findNUser(parv[1]);
+  if (!acptr)
+    acptr = FindClient(parv[1]);
+  if (!acptr)
+    return 0;
+
+  if (!MyUser(acptr))
+  {
+    sendcmdto_one(acptr, sptr, "SVSKICK", TOK_SVSKICK, "%s :%s", parv[2], comment);
+    return 0;
+  }
+
+  acptr->flags &= ~FLAGS_TS8;
+  name = parv[2];
+
+  chptr = get_channel(acptr, name, !CREATE);
+  if (!chptr)
+    return 0;
+
+  if (*name == '&')
+    return 0;
+
+  /* Do not use IsMember here: zombies must be able to part too */
+  if (!(lp = find_user_link(chptr->members, acptr)))
+    return 0;
+
+  sendto_one(acptr, ":%s KICK %s %s :%s", sptr->name, chptr->chname, acptr->name, comment);
+
+  /* Send part to all clients */
+  if (!(lp->flags & CHFL_ZOMBIE))
+  {
+#if defined(WEBCHAT)
+    sendto_channel_web2_butserv(chptr, acptr, PartWeb2, chptr->webnumeric, acptr->webnumeric);
+#endif
+    if (mensaje_part_svskick)
+      sendto_channel_butserv(chptr, acptr, PartFmt2, acptr->name, chptr->chname, mensaje_part_svskick);
+    else
+      sendto_channel_butserv(chptr, acptr, PartFmt1, acptr->name, chptr->chname);
+  }
+  remove_user_from_channel(acptr, chptr);
+
+  /* Send out the parts to all servers... -Kev */
+  if (mensaje_part_svskick)
+  {
+#if !defined(NO_PROTOCOL9)
+    sendto_lowprot_butone(NULL, 9, PartFmt2, acptr->name, name, mensaje_part_svskick);
+#endif
+    sendto_highprot_butone(NULL, 10, PartFmt2Serv, NumNick(acptr), name, mensaje_part_svskick);
+  }
+  else
+  {
+#if !defined(NO_PROTOCOL9)
+    sendto_lowprot_butone(NULL, 9, PartFmt1, acptr->name, name);
+#endif
+    sendto_highprot_butone(NULL, 10, PartFmt1Serv, NumNick(acptr), name);
+  }
 }
 
 /*

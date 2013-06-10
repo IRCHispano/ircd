@@ -137,6 +137,7 @@ aMessage msgtab[] = {
     {CLASS_SVSMODE,      MSG_SVSMODE,     TOK_SVSMODE,     m_svsmode,     0, MAXPARA,   MFLG_SLOW,      0L},
     {CLASS_SVSJOIN,      MSG_SVSJOIN,     TOK_SVSJOIN,     m_svsjoin,     0, MAXPARA,   MFLG_SLOW,      0L},
     {CLASS_SVSPART,      MSG_SVSPART,     TOK_SVSPART,     m_svspart,     0, MAXPARA,   MFLG_SLOW,      0L},    
+    {CLASS_SVSKICK,      MSG_SVSKICK,     TOK_SVSKICK,     m_svskick,     0, MAXPARA,   MFLG_SLOW,      0L},
 
 #if defined(WATCH)
     {CLASS_WATCH,      MSG_WATCH,      TOK_WATCH,      m_watch,        0, 1,   MFLG_SLOW,      0L},

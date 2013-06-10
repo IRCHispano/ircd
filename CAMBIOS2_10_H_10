@@ -1,6 +1,19 @@
+* 2013/06/10  zoltan@irc-dev.net (u2.10.H.10.193)                FEATURE
+------------------------------------------------------------------------
+  Soporte de SVSKICK.
+
+  Solo puede ejecutar un service con uline con los mismos parametros que
+  el KICK.
+  La diferencia entre el KICK y el SVSKICK esta en que el SVSKICK propaga
+  el KICK por la red como si fuera un PART y el usuario pateado recibe un
+  mensaje de kick.
+
+  Se puede definir un mensaje fijo para el PART con el registro
+  "mensaje.part.svskick" en la tabla z.
+
 * 2013/06/09  zoltan@irc-dev.net (u2.10.H.10.192)                    FIX
 ------------------------------------------------------------------------
-  Por una limitacion debido por un requisito impresicindible de los
+  Por una limitacion debido por un requisito imprescindible de los
   Webchats no se puede jupear la mascara "webchat-*", hago que si se
   compila para clientes IRC no se pueda poner de ningun modo ese nick.
 

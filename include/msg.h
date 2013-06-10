@@ -91,6 +91,11 @@
 #define TOK_SVSPART    "SL"
 #define CLASS_SVSPART    LEVEL_PROPAGATE
 
+#define MSG_SVSKICK    "SVSKICK"
+#define TOK_SVSKICK    "SK"
+#define CLASS_SVSKICK    LEVEL_PROPAGATE
+
+
 #if defined(WATCH)
 #define MSG_WATCH              "WATCH"         /* Comando WATCH */
 #define TOK_WATCH              "WATCH"

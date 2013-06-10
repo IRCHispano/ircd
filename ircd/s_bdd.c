@@ -89,6 +89,7 @@ int excepcion_invisible = 0;
 int activar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
 int compresion_zlib_cliente = 1;
+char *mensaje_part_svskick = NULL;
 int transicion_ircd = 0;
 
 /*
@@ -589,6 +590,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               compresion_zlib_cliente = 1;
             }
+
             else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
             {
               activar_redireccion_canales=0;
@@ -604,7 +606,15 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
             {
               excepcion_invisible=0;
-            }   
+            }
+            else if(!strcmp(c, BDD_MENSAJE_PART_SVSKICK))
+            {
+              if(mensaje_part_svskick)
+              {
+                RunFree(mensaje_part_svskick);
+                mensaje_part_svskick=NULL;
+              }
+            }
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -970,7 +980,11 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
       {
         excepcion_invisible = !0;
-      }     
+      }
+      else if(!strcmp(c, BDD_MENSAJE_PART_SVSKICK))
+      {
+        SlabStringAllocDup(&mensaje_part_svskick, v, 0);
+      }
       break;
     case BDD_IPVIRTUALDB:
       {

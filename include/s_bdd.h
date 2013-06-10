@@ -59,6 +59,7 @@
 #define BDD_CLAVE_DE_CIFRADO_DE_COOKIES "clave.de.cifrado.de.cookies"
 #define BDD_CLAVE_DE_CIFRADO_DE_COOKIES2 "clave.de.cifrado.de.cookies2"
 #define BDD_COMPRESION_ZLIB_CLIENTE "compresion.zlib.cliente"
+#define BDD_MENSAJE_PART_SVSKICK "mensaje.part.svskick"
 #define BDD_CANAL_DEBUG "debugchan"
 #define BDD_TRANSICION_IRCD	"transicion.ircd"
 /* Para las features de los pseudoBOTS */
@@ -109,6 +110,7 @@ extern int excepcion_invisible;
 extern int activar_redireccion_canales;
 extern char *mensaje_quit_personalizado;
 extern int compresion_zlib_cliente;
+extern char *mensaje_part_svskick;
 extern int transicion_ircd;
 
 /* -- mman.h no contiene algunas definicieones en plataformas antiguas -- */
