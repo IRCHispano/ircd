@@ -182,7 +182,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
 #if !defined(OPER_CHANNEL_SERVICE_ESNET)
       && !IsChannelService(acptr)
 #endif
-      )
+      && !IsNoChan(acptr))
   {
     Reg3 Link *lp;
     for (lp = acptr->user->channel; lp && !chptr; lp = lp->next)
@@ -877,6 +877,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if !defined(OPER_CHANNEL_SERVICE_ESNET)
             && !IsChannelService(acptr)
 #endif
+            && (!IsNoChan(acptr) || acptr == sptr)
             )
         {
           mlen = strlen(me.name) + strlen(parv[0]) + 12 + strlen(name);

@@ -1,3 +1,10 @@
+* 2013/06/11  zoltan@irc-dev.net (u2.10.H.10.194)                FEATURE
+------------------------------------------------------------------------
+  Nuevo modo 'u' como en Quakenet.
+
+  Solo puede ponerlo por un servidor/service y es para ocultar todos los
+  canales en el whois.
+
 * 2013/06/10  zoltan@irc-dev.net (u2.10.H.10.193)                FEATURE
 ------------------------------------------------------------------------
   Soporte de SVSKICK.

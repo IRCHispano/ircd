@@ -969,6 +969,7 @@ static int user_hmodes[] = {
   HMODE_STRIPCOLOR,     'c',
   HMODE_USERBLIND,      'P',
   HMODE_USERNOJOIN,     'C',
+  HMODE_NOCHAN,         'n',
   0,			0
 };
 
@@ -2916,6 +2917,9 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if (!(sethmodes & HMODE_USERNOJOIN))
       ClearUserNoJoin(sptr);
+
+    if (!(sethmodes & HMODE_NOCHAN))
+      ClearNoChan(sptr);
   }
 
   if (IsNickRegistered(sptr))

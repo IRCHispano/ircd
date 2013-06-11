@@ -238,13 +238,13 @@ extern struct sockaddr_in vserv;
 #define HMODE_STRIPCOLOR              0x00000200  /* El usuario no recibe colores en +c */
 #define HMODE_USERBLIND               0x00000400  /* El resto de usuarios no ven lo que este dice en un canal */
 #define HMODE_USERNOJOIN              0x00000800  /* Al intentar entrar a un canal entra siempre a uno de debug */
-
+#define HMODE_NOCHAN                  0x00001000  /* No mostrar canales */
 
 /* Modos hispano  a propagar */
 #define SEND_HMODES \
     (HMODE_NICKREGISTERED | HMODE_HELPOP | HMODE_SERVICESBOT | HMODE_HIDDEN | HMODE_HIDDENVIEWER \
        | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG | HMODE_USERDEAF | HMODE_STRIPCOLOR | HMODE_USERBLIND \
-       | HMODE_USERNOJOIN)
+       | HMODE_USERNOJOIN | HMODE_NOCHAN)
 
 /* Modos hispano TODOS */
 #define ALL_HMODES \
@@ -265,6 +265,7 @@ extern struct sockaddr_in vserv;
 #define IsStripColor(x)         ((x)->hmodes & HMODE_STRIPCOLOR)
 #define IsUserBlind(x)          ((x)->hmodes & HMODE_USERBLIND)
 #define IsUserNoJoin(x)         ((x)->hmodes & HMODE_USERNOJOIN)
+#define IsNoChan(x)             ((x)->hmodes & HMODE_NOCHAN)
 
 #define TieneIpVirtualPersonalizada(x)  ((x)->hmodes & HFLAG_IPVIRTUAL_PERSONALIZADA)
 
@@ -281,6 +282,7 @@ extern struct sockaddr_in vserv;
 #define SetStripColor(x)        ((x)->hmodes |= HMODE_STRIPCOLOR)
 #define SetUserBlind(x)         ((x)->hmodes |= HMODE_USERBLIND)
 #define SetUserNoJoin(x)        ((x)->hmodes |= HMODE_USERNOJOIN)
+#define SetNoChan(x)            ((x)->hmodes |= HMODE_NOCHAN)
 
 #define SetIpVirtualPersonalizada(x)    ((x)->hmodes |= HFLAG_IPVIRTUAL_PERSONALIZADA)
 
@@ -298,6 +300,7 @@ extern struct sockaddr_in vserv;
 #define ClearStripColor(x)      ((x)->hmodes &= ~HMODE_STRIPCOLOR)
 #define ClearUserBlind(x)       ((x)->hmodes &= ~HMODE_USERBLIND)
 #define ClearUserNoJoin(x)      ((x)->hmodes &= ~HMODE_USERNOJOIN)
+#define ClearNoChan(x)          ((x)->hmodes &= ~HMODE_NOCHAN)
 
 #define ClearIpVirtualPersonalizada(x)  ((x)->hmodes &= ~HFLAG_IPVIRTUAL_PERSONALIZADA)
 
