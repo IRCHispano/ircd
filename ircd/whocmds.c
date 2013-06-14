@@ -967,12 +967,26 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
             sendto_one(sptr, rpl_str(RPL_WHOISSUSPNICK), me.name, parv[0],
                 name);
 
-          if (IsHelpOp(acptr))
-            sendto_one(sptr, rpl_str(RPL_WHOISHELPOP), me.name, parv[0], name);
+          if (IsHelpOp(acptr)) {
+            if (transicion_ircd && user->away)
+              sendto_one(sptr, rpl_str(RPL_WHOISHELPOP), me.name, parv[0], name);
+            else if (!transicion_ircd)
+              sendto_one(sptr, ":%s %d %s %s :Es un OPERador de los servicios de red",
+                  me.name, RPL_ENDOFNAMES, parv[0], name);
+          }
 
-          if (IsAnOper(acptr))
-            sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR),
-                me.name, parv[0], name);
+          if (IsAdmin(acptr))
+            sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
+                "Es un ADMINistrador de los servicios de red");
+          else if (IsCoder(acptr))
+            sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
+                "Es un Desarrollador de la red");
+          else if (IsHelpOp(acptr) && transicion_ircd)
+            sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
+                "Es un OPERador de los servicios de red");
+          else if (IsAnOper(acptr))
+            sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
+                "Is an IRC Operator");
 
           if (IsMsgOnlyReg(acptr))
             sendto_one(sptr, rpl_str(RPL_MSGONLYREG), me.name, parv[0], name);
@@ -983,6 +997,9 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
           sendto_one(sptr, rpl_str(RPL_WHOISMODES), me.name,
               parv[0], name, umode_str(acptr, sptr));
+
+         if (IsSSL(acptr))
+          sendto_one(sptr, rpl_str(RPL_WHOISSSL), me.name, parv[0], name);
 
          if (MyConnect(acptr) && (!ocultar_servidores ||
                   (sptr == acptr || IsAnOper(sptr) || IsHelpOp(sptr) || parc >= 3)))

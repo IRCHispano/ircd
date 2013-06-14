@@ -959,17 +959,22 @@ static int user_modes[] = {
 
 static int user_hmodes[] = {
   HMODE_NICKREGISTERED, 'r',
+  HMODE_NICKSUSPENDED,  'S',
+  HMODE_ADMIN,          'a',
+  HMODE_CODER,          '',
   HMODE_HELPOP,         'h',
   HMODE_HIDDEN,         'x',
   HMODE_HIDDENVIEWER,   'X',
   HMODE_SERVICESBOT,    'B',
   HMODE_NICKSUSPENDED,  'S',
   HMODE_MSGONLYREG,     'R',
-  HMODE_USERDEAF,       'D',
   HMODE_STRIPCOLOR,     'c',
+  HMODE_NOCHAN,         'n',
+  HMODE_SSL,            'z',
+  HMODE_USERDEAF,       'D',
   HMODE_USERBLIND,      'P',
   HMODE_USERNOJOIN,     'C',
-  HMODE_NOCHAN,         'n',
+  HMODE_NOSENDPRIVS,    '',
   0,			0
 };
 

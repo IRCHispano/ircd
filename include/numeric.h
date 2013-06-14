@@ -150,10 +150,12 @@
 /*      ERR_UNIQOPRIVSNEEDED 485          IRCnet extension */
 /*      ERR_KILLDENY         485          Unreal */
 /*      ERR_CANTKICKADMIN    485          PTlink */
+#define ERR_ISREALSERVICE    485  /* Undernet extension */
 #define ERR_NONONREG         486  /* Dalnet extension */
 /*      ERR_HTMDISABLED      486          Unreal */
 /*      ERR_CHANTOORECENT    487           IRCnet extension */
 /*      ERR_TSLESSCHAN       488           IRCnet extension */
+#define ERR_NOSSL            488
 #define ERR_VOICENEEDED	     489  /* Undernet extension */
 
 #define ERR_NOOPERHOST	     491
@@ -261,6 +263,7 @@
 #define RPL_TOPICWHOTIME     333  /* Undernet extension */
 #define RPL_LISTUSAGE	     334  /* Undernet extension */
 
+#define RPL_WHOISSSL         337
 #define RPL_WHOISACTUALLY    338        /* Undernet extension, dalnet */
 /*      RPL_CHANPASSOK       338           IRCnet extension */
 /*      RPL_BADCHANPASS      339           IRCnet & Dalnet extension */

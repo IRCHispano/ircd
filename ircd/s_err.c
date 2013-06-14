@@ -267,16 +267,17 @@ static Numeric numeric_errors[] = {
 /* 483 */
     {ERR_CANTKILLSERVER, ":You cant kill a server!"},
 /* 484 */
-    {ERR_ISCHANSERVICE, "%s %s :Cannot kick or deop channel service"},
+    {ERR_ISCHANSERVICE, "%s %s :Cannot kill, kick or deop an IRC Operator"},
 /* 485 */
-    {0, (char *)NULL},
+    {ERR_ISREALSERVICE, "%s %s :Cannot kill, kick or deop a network service"},
 /* 486 */
-    {ERR_NONONREG, ":Necesita registrar su nick para poder hablar con %s, " 
+    {ERR_NONONREG, ":Necesita registrar su nick para poder hablar con %s, "
 	           "para más información escriba: /msg NiCK help REGISTER"},
 /* 487 */
     {0, (char *)NULL},
 /* 488 */
-    {0, (char *)NULL},
+    {ERR_NOSSL, "%s :Cannot join channel (+z) - "
+                        "Necesita conectar de forma segura con SSL para entrar al canal"},
 /* 489 */
     {ERR_VOICENEEDED, "%s :You're neither voiced nor channel operator"},
 /* 490 */
@@ -362,13 +363,13 @@ static Numeric numeric_replies[] = {
 /* 309 */
     {0, (char *)NULL},
 /* 310 */
-    {RPL_WHOISHELPOP, "%s :Es un OPERador de los servicios de red"},
+    {RPL_WHOISHELPOP, "%s :esta disponible para ayuda"},
 /* 311 */
     {RPL_WHOISUSER, "%s %s %s * :%s"},
 /* 312 */
     {RPL_WHOISSERVER, "%s %s :%s"},
 /* 313 */
-    {RPL_WHOISOPERATOR, "%s :is an IRC Operator"},
+    {RPL_WHOISOPERATOR, "%s :is %s"},
 /* 314 */
     {RPL_WHOWASUSER, "%s %s %s * :%s"},
 /* 315 */
@@ -416,7 +417,7 @@ static Numeric numeric_replies[] = {
 /* 336 */
     {0, (char *)NULL},
 /* 337 */
-    {0, (char *)NULL},
+    {RPL_WHOISSSL, "%s :is connected via SSL"},
 /* 338 */
     {RPL_WHOISACTUALLY, "%s %s@%s %s :Actual user@host, Actual IP"},
 /* 339 */

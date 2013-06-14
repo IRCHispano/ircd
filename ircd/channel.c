@@ -595,13 +595,13 @@ int can_send(aClient *cptr, aChannel *chptr)
 
   if (flag && MyUser(cptr))
   {
-    if (MsgOnlyRegChannel(chptr) && !IsNickRegistered(cptr))
-    {
-      return (MODE_MSGNONREG);
-    }
     if (is_banned(cptr, chptr, lp))
     {
       return (MODE_BAN);
+    }
+    if (MsgOnlyRegChannel(chptr) && !IsNickRegistered(cptr))
+    {
+      return (MODE_MSGNONREG);
     }
   }
 
@@ -655,6 +655,8 @@ void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
     *mbuf++ = 'u';
   if (chptr->mode.mode & MODE_DELJOINS)
     *mbuf++ = 'D';
+  if (chptr->mode.mode & MODE_SSLONLY)
+    *mbuf++ = 'z';
 
   if (chptr->mode.limit)
   {
@@ -1354,6 +1356,7 @@ static int canal_flags[] = {
   MODE_MSGNONREG, 'M', MODE_NOCTCP, 'C',
   MODE_NONOTICE, 'N', MODE_NOQUITPARTS, 'u',
   MODE_DELJOINS, 'D', MODE_NOCOLOUR, 'c',
+  MODE_SSLONLY, 'z',
   0x0, 0x0
 };
 
@@ -1901,8 +1904,12 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
 ** y si alguno no esta soportado, lo eliminamos.
 */
     activacion_modos = (~(oldm.mode)) & newmode;
-    newmode &=
-          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_DELJOINS | MODE_NOCOLOUR));
+    if (transicion_ircd)
+       newmode &=
+          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_DELJOINS));
+    else
+       newmode &=
+          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_DELJOINS | MODE_SSLONLY));
   }
 
 /*
@@ -3638,6 +3645,9 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
     }
   }
 
+  if (SSLOnlyChannel(chptr) && !IsSSL(sptr))
+      return overrideJoin + (ERR_NOSSL);
+
   /* now using compall (above) to test against a whole key ring -Kev */
   if (chptr->mode.key && (BadPtr(key) || compall(chptr->mode.key, key)))
     return overrideJoin + (ERR_BADCHANNELKEY);
@@ -5241,6 +5251,20 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 modebuf[mblen2++] = 'D';
               break;
             }
+            case 'z':
+            {
+              int tmp;
+              prev_mode &= ~MODE_SSLONLY;
+              if (!(tmp = netride ||
+                  (current_mode->mode & MODE_SSLONLY)) || wipeout)
+              {
+                bmodebuf[mblen++] = 'z';
+                current_mode->mode |= MODE_SSLONLY;
+              }
+              if (!tmp)
+                modebuf[mblen2++] = 'z';
+              break;
+            }
             case 'n':
             {
               int tmp;
@@ -5619,6 +5643,8 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       cancel_mode(sptr, chptr, 'u', NULL, &count);
     if ((prev_mode & MODE_DELJOINS))
       cancel_mode(sptr, chptr, 'D', NULL, &count);
+    if ((prev_mode & MODE_SSLONLY))
+      cancel_mode(sptr, chptr, 'z', NULL, &count);
 
     prev_mode &= ~(MODE_REGCHAN); /* Mantenemos estos modos aunque el canal que llega sea mas antiguo */
     current_mode->mode &= ~prev_mode;

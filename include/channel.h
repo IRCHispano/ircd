@@ -93,13 +93,14 @@
 #define MODE_DELJOINS   0x200000
 #define MODE_WASDELJOINS 0x400000
 #define MODE_NOCOLOUR    0x800000
-
+#define MODE_SSLONLY     0x1000000
 
 #define RegisteredChannel(x)    ((x) && ((x)->mode.mode & MODE_REGCHAN))
 #define RestrictedChannel(x)    ((x) && ((x)->mode.mode & MODE_REGNICKS))
 #define AutoOpChannel(x)        ((x) && ((x)->mode.mode & MODE_AUTOOP))
 #define SecureOpChannel(x)      ((x) && ((x)->mode.mode & MODE_SECUREOP))
 #define MsgOnlyRegChannel(x)   ((x) && ((x)->mode.mode & MODE_MSGNONREG))
+#define SSLOnlyChannel(x)      ((x) && ((x)->mode.mode & MODE_SSLONLY))
 
 extern int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_opmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);

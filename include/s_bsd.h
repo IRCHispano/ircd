@@ -239,19 +239,23 @@ extern struct sockaddr_in vserv;
 #define HMODE_USERBLIND               0x00000400  /* El resto de usuarios no ven lo que este dice en un canal */
 #define HMODE_USERNOJOIN              0x00000800  /* Al intentar entrar a un canal entra siempre a uno de debug */
 #define HMODE_NOCHAN                  0x00001000  /* No mostrar canales */
+#define HMODE_SSL                     0x00002000  /* Usuario con conexion SSL */
+#define HMODE_ADMIN                   0x00004000  /* Administrador de Red */
+#define HMODE_CODER                   0x00008000  /* Desarrollador de Red */
+#define HMODE_NOSENDPRIVS             0x00010000  /* Usuario no puede mandar privados */
 
 /* Modos hispano  a propagar */
 #define SEND_HMODES \
     (HMODE_NICKREGISTERED | HMODE_HELPOP | HMODE_SERVICESBOT | HMODE_HIDDEN | HMODE_HIDDENVIEWER \
        | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG | HMODE_USERDEAF | HMODE_STRIPCOLOR | HMODE_USERBLIND \
-       | HMODE_USERNOJOIN | HMODE_NOCHAN)
+       | HMODE_USERNOJOIN | HMODE_NOCHAN | HMODE_SSL | HMODE_ADMIN | HMODE_CODER | HMODE_NOSENDPRIVS)
 
 /* Modos hispano TODOS */
 #define ALL_HMODES \
     (SEND_HMODES)
 
 #define HMODES_HIDDEN \
-    (HMODE_USERDEAF | HMODE_USERBLIND | HMODE_USERNOJOIN)
+    (HMODE_USERDEAF | HMODE_USERBLIND | HMODE_USERNOJOIN | HMODE_NOSENDPRIVS)
 
 /* Macros comprobacion modos hispano */
 #define IsNickRegistered(x)     ((x)->hmodes & HMODE_NICKREGISTERED)
@@ -266,6 +270,10 @@ extern struct sockaddr_in vserv;
 #define IsUserBlind(x)          ((x)->hmodes & HMODE_USERBLIND)
 #define IsUserNoJoin(x)         ((x)->hmodes & HMODE_USERNOJOIN)
 #define IsNoChan(x)             ((x)->hmodes & HMODE_NOCHAN)
+#define IsSSL(x)                ((x)->hmodes & HMODE_SSL)
+#define IsAdmin(x)              ((x)->hmodes & HMODE_ADMIN)
+#define IsCoder(x)              ((x)->hmodes & HMODE_CODER)
+#define IsUserNoSendPriv(x)     ((x)->hmodes & HMODE_NOSENDPRIVS)
 
 #define TieneIpVirtualPersonalizada(x)  ((x)->hmodes & HFLAG_IPVIRTUAL_PERSONALIZADA)
 
@@ -283,6 +291,10 @@ extern struct sockaddr_in vserv;
 #define SetUserBlind(x)         ((x)->hmodes |= HMODE_USERBLIND)
 #define SetUserNoJoin(x)        ((x)->hmodes |= HMODE_USERNOJOIN)
 #define SetNoChan(x)            ((x)->hmodes |= HMODE_NOCHAN)
+#define SetSSL(x)               ((x)->hmodes |= HMODE_SSL)
+#define SetAdmin(x)             ((x)->hmodes |= HMODE_ADMIN)
+#define SetCoder(x)             ((x)->hmodes |= HMODE_CODER)
+#define SetUserNoSendPriv(x)    ((x)->hmodes |= HMODE_NOSENDPRIVS)
 
 #define SetIpVirtualPersonalizada(x)    ((x)->hmodes |= HFLAG_IPVIRTUAL_PERSONALIZADA)
 
@@ -301,6 +313,10 @@ extern struct sockaddr_in vserv;
 #define ClearUserBlind(x)       ((x)->hmodes &= ~HMODE_USERBLIND)
 #define ClearUserNoJoin(x)      ((x)->hmodes &= ~HMODE_USERNOJOIN)
 #define ClearNoChan(x)          ((x)->hmodes &= ~HMODE_NOCHAN)
+#define ClearSSL(x)             ((x)->hmodes &= ~HMODE_SSL)
+#define ClearAdmin(x)           ((x)->hmodes &= ~HMODE_ADMIN)
+#define ClearCoder(x)           ((x)->hmodes &= ~HMODE_CODER)
+#define ClearUserNoSendPriv(x)  ((x)->hmodes &= ~HMODE_NOSENDPRIVS)
 
 #define ClearIpVirtualPersonalizada(x)  ((x)->hmodes &= ~HFLAG_IPVIRTUAL_PERSONALIZADA)
 
