@@ -1,3 +1,8 @@
+* 2013/06/14  zoltan@irc-dev.net (u2.10.H.10.195)                    FIX
+------------------------------------------------------------------------
+  Corregido un error de compilacion aportado por donostiarra que impedia
+  compilar con BDD_MMAP y sin WEBCHAT.
+
 * 2013/06/11  zoltan@irc-dev.net (u2.10.H.10.194)                FEATURE
 ------------------------------------------------------------------------
   Nuevo modo 'u' como en Quakenet.

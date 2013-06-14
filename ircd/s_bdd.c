@@ -2324,6 +2324,7 @@ void initdb(void)
       clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
 
     }
+#if defined(WEBCHAT)
     if ((reg = db_buscar_registro(BDD_CONFIGDB, BDD_CLAVE_DE_CIFRADO_DE_COOKIES)))
     {
       char key[45];
@@ -2341,6 +2342,7 @@ void initdb(void)
       base64_to_buf_r(clave_de_cifrado_de_cookies, key);
       cifrado_cookies=1;
     }
+#endif
 #endif /* CACHE HIT */
   }
 
