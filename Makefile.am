@@ -1,6 +1,6 @@
 ## AutoMake top-level Makefile for the IRC-DEV IRC Daemon
 ##
-## Copyright (C) 2005-2007 IRC-Dev Development Team <devel@irc-dev.net>
+## Copyright (C) 2005-2014 IRC-Dev Development Team <devel@irc-dev.net>
 ## Copyright (C) 2005 by Kevin L. Mitchell <klmitch@mit.edu>
 ##
 ## This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,6 @@ EXTRA_DIST = doc patches tools include Doxyfile INSTALL INSTALL.es ircd-patch \
 	TODO TODO.es
 
 # Install man page and example.conf
-man_MANS = doc/en/ircd.8
 sysconf_DATA = doc/ircd.sample-en.conf doc/ircd.sample-es.conf
 
 # Make sure to filter out those CVS directories

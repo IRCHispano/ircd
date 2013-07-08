@@ -22,7 +22,7 @@ make -f Makefile2
 echo Configurando IRCD
 cd ..
 cd ..
-./configure --prefix=$1 --with-maxcon=$2 --enable-p09 --enable-pcre
+./configure --prefix=$1 --with-maxcon=$2 --enable-pcre
 
 echo ""
 exit 0

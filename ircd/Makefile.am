@@ -195,7 +195,7 @@ ircd_SOURCES += \
 	pcre_try_flipped.c \
 	pcre_match.c
 	
-if WEBCHAT_FLASH
+if WEBCHAT_FLASH_DEPRECATED
 ircd_SOURCES += \
    aes.c \
    cookies.c

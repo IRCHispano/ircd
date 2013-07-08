@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl
 dnl IRC-Dev IRCD - An advanced and innovative IRC Daemon, configure
 dnl
-dnl Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+dnl Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
 dnl Copyright (C) 2005  Kevin L. Mitchell <klmitch@mit.edu>
 dnl Copyright (C) 2001  Kevin L. Mitchell <klmitch@mit.edu>
 dnl Copyright (c) 1997, by Carlo Wood <carlo@runaway.xs4all.nl>
@@ -27,7 +27,7 @@ dnl  @(#)$Id: configure.ac,v 1.3 2007-11-11 21:53:03 zolty Exp $
 dnl
 
 AC_INIT([IRC-Hispano IRC Daemon],[u2.10.H.11],[devel@irc-dev.net],[ircd-irchispano])
-AC_PREREQ(2.61)
+AC_PREREQ([2.69])
 
 AC_COPYRIGHT(
 [This program is free software; you can redistribute it and/or modify
@@ -85,29 +85,6 @@ AC_SEARCH_LIBS(crypt, [descrypt crypt], ,
 dnl Do the checks necessary to figure out -lnsl / -lsocket stuff
 AC_LIBRARY_NET
 
-
-dnl VIEJO
-AC_HEADER_STDC
-AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([malloc.h sys/malloc.h fcntl.h string.h strings.h sys/file.h sys/ioctl.h sys/time.h syslog unistd.h memory.h errno.h net/errno.h sys/cdefs.h])
-AC_C_CONST
-AC_C_BIGENDIAN
-AC_TYPE_SIZE_T
-AC_HEADER_TIME
-AC_STRUCT_TM
-AC_TYPE_UID_T
-unet_CHECK_TYPE_SIZES
-AC_PROG_GCC_TRADITIONAL
-AC_FUNC_MEMCMP
-AC_FUNC_SETVBUF_REVERSED
-AC_TYPE_SIGNAL
-AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(strchr memcpy memmove)
-AC_CHECK_FUNCS(gethostname gettimeofday mkdir strerror strtoken)
-AC_CHECK_FUNCS(select socket uname)
-AC_CHECK_FUNCS(setrlimit inet_netof getrusage times res_init)
-
-dnl FIN VIEJO
 
 dnl Check out header files
 AC_HEADER_STDC
@@ -318,15 +295,6 @@ if test x"$unet_cv_enable_ipv6" = xyes; then
     AC_DEFINE([IPV6], 1, [Enable IPv6 support])
 fi
 
-dnl how about P09 support?
-unet_TOGGLE([p09], no, [Enable P09 support],
-    [whether to enable P09 match])
-
-# Set the preprocessor symbol
-if test x"$unet_cv_enable_p09" = xyes; then
-    AC_DEFINE([P09_SUPPORT], 1, [Enable P09 support])
-fi
-
 dnl how about ZLIB support?
 unet_TOGGLE([zlib], yes, [Disable ZLIB support],
     [whether to enable ZLIB])
@@ -349,23 +317,14 @@ fi
 AM_CONDITIONAL(PCRE_MATCH, [test x"$unet_cv_enable_pcre" = xyes])
 
 dnl how about Webchat Flash?
-unet_TOGGLE([webchat], no, [Enable Webchat Flash support],
+unet_TOGGLE([webchat], no, [Enable Webchat Flash support (deprecated)],
     [whether to enable Webchat Flash support])
 
 # Set the preprocessor symbol
-if test x"$unet_cv_enable_webchat" = xyes; then
-    AC_DEFINE([WEBCHAT], 1, [Enable Webchat Flash support])
+if test x"$unet_cv_enable_webchat_flash_deprecated" = xyes; then
+    AC_DEFINE([WEBCHAT_FLASH_DEPRECATED], 1, [Enable Webchat Flash support (deprecated)])
 fi
-AM_CONDITIONAL(WEBCHAT_FLASH, [test x"$unet_cv_enable_webchat" = xyes])
-
-dnl how about Webchat HTML?
-unet_TOGGLE([webchathtml], no, [Enable Webchat HTML support],
-    [whether to enable Webchat HTML support])
-
-# Set the preprocessor symbol
-if test x"$unet_cv_enable_webchathtml" = xyes; then
-    AC_DEFINE([WEBCHAT_HTML], 1, [Enable Webchat HTML support])
-fi
+AM_CONDITIONAL(WEBCHAT_FLASH_DEPRECATED, [test x"$unet_cv_enable_webchat_flash_deprecated" = xyes])
 
 dnl how about SSL support?
 #Temporal
@@ -589,12 +548,10 @@ dnl echo "  Warnings:            $unet_cv_enable_warnings"
 echo "  Debug:               $unet_cv_enable_debug"
 dnl echo "  Leak Detect:         $unet_cv_with_leak_detect"
 echo "  IPv6:                $unet_cv_enable_ipv6"
-echo "  P09 Support:         $unet_cv_enable_p09"
 echo "  ZLIB:                $unet_cv_enable_zlib"
 echo "  SSL:                 $unet_cv_enable_ssl"
 echo "  PCRE match:          $unet_cv_enable_pcre"
-echo "  Webchat Flash:       $unet_cv_enable_webchat"
-echo "  Webchat HTML:        $unet_cv_enable_webchathtml"
+echo "  Webchat Flash (Deprecated): $unet_cv_enable_webchat_flash_deprecated"
 dnl echo "  Profile:             $unet_cv_enable_profile"
 dnl echo "  Pedantic:            $unet_cv_enable_pedantic"
 echo "  Inlines:             $unet_cv_enable_inlines"
