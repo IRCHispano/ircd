@@ -1,16 +1,25 @@
-* 2013/05/31 zoltan@irc-dev.net      (u2.10.H.11.06)                 PORT
+* 2013/07/12 zoltan@irc-dev.net      (u2.10.H.11.alpha07)          UPDATE
+  -----------------------------------------------------------------------
+  Actualizamos la libreria zlib, pasamos de 1.2.1 (17/11/2003) a la nueva
+  version 1.2.8 (28/04/2013).
+
+  Agregamos la libreria pcre, a la version 8.3.3 (28/05/2013) en el
+  directorio libs/ y eliminamos del codigo fuente del ircd archivos sueltos
+  de pcre que usaba la version 7.9 (11/04/2009).
+
+* 2013/05/31 zoltan@irc-dev.net      (u2.10.H.11.alpha06)            PORT
   -----------------------------------------------------------------------
   2 anios despues seguimos. Hago copia de seguridad de codigo.
 
   *NO COMPILA*
 
-* 2011/05/12 zoltan@irc-dev.net      (u2.10.H.11.05)                 PORT
+* 2011/05/12 zoltan@irc-dev.net      (u2.10.H.11.alpha05)            PORT
   -----------------------------------------------------------------------
   Separo el Client local&remoto por Client y Connection. 
 
   *NO COMPILA*
 
-* 2011/05/05 zoltan@irc-dev.net      (u2.10.H.11.04)                 PORT
+* 2011/05/05 zoltan@irc-dev.net      (u2.10.H.11.alpha04)            PORT
   -----------------------------------------------------------------------
   Cambio el sistema de ./configure por el utilizado por undernet.
 
@@ -20,7 +29,7 @@
   No genera aun el tema de la BDD, asi que a generar tablas a mano si no
   existen.
 
-* 2011/05/04 zoltan@irc-dev.net      (u2.10.H.11.03)              FEATURE
+* 2011/05/04 zoltan@irc-dev.net      (u2.10.H.11.alpha03)         FEATURE
   -----------------------------------------------------------------------
   Implementación de cifrado de IPs en IPv6.
 
@@ -28,16 +37,16 @@
   de /64 a los usuarios finales, de esta forma, un ban a la ip virtual
   correspondera a todo el rango asignado al usuario.
 
-* 2011/05/01 zoltan@irc-dev.net      (u2.10.H.11.02)                 PORT
+* 2011/05/01 zoltan@irc-dev.net      (u2.10.H.11.alpha02)            PORT
   -----------------------------------------------------------------------
   Port rutinas de mapas de caracteres mas modernas.
 
-* 2011/05/01 zoltan@irc-dev.net      (u2.10.H.11.01)                 PORT
+* 2011/05/01 zoltan@irc-dev.net      (u2.10.H.11.alpha01             PORT
   -----------------------------------------------------------------------
   Cambiamos las rutinas de memoria, RunMalloc por MyMalloc con vistas a
   nuevos ports como CIDR, nuevos glines, excepciones, etc..
 
-* 2011/05/01 zoltan@irc-dev.net      (u2.10.H.11.00)              
+* 2011/05/01 zoltan@irc-dev.net      (u2.10.H.11.alpha00)              
   -----------------------------------------------------------------------
   Subimos de version, esta version es de paso de compatibilidad.
 
