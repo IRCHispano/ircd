@@ -11,18 +11,8 @@ then
         exit 1
 fi
 
-echo
-echo
-echo Configurando libreria ZLIB...
-cd libs
-cd zlib
-./configure
-make -f Makefile2
-
 echo Configurando IRCD
-cd ..
-cd ..
-./configure --prefix=$1 --with-maxcon=$2 --enable-pcre
+./configure --prefix=$1 --with-maxcon=$2
 
 echo ""
 exit 0

@@ -638,6 +638,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
+enable_option_checking=no
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
@@ -653,6 +654,9 @@ WEBCHAT_FLASH_DEPRECATED_FALSE
 WEBCHAT_FLASH_DEPRECATED_TRUE
 PCRE_MATCH_FALSE
 PCRE_MATCH_TRUE
+PCRE_SUBDIR
+ZLIB_SUBDIR
+subdirs
 ENGINE_EPOLL_FALSE
 ENGINE_EPOLL_TRUE
 ENGINE_KQUEUE_FALSE
@@ -791,7 +795,8 @@ CPPFLAGS
 YACC
 YFLAGS
 CPP'
-
+ac_subdirs_all='libs/zlib
+libs/pcre'
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -1422,15 +1427,19 @@ Optional Features:
   --disable-zlib          Disable ZLIB support
   --enable-pcre           Enable PCRE match support
   --enable-webchat        Enable Webchat Flash support (deprecated)
-  --disable-ssl           Disable SSL support
+  --disable-ssl           Disable Secure Sockets Layer support
   --disable-inlines       Disable inlining for a few critical functions
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-openssl-includes Specify location of OpenSSL header files (default /usr/include)
-  --with-openssl-libs     Specify location of OpenSSL libs (default /usr/lib)
-  --with-kerb-includes    Specify location of Kerberos includes (default /usr/kerberos/include)
+  --with-openssl-includes=dir
+                          Specify location of OpenSSL header files (default:
+                          /usr/include)
+  --with-openssl-libs=dir Specify location of OpenSSL libs (default: /usr/lib)
+  --with-kerb-includes=dir
+                          Specify location of Kerberos includes (default:
+                          /usr/kerberos/include)
   --with-domain           Domain name to use for local statistics
   --with-maxcon           Maximum number of connections server will accept
   --with-ddb-environment      Use the DDB Environment (Distributed DataBase)
@@ -6431,8 +6440,14 @@ if test x"$unet_cv_enable_zlib" = xyes; then
 
 $as_echo "#define USE_ZLIB 1" >>confdefs.h
 
+
+
+subdirs="$subdirs libs/zlib"
+
+    ZLIB_SUBDIR="libs/zlib"
     LIBS="$LIBS -L../libs/zlib -lz"
     CFLAGS="$CFLAGS -I../libs/zlib"
+
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable PCRE match" >&5
@@ -6458,6 +6473,12 @@ $as_echo "$unet_cv_enable_pcre" >&6; }
 if test x"$unet_cv_enable_pcre" = xyes; then
 
 $as_echo "#define PCRE 1" >>confdefs.h
+
+    subdirs="$subdirs libs/pcre"
+
+    PCRE_SUBDIR="libs/pcre"
+    LIBS="$LIBS -L../libs/pcre -lpcreposix -lpcre"
+    CFLAGS="$CFLAGS -I../libs/pcre"
 
 fi
  if test x"$unet_cv_enable_pcre" = xyes; then
@@ -6489,12 +6510,12 @@ fi
 $as_echo "$unet_cv_enable_webchat" >&6; }
 
 # Set the preprocessor symbol
-if test x"$unet_cv_enable_webchat_flash_deprecated" = xyes; then
+if test x"$unet_cv_enable_webchat" = xyes; then
 
 $as_echo "#define WEBCHAT_FLASH_DEPRECATED 1" >>confdefs.h
 
 fi
- if test x"$unet_cv_enable_webchat_flash_deprecated" = xyes; then
+ if test x"$unet_cv_enable_webchat" = xyes; then
   WEBCHAT_FLASH_DEPRECATED_TRUE=
   WEBCHAT_FLASH_DEPRECATED_FALSE='#'
 else
@@ -6503,27 +6524,20 @@ else
 fi
 
 
-#Temporal
-unet_cv_enable_ssl=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable SSL" >&5
-$as_echo_n "checking whether to enable SSL... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable OpenSSL support" >&5
+$as_echo_n "checking whether to enable OpenSSL support... " >&6; }
 # Check whether --enable-ssl was given.
 if test "${enable_ssl+set}" = set; then :
-  enableval=$enable_ssl; unet_cv_enable_ssl=$enableval
+  enableval=$enable_ssl; unet_cv_enable_ssl=$enable_ssl
 else
   if ${unet_cv_enable_ssl+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  unet_cv_enable_ssl=$unet_have_ssl
+  unet_cv_enable_ssl=yes
 fi
 
 fi
 
-
-# Prohibit SSL support if ssl doesn't exist
-if test x"$unet_have_ssl" = xno; then
-    unet_cv_enable_ssl=no
-fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $unet_cv_enable_ssl" >&5
 $as_echo "$unet_cv_enable_ssl" >&6; }
 
@@ -6579,8 +6593,11 @@ fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $unet_cv_with_kerberos_prefix" >&5
 $as_echo "$unet_cv_with_kerberos_prefix" >&6; }
 
-  save_CFLAGS=$CFLAGS;
-  CFLAGS="-lcrypto";
+  save_CFLAGS=$CFLAGS
+  save_LIBS=$LIBS
+
+  CFLAGS="-I$unet_cv_with_openssl_inc_prefix -lcrypto"
+  LIBS="-L$unet_cv_with_openssl_prefix -lssl -lcrypto"
 
   unet_cv_enable_ssl="no";
   OPENSSL_LDFLAGS="";
@@ -6622,9 +6639,9 @@ fi
 $as_echo "$ac_cv_lib_ssl_SSL_read" >&6; }
 if test "x$ac_cv_lib_ssl_SSL_read" = xyes; then :
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for X509_new in -lcrypto" >&5
-$as_echo_n "checking for X509_new in -lcrypto... " >&6; }
-if ${ac_cv_lib_crypto_X509_new+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for EVP_sha256 in -lcrypto" >&5
+$as_echo_n "checking for EVP_sha256 in -lcrypto... " >&6; }
+if ${ac_cv_lib_crypto_EVP_sha256+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -6638,27 +6655,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char X509_new ();
+char EVP_sha256 ();
 int
 main ()
 {
-return X509_new ();
+return EVP_sha256 ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_crypto_X509_new=yes
+  ac_cv_lib_crypto_EVP_sha256=yes
 else
-  ac_cv_lib_crypto_X509_new=no
+  ac_cv_lib_crypto_EVP_sha256=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_crypto_X509_new" >&5
-$as_echo "$ac_cv_lib_crypto_X509_new" >&6; }
-if test "x$ac_cv_lib_crypto_X509_new" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_crypto_EVP_sha256" >&5
+$as_echo "$ac_cv_lib_crypto_EVP_sha256" >&6; }
+if test "x$ac_cv_lib_crypto_EVP_sha256" = xyes; then :
 
       for ac_header in $base_ssl_inc/openssl/ssl.h $base_ssl_inc/openssl/err.h
 do :
@@ -6670,8 +6687,8 @@ if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
 _ACEOF
 
         unet_cv_enable_ssl="yes";
-        OPENSSL_LDFLAGS="-lcrypto -lssl"
-        SSL_C=ssl.c
+        OPENSSL_LDFLAGS="-lssl -lcrypto"
+        SSL_C=ircd_ssl.c
 
 
 fi
@@ -6684,6 +6701,8 @@ fi
 
 fi
 
+
+  LIBS=$save_LIBS
   CFLAGS=$save_CFLAGS
 
   if test "x$unet_cv_enable_ssl" = xyes; then
@@ -6693,6 +6712,8 @@ $as_echo "#define USE_SSL 1" >>confdefs.h
 
     LIBS="$LIBS -L$unet_cv_with_openssl_prefix $OPENSSL_LDFLAGS"
     CFLAGS="$CFLAGS -I$unet_cv_with_openssl_inc_prefix -I$unet_cv_with_kerberos_prefix"
+  else
+    as_fn_error $? "Unable to find OpenSSL with sha256 support, Maybe you need to install the openssl and libssl-dev package, or use --with-openssl-includes and --with-openssl-libs if you have openssl installed in an odd location" "$LINENO" 5
   fi
 fi
 
@@ -8443,6 +8464,151 @@ if test "$no_create" != yes; then
   # would make configure fail if this is the last instruction.
   $ac_cs_success || as_fn_exit 1
 fi
+
+#
+# CONFIG_SUBDIRS section.
+#
+if test "$no_recursion" != yes; then
+
+  # Remove --cache-file, --srcdir, and --disable-option-checking arguments
+  # so they do not pile up.
+  ac_sub_configure_args=
+  ac_prev=
+  eval "set x $ac_configure_args"
+  shift
+  for ac_arg
+  do
+    if test -n "$ac_prev"; then
+      ac_prev=
+      continue
+    fi
+    case $ac_arg in
+    -cache-file | --cache-file | --cache-fil | --cache-fi \
+    | --cache-f | --cache- | --cache | --cach | --cac | --ca | --c)
+      ac_prev=cache_file ;;
+    -cache-file=* | --cache-file=* | --cache-fil=* | --cache-fi=* \
+    | --cache-f=* | --cache-=* | --cache=* | --cach=* | --cac=* | --ca=* \
+    | --c=*)
+      ;;
+    --config-cache | -C)
+      ;;
+    -srcdir | --srcdir | --srcdi | --srcd | --src | --sr)
+      ac_prev=srcdir ;;
+    -srcdir=* | --srcdir=* | --srcdi=* | --srcd=* | --src=* | --sr=*)
+      ;;
+    -prefix | --prefix | --prefi | --pref | --pre | --pr | --p)
+      ac_prev=prefix ;;
+    -prefix=* | --prefix=* | --prefi=* | --pref=* | --pre=* | --pr=* | --p=*)
+      ;;
+    --disable-option-checking)
+      ;;
+    *)
+      case $ac_arg in
+      *\'*) ac_arg=`$as_echo "$ac_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
+      esac
+      as_fn_append ac_sub_configure_args " '$ac_arg'" ;;
+    esac
+  done
+
+  # Always prepend --prefix to ensure using the same prefix
+  # in subdir configurations.
+  ac_arg="--prefix=$prefix"
+  case $ac_arg in
+  *\'*) ac_arg=`$as_echo "$ac_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
+  esac
+  ac_sub_configure_args="'$ac_arg' $ac_sub_configure_args"
+
+  # Pass --silent
+  if test "$silent" = yes; then
+    ac_sub_configure_args="--silent $ac_sub_configure_args"
+  fi
+
+  # Always prepend --disable-option-checking to silence warnings, since
+  # different subdirs can have different --enable and --with options.
+  ac_sub_configure_args="--disable-option-checking $ac_sub_configure_args"
+
+  ac_popdir=`pwd`
+  for ac_dir in : $subdirs; do test "x$ac_dir" = x: && continue
+
+    # Do not complain, so a configure script can configure whichever
+    # parts of a large source tree are present.
+    test -d "$srcdir/$ac_dir" || continue
+
+    ac_msg="=== configuring in $ac_dir (`pwd`/$ac_dir)"
+    $as_echo "$as_me:${as_lineno-$LINENO}: $ac_msg" >&5
+    $as_echo "$ac_msg" >&6
+    as_dir="$ac_dir"; as_fn_mkdir_p
+    ac_builddir=.
+
+case "$ac_dir" in
+.) ac_dir_suffix= ac_top_builddir_sub=. ac_top_build_prefix= ;;
+*)
+  ac_dir_suffix=/`$as_echo "$ac_dir" | sed 's|^\.[\\/]||'`
+  # A ".." for each directory in $ac_dir_suffix.
+  ac_top_builddir_sub=`$as_echo "$ac_dir_suffix" | sed 's|/[^\\/]*|/..|g;s|/||'`
+  case $ac_top_builddir_sub in
+  "") ac_top_builddir_sub=. ac_top_build_prefix= ;;
+  *)  ac_top_build_prefix=$ac_top_builddir_sub/ ;;
+  esac ;;
+esac
+ac_abs_top_builddir=$ac_pwd
+ac_abs_builddir=$ac_pwd$ac_dir_suffix
+# for backward compatibility:
+ac_top_builddir=$ac_top_build_prefix
+
+case $srcdir in
+  .)  # We are building in place.
+    ac_srcdir=.
+    ac_top_srcdir=$ac_top_builddir_sub
+    ac_abs_top_srcdir=$ac_pwd ;;
+  [\\/]* | ?:[\\/]* )  # Absolute name.
+    ac_srcdir=$srcdir$ac_dir_suffix;
+    ac_top_srcdir=$srcdir
+    ac_abs_top_srcdir=$srcdir ;;
+  *) # Relative name.
+    ac_srcdir=$ac_top_build_prefix$srcdir$ac_dir_suffix
+    ac_top_srcdir=$ac_top_build_prefix$srcdir
+    ac_abs_top_srcdir=$ac_pwd/$srcdir ;;
+esac
+ac_abs_srcdir=$ac_abs_top_srcdir$ac_dir_suffix
+
+
+    cd "$ac_dir"
+
+    # Check for guested configure; otherwise get Cygnus style configure.
+    if test -f "$ac_srcdir/configure.gnu"; then
+      ac_sub_configure=$ac_srcdir/configure.gnu
+    elif test -f "$ac_srcdir/configure"; then
+      ac_sub_configure=$ac_srcdir/configure
+    elif test -f "$ac_srcdir/configure.in"; then
+      # This should be Cygnus configure.
+      ac_sub_configure=$ac_aux_dir/configure
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: no configuration information is in $ac_dir" >&5
+$as_echo "$as_me: WARNING: no configuration information is in $ac_dir" >&2;}
+      ac_sub_configure=
+    fi
+
+    # The recursion is here.
+    if test -n "$ac_sub_configure"; then
+      # Make the cache file name correct relative to the subdirectory.
+      case $cache_file in
+      [\\/]* | ?:[\\/]* ) ac_sub_cache_file=$cache_file ;;
+      *) # Relative name.
+	ac_sub_cache_file=$ac_top_build_prefix$cache_file ;;
+      esac
+
+      { $as_echo "$as_me:${as_lineno-$LINENO}: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&5
+$as_echo "$as_me: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&6;}
+      # The eval makes quoting arguments work.
+      eval "\$SHELL \"\$ac_sub_configure\" $ac_sub_configure_args \
+	   --cache-file=\"\$ac_sub_cache_file\" --srcdir=\"\$ac_srcdir\"" ||
+	as_fn_error $? "$ac_sub_configure failed for $ac_dir" "$LINENO" 5
+    fi
+
+    cd "$ac_popdir"
+  done
+fi
 if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
@@ -8472,7 +8638,7 @@ echo "  IPv6:                $unet_cv_enable_ipv6"
 echo "  ZLIB:                $unet_cv_enable_zlib"
 echo "  SSL:                 $unet_cv_enable_ssl"
 echo "  PCRE match:          $unet_cv_enable_pcre"
-echo "  Webchat Flash (Deprecated): $unet_cv_enable_webchat_flash_deprecated"
+echo "  Webchat Flash (Deprecated): $unet_cv_enable_webchat"
 echo "  Inlines:             $unet_cv_enable_inlines"
 echo ""
 echo "  Prefix:              $prefix"

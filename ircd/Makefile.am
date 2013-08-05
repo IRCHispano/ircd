@@ -186,13 +186,6 @@ ircd_SOURCES = \
 #	ssl.c \
 if PCRE_MATCH
 ircd_SOURCES += \
-	pcre_compile.c \
-	pcre_exec.c \
-	pcre_newline.c \
-	pcre_globals.c \
-	pcre_tables.c \
-	pcre_chartables.c \
-	pcre_try_flipped.c \
 	pcre_match.c
 	
 if WEBCHAT_FLASH_DEPRECATED

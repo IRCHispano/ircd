@@ -130,8 +130,6 @@ am__ircd_SOURCES_DIST = IPcheck.c class.c client.c crule.c dbuf.c \
 	packet.c parse.c querycmds.c random.c s_auth.c s_bsd.c \
 	s_conf.c s_debug.c s_err.c s_misc.c s_numeric.c s_serv.c \
 	s_stats.c s_user.c send.c uping.c userload.c watch.c whowas.c \
-	pcre_compile.c pcre_exec.c pcre_newline.c pcre_globals.c \
-	pcre_tables.c pcre_chartables.c pcre_try_flipped.c \
 	pcre_match.c aes.c cookies.c m_account.c ddb.c ddb_events.c \
 	ircd_tea.c m_db.c m_dbq.c m_ghost.c m_svsnick.c \
 	persistent_malloc.c m_config.c m_svsmode.c m_svsjoin.c \
@@ -197,13 +195,10 @@ am_ircd_OBJECTS = IPcheck.$(OBJEXT) class.$(OBJEXT) client.$(OBJEXT) \
 	s_numeric.$(OBJEXT) s_serv.$(OBJEXT) s_stats.$(OBJEXT) \
 	s_user.$(OBJEXT) send.$(OBJEXT) uping.$(OBJEXT) \
 	userload.$(OBJEXT) watch.$(OBJEXT) whowas.$(OBJEXT) \
-	pcre_compile.$(OBJEXT) pcre_exec.$(OBJEXT) \
-	pcre_newline.$(OBJEXT) pcre_globals.$(OBJEXT) \
-	pcre_tables.$(OBJEXT) pcre_chartables.$(OBJEXT) \
-	pcre_try_flipped.$(OBJEXT) pcre_match.$(OBJEXT) \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
-	$(am__objects_7) $(am__objects_8) $(am__objects_9)
+	pcre_match.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
+	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
+	$(am__objects_9)
 nodist_ircd_OBJECTS = version.$(OBJEXT)
 ircd_OBJECTS = $(am_ircd_OBJECTS) $(nodist_ircd_OBJECTS)
 am__DEPENDENCIES_1 =
@@ -283,6 +278,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PCRE_SUBDIR = @PCRE_SUBDIR@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SSL_C = @SSL_C@
@@ -290,6 +286,7 @@ STRIP = @STRIP@
 VERSION = @VERSION@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
+ZLIB_SUBDIR = @ZLIB_SUBDIR@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -335,6 +332,7 @@ psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
+subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -398,8 +396,6 @@ ircd_SOURCES = IPcheck.c class.c client.c crule.c dbuf.c \
 	packet.c parse.c querycmds.c random.c s_auth.c s_bsd.c \
 	s_conf.c s_debug.c s_err.c s_misc.c s_numeric.c s_serv.c \
 	s_stats.c s_user.c send.c uping.c userload.c watch.c whowas.c \
-	pcre_compile.c pcre_exec.c pcre_newline.c pcre_globals.c \
-	pcre_tables.c pcre_chartables.c pcre_try_flipped.c \
 	pcre_match.c $(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4) $(am__append_5) $(am__append_6) \
 	$(am__append_7) $(am__append_8) $(am__append_9)
@@ -628,14 +624,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/os_generic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/packet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcre_chartables.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcre_compile.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcre_exec.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcre_globals.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcre_match.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcre_newline.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcre_tables.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcre_try_flipped.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/persistent_malloc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/querycmds.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/random.Po@am__quote@

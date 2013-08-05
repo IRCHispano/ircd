@@ -111,26 +111,8 @@
 /* Define to 1 if you have the <crypt.h> header file. */
 #undef HAVE_CRYPT_H
 
-/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
-#undef HAVE_DOPRNT
-
-/* Define to 1 if you have the <errno.h> header file. */
-#undef HAVE_ERRNO_H
-
-/* Define to 1 if you have the <fcntl.h> header file. */
-#undef HAVE_FCNTL_H
-
-/* Define to 1 if you have the `gethostname' function. */
-#undef HAVE_GETHOSTNAME
-
 /* Define to 1 if you have the `getrusage' function. */
 #undef HAVE_GETRUSAGE
-
-/* Define to 1 if you have the `gettimeofday' function. */
-#undef HAVE_GETTIMEOFDAY
-
-/* Define to 1 if you have the `inet_netof' function. */
-#undef HAVE_INET_NETOF
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -147,38 +129,14 @@
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
 
-/* Define to 1 if you have the <malloc.h> header file. */
-#undef HAVE_MALLOC_H
-
-/* Define to 1 if you have the `memcpy' function. */
-#undef HAVE_MEMCPY
-
-/* Define to 1 if you have the `memmove' function. */
-#undef HAVE_MEMMOVE
-
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
-
-/* Define to 1 if you have the `mkdir' function. */
-#undef HAVE_MKDIR
-
-/* Define to 1 if you have the <net/errno.h> header file. */
-#undef HAVE_NET_ERRNO_H
 
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
 
-/* Define to 1 if you have the `res_init' function. */
-#undef HAVE_RES_INIT
-
-/* Define to 1 if you have the `select' function. */
-#undef HAVE_SELECT
-
 /* Define to 1 if you have the `setrlimit' function. */
 #undef HAVE_SETRLIMIT
-
-/* Define to 1 if you have the `socket' function. */
-#undef HAVE_SOCKET
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -186,26 +144,11 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* Define to 1 if you have the `strchr' function. */
-#undef HAVE_STRCHR
-
-/* Define to 1 if you have the `strerror' function. */
-#undef HAVE_STRERROR
-
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
-
-/* Define to 1 if you have the `strtoken' function. */
-#undef HAVE_STRTOKEN
-
-/* Define to 1 if you have the <syslog> header file. */
-#undef HAVE_SYSLOG
-
-/* Define to 1 if you have the <sys/cdefs.h> header file. */
-#undef HAVE_SYS_CDEFS_H
 
 /* Define to 1 if you have the <sys/devpoll.h> header file. */
 #undef HAVE_SYS_DEVPOLL_H
@@ -215,15 +158,6 @@
 
 /* Define to 1 if you have the <sys/event.h> header file. */
 #undef HAVE_SYS_EVENT_H
-
-/* Define to 1 if you have the <sys/file.h> header file. */
-#undef HAVE_SYS_FILE_H
-
-/* Define to 1 if you have the <sys/ioctl.h> header file. */
-#undef HAVE_SYS_IOCTL_H
-
-/* Define to 1 if you have the <sys/malloc.h> header file. */
-#undef HAVE_SYS_MALLOC_H
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
@@ -237,29 +171,17 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
-/* Define to 1 if you have the <sys/time.h> header file. */
-#undef HAVE_SYS_TIME_H
-
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
-/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
-#undef HAVE_SYS_WAIT_H
-
 /* Define to 1 if you have the `times' function. */
 #undef HAVE_TIMES
-
-/* Define to 1 if you have the `uname' function. */
-#undef HAVE_UNAME
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
 /* Define if we have va_copy */
 #undef HAVE_VA_COPY
-
-/* Define to 1 if you have the `vprintf' function. */
-#undef HAVE_VPRINTF
 
 /* Define if we have __va_copy */
 #undef HAVE___VA_COPY
@@ -281,9 +203,6 @@
 
 /* Disable assertion checking */
 #undef NDEBUG
-
-/* Enable P09 support */
-#undef P09_SUPPORT
 
 /* Name of package */
 #undef PACKAGE
@@ -311,9 +230,6 @@
 
 /* Define if you have POSIX signals. */
 #undef POSIX_SIGNALS
-
-/* Define as the return type of signal handlers (`int' or `void'). */
-#undef RETSIGTYPE
 
 /* Services Environment (Ex-TerraIRCU) */
 #undef SERVICES
@@ -378,11 +294,8 @@
 /* Version number of package */
 #undef VERSION
 
-/* Enable Webchat Flash support */
-#undef WEBCHAT
-
-/* Enable Webchat HTML support */
-#undef WEBCHAT_HTML
+/* Enable Webchat Flash support (deprecated) */
+#undef WEBCHAT_FLASH_DEPRECATED
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

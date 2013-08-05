@@ -302,8 +302,11 @@ unet_TOGGLE([zlib], yes, [Disable ZLIB support],
 # Set the preprocessor symbol
 if test x"$unet_cv_enable_zlib" = xyes; then
     AC_DEFINE([USE_ZLIB], 1, [Enable ZLIB support])
+    AC_CONFIG_SUBDIRS([libs/zlib])
+    ZLIB_SUBDIR="libs/zlib"
     LIBS="$LIBS -L../libs/zlib -lz"
     CFLAGS="$CFLAGS -I../libs/zlib"
+    AC_SUBST(ZLIB_SUBDIR)
 fi
 
 dnl how about PCRE support?
@@ -313,6 +316,11 @@ unet_TOGGLE([pcre], no, [Enable PCRE match support],
 # Set the preprocessor symbol
 if test x"$unet_cv_enable_pcre" = xyes; then
     AC_DEFINE([PCRE], 1, [Enable PCRE match support])
+    AC_CONFIG_SUBDIRS([libs/pcre])
+    PCRE_SUBDIR="libs/pcre"
+    LIBS="$LIBS -L../libs/pcre -lpcreposix -lpcre"
+    CFLAGS="$CFLAGS -I../libs/pcre"
+    AC_SUBST(PCRE_SUBDIR)
 fi
 AM_CONDITIONAL(PCRE_MATCH, [test x"$unet_cv_enable_pcre" = xyes])
 
@@ -321,26 +329,25 @@ unet_TOGGLE([webchat], no, [Enable Webchat Flash support (deprecated)],
     [whether to enable Webchat Flash support])
 
 # Set the preprocessor symbol
-if test x"$unet_cv_enable_webchat_flash_deprecated" = xyes; then
+if test x"$unet_cv_enable_webchat" = xyes; then
     AC_DEFINE([WEBCHAT_FLASH_DEPRECATED], 1, [Enable Webchat Flash support (deprecated)])
 fi
-AM_CONDITIONAL(WEBCHAT_FLASH_DEPRECATED, [test x"$unet_cv_enable_webchat_flash_deprecated" = xyes])
+AM_CONDITIONAL(WEBCHAT_FLASH_DEPRECATED, [test x"$unet_cv_enable_webchat" = xyes])
 
 dnl how about SSL support?
-#Temporal
-unet_cv_enable_ssl=no
-unet_TOGGLE([ssl], $unet_have_ssl, [Disable SSL support],
-    [whether to enable SSL],
-[# Prohibit SSL support if ssl doesn't exist
-if test x"$unet_have_ssl" = xno; then
-    unet_cv_enable_ssl=no
-fi])
+AC_MSG_CHECKING([whether to enable OpenSSL support])
+AC_ARG_ENABLE([ssl],
+[  --disable-ssl           Disable Secure Sockets Layer support],
+[unet_cv_enable_ssl=$enable_ssl],
+[AC_CACHE_VAL(unet_cv_enable_ssl,
+[unet_cv_enable_ssl=yes])])
+AC_MSG_RESULT([$unet_cv_enable_ssl])
 
 # Set the preprocessor symbol
 if test x"$unet_cv_enable_ssl" = xyes; then
   AC_MSG_CHECKING([for OpenSSL includes])
   AC_ARG_WITH(openssl-includes,
-  [  --with-openssl-includes Specify location of OpenSSL header files (default /usr/include)],
+  AS_HELP_STRING([--with-openssl-includes=dir], [Specify location of OpenSSL header files (default: /usr/include)]),
   [base_ssl_inc=$withval],
   [base_ssl_inc=/usr/include])
   [unet_cv_with_openssl_inc_prefix=$base_ssl_inc]
@@ -350,7 +357,7 @@ if test x"$unet_cv_enable_ssl" = xyes; then
 
   AC_MSG_CHECKING([for OpenSSL libraries])
   AC_ARG_WITH(openssl-libs,
-  [  --with-openssl-libs     Specify location of OpenSSL libs (default /usr/lib)],
+  AS_HELP_STRING([--with-openssl-libs=dir], [Specify location of OpenSSL libs (default: /usr/lib)]),
   [unet_cv_with_openssl_prefix=$withval],
   [unet_cv_with_openssl_prefix=/usr/lib])
   AC_MSG_RESULT([$unet_cv_with_openssl_prefix])
@@ -359,26 +366,31 @@ if test x"$unet_cv_enable_ssl" = xyes; then
 
   AC_MSG_CHECKING([for Kerberos includes])
   AC_ARG_WITH(kerberos-includes,
-  [  --with-kerb-includes    Specify location of Kerberos includes (default /usr/kerberos/include)],
+  AS_HELP_STRING([--with-kerb-includes=dir], [Specify location of Kerberos includes (default: /usr/kerberos/include)]),
   [unet_cv_with_kerberos_prefix=$withval],
   [unet_cv_with_kerberos_prefix=/usr/kerberos/include])
   AC_MSG_RESULT([$unet_cv_with_kerberos_prefix])
 
-  save_CFLAGS=$CFLAGS;
-  CFLAGS="-lcrypto";
+  save_CFLAGS=$CFLAGS
+  save_LIBS=$LIBS
+
+  CFLAGS="-I$unet_cv_with_openssl_inc_prefix -lcrypto"
+  LIBS="-L$unet_cv_with_openssl_prefix -lssl -lcrypto"
 
   unet_cv_enable_ssl="no";
   OPENSSL_LDFLAGS="";
   AC_CHECK_LIB(ssl, SSL_read, [
-    AC_CHECK_LIB(crypto, X509_new, [
+    AC_CHECK_LIB(crypto, EVP_sha256, [
       AC_CHECK_HEADERS($base_ssl_inc/openssl/ssl.h $base_ssl_inc/openssl/err.h, [
         unet_cv_enable_ssl="yes";
-        OPENSSL_LDFLAGS="-lcrypto -lssl"
-        SSL_C=ssl.c
+        OPENSSL_LDFLAGS="-lssl -lcrypto"
+        SSL_C=ircd_ssl.c
         AC_SUBST(SSL_C)
       ])
     ])
   ])
+
+  LIBS=$save_LIBS
   CFLAGS=$save_CFLAGS
 
   if test "x$unet_cv_enable_ssl" = xyes; then
@@ -386,6 +398,8 @@ if test x"$unet_cv_enable_ssl" = xyes; then
 
     LIBS="$LIBS -L$unet_cv_with_openssl_prefix $OPENSSL_LDFLAGS"
     CFLAGS="$CFLAGS -I$unet_cv_with_openssl_inc_prefix -I$unet_cv_with_kerberos_prefix"
+  else
+    AC_MSG_ERROR([Unable to find OpenSSL with sha256 support, Maybe you need to install the openssl and libssl-dev package, or use --with-openssl-includes and --with-openssl-libs if you have openssl installed in an odd location])
   fi
 fi
 
@@ -551,7 +565,7 @@ echo "  IPv6:                $unet_cv_enable_ipv6"
 echo "  ZLIB:                $unet_cv_enable_zlib"
 echo "  SSL:                 $unet_cv_enable_ssl"
 echo "  PCRE match:          $unet_cv_enable_pcre"
-echo "  Webchat Flash (Deprecated): $unet_cv_enable_webchat_flash_deprecated"
+echo "  Webchat Flash (Deprecated): $unet_cv_enable_webchat"
 dnl echo "  Profile:             $unet_cv_enable_profile"
 dnl echo "  Pedantic:            $unet_cv_enable_pedantic"
 echo "  Inlines:             $unet_cv_enable_inlines"

@@ -1,3 +1,15 @@
+* 2013/08/15 zoltan@irc-dev.net      (u2.10.H.11.alpha08)          UPDATE
+  -----------------------------------------------------------------------
+  Ajustamos el configure y makefile para compilar ZLIB y PCRE como libreria
+  externa.
+  Ajustamos la configuracion del SSL nativo.
+
+  Eliminamos codigo original de PCRE en el ircd, vamos a usar la libreria
+  externa por la facilidad de actualizaciones.
+
+  Adapto los scripts de autoconfiguracion para IRC-Hispano (normal y
+  webchat flash) con los cambios realizados.
+ 
 * 2013/07/12 zoltan@irc-dev.net      (u2.10.H.11.alpha07)          UPDATE
   -----------------------------------------------------------------------
   Actualizamos la libreria zlib, pasamos de 1.2.1 (17/11/2003) a la nueva

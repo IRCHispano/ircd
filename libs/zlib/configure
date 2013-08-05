@@ -121,10 +121,10 @@ case "$1" in
     --sysconfdir=*) echo "ignored option: --sysconfdir" | tee -a configure.log; shift ;;
     --localstatedir=*) echo "ignored option: --localstatedir" | tee -a configure.log; shift ;;
     -c* | --const) zconst=1; shift ;;
-    *)
-      echo "unknown option: $1" | tee -a configure.log
-      echo "$0 --help for help" | tee -a configure.log
-      leave 1;;
+    *) shift ;;
+#      echo "unknown option: $1" | tee -a configure.log
+#      echo "$0 --help for help" | tee -a configure.log
+#      leave 1;;
     esac
 done
 
