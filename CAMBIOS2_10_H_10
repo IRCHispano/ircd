@@ -1,3 +1,24 @@
+* 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.196)                FEATURE
+------------------------------------------------------------------------
+  Con el fin de facilitar la transicion a la nueva base de ircd basado
+  en Quakenet+Undernet, se introducen nuevos modos:
+
+  Canales:
+  +z Solo puede entrar usuarios con +z (conexion segura)
+  +D Delayed join (no hace efecto alguno, es para propagar el modo)
+
+  Usuarios:
+  +z Conexion segura por SSL
+  +a Admin
+  +C Coder
+
+  Cambios esteticos en numericos, simplificacion de procesos.
+
+  Se elimina los modos de canal +A y +S introducidos en 1999 y jamas
+  usados en IRC-Hispano ni hay planes de usarlos.
+
+  Este diff es parcial, la otra parte del diff esta en la revision 434.
+
 * 2013/06/14  zoltan@irc-dev.net (u2.10.H.10.195)                    FIX
 ------------------------------------------------------------------------
   Corregido un error de compilacion aportado por donostiarra que impedia
@@ -5,7 +26,7 @@
 
 * 2013/06/11  zoltan@irc-dev.net (u2.10.H.10.194)                FEATURE
 ------------------------------------------------------------------------
-  Nuevo modo 'u' como en Quakenet.
+  Nuevo modo 'n' como en Quakenet.
 
   Solo puede ponerlo por un servidor/service y es para ocultar todos los
   canales en el whois.

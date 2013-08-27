@@ -961,7 +961,7 @@ static int user_hmodes[] = {
   HMODE_NICKREGISTERED, 'r',
   HMODE_NICKSUSPENDED,  'S',
   HMODE_ADMIN,          'a',
-  HMODE_CODER,          '',
+  HMODE_CODER,          'E',
   HMODE_HELPOP,         'h',
   HMODE_HIDDEN,         'x',
   HMODE_HIDDENVIEWER,   'X',
@@ -971,10 +971,14 @@ static int user_hmodes[] = {
   HMODE_STRIPCOLOR,     'c',
   HMODE_NOCHAN,         'n',
   HMODE_SSL,            'z',
-  HMODE_USERDEAF,       'D',
-  HMODE_USERBLIND,      'P',
+  HMODE_NOIDLE,         'I',
+  HMODE_WHOIS,          'W',
+/* Control Spam */
+  HMODE_USERBITCH,      'P',
+  HMODE_USERNOJOIN,     'J',
+/* Provisional, eliminar con transicion ircd activada */
+  HMODE_USERBITCH,      'D',
   HMODE_USERNOJOIN,     'C',
-  HMODE_NOSENDPRIVS,    '',
   0,			0
 };
 
@@ -1236,7 +1240,7 @@ static int m_message(aClient *cptr, aClient *sptr,
             continue;
           }
 
-          if (IsUserBlind(sptr))
+          if (IsUserBitch(sptr))
             continue;
           if(chptr->mode.mode & MODE_NOCOLOUR) {
             /* Calcula el color solo una vez */
@@ -1293,11 +1297,16 @@ static int m_message(aClient *cptr, aClient *sptr,
       {
         if (MyUser(sptr) && check_target_limit(sptr, acptr, acptr->name, 0))
           continue;
-        
-        if(MyUser(sptr) && !IsOper(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip)
-            && IsUserDeaf(acptr))
+
+        /* Los +P solo reciben si viene de un ircop o un clon */
+        if (MyUser(sptr) && !IsOper(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip)
+            && IsUserBitch(acptr))
           continue;
-        
+
+        /* Los +P solo mandan a un clon */
+        if (MyUser(sptr) && IsUserBitch(sptr) && !irc_in_addr_cmp(&sptr->ip, &acptr->ip))
+          continue;
+
         if (MyUser(sptr) && IsMsgOnlyReg(acptr) && !IsNickRegistered(sptr)
             && !IsAnOper(sptr))
         {
@@ -2875,7 +2884,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   /*
    * Stop users making themselves operators too easily:
    */
-  
+
   /* Si es admin puede hacerse ircop en cualquier momento */
   if (MyUser(sptr) && (!(setflags & FLAGS_OPER))
       && IsOper(sptr))
@@ -2885,7 +2894,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       ClearOper(sptr);
   }
 
-/*  
+/*
   if (!(setflags & FLAGS_OPER) && IsOper(sptr) && !IsServer(cptr))
     ClearOper(sptr);
 */
@@ -2894,7 +2903,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if ((setflags & (FLAGS_OPER | FLAGS_LOCOP)) && !IsAnOper(sptr) &&
       MyConnect(sptr))
     det_confs_butmask(sptr, CONF_CLIENT & ~CONF_OPS);  
-  
+
   /* new umode; servers can set it, local users cannot;
    * prevents users from /kick'ing or /mode -o'ing */
   /* el modo +/-r solo se acepta de los Servidores */
@@ -2911,20 +2920,26 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else
       ClearNickSuspended(sptr);
 
+    if (!(sethmodes & HMODE_SSL))
+      ClearSSL(sptr);
+
     if (!(sethmodes & HMODE_SERVICESBOT))
       ClearServicesBot(sptr);
 
-    if (!(sethmodes & HMODE_USERDEAF))
-      ClearUserDeaf(sptr);
+    if (!(sethmodes & HMODE_NOCHAN))
+      ClearNoChan(sptr);
 
-    if (!(sethmodes & HMODE_USERBLIND))
-      ClearUserBlind(sptr);
+    if (!(sethmodes & HMODE_NOIDLE))
+      ClearNoIdle(sptr);
+
+    if (!(sethmodes & HMODE_WHOIS))
+      ClearWhois(sptr);
+
+    if (!(sethmodes & HMODE_USERBITCH))
+      ClearUserBitch(sptr);
 
     if (!(sethmodes & HMODE_USERNOJOIN))
       ClearUserNoJoin(sptr);
-
-    if (!(sethmodes & HMODE_NOCHAN))
-      ClearNoChan(sptr);
   }
 
   if (IsNickRegistered(sptr))
@@ -2933,6 +2948,13 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!(sethmodes & HMODE_HELPOP) && IsHelpOp(sptr) &&
         !db_buscar_registro(BDD_OPERDB, sptr->name))
       ClearHelpOp(sptr);
+
+    /* Modo +a y +c solo en la transicion */
+    if (!(sethmodes & HMODE_ADMIN) && IsAdmin(sptr))
+      ClearAdmin(sptr);
+
+    if (!(sethmodes & HMODE_CODER) && IsCoder(sptr))
+      ClearCoder(sptr);
 
     if (!(sethmodes & HMODE_HIDDENVIEWER) && !(IsHelpOp(sptr)
         || IsAnOper(sptr)))
@@ -2966,6 +2988,8 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {                             /* Nick no registrado */
     ClearMsgOnlyReg(sptr);
     ClearHelpOp(sptr);
+    ClearAdmin(sptr);
+    ClearCoder(sptr);
 #if defined(BDD_VIP) && !defined(BDD_VIP2)
     if (MyConnect(sptr))
     {
@@ -2991,14 +3015,14 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 
 /*
-** Si somos IRCOPs y hemos puesto o quitado el flag D, lo acepta.
+** Si somos IRCOPs y hemos puesto o quitado el flag P, lo acepta.
 ** dfm@unr.com 20090427
 */
   if (!IsServer(cptr) && !IsOper(sptr))
-    if(sethmodes & HMODE_USERDEAF)
-      SetUserDeaf(sptr);
+    if(sethmodes & HMODE_USERBITCH)
+      SetUserBitch(sptr);
     else
-      ClearUserDeaf(sptr);
+      ClearUserBitch(sptr);
 
 /*
 ** Si somos IRCOPs y hemos puesto el flag K, lo acepta.
@@ -3252,12 +3276,12 @@ char *umode_str(aClient *cptr, aClient *acptr)
     if (c_hmodes & flag)
       if(acptr)
       {
-        if (flag & HMODES_HIDDEN)
-        {
-          if (IsAnOper(acptr))
+ //       if (flag & HMODES_HIDDEN)
+  //      {
+   //       if (IsAnOper(acptr))
             *m++ = *(s + 1);
-        } else
-          *m++ = *(s + 1);         
+     //   } else
+       //   *m++ = *(s + 1);
       }
       else
         *m++ = *(s + 1);
@@ -3973,6 +3997,8 @@ void rename_user(aClient *sptr, char *nick_nuevo)
         --nrof.helpers;
         ClearHelpOp(sptr);
       }
+      ClearAdmin(sptr);
+      ClearCoder(sptr);
 
 #if defined(BDD_VIP)
 #if !defined(BDD_VIP2)
@@ -4110,6 +4136,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       {
         SetHelpOp(sptr);
         ++nrof.helpers;
+        /* transicion */
       }
       send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
     }
@@ -5206,6 +5233,8 @@ nickkilldone:
             ClearHelpOp(sptr);
             --nrof.helpers;
           }
+          ClearAdmin(sptr);
+          ClearCoder(sptr);
 #if defined (BDD_VIP)
 #if !defined(BDD_VIP2)
           ClearHidden(sptr);
@@ -5404,9 +5433,13 @@ nickkilldone:
       {
         SetHelpOp(sptr);
         ++nrof.helpers;
+        /* transicion */
       }
-      else
+      else {
         ClearHelpOp(sptr);
+        ClearAdmin(sptr);
+        ClearCoder(sptr);
+      }
     }
     else
     {
@@ -5414,6 +5447,8 @@ nickkilldone:
       ClearNickSuspended(sptr);
       ClearMsgOnlyReg(sptr);
       ClearHelpOp(sptr);
+      ClearAdmin(sptr);
+      ClearCoder(sptr);
     }
 #if defined(BDD_VIP)
     if (IsUser(sptr))
@@ -5881,6 +5916,8 @@ nickkilldone:
             ClearHelpOp(sptr);
             --nrof.helpers;
           }
+          ClearAdmin(sptr);
+          ClearCoder(sptr);
           if (!IsAnOper(sptr))
             ClearHiddenViewer(sptr);
           send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));

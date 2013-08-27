@@ -505,15 +505,11 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             chptr = get_channel(NULL, c, !CREATE);
             if (chptr && ((mode = chptr->mode.mode) & MODE_REGCHAN))
             {
-              chptr->mode.mode = mode & (~(MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP));  /* Modos vinculados a +r */
+              chptr->mode.mode = mode & (~(MODE_REGCHAN));  /* Modos vinculados a +r */
               chptr->modos_obligatorios = chptr->modos_prohibidos = 0;
               if (chptr->users)
               {                 /* Quedan usuarios */
                 strcpy(buf, "-r");
-                if (mode & MODE_AUTOOP)
-                  strcat(buf, "A"); /* Modos vinculados a +r */
-                if (mode & MODE_SECUREOP)
-                  strcat(buf, "S"); /* Modos vinculados a +r */
 #if defined(WEBCHAT)
                 /* No se muestran modos en tok/web */
 #endif

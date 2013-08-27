@@ -417,7 +417,7 @@ static Numeric numeric_replies[] = {
 /* 336 */
     {0, (char *)NULL},
 /* 337 */
-    {RPL_WHOISSSL, "%s :is connected via SSL"},
+    {RPL_WHOISSSL, "%s :conecta de forma segura con SSL"},
 /* 338 */
     {RPL_WHOISACTUALLY, "%s %s@%s %s :Actual user@host, Actual IP"},
 /* 339 */

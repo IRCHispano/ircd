@@ -639,10 +639,6 @@ void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
     *mbuf++ = 'r';
   if (RestrictedChannel(chptr))
     *mbuf++ = 'R';
-  if (AutoOpChannel(chptr))
-    *mbuf++ = 'A';
-  if (SecureOpChannel(chptr))
-    *mbuf++ = 'S';
   if (MsgOnlyRegChannel(chptr))
     *mbuf++ = 'M';
   if (chptr->mode.mode & MODE_NOCTCP)
@@ -1352,7 +1348,6 @@ static int canal_flags[] = {
   MODE_VOICE, 'v', MODE_KEY, 'k',
   MODE_LIMIT, 'l',              /* Rarezas del IRCD original. Necesitamos ponerlo para los canales persistentes */
   MODE_REGCHAN, 'r', MODE_REGNICKS, 'R',
-  MODE_AUTOOP, 'A', MODE_SECUREOP, 'S',
   MODE_MSGNONREG, 'M', MODE_NOCTCP, 'C',
   MODE_NONOTICE, 'N', MODE_NOQUITPARTS, 'u',
   MODE_DELJOINS, 'D', MODE_NOCOLOUR, 'c',
@@ -1585,8 +1580,9 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
         /* if the user is +k, prevent a deop from local user */
         if (whatt == MODE_DEL && IsChannelService(who) && *curr == 'o')
         {
-          sendto_one(cptr, err_str(ERR_ISCHANSERVICE), me.name,
-              cptr->name, parv[0], chptr->chname);
+          sendto_one(cptr,
+              IsService(who->user->server) ? err_str(ERR_ISREALSERVICE) : err_str(ERR_ISCHANSERVICE),
+              me.name, cptr->name, parv[0], chptr->chname);
           break;
         }
 #if defined(NO_OPER_DEOP_LCHAN)
@@ -1904,12 +1900,8 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
 ** y si alguno no esta soportado, lo eliminamos.
 */
     activacion_modos = (~(oldm.mode)) & newmode;
-    if (transicion_ircd)
-       newmode &=
-          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_DELJOINS));
-    else
-       newmode &=
-          ~(activacion_modos & (MODE_REGCHAN | MODE_AUTOOP | MODE_SECUREOP | MODE_DELJOINS | MODE_SSLONLY));
+    newmode &=
+        ~(activacion_modos & (MODE_REGCHAN | MODE_DELJOINS));
   }
 
 /*
@@ -4245,11 +4237,6 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
           continue;
 #endif
         }
-        /* asi ya lo meto en el canal con el OP puesto a nivel local */
-        if (AutoOpChannel(chptr) &&
-            IsNickRegistered(sptr) &&
-            db_es_miembro(BDD_CHANDB_OLD, chptr->chname, sptr->name))
-          flags = CHFL_CHANOP;
       }
       /*
        * Complete user entry to the new channel (if any)
@@ -4340,37 +4327,6 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
           sendto_highprot_butone(cptr, 10, "%s " TOK_MODE " %s + " TIME_T_FMT, NumServ(&me), chptr->chname, chptr->creationtime); /* ok, send TS */
           chptr->mode.mode &= ~MODE_SENDTS; /* reset flag */
-        }
-        /*
-         * solo seria necesario si no se ha creado
-         * el canal, pero no tengo datos ...
-         */
-        if (chptr && AutoOpChannel(chptr)
-            && IsNickRegistered(sptr)
-            && db_es_miembro(BDD_CHANDB_OLD, chptr->chname, sptr->name))
-        {
-          struct db_reg *r;
-          char *botname;
-
-          if ((r = db_buscar_registro(BDD_BOTSDB, BDD_CHANSERV)) != NULL)
-            botname = r->valor;
-          else
-            botname = me.name;
-
-          /* queridos remotos, ahora os comereis un modo OP */
-#if !defined(NO_PROTOCOL9)
-          sendto_lowprot_butone(cptr, 9, ":%s BMODE %s %s +o %s",
-              me.name, BDD_CHANSERV, chptr->chname, sptr->name);
-#endif
-          sendto_highprot_butone(cptr, 10, "%s BMODE %s %s +o %s%s",
-              NumServ(&me), BDD_CHANSERV, chptr->chname, NumNick(sptr));
-
-          /* queridos usuarios, ahora os tomo el pelo como a chinos */
-#if defined(WEBCHAT)
-          /* Comando no implementado en IRC-Hispano */
-#endif
-          sendto_channel_butserv(chptr, NULL, ":%s MODE %s +o %s",
-              botname, chptr->chname, sptr->name);
         }
       }
     }
@@ -5139,34 +5095,6 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 modebuf[mblen2++] = 'R';
               break;
             }
-            case 'A':
-            {
-              int tmp;
-              prev_mode &= ~MODE_AUTOOP;
-              if (!(tmp = netride ||
-                  (current_mode->mode & MODE_AUTOOP)) || wipeout)
-              {
-                bmodebuf[mblen++] = 'A';
-                current_mode->mode |= MODE_AUTOOP;
-              }
-              if (!tmp)
-                modebuf[mblen2++] = 'A';
-              break;
-            }
-            case 'S':
-            {
-              int tmp;
-              prev_mode &= ~MODE_SECUREOP;
-              if (!(tmp = netride ||
-                  (current_mode->mode & MODE_SECUREOP)) || wipeout)
-              {
-                bmodebuf[mblen++] = 'S';
-                current_mode->mode |= MODE_SECUREOP;
-              }
-              if (!tmp)
-                modebuf[mblen2++] = 'S';
-              break;
-            }
             case 'M':
             {
               int tmp;
@@ -5627,10 +5555,6 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     if ((prev_mode & MODE_REGNICKS))
       cancel_mode(sptr, chptr, 'R', NULL, &count);
-    if ((prev_mode & MODE_AUTOOP))
-      cancel_mode(sptr, chptr, 'A', NULL, &count);
-    if ((prev_mode & MODE_SECUREOP))
-      cancel_mode(sptr, chptr, 'S', NULL, &count);
     if ((prev_mode & MODE_MSGNONREG))
       cancel_mode(sptr, chptr, 'M', NULL, &count);
     if ((prev_mode & MODE_NOCTCP))
@@ -6089,8 +6013,9 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /* if the user is +k, prevent a kick from local user */
     if (IsChannelService(who) && MyUser(sptr))
     {
-      sendto_one(sptr, err_str(ERR_ISCHANSERVICE), me.name,
-          parv[0], who->name, chptr->chname);
+      sendto_one(sptr,
+          IsService(who->user->server) ? err_str(ERR_ISREALSERVICE) : err_str(ERR_ISCHANSERVICE),
+          me.name, parv[0], who->name, chptr->chname);
       return 0;
     }
 

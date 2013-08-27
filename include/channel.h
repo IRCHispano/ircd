@@ -84,8 +84,10 @@
                                  * temporary TS; can be removed when all 2.10 */
 #define MODE_REGCHAN    0x2000
 #define MODE_REGNICKS   0x4000
+/*
 #define MODE_AUTOOP     0x8000
 #define MODE_SECUREOP   0x10000
+*/
 #define MODE_MSGNONREG  0x20000
 #define MODE_NOCTCP     0x40000
 #define MODE_NONOTICE   0x80000
@@ -97,8 +99,6 @@
 
 #define RegisteredChannel(x)    ((x) && ((x)->mode.mode & MODE_REGCHAN))
 #define RestrictedChannel(x)    ((x) && ((x)->mode.mode & MODE_REGNICKS))
-#define AutoOpChannel(x)        ((x) && ((x)->mode.mode & MODE_AUTOOP))
-#define SecureOpChannel(x)      ((x) && ((x)->mode.mode & MODE_SECUREOP))
 #define MsgOnlyRegChannel(x)   ((x) && ((x)->mode.mode & MODE_MSGNONREG))
 #define SSLOnlyChannel(x)      ((x) && ((x)->mode.mode & MODE_SSLONLY))
 
