@@ -1090,12 +1090,17 @@ int initconf(int opt)
         free_conf(aconf);
         aconf = bconf;
       }
-      else if (aconf->host && aconf->status==CONF_LISTEN_PORT) {
+      else if (aconf->host && aconf->status == CONF_LISTEN_PORT) {
         char *passwd = aconf->passwd;
-        if(passwd != NULL && !strcmp("X", passwd)) /* Si tiene el flag X es que es de cookie encriptada */
+        if (passwd != NULL && strchr(passwd, 'X')) /* Si tiene el flag X es que es de cookie encriptada */
           aconf->status |= CONF_COOKIE_ENC;
         else
           aconf->status &= ~CONF_COOKIE_ENC;
+
+        if (passwd != NULL && strchr(passwd, 'S')) /* Si tiene el flag S es que es puerto SSL */
+          aconf->status |= CONF_SSL_PORT;
+        else
+          aconf->status &= ~CONF_SSL_PORT;
 
         add_listener(aconf);
       }
@@ -1292,6 +1297,22 @@ int find_port_cookie_encrypted(aClient *cptr) {
   
   return 0;
   
+}
+
+int find_port_ssl(aClient *cptr) {
+  aConfItem *tmp;
+
+  for (tmp = conf; tmp; tmp = tmp->next)
+  {
+    if (!IsConfListenPort(tmp) || !IsConfSSLPort(tmp))
+      continue;
+
+    if (tmp->port == cptr->acpt->port)
+      return 1;
+  }
+
+  return 0;
+
 }
 
 int find_exception(aClient *cptr)

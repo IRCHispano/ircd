@@ -5383,6 +5383,9 @@ nickkilldone:
    if (auto_invisible && !excepcion_invisible)
      SetInvisible(sptr);
 
+   if (find_port_ssl(sptr))
+     SetSSL(sptr);
+
     send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));
   }
 

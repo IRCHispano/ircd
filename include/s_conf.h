@@ -42,6 +42,7 @@
 #endif
 
 #define CONF_COOKIE_ENC         0x02000000
+#define CONF_SSL_PORT           0x04000000
 
 #define CONF_OPS		(CONF_OPERATOR | CONF_LOCOP)
 #define CONF_SERVER_MASK       (CONF_CONNECT_SERVER)
@@ -52,6 +53,7 @@
 #define IsIllegal(x)	((x)->status & CONF_ILLEGAL)
 
 #define IsConfCookieEnc(x)  ((x)->status & CONF_COOKIE_ENC)
+#define IsConfSSLPort(x)    ((x)->status & CONF_SSL_PORT)
 #define IsConfListenPort(x) ((x)->status & CONF_LISTEN_PORT)
 #define IsConfClient(x)     ((x)->status & CONF_CLIENT)
 
@@ -124,6 +126,7 @@ extern void read_tlines(void);
 extern int find_kill(aClient *cptr);
 extern int find_restrict(aClient *cptr);
 extern int find_port_cookie_encrypted(aClient *cptr);
+extern int find_port_ssl(aClient *cptr);
 extern int m_killcomment(aClient *sptr, char *parv, char *filename);
 extern aMotdItem *read_motd(char *motdfile);
 

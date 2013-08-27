@@ -1,3 +1,12 @@
+* 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.197)                FEATURE
+------------------------------------------------------------------------
+  Soporte de SSL con stunnel y similares.
+
+  Se define un puerto en el .conf con el flag S para indicar que es un
+  puerto de conexion SSL para dar modo +z automatico a los que entran.
+
+  El soporte nativo de SSL lo tendra el nuevo ircd.
+
 * 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.196)                FEATURE
 ------------------------------------------------------------------------
   Con el fin de facilitar la transicion a la nueva base de ircd basado
