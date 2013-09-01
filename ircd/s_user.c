@@ -3907,11 +3907,35 @@ void make_vhostperso(aClient *acptr, int mostrar)
 
   if ((reg = db_buscar_registro(BDD_IPVIRTUALDB, acptr->name)))
   {
-    SlabStringAllocDup(&(acptr->user->vhostperso), reg->valor, HOSTLEN);
+    char *vhost;
+    char *tmp;
+
+    /* Copio el valor en memoria para evitar que corte el registro en
+     * memoria de la BDD cuando hay un ! de separacion de campos.
+     */
+    DupString(vhost, reg->valor);
+    if (strchr(vhost, '!'))
+    {
+      /* Corto */
+      int i = 0;
+
+      while (vhost[i] != 0) {
+        if (vhost[i] == '!')
+        {
+          vhost[i]=0;
+          break;
+        }
+        i++;
+      }
+    }
+
+    SlabStringAllocDup(&(acptr->user->vhostperso), vhost, HOSTLEN);
     SetIpVirtualPersonalizada(acptr);
     if (mostrar)
       sendto_one(acptr, rpl_str(RPL_HOSTHIDDEN), me.name, acptr->name,
           acptr->user->vhostperso);
+
+    RunFree(vhost);
   }
 }
 #endif

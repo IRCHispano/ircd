@@ -1,3 +1,21 @@
+* 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.199)                FEATURE
+------------------------------------------------------------------------
+  En su dia, en el parche u2.10.H.10.63, establecia una tabla propia
+  para usar colores en el whois.
+  Durante la refactorizacion del soporte DDB en el nuevo ircd, me he
+  dado cuenta del error grave que he cometido, teniendo en cuenta el uso
+  que se da en IRC-Hispano, que en cada borrado de un nick, se manda
+  borrado del registro en las tablas v y w aunque no lo tuviese. Hay el
+  doble de tráfico de borrado de lo deseable.
+
+  Entonces, con "transicion.ircd" activado, se hace con la tabla v.
+
+   Clave: Nick
+   Valor: vhost[!vhost_color]
+
+  Se ha elegido el caracter '!' por ser ':' un caracter valido en IPs,
+  aunque no en hosts, para no impedir la posibilidad de poner IPv6 "fakes".  
+
 * 2013/09/01  zoltan@irc-dev.net (u2.10.H.10.198)                    FIX
 ------------------------------------------------------------------------
   Por notificacion de Corleone se ha corregido un problema con el registro
