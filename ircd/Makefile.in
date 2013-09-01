@@ -237,329 +237,452 @@ stamp-m:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-IPcheck.o: IPcheck.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/IPcheck.h ../include/querycmds.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/s_user.h ../include/s_bsd.h \
-  ../include/s_conf.h ../include/list.h ../include/send.h \
-  ../include/s_bdd.h ../include/support.h
-bsd.o: bsd.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/s_bsd.h ../include/s_conf.h \
-  ../include/list.h ../include/ircd.h ../include/bsd.h ../libevent/event.h
-channel.o: channel.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
-  ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/channel.h \
-  ../include/list.h ../include/parse.h ../include/send.h \
-  ../include/s_err.h ../include/numeric.h ../include/ircd.h \
-  ../include/common.h ../include/s_bdd.h ../include/match.h \
-  ../include/hash.h ../include/s_serv.h ../include/s_misc.h \
-  ../include/s_user.h ../include/s_conf.h ../include/s_bsd.h \
-  ../include/msg.h ../include/support.h ../include/numnicks.h \
-  ../include/sprintf_irc.h ../include/querycmds.h ../libevent/event.h
-class.o: class.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/class.h ../include/s_conf.h \
-  ../include/list.h ../include/s_serv.h ../include/send.h \
-  ../include/s_err.h ../include/numeric.h ../include/ircd.h ../libevent/event.h
+IPcheck.o: IPcheck.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/IPcheck.h ../include/querycmds.h \
+ ../include/struct.h ../include/whowas.h ../include/dbuf.h \
+ ../libevent/event.h ../libevent/event-config.h ../libevent/evutil.h \
+ ../include/res.h ../include/../libevent/event.h ../include/list.h \
+ ../zlib/zlib.h ../zlib/zconf.h ../include/s_user.h ../include/s_bsd.h \
+ ../include/s_conf.h ../include/send.h ../include/s_bdd.h \
+ ../include/struct.h ../include/support.h
+bsd.o: bsd.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_bsd.h \
+ ../include/s_conf.h ../include/ircd.h ../include/bsd.h
+channel.o: channel.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/channel.h \
+ ../include/parse.h ../include/whowas.h ../include/send.h \
+ ../include/s_err.h ../include/numeric.h ../include/ircd.h \
+ ../include/common.h ../include/sys.h ../include/s_bdd.h \
+ ../include/struct.h ../include/match.h ../include/pcre.h \
+ ../include/list.h ../include/hash.h ../include/s_serv.h \
+ ../include/s_misc.h ../include/s_user.h ../include/s_conf.h \
+ ../include/s_bsd.h ../include/s_conf.h ../include/msg.h \
+ ../include/s_serv.h ../include/support.h ../include/numnicks.h \
+ ../include/sprintf_irc.h ../include/querycmds.h ../include/network.h
+class.o: class.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/class.h \
+ ../include/s_conf.h ../include/s_serv.h ../include/struct.h \
+ ../include/send.h ../include/s_err.h ../include/numeric.h \
+ ../include/ircd.h
 common.o: common.c ../include/common.h ../include/sys.h \
-  ../config/config.h ../config/setup.h ../include/runmalloc.h
-crule.o: crule.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h ../include/ircd.h \
-  ../include/match.h ../include/s_bsd.h ../include/s_conf.h \
-  ../include/list.h ../include/common.h ../include/crule.h ../libevent/event.h
-dbuf.o: dbuf.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/common.h ../include/struct.h ../include/whowas.h \
-  ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h \
-  ../include/list.h ../include/send.h ../libevent/event.h
-fileio.o: fileio.c ../include/fileio.h ../include/runmalloc.h \
-  ../include/sys.h
-ircd.o: ircd.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/res.h ../include/list.h ../include/struct.h \
-  ../include/whowas.h ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h \
-  ../include/s_serv.h ../include/send.h ../include/ircd.h \
-  ../include/s_conf.h ../include/class.h ../include/s_misc.h \
-  ../include/parse.h ../include/match.h ../include/s_bsd.h \
-  ../include/crule.h ../include/userload.h ../include/numeric.h \
-  ../include/hash.h ../include/bsd.h ../include/version.h \
-  ../include/numnicks.h ../include/IPcheck.h ../include/s_bdd.h \
-  ../include/slab_alloc.h ../include/random.h ../libevent/event.h
-list.o: list.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/numeric.h ../include/send.h \
-  ../include/s_conf.h ../include/list.h ../include/class.h \
-  ../include/match.h ../include/ircd.h ../include/s_serv.h \
-  ../include/support.h ../include/s_misc.h ../include/s_bsd.h \
-  ../include/res.h ../include/common.h ../include/s_user.h \
-  ../include/opercmds.h ../include/m_watch.h ../include/hash.h \
-  ../include/slab_alloc.h ../include/pcre.h ../libevent/event.h
-map.o: map.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/numeric.h ../include/send.h \
-  ../include/match.h ../include/list.h ../include/s_err.h \
-  ../include/ircd.h ../include/s_bsd.h ../include/s_conf.h \
-  ../include/s_misc.h ../include/querycmds.h ../include/map.h \
-  ../include/numnicks.h ../libevent/event.h
-match.o: match.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/common.h ../include/match.h \
-  ../include/ircd.h ../include/pcre.h ../libevent/event.h \
-  ../include/runmalloc.h
+ ../include/../config/config.h ../include/../config/setup.h \
+ ../include/runmalloc.h
+crule.o: crule.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h \
+ ../include/struct.h ../include/ircd.h ../include/match.h \
+ ../include/pcre.h ../include/s_bsd.h ../include/s_conf.h \
+ ../include/common.h ../include/sys.h ../include/crule.h
+dbuf.o: dbuf.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/common.h ../include/sys.h \
+ ../include/struct.h ../include/whowas.h ../include/dbuf.h \
+ ../libevent/event.h ../libevent/event-config.h ../libevent/evutil.h \
+ ../include/res.h ../include/../libevent/event.h ../include/list.h \
+ ../zlib/zlib.h ../zlib/zconf.h ../include/dbuf.h ../include/s_serv.h \
+ ../include/struct.h ../include/list.h ../include/send.h
+fileio.o: fileio.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/fileio.h \
+ ../include/runmalloc.h
+ircd.o: ircd.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/res.h ../include/../libevent/event.h \
+ ../libevent/event-config.h ../libevent/evutil.h ../include/list.h \
+ ../include/struct.h ../include/whowas.h ../include/dbuf.h \
+ ../libevent/event.h ../include/res.h ../zlib/zlib.h ../zlib/zconf.h \
+ ../include/s_serv.h ../include/struct.h ../include/send.h \
+ ../include/ircd.h ../include/s_conf.h ../include/class.h \
+ ../include/s_misc.h ../include/parse.h ../include/match.h \
+ ../include/pcre.h ../include/s_bsd.h ../include/s_conf.h \
+ ../include/crule.h ../include/userload.h ../include/numeric.h \
+ ../include/hash.h ../include/s_serv.h ../include/bsd.h \
+ ../include/version.h ../include/whowas.h ../include/numnicks.h \
+ ../include/IPcheck.h ../include/s_bdd.h ../include/slab_alloc.h \
+ ../include/network.h ../include/msg.h ../include/random.h
+list.o: list.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/numeric.h \
+ ../include/send.h ../include/s_conf.h ../include/class.h \
+ ../include/match.h ../include/pcre.h ../include/ircd.h \
+ ../include/s_serv.h ../include/struct.h ../include/support.h \
+ ../include/s_misc.h ../include/s_bsd.h ../include/s_conf.h \
+ ../include/whowas.h ../include/res.h ../include/common.h \
+ ../include/sys.h ../include/list.h ../include/s_user.h \
+ ../include/opercmds.h ../include/m_watch.h ../include/hash.h \
+ ../include/s_serv.h ../include/slab_alloc.h
+map.o: map.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/numeric.h \
+ ../include/send.h ../include/match.h ../include/pcre.h ../include/list.h \
+ ../include/s_err.h ../include/ircd.h ../include/s_bsd.h \
+ ../include/s_conf.h ../include/s_misc.h ../include/querycmds.h \
+ ../include/map.h ../include/numnicks.h ../include/s_bdd.h \
+ ../include/struct.h ../include/s_serv.h
+match.o: match.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/common.h \
+ ../include/sys.h ../include/match.h ../include/pcre.h ../include/ircd.h \
+ ../include/runmalloc.h ../include/res.h
 numnicks.o: numnicks.c ../include/numnicks.h ../include/sys.h \
-  ../config/config.h ../config/setup.h ../include/runmalloc.h \
-  ../include/h.h ../include/s_debug.h ../include/s_serv.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/common.h ../include/ircd.h \
-  ../include/s_misc.h ../include/match.h ../include/s_bsd.h \
-  ../include/s_conf.h ../include/list.h ../include/s_bdd.h ../libevent/event.h
-opercmds.o: opercmds.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/opercmds.h ../include/struct.h \
-  ../include/whowas.h ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h \
-  ../include/ircd.h ../include/s_bsd.h ../include/s_conf.h \
-  ../include/list.h ../include/send.h ../include/s_err.h \
-  ../include/numeric.h ../include/match.h ../include/s_misc.h \
-  ../include/class.h ../include/s_bdd.h ../include/s_user.h \
-  ../include/common.h ../include/msg.h ../include/sprintf_irc.h \
-  ../include/userload.h ../include/parse.h ../include/numnicks.h \
-  ../include/crule.h ../include/version.h ../include/support.h \
-  ../include/s_serv.h ../include/hash.h ../include/persistent_malloc.h \
-  ../libevent/event.h
-packet.o: packet.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/s_misc.h ../include/s_bsd.h \
-  ../include/s_conf.h ../include/list.h ../include/ircd.h \
-  ../include/msg.h ../include/parse.h ../include/send.h \
-  ../include/packet.h ../include/s_serv.h
-parse.o: parse.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h ../include/send.h \
-  ../include/parse.h ../include/common.h ../include/s_bsd.h \
-  ../include/s_conf.h ../include/list.h ../include/msg.h \
-  ../include/s_user.h ../include/channel.h ../include/s_ping.h \
-  ../include/res.h ../include/map.h ../include/m_watch.h \
-  ../include/s_bdd.h ../include/m_config.h ../include/hash.h \
-  ../include/numeric.h ../include/ircd.h ../include/s_misc.h \
-  ../include/s_numeric.h ../include/numnicks.h ../include/opercmds.h \
-  ../include/querycmds.h ../include/whocmds.h
-querycmds.o: querycmds.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
-  ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/parse.h \
-  ../include/send.h ../include/s_err.h ../include/numeric.h \
-  ../include/ircd.h ../include/s_user.h ../include/version.h \
-  ../include/s_bsd.h ../include/s_conf.h ../include/list.h \
-  ../include/s_misc.h ../include/match.h ../include/s_serv.h \
-  ../include/msg.h ../include/channel.h ../include/numnicks.h \
-  ../include/userload.h ../include/support.h ../include/sprintf_irc.h \
-  ../include/querycmds.h ../include/s_bdd.h
-random.o: random.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/random.h
-res.o: res.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/res.h ../include/list.h ../include/struct.h \
-  ../include/whowas.h ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h \
-  ../include/numeric.h ../include/send.h ../include/s_err.h \
-  ../include/s_misc.h ../include/s_bsd.h ../include/s_conf.h \
-  ../include/ircd.h ../include/s_ping.h ../include/support.h \
-  ../include/common.h ../include/sprintf_irc.h
-runmalloc.o: runmalloc.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h
-s_auth.o: s_auth.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/res.h ../include/list.h ../include/struct.h \
-  ../include/whowas.h ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h \
-  ../include/common.h ../include/send.h ../include/s_bsd.h \
-  ../include/s_conf.h ../include/s_misc.h ../include/s_serv.h \
-  ../include/support.h ../include/ircd.h ../include/s_auth.h \
-  ../include/slab_alloc.h ../include/sprintf_irc.h
-s_bsd.o: s_bsd.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/res.h ../include/list.h ../include/struct.h \
-  ../include/whowas.h ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h \
-  ../include/s_bsd.h ../include/s_conf.h ../include/s_serv.h \
-  ../include/numeric.h ../include/send.h ../include/s_bdd.h \
-  ../include/m_config.h ../include/s_misc.h ../include/hash.h \
-  ../include/s_err.h ../include/ircd.h ../include/support.h \
-  ../include/s_auth.h ../include/class.h ../include/packet.h \
-  ../include/s_ping.h ../include/channel.h ../include/version.h \
-  ../include/parse.h ../include/common.h ../include/bsd.h \
-  ../include/numnicks.h ../include/s_user.h ../include/sprintf_irc.h \
-  ../include/querycmds.h ../include/IPcheck.h ../include/msg.h \
-  ../include/slab_alloc.h ../libevent/event.h 
-s_conf.o: s_conf.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h \
-  ../include/opercmds.h ../include/numeric.h ../include/send.h \
-  ../include/s_conf.h ../include/list.h ../include/class.h \
-  ../include/s_misc.h ../include/match.h ../include/common.h \
-  ../include/s_err.h ../include/s_bsd.h ../include/ircd.h \
-  ../include/crule.h ../include/res.h ../include/s_bdd.h \
-  ../include/support.h ../include/parse.h ../include/numnicks.h \
-  ../include/sprintf_irc.h ../include/IPcheck.h ../include/hash.h \
-  ../include/fileio.h ../include/slab_alloc.h ../libevent/event.h
-s_debug.o: s_debug.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
-  ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/numeric.h \
-  ../include/hash.h ../include/s_serv.h ../include/send.h \
-  ../include/s_conf.h ../include/list.h ../include/class.h \
-  ../include/ircd.h ../include/s_bsd.h ../include/bsd.h ../include/res.h \
-  ../include/channel.h ../include/numnicks.h ../libevent/event.h
-s_err.o: s_err.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/numeric.h ../include/s_err.h ../include/sprintf_irc.h \
-  ../include/m_watch.h
-s_misc.o: s_misc.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h ../include/numeric.h \
-  ../include/send.h ../include/s_conf.h ../include/list.h \
-  ../include/s_misc.h ../include/common.h ../include/match.h \
-  ../include/hash.h ../include/s_bsd.h ../include/res.h ../include/ircd.h \
-  ../include/s_ping.h ../include/channel.h ../include/s_err.h \
-  ../include/support.h ../include/userload.h ../include/parse.h \
-  ../include/s_user.h ../include/numnicks.h ../include/sprintf_irc.h \
-  ../include/querycmds.h ../include/IPcheck.h ../include/m_watch.h \
-  ../include/slab_alloc.h ../libevent/event.h
-s_numeric.o: s_numeric.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
-  ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h \
-  ../include/s_bsd.h ../include/s_conf.h ../include/list.h \
-  ../include/send.h ../include/support.h ../include/parse.h \
-  ../include/numeric.h ../include/channel.h ../include/ircd.h \
-  ../include/hash.h ../include/numnicks.h ../include/s_numeric.h \
-  ../libevent/event.h
-s_ping.o: s_ping.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/send.h ../include/s_conf.h \
-  ../include/list.h ../include/match.h ../include/res.h \
-  ../include/s_bsd.h ../include/s_serv.h ../include/ircd.h \
-  ../include/s_ping.h ../include/support.h ../include/numeric.h \
-  ../include/s_user.h ../include/s_err.h ../include/common.h \
-  ../include/numnicks.h ../include/slab_alloc.h ../libevent/event.h
-s_serv.o: s_serv.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/ircd.h ../include/s_serv.h \
-  ../include/s_misc.h ../include/sprintf_irc.h ../include/send.h \
-  ../include/s_err.h ../include/numeric.h ../include/s_bsd.h \
-  ../include/s_conf.h ../include/list.h ../include/hash.h \
-  ../include/common.h ../include/s_bdd.h ../include/msg.h \
-  ../include/m_config.h ../include/match.h ../include/crule.h \
-  ../include/parse.h ../include/numnicks.h ../include/userload.h \
-  ../include/s_user.h ../include/channel.h ../include/querycmds.h \
-  ../include/IPcheck.h ../include/slab_alloc.h ../libevent/event.h
-s_user.o: s_user.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/common.h ../include/s_serv.h \
-  ../include/numeric.h ../include/send.h ../include/s_conf.h \
-  ../include/list.h ../include/s_misc.h ../include/match.h \
-  ../include/hash.h ../include/s_bsd.h ../include/s_err.h \
-  ../include/parse.h ../include/m_watch.h ../include/s_bdd.h \
-  ../include/ircd.h ../include/s_user.h ../include/support.h \
-  ../include/channel.h ../include/random.h ../include/version.h \
-  ../include/msg.h ../include/userload.h ../include/numnicks.h \
-  ../include/sprintf_irc.h ../include/querycmds.h ../include/IPcheck.h \
-  ../include/class.h ../include/slab_alloc.h ../include/network.h \
-  ../include/aes.h ../include/padlock.h ../libevent/event.h
-send.o: send.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/s_bsd.h ../include/s_conf.h \
-  ../include/list.h ../include/s_serv.h ../include/send.h \
-  ../include/s_misc.h ../include/common.h ../include/match.h \
-  ../include/ircd.h ../include/channel.h ../include/bsd.h \
-  ../include/class.h ../include/s_user.h ../include/slab_alloc.h \
-  ../include/sprintf_irc.h ../libevent/event.h
-sprintf_irc.o: sprintf_irc.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/sprintf_irc.h
-support.o: support.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/send.h ../include/ircd.h \
-  ../include/s_bsd.h ../include/s_conf.h ../include/list.h \
-  ../include/support.h ../include/sprintf_irc.h ../include/common.h \
-  ../include/fileio.h
-userload.o: userload.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
-  ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/send.h \
-  ../include/s_misc.h ../include/userload.h ../include/ircd.h \
-  ../include/numnicks.h ../include/s_serv.h ../include/querycmds.h \
-  ../libevent/event.h
-whocmds.o: whocmds.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
-  ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/common.h \
-  ../include/s_serv.h ../include/numeric.h ../include/send.h \
-  ../include/s_conf.h ../include/list.h ../include/s_misc.h \
-  ../include/match.h ../include/hash.h ../include/s_bsd.h \
-  ../include/s_err.h ../include/parse.h ../include/ircd.h \
-  ../include/s_user.h ../include/support.h ../include/channel.h \
-  ../include/random.h ../include/version.h ../include/msg.h \
-  ../include/userload.h ../include/numnicks.h ../include/sprintf_irc.h \
-  ../include/querycmds.h ../include/IPcheck.h ../libevent/event.h
-whowas.o: whowas.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/common.h ../include/h.h \
-  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
-  ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/numeric.h \
-  ../include/send.h ../include/s_misc.h ../include/s_err.h \
-  ../include/ircd.h ../include/list.h ../include/s_user.h \
-  ../include/support.h ../libevent/event.h
-s_bdd.o: s_bdd.c ../include/sys.h ../config/config.h ../config/setup.h \
-  ../include/runmalloc.h ../include/persistent_malloc.h ../include/h.h \
-  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
-  ../include/dbuf.h ../zlib/zlib.h ../zlib/zconf.h ../include/ircd.h \
-  ../include/s_serv.h ../include/s_misc.h ../include/sprintf_irc.h \
-  ../include/send.h ../include/s_err.h ../include/numeric.h \
-  ../include/s_bsd.h ../include/s_conf.h ../include/list.h \
-  ../include/hash.h ../include/common.h ../include/match.h \
-  ../include/crule.h ../include/parse.h ../include/numnicks.h \
-  ../include/userload.h ../include/s_user.h ../include/channel.h \
-  ../include/querycmds.h ../include/IPcheck.h ../include/slab_alloc.h \
-  ../include/s_bdd.h ../include/msg.h ../include/support.h ../libevent/event.h
-m_config.o: m_config.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/common.h ../include/ircd.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h ../include/msg.h \
-  ../include/s_conf.h ../include/list.h ../include/m_config.h \
-  ../include/send.h ../libevent/event.h ../include/s_bdd.h
-m_watch.o: m_watch.c ../include/sys.h ../config/config.h \
-  ../config/setup.h ../include/runmalloc.h ../include/h.h \
-  ../include/s_debug.h ../include/hash.h ../include/s_serv.h \
-  ../include/struct.h ../include/whowas.h ../include/dbuf.h \
-  ../zlib/zlib.h ../zlib/zconf.h ../include/ircd.h ../include/list.h \
-  ../include/msg.h ../include/numeric.h ../include/s_bsd.h \
-  ../include/s_conf.h ../include/s_err.h ../include/s_user.h \
-  ../include/send.h ../include/support.h ../include/m_watch.h
+ ../include/../config/config.h ../include/../config/setup.h \
+ ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
+ ../include/s_serv.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/struct.h \
+ ../include/common.h ../include/sys.h ../include/ircd.h \
+ ../include/s_misc.h ../include/match.h ../include/pcre.h \
+ ../include/s_bsd.h ../include/s_conf.h ../include/s_bdd.h \
+ ../include/channel.h ../include/res.h
+opercmds.o: opercmds.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/opercmds.h ../include/res.h \
+ ../include/../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/list.h ../include/pcre.h \
+ ../include/struct.h ../include/whowas.h ../include/dbuf.h \
+ ../libevent/event.h ../zlib/zlib.h ../zlib/zconf.h ../include/ircd.h \
+ ../include/s_bsd.h ../include/s_conf.h ../include/send.h \
+ ../include/s_err.h ../include/numeric.h ../include/match.h \
+ ../include/s_misc.h ../include/s_conf.h ../include/class.h \
+ ../include/s_bdd.h ../include/struct.h ../include/s_user.h \
+ ../include/common.h ../include/sys.h ../include/msg.h \
+ ../include/sprintf_irc.h ../include/userload.h ../include/parse.h \
+ ../include/numnicks.h ../include/crule.h ../include/version.h \
+ ../include/support.h ../include/s_serv.h ../include/hash.h \
+ ../include/s_serv.h
+packet.o: packet.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_misc.h \
+ ../include/s_bsd.h ../include/s_conf.h ../include/ircd.h \
+ ../include/msg.h ../include/parse.h ../include/send.h \
+ ../include/packet.h ../include/s_serv.h ../include/struct.h \
+ ../include/dbuf.h
+parse.o: parse.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h \
+ ../include/struct.h ../include/send.h ../include/parse.h \
+ ../include/common.h ../include/sys.h ../include/s_bsd.h \
+ ../include/s_conf.h ../include/msg.h ../include/s_user.h \
+ ../include/channel.h ../include/whowas.h ../include/s_ping.h \
+ ../include/s_conf.h ../include/res.h ../include/map.h \
+ ../include/m_watch.h ../include/s_bdd.h ../include/m_config.h \
+ ../include/hash.h ../include/s_serv.h ../include/numeric.h \
+ ../include/ircd.h ../include/s_misc.h ../include/s_numeric.h \
+ ../include/numnicks.h ../include/opercmds.h ../include/pcre.h \
+ ../include/querycmds.h ../include/whocmds.h
+querycmds.o: querycmds.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/parse.h \
+ ../include/send.h ../include/s_err.h ../include/numeric.h \
+ ../include/ircd.h ../include/s_user.h ../include/version.h \
+ ../include/s_bsd.h ../include/s_conf.h ../include/s_misc.h \
+ ../include/match.h ../include/pcre.h ../include/s_serv.h \
+ ../include/struct.h ../include/msg.h ../include/channel.h \
+ ../include/numnicks.h ../include/userload.h ../include/s_conf.h \
+ ../include/support.h ../include/sprintf_irc.h ../include/querycmds.h \
+ ../include/s_bdd.h
+random.o: random.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/random.h
+res.o: res.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/res.h ../include/../libevent/event.h \
+ ../libevent/event-config.h ../libevent/evutil.h ../include/list.h \
+ ../include/struct.h ../include/whowas.h ../include/dbuf.h \
+ ../libevent/event.h ../include/res.h ../zlib/zlib.h ../zlib/zconf.h \
+ ../include/numeric.h ../include/send.h ../include/s_err.h \
+ ../include/s_misc.h ../include/s_bsd.h ../include/s_conf.h \
+ ../include/ircd.h ../include/s_ping.h ../include/support.h \
+ ../include/common.h ../include/sys.h ../include/sprintf_irc.h
+runmalloc.o: runmalloc.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h
+s_auth.o: s_auth.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/res.h ../include/../libevent/event.h \
+ ../libevent/event-config.h ../libevent/evutil.h ../include/list.h \
+ ../include/struct.h ../include/whowas.h ../include/dbuf.h \
+ ../libevent/event.h ../include/res.h ../zlib/zlib.h ../zlib/zconf.h \
+ ../include/common.h ../include/sys.h ../include/send.h \
+ ../include/s_bsd.h ../include/s_conf.h ../include/s_misc.h \
+ ../include/s_serv.h ../include/struct.h ../include/support.h \
+ ../include/ircd.h ../include/s_auth.h ../include/slab_alloc.h \
+ ../include/sprintf_irc.h ../include/s_bdd.h
+s_bsd.o: s_bsd.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/res.h ../include/../libevent/event.h \
+ ../libevent/event-config.h ../libevent/evutil.h ../include/list.h \
+ ../include/struct.h ../include/whowas.h ../include/dbuf.h \
+ ../libevent/event.h ../include/res.h ../zlib/zlib.h ../zlib/zconf.h \
+ ../include/s_bsd.h ../include/s_conf.h ../include/s_serv.h \
+ ../include/struct.h ../include/numeric.h ../include/send.h \
+ ../include/s_conf.h ../include/s_bdd.h ../include/m_config.h \
+ ../include/s_misc.h ../include/hash.h ../include/s_serv.h \
+ ../include/s_err.h ../include/ircd.h ../include/support.h \
+ ../include/s_auth.h ../include/class.h ../include/packet.h \
+ ../include/s_ping.h ../include/channel.h ../include/version.h \
+ ../include/parse.h ../include/common.h ../include/sys.h ../include/bsd.h \
+ ../include/numnicks.h ../include/s_user.h ../include/sprintf_irc.h \
+ ../include/querycmds.h ../include/IPcheck.h ../include/msg.h \
+ ../include/slab_alloc.h
+s_conf.o: s_conf.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h \
+ ../include/struct.h ../include/opercmds.h ../include/pcre.h \
+ ../include/numeric.h ../include/send.h ../include/s_conf.h \
+ ../include/class.h ../include/s_misc.h ../include/match.h \
+ ../include/common.h ../include/sys.h ../include/s_err.h \
+ ../include/s_bsd.h ../include/s_conf.h ../include/ircd.h \
+ ../include/crule.h ../include/res.h ../include/s_bdd.h \
+ ../include/support.h ../include/parse.h ../include/numnicks.h \
+ ../include/sprintf_irc.h ../include/IPcheck.h ../include/hash.h \
+ ../include/s_serv.h ../include/fileio.h ../include/slab_alloc.h
+s_debug.o: s_debug.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/numeric.h \
+ ../include/hash.h ../include/s_serv.h ../include/struct.h \
+ ../include/send.h ../include/s_conf.h ../include/class.h \
+ ../include/ircd.h ../include/s_bsd.h ../include/s_conf.h \
+ ../include/bsd.h ../include/whowas.h ../include/s_serv.h \
+ ../include/res.h ../include/channel.h ../include/msg.h \
+ ../include/numnicks.h
+s_err.o: s_err.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/numeric.h ../include/s_err.h \
+ ../include/sprintf_irc.h ../include/m_watch.h
+s_misc.o: s_misc.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h \
+ ../include/struct.h ../include/numeric.h ../include/send.h \
+ ../include/s_conf.h ../include/s_misc.h ../include/common.h \
+ ../include/sys.h ../include/match.h ../include/pcre.h ../include/hash.h \
+ ../include/s_serv.h ../include/s_bsd.h ../include/s_conf.h \
+ ../include/res.h ../include/list.h ../include/ircd.h ../include/s_ping.h \
+ ../include/channel.h ../include/s_err.h ../include/support.h \
+ ../include/userload.h ../include/parse.h ../include/s_user.h \
+ ../include/numnicks.h ../include/sprintf_irc.h ../include/querycmds.h \
+ ../include/IPcheck.h ../include/m_watch.h ../include/slab_alloc.h \
+ ../include/s_bdd.h ../include/msg.h ../include/dbuf.h
+s_numeric.o: s_numeric.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h \
+ ../include/struct.h ../include/s_bsd.h ../include/s_conf.h \
+ ../include/send.h ../include/support.h ../include/parse.h \
+ ../include/numeric.h ../include/channel.h ../include/ircd.h \
+ ../include/hash.h ../include/s_serv.h ../include/numnicks.h \
+ ../include/s_numeric.h ../include/s_bdd.h
+s_ping.o: s_ping.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/send.h \
+ ../include/s_conf.h ../include/match.h ../include/pcre.h \
+ ../include/res.h ../include/s_bsd.h ../include/s_conf.h \
+ ../include/s_serv.h ../include/struct.h ../include/ircd.h \
+ ../include/s_ping.h ../include/support.h ../include/numeric.h \
+ ../include/s_user.h ../include/s_err.h ../include/common.h \
+ ../include/sys.h ../include/numnicks.h ../include/msg.h \
+ ../include/slab_alloc.h
+s_serv.o: s_serv.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/ircd.h \
+ ../include/s_serv.h ../include/struct.h ../include/s_misc.h \
+ ../include/sprintf_irc.h ../include/send.h ../include/s_err.h \
+ ../include/numeric.h ../include/s_bsd.h ../include/s_conf.h \
+ ../include/s_conf.h ../include/hash.h ../include/s_serv.h \
+ ../include/common.h ../include/sys.h ../include/s_bdd.h ../include/msg.h \
+ ../include/m_config.h ../include/dbuf.h ../include/match.h \
+ ../include/pcre.h ../include/crule.h ../include/parse.h \
+ ../include/numnicks.h ../include/userload.h ../include/s_user.h \
+ ../include/channel.h ../include/querycmds.h ../include/IPcheck.h \
+ ../include/slab_alloc.h ../include/opercmds.h
+s_user.o: s_user.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/common.h \
+ ../include/sys.h ../include/s_serv.h ../include/struct.h \
+ ../include/numeric.h ../include/send.h ../include/s_conf.h \
+ ../include/s_misc.h ../include/match.h ../include/pcre.h \
+ ../include/hash.h ../include/s_serv.h ../include/s_bsd.h \
+ ../include/s_conf.h ../include/whowas.h ../include/list.h \
+ ../include/s_err.h ../include/parse.h ../include/m_watch.h \
+ ../include/s_bdd.h ../include/ircd.h ../include/s_user.h \
+ ../include/support.h ../include/channel.h ../include/random.h \
+ ../include/version.h ../include/msg.h ../include/userload.h \
+ ../include/numnicks.h ../include/sprintf_irc.h ../include/querycmds.h \
+ ../include/IPcheck.h ../include/class.h ../include/slab_alloc.h \
+ ../include/network.h ../include/aes.h
+send.o: send.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_bsd.h \
+ ../include/s_conf.h ../include/s_serv.h ../include/struct.h \
+ ../include/send.h ../include/s_misc.h ../include/common.h \
+ ../include/sys.h ../include/match.h ../include/pcre.h ../include/list.h \
+ ../include/ircd.h ../include/channel.h ../include/bsd.h \
+ ../include/class.h ../include/s_user.h ../include/slab_alloc.h \
+ ../include/sprintf_irc.h ../include/numnicks.h
+sprintf_irc.o: sprintf_irc.c ../include/sys.h \
+ ../include/../config/config.h ../include/../config/setup.h \
+ ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
+ ../include/sprintf_irc.h
+support.o: support.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/send.h ../include/ircd.h \
+ ../include/s_bsd.h ../include/s_conf.h ../include/list.h \
+ ../include/../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/support.h ../include/sprintf_irc.h \
+ ../include/common.h ../include/sys.h ../include/fileio.h \
+ ../include/struct.h ../include/whowas.h ../include/dbuf.h \
+ ../libevent/event.h ../include/res.h ../zlib/zlib.h ../zlib/zconf.h \
+ ../include/s_serv.h ../include/struct.h ../include/res.h
+userload.o: userload.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/send.h \
+ ../include/s_misc.h ../include/userload.h ../include/ircd.h \
+ ../include/numnicks.h ../include/msg.h ../include/s_serv.h \
+ ../include/struct.h ../include/querycmds.h
+whocmds.o: whocmds.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/common.h \
+ ../include/sys.h ../include/s_serv.h ../include/struct.h \
+ ../include/numeric.h ../include/send.h ../include/s_conf.h \
+ ../include/s_misc.h ../include/match.h ../include/pcre.h \
+ ../include/hash.h ../include/s_serv.h ../include/s_bsd.h \
+ ../include/s_conf.h ../include/whowas.h ../include/list.h \
+ ../include/s_err.h ../include/parse.h ../include/ircd.h \
+ ../include/s_user.h ../include/support.h ../include/channel.h \
+ ../include/random.h ../include/version.h ../include/msg.h \
+ ../include/userload.h ../include/numnicks.h ../include/sprintf_irc.h \
+ ../include/querycmds.h ../include/IPcheck.h ../include/s_bdd.h \
+ ../include/network.h
+whowas.o: whowas.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/common.h \
+ ../include/sys.h ../include/h.h ../include/s_debug.h ../include/struct.h \
+ ../include/whowas.h ../include/dbuf.h ../libevent/event.h \
+ ../libevent/event-config.h ../libevent/evutil.h ../include/res.h \
+ ../include/../libevent/event.h ../include/list.h ../zlib/zlib.h \
+ ../zlib/zconf.h ../include/numeric.h ../include/send.h \
+ ../include/s_misc.h ../include/s_err.h ../include/whowas.h \
+ ../include/ircd.h ../include/list.h ../include/msg.h ../include/s_user.h \
+ ../include/support.h ../include/s_bsd.h ../include/s_conf.h \
+ ../include/s_bdd.h ../include/struct.h ../include/network.h
+s_bdd.o: s_bdd.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h \
+ ../include/persistent_malloc.h ../include/h.h ../include/s_debug.h \
+ ../include/struct.h ../include/whowas.h ../include/dbuf.h \
+ ../libevent/event.h ../libevent/event-config.h ../libevent/evutil.h \
+ ../include/res.h ../include/../libevent/event.h ../include/list.h \
+ ../zlib/zlib.h ../zlib/zconf.h ../include/ircd.h ../include/s_serv.h \
+ ../include/struct.h ../include/s_misc.h ../include/sprintf_irc.h \
+ ../include/send.h ../include/s_err.h ../include/numeric.h \
+ ../include/s_bsd.h ../include/s_conf.h ../include/s_conf.h \
+ ../include/hash.h ../include/s_serv.h ../include/common.h \
+ ../include/sys.h ../include/match.h ../include/pcre.h ../include/crule.h \
+ ../include/parse.h ../include/numnicks.h ../include/userload.h \
+ ../include/s_user.h ../include/channel.h ../include/querycmds.h \
+ ../include/IPcheck.h ../include/network.h ../include/slab_alloc.h \
+ ../include/s_bdd.h ../include/dbuf.h ../include/msg.h \
+ ../include/support.h
+m_config.o: m_config.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/common.h ../include/sys.h \
+ ../include/ircd.h ../include/struct.h ../include/whowas.h \
+ ../include/dbuf.h ../libevent/event.h ../libevent/event-config.h \
+ ../libevent/evutil.h ../include/res.h ../include/../libevent/event.h \
+ ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/s_serv.h \
+ ../include/struct.h ../include/msg.h ../include/runmalloc.h \
+ ../include/s_conf.h ../include/m_config.h ../include/send.h \
+ ../include/numnicks.h ../include/s_bdd.h
+m_watch.o: m_watch.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
+ ../include/s_debug.h ../include/hash.h ../include/s_serv.h \
+ ../include/struct.h ../include/whowas.h ../include/dbuf.h \
+ ../libevent/event.h ../libevent/event-config.h ../libevent/evutil.h \
+ ../include/res.h ../include/../libevent/event.h ../include/list.h \
+ ../zlib/zlib.h ../zlib/zconf.h ../include/ircd.h ../include/list.h \
+ ../include/msg.h ../include/numeric.h ../include/s_bsd.h \
+ ../include/s_conf.h ../include/s_err.h ../include/s_user.h \
+ ../include/send.h ../include/struct.h ../include/support.h \
+ ../include/m_watch.h
 persistent_malloc.o: persistent_malloc.c ../include/persistent_malloc.h
-slab_alloc.o: slab_alloc.c ../include/runmalloc.h ../include/slab_alloc.h \
-  ../include/sys.h
-aes.o: aes.c ../include/aes.h ../include/padlock.h
-pcre_compile.o: pcre_compile.c ../include/pcre_internal.h
-pcre_exec.o: pcre_exec.c ../include/pcre_internal.h
-pcre_newline.o: pcre_newline.c ../include/pcre_internal.h
-pcre_globals.o: pcre_globals.c ../include/pcre_internal.h \
-  ../include/runmalloc.h
-pcre_tables.o: pcre_tables.c ../include/pcre_internal.h
-pcre_chartables.o: pcre_chartables.c ../include/pcre_internal.h
-pcre_try_flipped.o: pcre_try_flipped.c ../include/pcre_internal.h
+slab_alloc.o: slab_alloc.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h \
+ ../include/runmalloc.h ../include/slab_alloc.h
+aes.o: aes.c ../include/sys.h ../include/../config/config.h \
+ ../include/../config/setup.h ../include/runmalloc.h ../include/aes.h \
+ ../include/padlock.h ../include/aes.h
+pcre_compile.o: pcre_compile.c ../include/pcre_internal.h \
+ ../include/pcre_config.h ../include/pcre.h ../include/ucp.h
+pcre_exec.o: pcre_exec.c ../include/pcre_internal.h \
+ ../include/pcre_config.h ../include/pcre.h ../include/ucp.h
+pcre_newline.o: pcre_newline.c ../include/pcre_internal.h \
+ ../include/pcre_config.h ../include/pcre.h ../include/ucp.h
+pcre_globals.o: pcre_globals.c ../include/sys.h \
+ ../include/../config/config.h ../include/../config/setup.h \
+ ../include/runmalloc.h ../include/runmalloc.h ../include/pcre_internal.h \
+ ../include/pcre_config.h ../include/pcre.h ../include/ucp.h
+pcre_tables.o: pcre_tables.c ../include/pcre_internal.h \
+ ../include/pcre_config.h ../include/pcre.h ../include/ucp.h
+pcre_chartables.o: pcre_chartables.c ../include/pcre_internal.h \
+ ../include/pcre_config.h ../include/pcre.h ../include/ucp.h
+pcre_try_flipped.o: pcre_try_flipped.c ../include/pcre_internal.h \
+ ../include/pcre_config.h ../include/pcre.h ../include/ucp.h
