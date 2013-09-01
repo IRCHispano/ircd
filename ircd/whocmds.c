@@ -995,11 +995,11 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 name);
 
           if (IsHelpOp(acptr)) {
-            if (transicion_ircd && user->away)
+            if (transicion_ircd && user->away && !IsAdmin(acptr) && !IsCoder(acptr))
               sendto_one(sptr, rpl_str(RPL_WHOISHELPOP), me.name, parv[0], name);
             else if (!transicion_ircd)
               sendto_one(sptr, ":%s %d %s %s :Es un OPERador de los servicios de red",
-                  me.name, RPL_ENDOFNAMES, parv[0], name);
+                  me.name, RPL_WHOISHELPOP, parv[0], name);
           }
 
           if (IsAdmin(acptr))

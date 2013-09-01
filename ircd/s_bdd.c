@@ -483,8 +483,8 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
         case BDD_OPERDB:
        {
         aClient *sptr;
-        
-        if ((sptr = FindUser(clave)) && MyConnect(sptr) && IsHelpOp(sptr))
+
+        if ((sptr = FindUser(clave)) && MyConnect(sptr))
         {
          /* El usuario está conectado, y en nuestro servidor. */
          int of, oh;
@@ -492,8 +492,16 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
          of = sptr->flags;
          oh = sptr->hmodes;
 
+         if (IsHelpOp(sptr))
+           --nrof.helpers;
+
+         if (IsServicesBot(sptr))
+           --nrof.bots_oficiales;
+
          ClearHelpOp(sptr);
-         --nrof.helpers;
+         ClearAdmin(sptr);
+         ClearCoder(sptr);
+         ClearServicesBot(sptr);
 
          send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
         }
@@ -795,30 +803,49 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
     int nivel = atoi(valor);
 
     aClient *sptr;
-    
-    if (nivel >= 5)
+
+    /* Solo usuario con +r y en nuestro servidor */
+    if ((sptr = FindUser(clave)) && MyConnect(sptr) && IsNickRegistered(sptr))
     {
-     /* Si no tiene nivel superior o igual a 5,
-      * no hay nada. */
-     
-     if ((sptr = FindUser(clave)) && MyConnect(sptr) && !IsHelpOp(sptr))
-     { 
-       /* El usuario está conectado, y en nuestro servidor. */
-       
-       if (IsNickRegistered(sptr))
-       {
-        /* El usuario tiene +r */
+      int status;
+
+      status = get_status(sptr);
+      if (status)
+      {
         int of, oh;
 
         of = sptr->flags;
         oh = sptr->hmodes;
 
-        SetHelpOp(sptr);
-        ++nrof.helpers;
-       
+        if (status & HMODE_ADMIN)
+          SetAdmin(sptr);
+
+        if (status & HMODE_CODER)
+          SetCoder(sptr);
+
+        if (status & HMODE_SERVICESBOT)
+        {
+          if (!IsServicesBot(sptr))
+            nrof.bots_oficiales++;
+          SetServicesBot(sptr);
+        }
+
+        if (status & HMODE_HELPOP)
+        {
+          if (!IsHelpOp(sptr))
+            nrof.helpers++;
+          SetHelpOp(sptr);
+        }
+
+        if (status & FLAGS_OPER)
+        {
+          if (!IsAnOper(sptr))
+            nrof.opers++;
+          SetOper(sptr);
+        }
+
         send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
-       }
-     }
+      }
     }
    }
 
@@ -2899,12 +2926,19 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
 /*
 ** Limitamos el acceso a ciertas tablas y ciertos registros
 */
-  if (!IsServer(sptr) && IsHelpOp(sptr))
+  if (!IsServer(sptr))
   {
-    reg = db_buscar_registro(BDD_OPERDB, sptr->name);
-    if (reg)
-    {
-      nivel_helper = atoi(reg->valor);
+    int status = get_status(sptr);
+
+    if (status) {
+      if (status & FLAGS_OPER|HMODE_ADMIN|HMODE_CODER)
+        nivel_helper = 10;
+      else if (status & HMODE_HELPOP)
+        nivel_helper = 5;
+      else
+        nivel_helper = -1;
+    } else {
+        nivel_helper = -1;
     }
   }
 

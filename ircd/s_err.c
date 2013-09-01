@@ -267,7 +267,7 @@ static Numeric numeric_errors[] = {
 /* 483 */
     {ERR_CANTKILLSERVER, ":You cant kill a server!"},
 /* 484 */
-    {ERR_ISCHANSERVICE, "%s %s :Cannot kill, kick or deop an IRC Operator"},
+    {ERR_ISCHANSERVICE, "%s %s :Cannot kick or deop an IRC Operator"},
 /* 485 */
     {ERR_ISREALSERVICE, "%s %s :Cannot kill, kick or deop a network service"},
 /* 486 */
@@ -369,7 +369,7 @@ static Numeric numeric_replies[] = {
 /* 312 */
     {RPL_WHOISSERVER, "%s %s :%s"},
 /* 313 */
-    {RPL_WHOISOPERATOR, "%s :is %s"},
+    {RPL_WHOISOPERATOR, "%s :%s"},
 /* 314 */
     {RPL_WHOWASUSER, "%s %s %s * :%s"},
 /* 315 */

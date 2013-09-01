@@ -4228,6 +4228,9 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
               case ERR_BADCHANNELKEY:
                 i = 'k';
                 break;
+              case ERR_NOSSL:
+                i = 'z';
+                break;
             }
             sendto_op_mask(SNO_HACK4, "OPER JOIN: %s JOIN %s (overriding +%c)",
                 sptr->name, chptr->chname, i);

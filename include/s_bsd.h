@@ -256,7 +256,7 @@ extern struct sockaddr_in vserv;
     (SEND_HMODES)
 
 #define HMODES_HIDDEN \
-    (HMODE_USERBITCH | HMODE_USERNOJOIN)
+    (HMODE_NOIDLE | HMODE_WHOIS | HMODE_USERBITCH | HMODE_USERNOJOIN)
 
 /* Macros comprobacion modos hispano */
 #define IsNickRegistered(x)     ((x)->hmodes & HMODE_NICKREGISTERED)

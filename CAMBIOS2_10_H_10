@@ -1,3 +1,39 @@
+* 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.200)                FEATURE
+------------------------------------------------------------------------
+  Se modifica el comportamiento de la tabla o.
+  Si detecta que el contenido del registro es un numero, actua como hasta
+  ahora.
+
+  Pero si detecta que no es un numero, actua con la nueva forma, que es
+  la siguiente:
+
+        Clave: Nick con +r
+        Valor: FLAG:NUMERO
+
+    Siendo flag, un caracter con las siguientes posibilidades:
+          p: preoper, se activa el +h
+          h: oper, se activa el +h
+          c: coder, se activa el +Co
+          a: admin, se activa el +ao
+          b: bot, se activa el +Bo
+
+    Siendo numero, una mascara de bits con los privilegios que tiene el
+    nick en el ircd. Con esta base, un numero cualquiera distinto de 0,
+    activa el modo +X para el nick. 
+    Con la nueva base, activara lo siguiente:
+      - Modos (+X, +k, etc...)
+      - Comandos (KILL, OPMODE, CLEARMODES, etc...)
+      - Acceso a informacion (STATS, TRACE, etc...)
+
+  Se ha detectado incoherencias con los preopers (nivel 1 formato antiguo
+  y flag p formato nuevo) en unos casos no podian tener +h porque pedia
+  nivel 5 minimo y en otros casos si podian tener +h.
+  Lo he resuelto con dar +h en todos los casos.
+
+  Para usar el sistema nuevo, requiere que todos los servidores tengan
+  la version u2.10.H.10.200 o superior. No es necesario activar la
+  "transicion.ircd".
+
 * 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.199)                FEATURE
 ------------------------------------------------------------------------
   En su dia, en el parche u2.10.H.10.63, establecia una tabla propia

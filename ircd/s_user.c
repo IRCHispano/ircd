@@ -2755,6 +2755,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   snomask_t tmpmask = 0;
   int snomask_given = 0;
   int sethmodes;
+  int statusbdd = 0;
 
   what = MODE_ADD;
 
@@ -2881,18 +2882,19 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
             sendto_one(sptr, err_str(ERR_UMODEUNKNOWNFLAG), me.name, parv[0]);
           break;
       }
+
+  /* Pedimos los flags permitidos */
+  if (MyUser(sptr))
+    statusbdd = get_status(sptr);
+
   /*
    * Stop users making themselves operators too easily:
    */
 
-  /* Si es admin puede hacerse ircop en cualquier momento */
+  /* Si lo autoriza la BDD puede hacerse ircop en cualquier momento */
   if (MyUser(sptr) && (!(setflags & FLAGS_OPER))
-      && IsOper(sptr))
-  {
-    struct db_reg *reg = db_buscar_registro(BDD_OPERDB, sptr->name);
-    if (!reg || atoi(reg->valor) < 10)
-      ClearOper(sptr);
-  }
+      && IsOper(sptr) && !(statusbdd & FLAGS_OPER))
+    ClearOper(sptr);
 
 /*
   if (!(setflags & FLAGS_OPER) && IsOper(sptr) && !IsServer(cptr))
@@ -2902,7 +2904,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sptr->flags &= ~FLAGS_LOCOP;
   if ((setflags & (FLAGS_OPER | FLAGS_LOCOP)) && !IsAnOper(sptr) &&
       MyConnect(sptr))
-    det_confs_butmask(sptr, CONF_CLIENT & ~CONF_OPS);  
+    det_confs_butmask(sptr, CONF_CLIENT & ~CONF_OPS);
 
   /* new umode; servers can set it, local users cannot;
    * prevents users from /kick'ing or /mode -o'ing */
@@ -2920,11 +2922,10 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else
       ClearNickSuspended(sptr);
 
-    if (!(sethmodes & HMODE_SSL))
+    if (sethmodes & HMODE_SSL)
+      SetSSL(sptr);
+    else
       ClearSSL(sptr);
-
-    if (!(sethmodes & HMODE_SERVICESBOT))
-      ClearServicesBot(sptr);
 
     if (!(sethmodes & HMODE_NOCHAN))
       ClearNoChan(sptr);
@@ -2944,21 +2945,21 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (IsNickRegistered(sptr))
   {                             /* Nick Registrado */
+
     /* el modo +h solo se lo pueden poner los OPER y quitar a voluntad */
     if (!(sethmodes & HMODE_HELPOP) && IsHelpOp(sptr) &&
-        !db_buscar_registro(BDD_OPERDB, sptr->name))
+        !(statusbdd & HMODE_HELPOP))
       ClearHelpOp(sptr);
 
-    /* Modo +a y +c solo en la transicion */
-    if (!(sethmodes & HMODE_ADMIN) && IsAdmin(sptr))
+    /* el modo +a solo se lo pueden poner los ADMIN y quitar a voluntad */
+    if (!(sethmodes & HMODE_ADMIN) && IsAdmin(sptr) &&
+        !(statusbdd & HMODE_ADMIN))
       ClearAdmin(sptr);
 
-    if (!(sethmodes & HMODE_CODER) && IsCoder(sptr))
+    /* el modo +C solo se lo pueden poner los CODER y quitar a voluntad */
+    if (!(sethmodes & HMODE_CODER) && IsCoder(sptr) &&
+        !(statusbdd & HMODE_CODER))
       ClearCoder(sptr);
-
-    if (!(sethmodes & HMODE_HIDDENVIEWER) && !(IsHelpOp(sptr)
-        || IsAnOper(sptr)))
-      ClearHiddenViewer(sptr);
 
 #if defined(BDD_VIP) && !defined(BDD_VIP2)
     if (MyConnect(sptr))
@@ -2990,6 +2991,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     ClearHelpOp(sptr);
     ClearAdmin(sptr);
     ClearCoder(sptr);
+    ClearServicesBot(sptr);
 #if defined(BDD_VIP) && !defined(BDD_VIP2)
     if (MyConnect(sptr))
     {
@@ -3027,7 +3029,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 /*
 ** Si somos IRCOPs y hemos puesto el flag K, lo acepta.
 ** jcea@argo.es - 16/Dic/97
-*/  
+*/
   if (!(setflags & FLAGS_CHSERV) && !IsServer(cptr)
 #if defined(OPER_CHANNEL_SERVICE_ESNET)
       && !IsOper(sptr)
@@ -3035,9 +3037,9 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(BDD_OPER_HACK_KMODE)
       && !IsHelpOp(sptr)
 #endif
-      )
+      && !IsAdmin(sptr) && !IsCoder(sptr))
     sptr->flags &= ~FLAGS_CHSERV;
-  
+
 /* MODO +s capado para usuarios */
   if (!(setflags & FLAGS_SERVNOTICE) && !IsServer(cptr)
       && !IsOper(sptr) && !IsHelpOp(sptr))
@@ -3046,35 +3048,19 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     set_snomask(sptr, 0, SNO_SET);
   }
 
+    /* el modo +B solo se lo pueden poner los BOT y quitar a voluntad */
   if (!(sethmodes & HMODE_SERVICESBOT) && !IsServer(cptr)
-      && !IsOper(sptr) && !buscar_uline(cptr->confs, sptr->name))
-  {
-    sptr->hmodes &= ~HMODE_SERVICESBOT;
-  }
+      && !(statusbdd & HMODE_SERVICESBOT)
+      && !buscar_uline(cptr->confs, sptr->name))
+    ClearServicesBot(sptr);
 
 
 /*
-** El +X solo se lo pueden poner usuarios con nivel 5 o superior.
+** El +X solo se lo pueden poner usuarios autorizados
 */
   if (MyUser(sptr) && (!(sethmodes & HMODE_HIDDENVIEWER))
-      && IsHiddenViewer(sptr))
-  {
-    struct db_reg *reg;
-
-    if (!IsHelpOp(sptr))
-    {                           /* Por si acaso era IRCop */
-      ClearHiddenViewer(sptr);
-    }
-    else
-    {
-      reg = db_buscar_registro(BDD_OPERDB, sptr->name);
-      if (reg)
-      {
-        if (atoi(reg->valor) < 5)
-          ClearHiddenViewer(sptr);
-      }
-    }
-  }
+      && IsHiddenViewer(sptr) && !get_privs(sptr))
+    ClearHiddenViewer(sptr);
 
   /*
    * Compare new flags with old flags and send string which
@@ -3235,7 +3221,7 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (tmpmask != acptr->snomask)
       set_snomask(acptr, tmpmask, SNO_SET);
   }
-  
+
 #if 1 /* ALTERNATIVA SVSMODE A TODOS */
 
   if (MyUser(acptr))
@@ -3276,12 +3262,12 @@ char *umode_str(aClient *cptr, aClient *acptr)
     if (c_hmodes & flag)
       if(acptr)
       {
- //       if (flag & HMODES_HIDDEN)
-  //      {
-   //       if (IsAnOper(acptr))
+        if (flag & HMODES_HIDDEN)
+        {
+          if (IsAnOper(acptr))
             *m++ = *(s + 1);
-     //   } else
-       //   *m++ = *(s + 1);
+        } else
+          *m++ = *(s + 1);
       }
       else
         *m++ = *(s + 1);
@@ -3735,6 +3721,96 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
   return 0;
 }
 
+/*
+ * int get_status(sptr)
+ *
+ * Da los flags segun la tabla o de operadores
+ *
+ */
+int get_status(aClient *sptr)
+{
+  int status = 0;
+  struct db_reg *reg;
+
+  reg = db_buscar_registro(BDD_OPERDB, sptr->name);
+
+  if (reg) {
+      if (isDigit(*reg->valor)) {
+        /* Sistema antiguo, numerico */
+        int valor;
+
+        valor = atoi(reg->valor);
+        if (valor > 0)
+          status |= HMODE_HELPOP;
+
+        if (valor >= 10)
+          status |= FLAGS_OPER;
+
+      } else {
+        /* Sistema nuevo, por flags */
+        switch (*reg->valor)
+        {
+          case 'a':
+            status |= HMODE_ADMIN | FLAGS_OPER;
+            break;
+
+          case 'c':
+            status |= HMODE_CODER | FLAGS_OPER;
+            break;
+
+          case 'b':
+            status |= HMODE_SERVICESBOT | FLAGS_OPER;
+            break;
+
+          case 'h':
+          case 'p':
+            status |= HMODE_HELPOP;
+            break;
+        }
+      }
+      return status;
+  }
+
+  return 0;
+}
+
+/* int get_privs(sptr)
+ *
+ * Da los privilegios segun tabla o de operadores
+ *
+ * En esta base solo para el +X. Devuelve 1 si puede +X
+ */
+int get_privs(aClient *sptr)
+{
+  int privs = 0;
+  struct db_reg *reg;
+
+  if (!IsNickRegistered(sptr))
+    return 0;
+
+  reg = db_buscar_registro(BDD_OPERDB, sptr->name);
+
+  if (reg) {
+      if (isDigit(*reg->valor)) {
+        /* Sistema antiguo, numerico */
+
+        if (atoi(reg->valor) >= 5)
+          privs = !0;
+
+      } else {
+        /* Sistema nuevo, por flags */
+        if (reg->valor[1] != ':')
+          return 0;
+        if (reg->valor[2] == '\0')
+          return 0;
+        privs = atoi(reg->valor + 2);
+      }
+      return privs;
+  }
+
+  return 0;
+}
+
 #if defined(BDD_VIP)
 /*
  * char *get_virtualhost(sptr)                  ** MIGRAR A hispano.c **
@@ -4023,6 +4099,11 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       }
       ClearAdmin(sptr);
       ClearCoder(sptr);
+      if (IsServicesBot(sptr))
+      {
+        --nrof.bots_oficiales;
+        ClearServicesBot(sptr);
+      }
 
 #if defined(BDD_VIP)
 #if !defined(BDD_VIP2)
@@ -4156,11 +4237,40 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       }
 #endif
 
-      if (db_buscar_registro(BDD_OPERDB, sptr->name) && !IsNickSuspended(sptr))
+      if (!IsNickSuspended(sptr))
       {
-        SetHelpOp(sptr);
-        ++nrof.helpers;
-        /* transicion */
+        int status;
+
+        status = get_status(sptr);
+        if (status)
+        {
+          if (status & HMODE_ADMIN)
+            SetAdmin(sptr);
+
+          if (status & HMODE_CODER)
+            SetCoder(sptr);
+
+          if (status & HMODE_SERVICESBOT)
+          {
+            if (!IsServicesBot(sptr))
+              nrof.bots_oficiales++;
+            SetServicesBot(sptr);
+          }
+
+          if (status & HMODE_HELPOP)
+          {
+            if (!IsHelpOp(sptr))
+              nrof.helpers++;
+            SetHelpOp(sptr);
+          }
+
+          if (status & FLAGS_OPER)
+          {
+            if (!IsAnOper(sptr))
+              nrof.opers++;
+            SetOper(sptr);
+          }
+        }
       }
       send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
     }
@@ -5259,6 +5369,11 @@ nickkilldone:
           }
           ClearAdmin(sptr);
           ClearCoder(sptr);
+          if (IsServicesBot(sptr))
+          {
+            ClearServicesBot(sptr);
+            --nrof.bots_oficiales;
+          }
 #if defined (BDD_VIP)
 #if !defined(BDD_VIP2)
           ClearHidden(sptr);
@@ -5359,7 +5474,7 @@ nickkilldone:
       }
 #else
       do
-      { 
+      {
         sptr->cookie = ircrandom() & 0x7fffffff;
       }
       while ((!sptr->cookie) || IsCookieVerified(sptr));
@@ -5420,6 +5535,7 @@ nickkilldone:
   if (!nick_equivalentes)
   {
     int of, oh;
+    int statusbdd = 0;;
 
     of = sptr->flags;
     oh = sptr->hmodes;
@@ -5456,16 +5572,39 @@ nickkilldone:
       }
 #endif
 #endif
-      if (db_buscar_registro(BDD_OPERDB, nick) && !nick_suspendido)
+
+      statusbdd = get_status(sptr);
+      if (statusbdd && !nick_suspendido)
       {
-        SetHelpOp(sptr);
-        ++nrof.helpers;
-        /* transicion */
-      }
-      else {
+        if (statusbdd & HMODE_ADMIN)
+          SetAdmin(sptr);
+
+        if (statusbdd & HMODE_CODER)
+          SetCoder(sptr);
+
+        if (statusbdd & HMODE_SERVICESBOT)
+        {
+          SetServicesBot(sptr);
+          nrof.bots_oficiales++;
+        }
+
+        if (statusbdd & HMODE_HELPOP)
+        {
+          SetHelpOp(sptr);
+          nrof.helpers++;
+        }
+
+        if (statusbdd & FLAGS_OPER)
+        {
+          SetOper(sptr);
+          nrof.opers++;
+        }
+
+      } else {
         ClearHelpOp(sptr);
         ClearAdmin(sptr);
         ClearCoder(sptr);
+        ClearServicesBot(sptr);
       }
     }
     else
@@ -5476,6 +5615,7 @@ nickkilldone:
       ClearHelpOp(sptr);
       ClearAdmin(sptr);
       ClearCoder(sptr);
+      ClearServicesBot(sptr);
     }
 #if defined(BDD_VIP)
     if (IsUser(sptr))
@@ -5945,6 +6085,11 @@ nickkilldone:
           }
           ClearAdmin(sptr);
           ClearCoder(sptr);
+          if (IsServicesBot(sptr))
+          {
+            ClearServicesBot(sptr);
+            --nrof.bots_oficiales;
+          }
           if (!IsAnOper(sptr))
             ClearHiddenViewer(sptr);
           send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));
