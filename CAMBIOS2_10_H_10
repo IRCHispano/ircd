@@ -1,3 +1,15 @@
+* 2013/09/01  zoltan@irc-dev.net (u2.10.H.10.198)                    FIX
+------------------------------------------------------------------------
+  Por notificacion de Corleone se ha corregido un problema con el registro
+  "debugchan" de la tabla z de la BDD.
+
+  Si se metia un registro con varios canales separados con "," para la
+  entrada simultanea como en el JOIN, se cortaba el registro en memoria
+  de la BDD.
+
+  Ahora esta corregido. Tambien se corrige otro bug, ahora solo lo hace
+  localmente en vez de todos los servidores.
+
 * 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.197)                FEATURE
 ------------------------------------------------------------------------
   Soporte de SSL con stunnel y similares.

@@ -3976,10 +3976,11 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
   size_t *buflen;
   char *p = NULL, *bufptr;
   struct db_reg *ch_redir = NULL;
+  char *usernojoin = NULL;
 #ifdef UTF8_TO_LATIN1 /* Esto es por si se quiere activar la conversion */
   char latin1[BUFSIZE];
-#endif /* UTF8_TO_LATIN1 */ 
-  
+#endif /* UTF8_TO_LATIN1 */
+
   if (IsServer(sptr))           /* Un servidor entrando en un canal? */
     return 0;
 
@@ -3989,10 +3990,14 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-  if (IsUserNoJoin(sptr)) {
-    struct db_reg *reg;
-    if ((reg = db_buscar_registro(BDD_CONFIGDB, BDD_CANAL_DEBUG))) {
-      parv[1] = reg->valor;
+  if (MyUser(sptr) && IsUserNoJoin(sptr)) {
+    struct db_reg *reg = db_buscar_registro(BDD_CONFIGDB, BDD_CANAL_DEBUG);
+    if (reg) {
+    /* Copio el valor en memoria para evitar que corte el registro en
+     * memoria de la BDD cuando hay un , de separacion de campos.
+     */
+      DupString(usernojoin, reg->valor);
+      parv[1] = usernojoin;
     }
   }
 
@@ -4125,7 +4130,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         else if (strlen(name) > CHANNELLEN)
         {
           /* Si es una redireccion NO corto el nombre del canal,
-           * porque cortaria el registro de la BDD en memoria 
+           * porque cortaria el registro de la BDD en memoria
            */
           if(!ch_redir) /* Si no es redireccion... */
             *(name + CHANNELLEN) = '\0'; /* ...pues corto el nombre */
@@ -4344,6 +4349,10 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
       }
     }
   }
+
+  if (MyUser(sptr) && IsUserNoJoin(sptr) && usernojoin)
+    RunFree(usernojoin);
+
   return 0;
 }
 
