@@ -1,0 +1,53 @@
+Repositorio de IRC-Hispano alojado en Sourceforge.net
+-----------------------------------------------------
+
+Este documento enumera las diferentes ramas del repositorio.
+
+URL del repositorio raiz: svn.code.sf.net/p/irc-hispano/code/
+
+
+RAMAS OFICIALES
+---------------
+
+ * IRCD 2.10.H.10 Oficial
+
+   IRCd utilizado en produccion en la red de IRC-Hispano.
+
+   URL: svn.code.sf.net/p/irc-hispano/code/ircd/branches/oficial
+
+
+
+ * PXYS 2
+
+   Chequeador de proxys utilizado en IRC-Hispano.
+
+   URL: svn.code.sf.net/p/irc-hispano/code/pxys2/trunk
+
+
+
+* RAMAS DE DESARROLLO
+---------------------
+
+ * IRCD 2.10.H.11
+
+   IRCd de nueva generacion, con todas las ultimas tecnologias vigentes,
+   desarrollo de nuevas caracteristicas y gestion de la base de datos.
+
+   URL: svn.code.sf.net/p/irc-hispano/code/ircd/trunk/
+
+
+
+ * IRCD 2.10.H.10 Desarrollo
+
+   IRCd de actual generacion, es una version de pruebas y desarrollos para
+   evaluacion de funciones. No todos los desarrollos pasan a la rama oficial.
+
+   URL: svn.code.sf.net/p/irc-hispano/code/ircd/branches/ircdold
+
+
+
+ * Denora
+
+   Services de estadisticas de Denora, no usados nunca en IRC-Hispano.
+
+   URL: svn.code.sf.net/p/irc-hispano/code/denora/
