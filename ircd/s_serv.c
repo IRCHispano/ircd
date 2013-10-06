@@ -1230,11 +1230,7 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
             acptr->name, acptr->hopcount + 1, acptr->lastnick,
             PunteroACadena(acptr->user->username),
             PunteroACadena(acptr->user->host), s, iptobase64(xxx_buf,
-#if defined(WEBCHAT_HTML)
-            MyUser(acptr) ? &acptr->ip_real : &acptr->ip,
-#else
             &acptr->ip,
-#endif
             sizeof(xxx_buf), 1), NumNick(acptr), PunteroACadena(acptr->info));
       }
     }

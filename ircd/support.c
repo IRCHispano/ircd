@@ -108,7 +108,7 @@ char *inetntoa(struct in_addr in)
 
 char *ircd_ntoa_c(aClient *cptr)
 {
-  return (char *)ircd_ntoa(client_addr(cptr));
+  return (char *)ircd_ntoa(&cptr->ip);
 }
 
 /*
@@ -433,19 +433,6 @@ ipmask_parse(const char *input, struct irc_in_addr *ip, unsigned char *pbits)
       *pbits = 0;
     return pos;
   } else return 0; /* parse failed */
-}
-
-struct irc_in_addr *client_addr(aClient *cptr)
-{
-#if defined(WEBCHAT_HTML)
-  if (MyConnect(cptr))
-    return &cptr->ip_real;
-  else
-    return &cptr->ip;
-#else
-  return &cptr->ip;
-#endif
-	
 }
 
 

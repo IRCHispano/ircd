@@ -947,12 +947,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         ocultar_servidores = !0;
       }
-#if !defined(WEBCHAT_HTML)
       else if (!strcmp(c, BDD_ACTIVAR_IDENT))
       {
         activar_ident = !0;
       }
-#endif
       else if (!strcmp(c, BDD_TRANSICION_IRCD))
       {
         transicion_ircd = !0;

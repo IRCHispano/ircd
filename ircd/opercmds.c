@@ -319,11 +319,6 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
   unsigned char stat = parc > 1 ? parv[1][0] : '\0';
   Reg1 int i;
 
-#if defined(WEBCHAT_HTML)
-  if (!IsAnOper(sptr))
-    return 0;
-#endif
-
   /* Solo ircops y opers tienen acceso a hacer stats remotos */
   if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
   {

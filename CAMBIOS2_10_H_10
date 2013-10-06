@@ -1,3 +1,11 @@
+* 2013/10/06  zoltan@irc-dev.net (u2.10.H.10.202)                CLEANUP
+------------------------------------------------------------------------
+  Dado que ya hay soporte de Webchat HTML con un estandar mundial, se
+  elimina del codigo todo el codigo del soporte propietario de Webchat
+  HTML introducido en las versiones u2.10.H.10.20 y u2.10.H.10.21.
+
+  Limpieza de funciones en desuso.
+
 * 2013/10/06  zoltan@irc-dev.net (u2.10.H.10.201)                FEATURE
 ------------------------------------------------------------------------
   Implementacion del estandar WEBIRC otientado para los webchats HTML

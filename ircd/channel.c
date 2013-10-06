@@ -424,11 +424,7 @@ static int is_banned(aClient *cptr, aChannel *chptr, Link *member)
       if (!ip_s)
         ip_s =
             make_nick_user_ip(cptr->name, PunteroACadena(cptr->user->username),
-#if defined(WEBCHAT_HTML)
-            MyUser(cptr) ? &cptr->ip_real : &cptr->ip);
-#else
             &cptr->ip);
-#endif
       if (match(tmp->value.ban.banstr, ip_s) == 0)
         break;
     }

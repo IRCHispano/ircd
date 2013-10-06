@@ -540,7 +540,6 @@ comment 'Mandatory defines (you should leave these untouched)'
     bool 'HISPANO/ESNET: ZLIB compression between servers - ESNET' ZLIB_ESNET y
     bool 'HISPANO: Webchat con protocolo propio server->cliente' WEBCHAT n
   fi
-  bool 'HISPANO: Servidor de Webchat HTML con IP real en vez de IP del servidor' WEBCHAT_HTML n
   int 'Max auto connects per class (1!)' MAXIMUM_LINKS 1
   echo '* Never define this on a production server:'
   bool 'Enable message logging' MSGLOG_ENABLED

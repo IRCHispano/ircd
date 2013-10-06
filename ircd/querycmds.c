@@ -261,10 +261,6 @@ int m_help(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), char *parv[])
 {
   int i;
 
-#if defined(WEBCHAT_HTML)
-  return 0;
-#endif
-
   for (i = 0; msgtab[i].cmd; i++)
     sendto_one(sptr, ":%s NOTICE %s :%s", me.name, parv[0], msgtab[i].cmd);
   return 0;

@@ -339,9 +339,6 @@ char serveropts[] = {
     '-',
 #endif
     '.','G','7',
-#if defined(WEBCHAT_HTML)
-    '+','W','E','B','C','H','A','T',
-#endif
     '\0'
 };
 
