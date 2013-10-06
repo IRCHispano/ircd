@@ -583,19 +583,26 @@ static int check_init(aClient *cptr, char *sockn)
     report_error("connect failure: %s %s", cptr);
     return -1;
   }
-  strcpy(sockn, inetntoa(sk.sin_addr));
 
-  if (inet_netof(sk.sin_addr) == IN_LOOPBACKNET)
-  {
-    cptr->hostp = NULL;
-    strncpy(sockn, me.name, HOSTLEN);
+  /* Los WebIRC son especiales */
+  if (IsWebIRC(cptr)) {
+    strncpy(sockn, PunteroACadena(cptr->sockhost), HOSTLEN);
+    get_sockhost(cptr, sockn);
+  } else {
+    strcpy(sockn, inetntoa(sk.sin_addr));
+
+    if (inet_netof(sk.sin_addr) == IN_LOOPBACKNET)
+    {
+      cptr->hostp = NULL;
+      strncpy(sockn, me.name, HOSTLEN);
+    }
+
+    /* Pasamos de sockaddr_in a irc_in_addr */
+    memset(&cptr->ip, 0, sizeof(struct irc_in_addr));
+    cptr->ip.in6_16[5] = htons(65535);
+    cptr->ip.in6_16[6] = htons(ntohl(sk.sin_addr.s_addr) >> 16);
+    cptr->ip.in6_16[7] = htons(ntohl(sk.sin_addr.s_addr) & 65535);
   }
-
-  /* Pasamos de sockaddr_in a irc_in_addr */
-  memset(&cptr->ip, 0, sizeof(struct irc_in_addr));
-  cptr->ip.in6_16[5] = htons(65535);
-  cptr->ip.in6_16[6] = htons(ntohl(sk.sin_addr.s_addr) >> 16);
-  cptr->ip.in6_16[7] = htons(ntohl(sk.sin_addr.s_addr) & 65535);
 
   cptr->port = ntohs(sk.sin_port);
 

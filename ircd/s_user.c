@@ -1755,6 +1755,119 @@ int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[])
 }
 
 /*
+ * m_webirc
+ *
+ * parv[0] = sender prefix
+ * parv[1] = password   (linea W o tabla w)
+ * parv[2] = username   (cgiirc por defecto)
+ * parv[3] = hostname   (Hostname)
+ * parv[4] = IP         (IP en formato humano)
+ */
+int m_webirc(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  struct ConfItem *aconf;
+  char *password;
+
+  if (IsRegistered(sptr))
+    return 0;
+
+  if (IsServer(sptr))
+    return 0;
+
+  if (IsServerPort(sptr))
+    return exit_client(sptr, sptr, &me, "Use a different port");
+
+  if (parc < 5)
+  {
+    sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "USER");
+    return 0;
+  }
+
+  password = parv[1];
+
+  /* Comprobamos las lineas W */
+  aconf = find_conf_exact("*", sptr->username,
+                          sptr->sockhost, CONF_WEBIRC);
+
+  if (!aconf)
+    aconf = find_conf_exact("*", sptr->username,
+                            ircd_ntoa_c(sptr), CONF_WEBIRC);
+  if (aconf)
+  {
+    char *encr;
+    /* Comprobamos pass */
+#if defined(CRYPT_OPER_PASSWORD)
+    /* use first two chars of the password they send in as salt */
+
+    /* passwd may be NULL. Head it off at the pass... */
+    salt[0] = '\0';
+    if (password && aconf->passwd)
+    {
+      salt[0] = aconf->passwd[0];
+      salt[1] = aconf->passwd[1];
+      salt[2] = '\0';
+      encr = crypt(password, salt);
+    }
+    else
+      encr = "";
+#else
+    encr = password;
+#endif /* CRYPT_OPER_PASSWORD */
+
+    if (strcmp(encr, aconf->passwd))
+      return exit_client(sptr, sptr, &me, "WEBIRC Password invalid for your host");
+
+  } else {
+    struct db_reg *reg;
+
+    /* Comprobamos tabla w BDD */
+    reg = db_buscar_registro(BDD_WEBIRCDB, sptr->sockhost);
+    if (!reg)
+      reg = db_buscar_registro(BDD_WEBIRCDB, ircd_ntoa_c(sptr));
+
+    if (!reg)
+      return exit_client(sptr, sptr, &me, "WEBIRC Not authorized from your host");
+
+    if (strcmp(password, reg->valor))
+      return exit_client(sptr, sptr, &me, "WEBIRC Password invalid for your host");
+  }
+
+  /* acceso concedido */
+
+  /* Eliminamos registro de clones */
+  IPcheck_connect_fail(sptr);
+  IPcheck_disconnect(sptr);
+
+  if (strIsIrcIp(parv[4])) {
+    /* Prioridad IPv4 en IP */
+    struct in_addr webirc_addr4;
+
+    inet_aton(parv[4], &webirc_addr4);
+
+    memset(&sptr->ip, 0, sizeof(struct irc_in_addr));
+    sptr->ip.in6_16[5] = htons(65535);
+    sptr->ip.in6_16[6] = htons(ntohl(webirc_addr4.s_addr) >> 16);
+    sptr->ip.in6_16[7] = htons(ntohl(webirc_addr4.s_addr) & 65535);
+  } else {
+    /* IPv6 */
+    struct sockaddr_in6 webirc_addr6;
+
+    inet_pton(AF_INET6, parv[4], &(webirc_addr6.sin6_addr));
+    memcpy(&(sptr->ip), &(webirc_addr6.sin6_addr), sizeof(struct irc_in_addr));
+  }
+
+  /* Volvemos a meter registro de clones con IP nueva */
+  /* OJO, no usamos throttle */
+  IPcheck_local_connect(sptr);
+
+  SlabStringAllocDup(&(sptr->sockhost), parv[3], HOSTLEN);
+  SetWebIRC(sptr);
+
+  return 0;
+}
+
+
+/*
  * m_quit
  *
  * cptr = Quien manda el mensaje de quit
@@ -2192,7 +2305,11 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if(IsCookieEncrypted(sptr))
         return exit_client(cptr, sptr, &me, "Invalid PONG message");
       else
+#if defined(WEBCHAT)
         sendto_one(sptr, ":%s %d %s :To connect, type /QUOTE PONG %s",
+#else
+        sendto_one(sptr, ":%s %d %s :To connect, type /QUOTE PONG %d",
+#endif
             me.name, ERR_BADPING, PunteroACadena(sptr->name), sptr->cookie);
 
     }

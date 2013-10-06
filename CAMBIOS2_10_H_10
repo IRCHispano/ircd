@@ -1,3 +1,32 @@
+* 2013/10/06  zoltan@irc-dev.net (u2.10.H.10.201)                FEATURE
+------------------------------------------------------------------------
+  Implementacion del estandar WEBIRC otientado para los webchats HTML
+  que entran al IRC con la IP del servidor HTTP.
+
+  La sintaxis del comando WEBIRC es:
+
+    WEBIRC <password> <ident> <hostname> <IP>
+
+    password: Contrasena de autorizacion del uso del comando.
+    ident: normalmente cgiirc, se ignora.
+    hostname: host del usuario, en caso de no tenerlo, la IP
+    ip: ip del usuario
+
+  Segun la especificacion, se manda ANTES del USER+NICK+PING inicial.
+
+  Para autorizar el uso del comando se hace con la IP del servidor web y
+  una contrasena, hay dos formas, local mediante linea W y global mediante
+  registro en la tabla w.
+
+   .conf (local)  
+  W:host/IP:password::
+
+   BDD (global)
+  clave: host/IP y contenido el password.
+
+  Se recomienda usar global para que funcione en todos los servidores con
+  puerto 6667.
+    
 * 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.200)                FEATURE
 ------------------------------------------------------------------------
   Se modifica el comportamiento de la tabla o.

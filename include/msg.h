@@ -102,6 +102,11 @@
 #define CLASS_WATCH            LEVEL_QUERY
 #endif
 
+#define MSG_WEBIRC              "WEBIRC"         /* WEBIRC */
+#define TOK_WEBIRC              "WEBIRC"
+#define CLASS_WEBIRC            LEVEL_QUERY
+
+
 
 #define MSG_PRIVATE		"PRIVMSG"	/* PRIV */
 #define TOK_PRIVATE		"P"

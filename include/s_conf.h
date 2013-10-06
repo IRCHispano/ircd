@@ -35,7 +35,7 @@
 #define CONF_TLINES		0x00800000
 #define CONF_IPKILL		0x00010000
 #define CONF_EXCEPTION          0x00020000
-
+#define CONF_WEBIRC             0x00040000
 
 #if defined(ESNET_NEG)
 #define CONF_NEGOTIATION	0x01000000

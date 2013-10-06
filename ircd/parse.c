@@ -136,12 +136,13 @@ aMessage msgtab[] = {
     {CLASS_SVSNICK,      MSG_SVSNICK,     TOK_SVSNICK,     m_svsnick,     0, MAXPARA,   MFLG_SLOW,      0L},
     {CLASS_SVSMODE,      MSG_SVSMODE,     TOK_SVSMODE,     m_svsmode,     0, MAXPARA,   MFLG_SLOW,      0L},
     {CLASS_SVSJOIN,      MSG_SVSJOIN,     TOK_SVSJOIN,     m_svsjoin,     0, MAXPARA,   MFLG_SLOW,      0L},
-    {CLASS_SVSPART,      MSG_SVSPART,     TOK_SVSPART,     m_svspart,     0, MAXPARA,   MFLG_SLOW,      0L},    
+    {CLASS_SVSPART,      MSG_SVSPART,     TOK_SVSPART,     m_svspart,     0, MAXPARA,   MFLG_SLOW,      0L},
     {CLASS_SVSKICK,      MSG_SVSKICK,     TOK_SVSKICK,     m_svskick,     0, MAXPARA,   MFLG_SLOW,      0L},
 
 #if defined(WATCH)
     {CLASS_WATCH,      MSG_WATCH,      TOK_WATCH,      m_watch,        0, 1,   MFLG_SLOW,      0L},
 #endif
+    {CLASS_WEBIRC,     MSG_WEBIRC,     TOK_WEBIRC,     m_webirc,       0, MAXPARA,   MFLG_SLOW|MFLG_UNREG,      0L},
 
     {0, (char *)0, (char *)0, (int (*)(aClient *, aClient *, int, char **))0,	0, 0, 0, 0L}
 }                                                                                                                                   ;

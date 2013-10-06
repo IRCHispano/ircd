@@ -1004,6 +1004,10 @@ int initconf(int opt)
       case 'u':                /* *Every* server on the net must define the same !!! */
         aconf->status = CONF_UWORLD;
         break;
+      case 'W':
+      case 'w':
+      aconf->status = CONF_WEBIRC;
+      break;
       case 'Y':
       case 'y':
         aconf->status = CONF_CLASS;
@@ -1105,6 +1109,32 @@ int initconf(int opt)
         add_listener(aconf);
       }
     }
+
+    /* WebIRC */
+    if (aconf->status & CONF_WEBIRC) {
+      struct ConfItem *bconf;
+
+      if ((bconf = find_conf_entry(aconf, aconf->status))) {
+        delist_conf(bconf);
+        bconf->status &= ~CONF_ILLEGAL;
+        if (aconf->status == CONF_WEBIRC) {
+          /*
+           * copy the password field in case it changed
+           */
+          RunFree(bconf->passwd);
+          bconf->passwd = aconf->passwd;
+          aconf->passwd = 0;
+
+          ConfLinks(bconf) -= bconf->clients;
+          bconf->confClass = aconf->confClass;
+          if (bconf->confClass)
+            ConfLinks(bconf) += bconf->clients;
+        }
+        free_conf(aconf);
+        aconf = bconf;
+      }
+    }
+
     if (aconf->status & CONF_SERVER_MASK)
       if (ncount > MAXCONFLINKS || ccount > MAXCONFLINKS ||
           !aconf->host || strchr(aconf->host, '*') ||
@@ -1345,8 +1375,8 @@ int find_exception(aClient *cptr)
           && (match(reg->valor, PunteroACadena(cptr->user->username)) == 0)))
         return 1;
     }
-  }  
-  
+  }
+
   return 0;
 }
 

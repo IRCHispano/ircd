@@ -245,6 +245,8 @@ extern struct sockaddr_in vserv;
 #define HMODE_USERBITCH               0x00008000  /* Usuario puteado, ni manda ni recibe salvo ciertas condiciones */
 #define HMODE_USERNOJOIN              0x00010000  /* Al intentar entrar a un canal entra siempre a uno de debug */
 
+#define HFLAG_WEBIRC                  0x01000000  /* Usuario WebIRC */
+
 /* Modos hispano  a propagar */
 #define SEND_HMODES \
     (HMODE_NICKREGISTERED | HMODE_HELPOP | HMODE_SERVICESBOT | HMODE_HIDDEN | HMODE_HIDDENVIEWER \
@@ -277,6 +279,7 @@ extern struct sockaddr_in vserv;
 #define IsUserNoJoin(x)         ((x)->hmodes & HMODE_USERNOJOIN)
 
 #define TieneIpVirtualPersonalizada(x)  ((x)->hmodes & HFLAG_IPVIRTUAL_PERSONALIZADA)
+#define IsWebIRC(x)             ((x)->hmodes & HFLAG_WEBIRC)
 
 
 /* Macros para poner modos hispano */
@@ -298,7 +301,7 @@ extern struct sockaddr_in vserv;
 #define SetUserNoJoin(x)        ((x)->hmodes |= HMODE_USERNOJOIN)
 
 #define SetIpVirtualPersonalizada(x)    ((x)->hmodes |= HFLAG_IPVIRTUAL_PERSONALIZADA)
-
+#define SetWebIRC(x)            ((x)->hmodes |= HFLAG_WEBIRC)
 
 /* Macros para borrar modos hispano */
 #define ClearNickRegistered(x)  ((x)->hmodes &= ~HMODE_NICKREGISTERED)

@@ -198,7 +198,7 @@ int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[])
  *       it--not reversed as in ircd.conf!
  */
 
-static unsigned int report_array[18][3] = {
+static unsigned int report_array[19][3] = {
   {CONF_CONNECT_SERVER, RPL_STATSCLINE, 'C'},
   {CONF_CLIENT, RPL_STATSILINE, 'I'},
   {CONF_KILL, RPL_STATSKLINE, 'K'},
@@ -214,6 +214,7 @@ static unsigned int report_array[18][3] = {
   {CONF_LISTEN_PORT, RPL_STATSPLINE, 'P'},
   {CONF_LISTEN_PORT|CONF_COOKIE_ENC, RPL_STATSPLINE, 'P'},
   {CONF_EXCEPTION, RPL_STATSELINE, 'E'},
+  {CONF_WEBIRC, RPL_STATSILINE, 'W'},
 #if defined(ESNET_NEG)
   {CONF_NEGOTIATION, RPL_STATSKLINE, 'F'},
   {CONF_NEGOTIATION, RPL_STATSKLINE, 'f'},
@@ -267,6 +268,9 @@ static void report_configured_links(aClient *sptr, int mask)
       else if ((tmp->status & (CONF_EXCEPTION)))
         sendto_one(sptr, rpl_str(p[1]), me.name, sptr->name, c, host, name,
             port, get_conf_class(tmp));
+      else if ((tmp->status & (CONF_WEBIRC)))
+        sendto_one(sptr, rpl_str(p[1]), me.name, sptr->name, c, host, "*",
+            0, -1);
 #if defined(ESNET_NEG)
       else if ((tmp->status & CONF_NEGOTIATION))
         sendto_one(sptr, rpl_str(p[1]), me.name, sptr->name, c, host, pass,
@@ -812,9 +816,29 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
           max_connection_count, max_client_count);
       break;
     }
-    case 'W':
     case 'w':
       calc_load(sptr);
+      break;
+    case 'W':
+      /* Solo ircops y opers tienen acceso */
+      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
+      report_configured_links(sptr, CONF_WEBIRC);
+      {
+        struct db_reg *reg;
+
+        for (reg = db_iterador_init(BDD_WEBIRCDB); reg;
+            reg = db_iterador_next())
+        {
+          if (!isDigit(*reg->clave))
+            continue;  /* Provisional mientras se use BDD w para vhosts */
+          sendto_one(sptr, rpl_str(RPL_STATSILINE), me.name, sptr->name, 'W',
+              reg->clave, "*", 0, 1);
+        }
+      }
       break;
     case 'X':
     case 'x':
