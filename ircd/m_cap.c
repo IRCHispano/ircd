@@ -1,7 +1,7 @@
 /*
- * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_cap.h
+ * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_cap.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2004 Kevin L. Mitchell <klmitch@mit.edu>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -56,7 +56,11 @@ struct capabilities {
 static struct capabilities capab_list[] = {
 #define _CAP(cap, flags, name) \
 	{ CAP_ ## cap, #cap, (flags), (name), sizeof(name) - 1 }
-  CAPLIST
+  CAPLIST,
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+  CAPWEB,
+#endif
+  CAPZLIB
 #undef _CAP
 };
 

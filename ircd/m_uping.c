@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_uping.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996 Carlo Wood <carlo@runaway.xs4all.nl>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -94,7 +94,7 @@ int ms_uping(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 		  "packets: %s", sptr, parv[4]);
     return 0;
   }
-  /* 
+  /*
    * Check if a CONNECT would be possible at all (adapted from m_connect)
    */
   if ((aconf = conf_find_server(parv[1])))

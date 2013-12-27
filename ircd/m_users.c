@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_users.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2004 Toni Garcia (zoltan) <zoltan@irc-dev.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -56,8 +56,8 @@ int m_users(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     if (hunt_server_cmd(sptr, CMD_USERS, cptr, feature_int(FEAT_HIS_REMOTE),
 			"%s :%C", 2, parc, parv) != HUNTED_ISME)
       return 0;
-
-  send_reply(sptr, RPL_CURRENT_LOCAL, UserStats.local_clients, max_client_count, 
+return 0; //PROVISIONAL
+  send_reply(sptr, RPL_CURRENT_LOCAL, UserStats.local_clients, max_client_count,
              date(max_client_count_TS));
   send_reply(sptr, RPL_CURRENT_GLOBAL, UserStats.clients, max_global_count,
              date(max_global_count_TS));

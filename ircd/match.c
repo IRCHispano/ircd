@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/match.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996 Carlo Wood <carlo@runaway.xs4all.nl>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
@@ -205,6 +205,8 @@ int match(const char *mask, const char *name)
       return 1;
     m = m_tmp;
     n = ++n_tmp;
+    if (*n == '\0')
+      return 1;
     break;
   case '\\':
     m++;
@@ -316,21 +318,21 @@ char *collapse(char *mask)
  * by means of matchcomp() that gets the plain text mask as input and writes
  * its result in the memory locations addressed by the 3 parameters:
  * - *cmask will contain the text of the compiled mask
- * - *minlen will contain the length of the shortest string that can match 
+ * - *minlen will contain the length of the shortest string that can match
  *   the mask
  * - *charset will contain the minimal set of chars needed to match the mask
  * You can pass NULL as *charset and it will be simply not returned, but you
- * MUST pass valid pointers for *minlen and *cmask (which must be big enough 
- * to contain the compiled mask text that is in the worst case as long as the 
- * text of the mask itself in plaintext format) and the return value of 
- * matchcomp() will be the number of chars actually written there (excluded 
+ * MUST pass valid pointers for *minlen and *cmask (which must be big enough
+ * to contain the compiled mask text that is in the worst case as long as the
+ * text of the mask itself in plaintext format) and the return value of
+ * matchcomp() will be the number of chars actually written there (excluded
  * the trailing zero). cmask can be == mask, matchcomp() can work in place.
  * The {cmask, minlen} couple of values make the real compiled mask and
  * need to be passed to the functions that use the compiled mask, if you pass
  * the wrong minlen or something wrong in cmask to one of these expect a
  * coredump. This means that when you record a compiled mask you must store
  * *both* these values.
- * Once compiled the mask can be used to match a string by means of 
+ * Once compiled the mask can be used to match a string by means of
  * matchexec(), it can be printed back to human-readable format by means
  * of sprintmatch() or it can be compared to another compiled mask by means
  * of mmexec() that will tell if it completely overrides that mask (a lot like
@@ -353,7 +355,7 @@ char *collapse(char *mask)
  *   bit is set it means that it contains only wild chars (and you can
  *   match it with strlen(field)>=minlen).
  * Do these optimizations ONLY when the data you are about to pass to
- * matchexec() are *known* to be invalid in advance, using strChattr() 
+ * matchexec() are *known* to be invalid in advance, using strChattr()
  * or strlen() on the text would be slower than calling matchexec() directly
  * and let it fail.
  * Internally a compiled mask contain in the *cmask area the text of
@@ -361,14 +363,14 @@ char *collapse(char *mask)
  * - All characters are forced to lowercase (so that uppercase letters and
  *   specifically the symbols 'A' and 'Z' are reserved for special use)
  * - All non-escaped stars '*' are replaced by the letter 'Z'
- * - All non-escaped question marks '?' are replaced by the letter 'A' 
+ * - All non-escaped question marks '?' are replaced by the letter 'A'
  * - All escape characters are removed, the wilds escaped by them are
  *   then passed by without the escape since they don't collide anymore
- *   with the real wilds (encoded as A/Z) 
+ *   with the real wilds (encoded as A/Z)
  * - Finally the part of the mask that follows the last asterisk is
  *   reversed (byte order mirroring) and moved right after the first
  *   asterisk.
- * After all this a mask like:   Head*CHUNK1*chu\*nK2*ch??k3*TaIl 
+ * After all this a mask like:   Head*CHUNK1*chu\*nK2*ch??k3*TaIl
  *               .... becomes:   headZliatZchunk1Zchu*nk2ZchAAk3
  * This can still be printed on a console, more or less understood by an
  * human and handled with the usual str*() library functions.
@@ -637,11 +639,11 @@ int matchdecomp(char *mask, const char *cmask)
  * a more restrict one (rcm/rminlen), basically what mmatch() does for
  * non-compiled masks, returns 0 if the override is true (like mmatch()).
  * "the wider overrides the restrict" means that any string that matches
- * the restrict one _will_ also match the wider one, always. 
- * In this we behave differently from mmatch() because in example we return 
- * true for " a?*cd overrides a*bcd " for which the override happens for how 
+ * the restrict one _will_ also match the wider one, always.
+ * In this we behave differently from mmatch() because in example we return
+ * true for " a?*cd overrides a*bcd " for which the override happens for how
  * we literally defined it, here mmatch() would have returned false.
- * The original concepts and the base algorithm are copied from mmatch() 
+ * The original concepts and the base algorithm are copied from mmatch()
  * written by Run (Carlo Wood), this function is written by
  * Nemesi (Andrea Cocito)
  */

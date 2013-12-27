@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_topic.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -68,20 +68,21 @@ static void do_settopic(struct Client *sptr, struct Client *cptr,
    ircd_strncpy(chptr->topic_nick, cli_name(from), NICKLEN);
    chptr->topic_time = ts ? ts : TStime();
    /* Fixed in 2.10.11: Don't propagate local topics */
-   if (!IsLocalChannel(chptr->chname)) {
-#if defined(P09_SUPPORT)
-     sendcmdto_lowprot_serv(sptr, 9, CMD_TOPIC, cptr, "%H :%s", chptr,
-                    chptr->topic);
-     sendcmdto_highprot_serv(sptr, 10, CMD_TOPIC, cptr, "%H %Tu %Tu :%s", chptr,
-                    chptr->creationtime, chptr->topic_time, chptr->topic);
-#else
+   if (!IsLocalChannel(chptr->chname))
      sendcmdto_serv(sptr, CMD_TOPIC, cptr, "%H %Tu %Tu :%s", chptr,
                     chptr->creationtime, chptr->topic_time, chptr->topic);
-#endif
-   }
    if (newtopic)
+   {
+     struct Membership *member;
+
+     /* If the member is delayed-join, show them. */
+     member = find_channel_member(sptr, chptr);
+     if (member && IsDelayedJoin(member))
+       RevealDelayedJoin(member);
+
      sendcmdto_channel(from, CMD_TOPIC, chptr, NULL, SKIP_SERVERS,
                        "%H :%s", chptr, chptr->topic);
+   }
       /* if this is the same topic as before we send it to the person that
        * set it (so they knew it went through ok), but don't bother sending
        * it to everyone else on the channel to save bandwidth
@@ -201,6 +202,7 @@ int ms_topic(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     if (parc > 3 && (ts = atoi(parv[2])) && chptr->creationtime < ts)
       continue;
 
+    ts = 0; /* Default to the current time if no topic_time is passed. */
     if (parc > 4 && (ts = atoi(parv[3])) && chptr->topic_time > ts)
       continue;
 

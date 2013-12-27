@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_pong.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -87,10 +87,10 @@ int ms_pong(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     cli_serv(cptr)->asll_last = CurrentTime;
     return 0;
   }
-  
+
   if (EmptyString(destination))
     return 0;
-  
+
   if (*destination == '!')
   {
     /* AsLL ping reply from a non-AsLL server */
@@ -123,7 +123,11 @@ int mr_pong(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   assert(!IsRegistered(sptr));
 
   ClearPingSent(cptr);
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+  return (parc > 1) ? auth_set_pong(cli_auth(sptr), parv[parc - 1]) : 0;
+#else
   return (parc > 1) ? auth_set_pong(cli_auth(sptr), strtoul(parv[parc - 1], NULL, 10)) : 0;
+#endif
 }
 
 /** Handle a PONG message from a normal connection.

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_userip.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996 Carlo Wood <carlo@runaway.xs4all.nl>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -77,6 +77,6 @@ int m_userip(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 
   if (parc < 2)
     return need_more_params(sptr, "USERIP");
-  send_user_info(sptr, parv[1], RPL_USERIP, userip_formatter); 
+  send_user_info(sptr, parv[1], RPL_USERIP, userip_formatter);
   return 0;
 }

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/s_bsd.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,7 @@
 #include "ircd_ssl.h"
 #endif
 #include "ircd_string.h"
+#include "ircd_zlib.h"
 #include "ircd.h"
 #include "list.h"
 #include "listener.h"
@@ -92,33 +93,33 @@ static char               readbuf[SERVER_TCP_WINDOW];
 /*
  * report_error text constants
  */
-static const char* const ACCEPT_ERROR_MSG    
+static const char* const ACCEPT_ERROR_MSG
 				= "error accepting connection for %s: %s";
-       const char* const BIND_ERROR_MSG      
+       const char* const BIND_ERROR_MSG
 				= "bind error for %s: %s";
-static const char* const CONNECT_ERROR_MSG   
+static const char* const CONNECT_ERROR_MSG
 				= "connect to host %s failed: %s";
-       const char* const CONNLIMIT_ERROR_MSG 
+       const char* const CONNLIMIT_ERROR_MSG
 				= "connect limit exceeded for %s: %s";
-       const char* const LISTEN_ERROR_MSG    
+       const char* const LISTEN_ERROR_MSG
 				= "listen error for %s: %s";
-       const char* const NONB_ERROR_MSG      
+       const char* const NONB_ERROR_MSG
 				= "error setting non-blocking for %s: %s";
-static const char* const PEERNAME_ERROR_MSG  
+static const char* const PEERNAME_ERROR_MSG
 				= "getpeername failed for %s: %s";
-static const char* const POLL_ERROR_MSG      
+static const char* const POLL_ERROR_MSG
 				= "poll error for %s: %s";
-static const char* const REGISTER_ERROR_MSG  
+static const char* const REGISTER_ERROR_MSG
 				= "registering %s: %s";
-       const char* const REUSEADDR_ERROR_MSG 
+       const char* const REUSEADDR_ERROR_MSG
 				= "error setting SO_REUSEADDR for %s: %s";
-static const char* const SELECT_ERROR_MSG    
+static const char* const SELECT_ERROR_MSG
 				= "select error for %s: %s";
-       const char* const SETBUFS_ERROR_MSG   
+       const char* const SETBUFS_ERROR_MSG
 				= "error setting buffer size for %s: %s";
-       const char* const SOCKET_ERROR_MSG    
+       const char* const SOCKET_ERROR_MSG
 				= "error creating socket for %s: %s";
-       const char* const TOS_ERROR_MSG	      
+       const char* const TOS_ERROR_MSG
 				= "error setting TOS for %s: %s";
 
 
@@ -130,7 +131,7 @@ static void client_timer_callback(struct Event* ev);
 /* Helper routines */
 static IOResult client_recv(struct Client *cptr, char *buf, unsigned int length, unsigned int* count_out)
 {
-  if (cli_socket(cptr).ssl)
+  if (cli_socket(cptr).s_ssl)
     return ssl_recv(&cli_socket(cptr), buf, length, count_out);
   else
     return os_recv_nonb(cli_fd(cptr), buf, length, count_out);
@@ -138,7 +139,7 @@ static IOResult client_recv(struct Client *cptr, char *buf, unsigned int length,
 
 static IOResult client_sendv(struct Client *cptr, struct MsgQ *buf, unsigned int *count_in, unsigned int *count_out)
 {
-  if (cli_socket(cptr).ssl)
+  if (cli_socket(cptr).s_ssl)
     return ssl_sendv(&cli_socket(cptr), buf, count_in, count_out);
   else
     return os_sendv_nonb(cli_fd(cptr), buf, count_in, count_out);
@@ -168,7 +169,7 @@ void report_error(const char* text, const char* who, int err)
   const char*   errmsg = (err) ? strerror(err) : "";
 
   if (!errmsg)
-    errmsg = "Unknown error"; 
+    errmsg = "Unknown error";
 
   if (EmptyString(who))
     who = "unknown";
@@ -232,7 +233,7 @@ int init_connection_limits(int maxconn)
     return 1;
   }
   if (limit < 0) {
-    fprintf(stderr, "error setting max fd's to %d\n", maxconn);
+    fprintf(stderr, "error setting max fds to %d: %s\n", maxconn, strerror(errno));
   }
   else if (limit > 0) {
     fprintf(stderr, "ircd fd table too big\nHard Limit: %d IRC max: %d\n"
@@ -288,7 +289,7 @@ static int connect_inet(struct ConfItem* aconf, struct Client* cptr)
   /*
    * Set the TOS bits - this is nonfatal if it doesn't stick.
    */
-  if (!os_set_tos(cli_fd(cptr), FEAT_TOS_SERVER)) {
+  if (!os_set_tos(cli_fd(cptr), feature_int(FEAT_TOS_SERVER))) {
     report_error(TOS_ERROR_MSG, cli_name(cptr), errno);
   }
   if ((result = os_connect_nonb(cli_fd(cptr), &aconf->address)) == IO_FAILURE) {
@@ -326,7 +327,11 @@ unsigned int deliver_it(struct Client *cptr, struct MsgQ *buf)
   unsigned int bytes_count = 0;
   assert(0 != cptr);
 
+#if defined(USE_SSL)
+  switch (client_sendv(cptr, buf, &bytes_count, &bytes_written)) {
+#else
   switch (os_sendv_nonb(cli_fd(cptr), buf, &bytes_count, &bytes_written)) {
+#endif
   case IO_SUCCESS:
     ClrFlag(cptr, FLAG_BLOCKED);
 
@@ -358,6 +363,10 @@ static int completed_connection(struct Client* cptr)
   time_t newts;
   struct Client *acptr;
   int i;
+#if defined(USE_SSL)
+  char *sslfp;
+  int r;
+#endif
 
   assert(0 != cptr);
 
@@ -377,6 +386,23 @@ static int completed_connection(struct Client* cptr)
     sendto_opmask(0, SNO_OLDSNO, "Lost Server Line for %s", cli_name(cptr));
     return 0;
   }
+
+#if defined(USE_SSL)
+  if (aconf->flags & CONF_SSL) {
+    r = ssl_connect(&(cli_socket(cptr)));
+    if (r == -1) {
+      sendto_opmask(0, SNO_OLDSNO, "Connection failed to %s: SSL error",
+                    cli_name(cptr));
+      return 0;
+    } else if (r == 0)
+      return 1;
+    sslfp = ssl_get_fingerprint(cli_socket(cptr).s_ssl);
+    if (sslfp)
+      ircd_strncpy(cli_sslclifp(cptr), sslfp, BUFSIZE+1);
+    SetSSL(cptr);
+  }
+#endif
+
   if (s_state(&(cli_socket(cptr))) == SS_CONNECTING)
     socket_state(&(cli_socket(cptr)), SS_CONNECTED);
 
@@ -388,7 +414,7 @@ static int completed_connection(struct Client* cptr)
    */
   newts = TStime();
   for (i = HighestFd; i > -1; --i) {
-    if ((acptr = LocalClientArray[i]) && 
+    if ((acptr = LocalClientArray[i]) &&
         (IsServer(acptr) || IsHandshake(acptr))) {
       if (cli_serv(acptr)->timestamp >= newts)
         newts = cli_serv(acptr)->timestamp + 1;
@@ -404,7 +430,7 @@ static int completed_connection(struct Client* cptr)
   cli_lasttime(cptr) = CurrentTime;
   ClearPingSent(cptr);
 
-/* NEGOCIACION
+/* TODO: NEGOCIACION
   envia_config_req(cptr);
 */
 
@@ -461,17 +487,17 @@ void close_connection(struct Client *cptr)
   else
     ServerStats->is_ni++;
 
-#if defined(USE_ZLIB1)
+#if defined(USE_ZLIB)
   /*
    * Siempre es una conexion nuestra
    */
-  if (cptr->cli_connect->negociacion & ZLIB_ESNET_IN) {
-    inflateEnd(cptr->cli_connect->comp_in);
-    MyFree(cptr->cli_connect->comp_in);
+  if (cli_connect(cptr)->zlib_negociation & ZLIB_IN) {
+    inflateEnd(cli_connect(cptr)->comp_in);
+    MyFree(cli_connect(cptr)->comp_in);
   }
-  if (cptr->cli_connect->negociacion & ZLIB_ESNET_OUT) {
-    deflateEnd(cptr->cli_connect->comp_out);
-    MyFree(cptr->cli_connect->comp_out);
+  if (cli_connect(cptr)->zlib_negociation & ZLIB_OUT) {
+    deflateEnd(cli_connect(cptr)->comp_out);
+    MyFree(cli_connect(cptr)->comp_out);
   }
 #endif
 
@@ -540,6 +566,9 @@ void add_connection(struct Listener* listener, int fd) {
   struct irc_sockaddr addr;
   struct Client      *new_client;
   time_t             next_target = 0;
+#if defined(USE_SSL)
+  char *sslfp;
+#endif
 
   const char* const throttle_message =
          "ERROR :Your host is trying to (re)connect too fast -- throttled\r\n";
@@ -585,9 +614,6 @@ void add_connection(struct Listener* listener, int fd) {
      *
      * If they're throttled, murder them, but tell them why first.
      */
-#if defined(WEBCHAT_HTML)
-    IPcheck_local_connect(&addr.addr, &next_target);
-#else
     if (!IPcheck_local_connect(&addr.addr, &next_target))
     {
       ++ServerStats->is_ref;
@@ -599,7 +625,6 @@ void add_connection(struct Listener* listener, int fd) {
 #endif
       return;
     }
-#endif /* WEBCHAT_HTML */
     new_client = make_client(0, STAT_UNKNOWN_USER);
     SetIPChecked(new_client);
   }
@@ -629,8 +654,12 @@ void add_connection(struct Listener* listener, int fd) {
     return;
   }
 #if defined(USE_SSL)
-  if (ssl)
-    cli_socket(new_client).ssl = ssl;
+  if (ssl) {
+    cli_socket(new_client).s_ssl = ssl;
+    sslfp = ssl_get_fingerprint(ssl);
+    if (sslfp)
+      ircd_strncpy(cli_sslclifp(new_client), sslfp, BUFSIZE+1);
+  }
 #endif
   cli_freeflag(new_client) |= FREEFLAG_SOCKET;
   cli_listener(new_client) = listener;
@@ -674,7 +703,11 @@ static int read_packet(struct Client *cptr, int socket_ready)
   if (socket_ready &&
       !(IsUser(cptr) &&
 	DBufLength(&(cli_recvQ(cptr))) > feature_uint(FEAT_CLIENT_FLOOD))) {
+#if defined(USE_SSL)
+    switch (client_recv(cptr, readbuf, sizeof(readbuf), &length)) {
+#else
     switch (os_recv_nonb(cli_fd(cptr), readbuf, sizeof(readbuf), &length)) {
+#endif
     case IO_SUCCESS:
       if (length)
       {
@@ -716,7 +749,7 @@ static int read_packet(struct Client *cptr, int socket_ready)
          && !IsChannelService(cptr))
       return exit_client(cptr, cptr, &me, "Excess Flood");
 
-    while (DBufLength(&(cli_recvQ(cptr))) && !NoNewLine(cptr) && 
+    while (DBufLength(&(cli_recvQ(cptr))) && !NoNewLine(cptr) &&
            (IsTrusted(cptr) || IsChannelService(cptr) || cli_since(cptr) - CurrentTime < 10))
     {
       dolen = dbuf_getmsg(&(cli_recvQ(cptr)), cli_buffer(cptr), BUFSIZE);
@@ -805,7 +838,7 @@ int connect_server(struct ConfItem* aconf, struct Client* by)
 
   if ((cptr = FindClient(aconf->name))) {
     if (IsServer(cptr) || IsMe(cptr)) {
-      sendto_opmask(0, SNO_OLDSNO, "Server %s already present from %s", 
+      sendto_opmask(0, SNO_OLDSNO, "Server %s already present from %s",
                     aconf->name, cli_name(cli_from(cptr)));
       if (by && IsUser(by) && !MyUser(by)) {
         sendcmdto_one(&me, CMD_NOTICE, by, "%C :Server %s already present "
@@ -965,6 +998,11 @@ static void client_sock_callback(struct Event* ev)
   case ET_ERROR: /* an error occurred */
     fallback = cli_info(cptr);
     cli_error(cptr) = ev_data(ev);
+    /* If the OS told us we have a bad file descriptor, we should
+     * record that for future reference.
+     */
+    if (cli_error(cptr) == EBADF)
+      cli_fd(cptr) = -1;
     if (s_state(&(con_socket(con))) == SS_CONNECTING) {
       completed_connection(cptr);
       /* for some reason, the os_get_sockerr() in completed_connection()

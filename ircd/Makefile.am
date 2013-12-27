@@ -1,6 +1,6 @@
 ## AutoMake Makefile for the IRC-Dev IRC Daemon sources
 ##
-## Copyright (C) 2005-2012 IRC-Dev Development Team <devel@irc-dev.net>
+## Copyright (C) 2005-2014 IRC-Dev Development Team <devel@irc-dev.net>
 ## Copyright (C) 2005 by Kevin L. Mitchell <klmitch@mit.edu>
 ##
 ## This program is free software; you can redistribute it and/or modify
@@ -49,12 +49,13 @@ umkpasswd_SOURCES = \
 nodist_ircd_SOURCES = version.c
 ircd_SOURCES = \
     IPcheck.c \
+    channel.c \
     class.c \
     client.c \
     crule.c \
     dbuf.c \
     destruct_event.c \
-	fileio.c \
+    fileio.c \
     gline.c \
     hash.c \
     ircd.c \
@@ -75,22 +76,25 @@ ircd_SOURCES = \
     ircd_reslib.c \
     ircd_signal.c \
     ircd_snprintf.c \
+    ircd_ssl.c \
     ircd_string.c \
+    ircd_tea.c \
+    ircd_zlib.c \
     jupe.c \
     list.c \
     listener.c \
-    match.c \
-    memdebug.c \
-    motd.c \
-    msgq.c \
     m_admin.c \
     m_asll.c \
     m_away.c \
+    m_burst.c \
     m_cap.c \
+    m_clearmode.c \
     m_close.c \
     m_connect.c \
     m_cprivmsg.c \
+    m_create.c \
     m_defaults.c \
+    m_destruct.c \
     m_desynch.c \
     m_die.c \
     m_endburst.c \
@@ -101,16 +105,22 @@ ircd_SOURCES = \
     m_info.c \
     m_invite.c \
     m_ison.c \
+    m_join.c \
     m_jupe.c \
+    m_kick.c \
     m_kill.c \
     m_links.c \
     m_list.c \
     m_lusers.c \
     m_map.c \
+    m_mode.c \
     m_motd.c \
     m_names.c \
+    m_nick.c \
     m_notice.c \
     m_oper.c \
+    m_opmode.c \
+    m_part.c \
     m_pass.c \
     m_ping.c \
     m_pong.c \
@@ -147,6 +157,12 @@ ircd_SOURCES = \
     m_who.c \
     m_whois.c \
     m_whowas.c \
+    m_xquery.c \
+    m_xreply.c \
+    match.c \
+    memdebug.c \
+    motd.c \
+    msgq.c \
     numnicks.c \
     opercmds.c \
     os_generic.c \
@@ -169,65 +185,44 @@ ircd_SOURCES = \
     userload.c \
     watch.c \
     whowas.c
-#ircd_SOURCES = \
-#	channel.c \
-#	m_burst.c \
-#	m_clearmode.c \
-#	m_create.c \
-#	m_destruct.c \
-#	m_desynch.c \
-#	m_join.c \
-#	m_kick.c \
-#	m_mode.c \
-#	m_names.c \
-#	m_nick.c \
-#	m_opmode.c \
-#	m_part.c \
-#	ssl.c \
+
 if PCRE_MATCH
 ircd_SOURCES += \
-	pcre_match.c
+    pcre_match.c
+endif
 	
 if WEBCHAT_FLASH_DEPRECATED
 ircd_SOURCES += \
-   aes.c \
-   cookies.c
+    aes.c
 endif
-
 
 if ENVIRONMENT_UNDERNET
 ircd_SOURCES += \
-	m_account.c
+    m_account.c
 endif
 
 if ENVIRONMENT_DDB
 ircd_SOURCES += \
-	ddb.c \
+    ddb.c \
     ddb_events.c \
-	ircd_tea.c \
+    m_bmode.c \
     m_db.c \
     m_dbq.c \
-	m_ghost.c \
-	m_svsnick.c \
-    persistent_malloc.c \
-    m_config.c
+    m_ghost.c \
+    m_svsnick.c \
+    m_svsmode.c \
+    m_svsjoin.c \
+    m_svskick.c \
+    m_svspart.c \
+    persistent_malloc.c
 endif
-
-#   ddb_db_native.c \
-#    ddb_db_mmap.c \
-  #  m_bmode.c \
-   # m_db.c \
-   # m_dbq.c \
-   # m_svsjoin.c \
- #    m_svsmode.c \
-   # m_svspart.c
-
 
 if ENVIRONMENT_SERVICES
 ircd_SOURCES += \
     m_svsnick.c \
     m_svsmode.c \
     m_svsjoin.c \
+    m_svskick.c \
     m_svspart.c
 endif
 

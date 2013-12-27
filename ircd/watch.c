@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/watch.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2002 Toni Garcia (zoltan) <zoltan@irc-dev.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -145,7 +145,7 @@ void check_status_watch(struct Client *cptr, int raw)
   {
     send_reply(lp->value.cptr, raw, cli_name(cptr),
 	IsUser(cptr) ? cli_user(cptr)->username : "<N/A>",
-	IsUser(cptr) ? 
+	IsUser(cptr) ?
  	  (HasHiddenHost(cptr) && !IsViewHiddenHost(lp->value.cptr) ?
 	  cli_user(cptr)->host : cli_user(cptr)->realhost)
 	: "<N/A>",

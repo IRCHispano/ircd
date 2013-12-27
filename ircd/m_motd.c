@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_motd.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,7 @@
  *
  * modified 30 mar 1995 by flux (cmlambertus@ucdavis.edu)
  * T line patch - display motd based on hostmask
- * modified again 7 sep 97 by Ghostwolf with code and ideas 
+ * modified again 7 sep 97 by Ghostwolf with code and ideas
  * stolen from comstud & Xorath.  All motd files are read into
  * memory in read_motd() in s_conf.c
  *
@@ -79,7 +79,7 @@ int m_motd(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
  *
  * modified 30 mar 1995 by flux (cmlambertus@ucdavis.edu)
  * T line patch - display motd based on hostmask
- * modified again 7 sep 97 by Ghostwolf with code and ideas 
+ * modified again 7 sep 97 by Ghostwolf with code and ideas
  * stolen from comstud & Xorath.  All motd files are read into
  * memory in read_motd() in s_conf.c
  *

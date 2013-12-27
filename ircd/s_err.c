@@ -2,7 +2,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/s_err.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1992 Darren Reed
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1032,7 +1032,7 @@ static Numeric replyTable[] = {
 /* 487 */
   { 0 },
 /* 488 */
-  { 0 },
+  { ERR_NOSSL, "%s :Cannot join channel (+z)", "488" },
 /* 489 */
   { ERR_VOICENEEDED, "%s :You're neither voiced nor channel operator", "489" },
 /* 490 */
@@ -1092,7 +1092,7 @@ static Numeric replyTable[] = {
 /* 517 */
   { ERR_DISABLED, "%s :Command disabled.", "517" },
 /* 518 */
-  { ERR_LONGMASK, " :Mask is too long", "518" },
+  { ERR_LONGMASK, ":Mask is too long", "518" },
 /* 519 */
   { ERR_TOOMANYUSERS, "%d :Too many users affected by mask", "519" },
 /* 520 */
@@ -1106,7 +1106,7 @@ static Numeric replyTable[] = {
 /* 524 */
   { ERR_QUARANTINED, "%s :Channel is quarantined : %s", "524" },
 /* 525 */
-  { 0 },
+  { ERR_INVALIDKEY, "%s :Key is not well-formed", "525" },
 /* 526 */
   { 0 },
 /* 527 */
@@ -1119,8 +1119,13 @@ static Numeric replyTable[] = {
   { 0 },
 /* 531 */
   { 0 },
+#if defined(USE_SSL)
+/* 532 */
+  { ERR_SSLCLIFP, ":SSL certificate fingerprint did not match", "532" },
+#else
 /* 532 */
   { 0 },
+#endif
 /* 533 */
   { 0 },
 /* 534 */

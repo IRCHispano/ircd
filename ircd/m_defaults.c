@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_defaults.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2000 Kevin L. Mitchell <klmitch@mit.edu>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
  *
  */
 /** @file
- * @brief 
+ * @brief
  * @version $Id: m_defaults.c,v 1.7 2007-09-20 21:00:32 zolty Exp $
  */
 #include "config.h"

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_endburst.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996 Carlo Wood <carlo@runaway.xs4all.nl>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -66,12 +66,7 @@ int ms_end_of_burst(struct Client* cptr, struct Client* sptr, int parc, char* pa
   assert(0 != sptr);
 
   sendto_opmask(0, SNO_NETWORK, "Completed net.burst from %C.", sptr);
-#if defined(P09_SUPPORT)
-  /* Only P10 */
-  sendcmdto_highprot_serv(sptr, 10, CMD_END_OF_BURST, cptr, "");
-#else
   sendcmdto_serv(sptr, CMD_END_OF_BURST, cptr, "");
-#endif
   ClearBurst(sptr);
   SetBurstAck(sptr);
   if (MyConnect(sptr))
@@ -115,12 +110,7 @@ int ms_end_of_burst_ack(struct Client *cptr, struct Client *sptr, int parc, char
     return 0;
 
   sendto_opmask(0, SNO_NETWORK, "%C acknowledged end of net.burst.", sptr);
-#if defined(P09_SUPPORT)
-  /* Only P10 */
-  sendcmdto_highprot_serv(sptr, 10, CMD_END_OF_BURST_ACK, cptr, "");
-#else
   sendcmdto_serv(sptr, CMD_END_OF_BURST_ACK, cptr, "");
-#endif
   ClearBurstAck(sptr);
 
   return 0;

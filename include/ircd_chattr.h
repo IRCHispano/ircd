@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/ircd_chattr.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1998 Andrea Cocito
  *
  * This program is free software; you can redistribute it and/or modify
@@ -71,6 +71,9 @@
 #define NTL_KTIME  0x20000  /**< Valid character for a k:line time   */
 #define NTL_CHPFX  0x40000  /**< channel prefix char # & +           */
 #define NTL_IRCIP6 0x80000  /**< Numeric IPv6 character (hex or colon) */
+#define NTL_LOWER_HISPANO 0x100000 /**< abcdefghijklmnopqrstuvwxyz   */
+#define NTL_UPPER_HISPANO 0x200000 /**< ABCDEFGHIJKLMNOPQRSTUVWXYZ   */
+#define NTL_IRCNK_HISPANO 0x400000 /**< Nick names charset, aka isvalid() */
 
 /*
  * Tables used for translation and classification macros
@@ -137,5 +140,7 @@ extern const unsigned int  IRCD_CharAttrTab[];
 #define IsEol(c)           (IRCD_CharAttrTab[(c) - CHAR_MIN] & NTL_EOL)
 /** Test whether a character is valid in a K: line expiration string. */
 #define IsKTimeChar(c)     (IRCD_CharAttrTab[(c) - CHAR_MIN] & NTL_KTIME)
+/** Test whether a character is valid in a Hispano nickname. */
+#define IsNickCharHispano(c) (IRCD_CharAttrTab[(c) - CHAR_MIN] & NTL_IRCNK_HISPANO)
 
 #endif /* INCLUDED_ircd_chattr_h */

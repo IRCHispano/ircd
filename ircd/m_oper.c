@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_oper.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -66,8 +66,8 @@ int oper_password_match(const char* to_match, const char* passwd)
   if (!to_match || !passwd)
     return 0;
 
-  /* we no longer do a CRYPT_OPER_PASSWORD check because a clear 
-     text passwords just handled by a fallback mechanism called 
+  /* we no longer do a CRYPT_OPER_PASSWORD check because a clear
+     text passwords just handled by a fallback mechanism called
      crypt_clear if it's enabled -- hikari */
   crypted = ircd_crypt(to_match, passwd);
 
@@ -121,7 +121,7 @@ int m_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   /* Clase por /OPER */
   if (class)
   {
-      
+
 
   }
 
@@ -148,7 +148,7 @@ int m_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     SetFlag(sptr, FLAG_WALLOP);
     SetFlag(sptr, FLAG_SERVNOTICE);
     SetFlag(sptr, FLAG_DEBUG);
-    
+
     set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
     cli_max_sendq(sptr) = 0; /* Get the sendq from the oper's class */
     send_umode_out(cptr, sptr, &old_mode, HasPriv(sptr, PRIV_PROPAGATE),
@@ -194,12 +194,7 @@ int ms_oper(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   {
     ++UserStats.opers;
     SetFlag(sptr, FLAG_OPER);
-#if defined(P09_SUPPORT)
-    sendcmdto_lowprot_serv(sptr, 9, CMD_MODE, cptr, "%s :+o", parv[0]);
-    sendcmdto_highprot_serv(sptr, 10, CMD_MODE, cptr, "%s :+o", parv[0]);
-#else
     sendcmdto_serv(sptr, CMD_MODE, cptr, "%s :+o", parv[0]);
-#endif
   }
   return 0;
 }

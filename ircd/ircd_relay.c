@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_relay.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -69,6 +69,54 @@
 #include <string.h>
 
 /*
+ * Elimino colores mIRC de un mensaje, adaptado de strip_color2 de xchat
+ *
+ * -- FreeMind 2009/02/16
+ */
+static void strip_color(const char *src, int maxlength, char *dst)
+{
+  int rcol = 0, bgcol = 0;
+  char *start = dst;
+  int pos=0;
+
+  while (*src && pos<(maxlength - 1))
+    {
+      if (rcol > 0 && (isdigit ((unsigned char)*src) ||
+          (*src == ',' && isdigit ((unsigned char)src[1]) && !bgcol)))
+        {
+          if (src[1] != ',') rcol--;
+          if (*src == ',')
+            {
+              rcol = 2;
+              bgcol = 1;
+            }
+        } else
+          {
+            rcol = bgcol = 0;
+            switch (*src)
+            {
+            case '\003':
+              rcol = 2;
+            case '\010':
+            case '\007':
+            case '\017':
+            case '\026':
+            case '\002':
+            case '\037':
+            case '\035':
+              break;
+            default:
+              pass_char:
+              *dst++ = *src;
+            }
+          }
+      src++;
+      pos++;
+    }
+  *dst = 0;
+}
+
+/*
  * This file contains message relaying functions for client and server
  * private messages and notices
  * TODO: This file contains a lot of cut and paste code, and needs
@@ -97,7 +145,7 @@ void relay_channel_message(struct Client* sptr, const char* name, const char* te
   /*
    * This first: Almost never a server/service
    */
-  if (!client_can_send_to_channel(sptr, chptr, 1)) {
+  if (!client_can_send_to_channel(sptr, chptr, 0)) {
     send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
     return;
   }
@@ -105,23 +153,52 @@ void relay_channel_message(struct Client* sptr, const char* name, const char* te
       check_target_limit(sptr, chptr, chptr->chname, 0))
     return;
 
-  /* +cC checks */
+#if 0
   if (chptr->mode.mode & MODE_NOCOLOUR)
-    for (ch=text;*ch;ch++)
-      if (*ch==2 || *ch==3 || *ch==22 || *ch==27 || *ch==31) {
+    for (ch = text; *ch; ch++)
+      if (*ch == 2 || *ch == 3 || *ch == 22 || *ch == 27 || *ch == 31) {
         send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
         return;
       }
+#endif
 
-  if ((chptr->mode.mode & MODE_NOCTCP) && ircd_strncmp(text,"\001ACTION ",8))
-    for (ch=text;*ch;)
-      if (*ch++==1) {
-        send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
-        return;
-      }
+  if ((chptr->mode.mode & MODE_NOCTCP)
+       && (*text == 1) && ircd_strncmp(text, "\001ACTION ", 8)
+       && !IsChannelService(sptr)) {
+    send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
+    return;
+  }
 
-  sendcmdto_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
-                    SKIP_DEAF | SKIP_BURST, "%H :%s", chptr, text);
+#if defined(DDB) || defined(SERVICES)
+  if (IsUserBitch(sptr))
+    return;
+#endif
+
+  RevealDelayedJoinIfNeeded(sptr, chptr);
+  if (chptr->mode.mode & MODE_NOCOLOUR) {
+    char buffer_nocolor[1024];
+
+    /* Calcula el color solo una vez */
+    strip_color(text, sizeof(buffer_nocolor), buffer_nocolor);
+
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+    sendcmdto_web_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
+                          SKIP_DEAF | SKIP_BURST | SKIP_COLOUR, "%s%s%s", sptr->webnumeric, chptr->webnumeric, text);
+    sendcmdto_web_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
+                          SKIP_DEAF | SKIP_BURST | SKIP_NOCOLOUR, "%s%s%s", sptr->webnumeric, chptr->webnumeric, buffer_nocolor);
+#endif
+    sendcmdto_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
+                      SKIP_DEAF | SKIP_BURST | SKIP_COLOUR, "%H :%s", chptr, text);
+    sendcmdto_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
+                      SKIP_DEAF | SKIP_BURST | SKIP_NOCOLOUR, "%H :%s", chptr, buffer_nocolor);
+  } else {
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+    sendcmdto_web_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
+                          SKIP_DEAF | SKIP_BURST, "%s%s%s", sptr->webnumeric, chptr->webnumeric, text);
+#endif
+    sendcmdto_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
+                      SKIP_DEAF | SKIP_BURST, "%H :%s", chptr, text);
+  }
 }
 
 /** Relay a local user's notice to a channel.
@@ -138,34 +215,73 @@ void relay_channel_notice(struct Client* sptr, const char* name, const char* tex
   assert(0 != name);
   assert(0 != text);
 
-  if (0 == (chptr = FindChannel(name)))
+  if (0 == (chptr = FindChannel(name))) {
+    send_reply(sptr, ERR_NOSUCHCHANNEL, name);
     return;
+  }
   /*
    * This first: Almost never a server/service
    */
-  if (!client_can_send_to_channel(sptr, chptr, 1))
+  if (!client_can_send_to_channel(sptr, chptr, 0)) {
+    send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
     return;
+  }
 
   if ((chptr->mode.mode & MODE_NOPRIVMSGS) &&
       check_target_limit(sptr, chptr, chptr->chname, 0))
     return;
 
-  if ((chptr->mode.mode & MODE_NONOTICE))
+  if ((chptr->mode.mode & MODE_NONOTICE) && !IsChannelService(sptr)) {
+    send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
     return;
+  }
 
-  /* +cC checks */
+#if 0
   if (chptr->mode.mode & MODE_NOCOLOUR)
-    for (ch=text;*ch;ch++)
-      if (*ch==2 || *ch==3 || *ch==22 || *ch==27 || *ch==31)
+    for (ch = text; *ch; ch++)
+      if (*ch == 2 || *ch == 3 || *ch == 22 || *ch == 27 || *ch == 31) {
+        send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
         return;
+      }
+#endif
 
-  if (chptr->mode.mode & MODE_NOCTCP)
-    for (ch=text;*ch;)
-      if (*ch++==1)
-        return;
+  if ((chptr->mode.mode & MODE_NOCTCP)
+       && (*text == 1) && ircd_strncmp(text, "\001ACTION ", 8)
+       && !IsChannelService(sptr)) {
+    send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
+    return;
+  }
 
-  sendcmdto_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
-                    SKIP_DEAF | SKIP_BURST, "%H :%s", chptr, text);
+#if defined(DDB) || defined(SERVICES)
+  if (IsUserBitch(sptr))
+    return;
+#endif
+
+  RevealDelayedJoinIfNeeded(sptr, chptr);
+  if (chptr->mode.mode & MODE_NOCOLOUR) {
+    char buffer_nocolor[1024];
+
+    /* Calcula el color solo una vez */
+    strip_color(text, sizeof(buffer_nocolor), buffer_nocolor);
+
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+    sendcmdto_web_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
+                          SKIP_DEAF | SKIP_BURST | SKIP_COLOUR, "%s%s%s", sptr->webnumeric, chptr->webnumeric, text);
+    sendcmdto_web_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
+                          SKIP_DEAF | SKIP_BURST | SKIP_NOCOLOUR, "%s%s%s", sptr->webnumeric, chptr->webnumeric, buffer_nocolor);
+#endif
+    sendcmdto_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
+                      SKIP_DEAF | SKIP_BURST | SKIP_COLOUR, "%H :%s", chptr, text);
+    sendcmdto_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
+                      SKIP_DEAF | SKIP_BURST | SKIP_NOCOLOUR, "%H :%s", chptr, buffer_nocolor);
+  } else {
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+    sendcmdto_web_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
+                          SKIP_DEAF | SKIP_BURST, "%s%s%s", sptr->webnumeric, chptr->webnumeric, text);
+#endif
+    sendcmdto_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
+                      SKIP_DEAF | SKIP_BURST, "%H :%s", chptr, text);
+  }
 }
 
 /** Relay a message to a channel.
@@ -268,7 +384,7 @@ void relay_directed_message(struct Client* sptr, char* name, char* server, const
   /* As reported by Vampire-, it's possible to brute force finding users
    * by sending a message to each server and see which one succeeded.
    * This means we have to remove error reporting.  Sigh.  Better than
-   * removing the ability to send directed messages to client servers 
+   * removing the ability to send directed messages to client servers
    * Thanks for the suggestion Vampire=.  -- Isomer 2001-08-28
    * Argh, /ping nick@server, disallow messages to non +k clients :/  I hate
    * this. -- Isomer 2001-09-16
@@ -364,15 +480,26 @@ void relay_private_message(struct Client* sptr, const char* name, const char* te
     return;
   }
   if ((!IsChannelService(acptr) &&
-       check_target_limit(sptr, acptr, cli_name(acptr), 0)) ||
-      is_silenced(sptr, acptr))
+       check_target_limit(sptr, acptr, cli_name(acptr), 0)))
     return;
 
-#if defined(DDB) || defined(SERVICES)
+#if defined(UNDERNET)
+  if (IsMsgOnlyReg(acptr) && !IsAccount(sptr) && !IsAnOper(sptr)) {
+#elif defined(DDB) || defined(SERVICES)
   if (IsMsgOnlyReg(acptr) && !IsNickRegistered(sptr) && !IsAnOper(sptr)) {
+#endif
     send_reply(sptr, ERR_NONONREG, cli_name(acptr));
     return;
   }
+
+  if (is_silenced(sptr, acptr)) {
+    send_reply(sptr, ERR_ISSILENCING, cli_name(acptr));
+    return;
+  }
+
+#if defined(DDB) || defined(SERVICES)
+  if ((IsUserBitch(acptr) || IsUserBitch(sptr)) && irc_in_addr_cmp(&cli_ip(sptr), &cli_ip(acptr)) && !IsAnOper(sptr))
+    return;
 #endif
 
   /*
@@ -404,15 +531,31 @@ void relay_private_notice(struct Client* sptr, const char* name, const char* tex
   assert(0 != name);
   assert(0 != text);
 
-  if (0 == (acptr = FindUser(name)))
+  if (0 == (acptr = FindUser(name))) {
+    send_reply(sptr, ERR_NOSUCHNICK, name);
     return;
-  if ((!IsChannelService(acptr) && 
-       check_target_limit(sptr, acptr, cli_name(acptr), 0)) ||
-      is_silenced(sptr, acptr))
+  }
+
+  if ((!IsChannelService(acptr) &&
+       check_target_limit(sptr, acptr, cli_name(acptr), 0)))
     return;
 
+#if defined(UNDERNET)
+  if (IsMsgOnlyReg(acptr) && !IsAccount(sptr) && !IsAnOper(sptr)) {
+#elif defined(DDB) || defined(SERVICES)
+  if (IsMsgOnlyReg(acptr) && !IsNickRegistered(sptr) && !IsAnOper(sptr)) {
+#endif
+    send_reply(sptr, ERR_NONONREG, cli_name(acptr));
+    return;
+  }
+
+  if (is_silenced(sptr, acptr)) {
+    send_reply(sptr, ERR_ISSILENCING, cli_name(acptr));
+    return;
+  }
+
 #if defined(DDB) || defined(SERVICES)
-  if (IsMsgOnlyReg(acptr) && !IsNickRegistered(sptr) && !IsAnOper(sptr))
+  if ((IsUserBitch(acptr) || IsUserBitch(sptr)) && irc_in_addr_cmp(&cli_ip(sptr), &cli_ip(acptr)) && !IsAnOper(sptr))
     return;
 #endif
 
@@ -422,6 +565,11 @@ void relay_private_notice(struct Client* sptr, const char* name, const char* tex
   if (MyUser(acptr))
     add_target(acptr, sptr);
 
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+  if (MyUser(acptr))
+      sendcmdto_one(sptr, CMD_PRIVATE, acptr, "%C :%s", acptr, text);
+  else
+#endif
   sendcmdto_one(sptr, CMD_NOTICE, acptr, "%C :%s", acptr, text);
 }
 
@@ -446,8 +594,11 @@ void server_relay_private_message(struct Client* sptr, const char* name, const c
                text);
     return;
   }
-  if (is_silenced(sptr, acptr))
+
+  if (is_silenced(sptr, acptr)) {
+    send_reply(sptr, ERR_ISSILENCING, cli_name(acptr));
     return;
+  }
 
   if (MyUser(acptr))
     add_target(acptr, sptr);
@@ -471,15 +622,26 @@ void server_relay_private_notice(struct Client* sptr, const char* name, const ch
   /*
    * nickname addressed?
    */
-  if (0 == (acptr = findNUser(name)) || !IsUser(acptr))
+  if (0 == (acptr = findNUser(name)) || !IsUser(acptr)) {
+    send_reply(sptr, SND_EXPLICIT | ERR_NOSUCHNICK, "* :Target left %s. "
+               "Failed to deliver: [%.20s]", feature_str(FEAT_NETWORK),
+               text);
     return;
+  }
 
-  if (is_silenced(sptr, acptr))
+  if (is_silenced(sptr, acptr)) {
+    send_reply(sptr, ERR_ISSILENCING, cli_name(acptr));
     return;
+  }
 
   if (MyUser(acptr))
     add_target(acptr, sptr);
 
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+  if (MyUser(acptr))
+      sendcmdto_one(sptr, CMD_PRIVATE, acptr, "%C :%s", acptr, text);
+  else
+#endif
   sendcmdto_one(sptr, CMD_NOTICE, acptr, "%C :%s", acptr, text);
 }
 

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/send.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -84,18 +84,6 @@ extern void sendcmdto_serv(struct Client *from, const char *cmd,
                            const char *tok, struct Client *one,
                            const char *pattern, ...);
 
-#if defined(P09_SUPPORT)
-/* Send command to all P09 servers except one */
-extern void sendcmdto_lowprot_serv(struct Client *from, int p, const char *cmd,
-                           const char *tok, struct Client *one,
-                           const char *pattern, ...);
-
-/* Send command to all P10 servers except one */
-extern void sendcmdto_highprot_serv(struct Client *from, int p, const char *cmd,
-                           const char *tok, struct Client *one,
-                           const char *pattern, ...);
-#endif
-
 /* Send command to all channels user is on */
 extern void sendcmdto_common_channels(struct Client *from,
                                       const char *cmd,
@@ -105,13 +93,10 @@ extern void sendcmdto_common_channels(struct Client *from,
 
 #if defined(DDB)
 /* Send bot command to all channel users on this server */
-extern void sendcmdbotto_channel_butserv(const char *botmode,
-                                         const char *cmd,
-                                         const char *tok,
-                                         struct Channel *to,
-                                         struct Client *one,
-                                         unsigned int skip,
-                                         const char *pattern, ...);
+extern void sendcmdbotto_channel(const char *botmode, const char *cmd,
+                                 const char *tok, struct Channel *to,
+                                 struct Client *one, unsigned int skip,
+                                 const char *pattern, ...);
 #endif
 
 /* Send command to all interested channel users */
@@ -120,12 +105,23 @@ extern void sendcmdto_channel(struct Client *from, const char *cmd,
                               struct Client *one, unsigned int skip,
                               const char *pattern, ...);
 
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+/* Send command to all web channel users */
+extern void sendcmdto_web_channel(struct Client *from, const char *cmd,
+                                  const char *tok, struct Channel *to,
+                                  struct Client *one, unsigned int skip,
+                                  const char *pattern, ...);
+#endif
+
+
 #define SKIP_DEAF   0x01    /**< skip users that are +d */
 #define SKIP_BURST  0x02    /**< skip users that are bursting */
 #define SKIP_NONOPS 0x04    /**< skip users that aren't chanops */
 #define SKIP_NONVOICES  0x08    /**< skip users that aren't voiced (includes
                                    chanops) */
 #define SKIP_SERVERS    0x10    /**< skip server links */
+#define SKIP_COLOUR     0x20    /**< skip users for text with colour */
+#define SKIP_NOCOLOUR   0x40    /**< skip users for text without colour */
 
 /* Send command to all users having a particular flag set */
 extern void sendwallto_group(struct Client *from, int type,
@@ -153,89 +149,5 @@ extern void sendto_opmask_ratelimited(struct Client *one,
 
 /* Send server notice to all local users */
 extern void sendto_lusers(const char *pattern, ...);
-
-
-
-
-/** PROVISIONAL **/
-/*=============================================================================
- * Macros
- */
-
-#define LastDeadComment(cptr) (PunteroACadena((cptr)->info))
-
-/*=============================================================================
- * Proto types
- */
-
-extern void sendto_one(struct Client *to, char *pattern, ...)
-    __attribute__ ((format(printf, 2, 3)));
-extern void sendto_one_hunt(struct Client *to, struct Client *from, char *cmd,
-    char *token, const char *pattern, ...)
-    __attribute__ ((format(printf, 5, 6))); 
-extern void sendbufto_one(struct Client *to);
-extern void sendto_ops(const char *pattern, ...)
-    __attribute__ ((format(printf, 1, 2)));
-extern void sendto_channel_butserv(struct Channel *chptr, struct Client *from,
-    char *pattern, ...) __attribute__ ((format(printf, 3, 4)));
-extern void sendto_serv_butone(struct Client *one, char *pattern, ...)
-    __attribute__ ((format(printf, 2, 3)));
-extern void sendto_match_servs(struct Channel *chptr, struct Client *from,
-    char *format, ...) __attribute__ ((format(printf, 3, 4)));
-extern void sendto_lowprot_butone(struct Client *cptr, int p, char *pattern, ...)
-    __attribute__ ((format(printf, 3, 4)));
-extern void sendto_highprot_butone(struct Client *cptr, int p, char *pattern, ...)
-    __attribute__ ((format(printf, 3, 4)));
-extern void sendto_prefix_one(struct Client *to, struct Client *from,
-    char *pattern, ...) __attribute__ ((format(printf, 3, 4)));
-extern void send_queued(struct Client *to);
-extern void vsendto_one(struct Client *to, char *pattern, va_list vl);
-extern void sendto_channel_butone(struct Client *one, struct Client *from,
-    struct Channel *chptr, char *pattern, ...) __attribute__ ((format(printf, 4, 5)));
-extern void sendto_channel_color_butone(struct Client *one, struct Client *from,
-    struct Channel *chptr, char *pattern, ...) __attribute__ ((format(printf, 4, 5)));
-extern void sendto_channel_nocolor_butone(struct Client *one, struct Client *from,
-    struct Channel *chptr, char *pattern, ...) __attribute__ ((format(printf, 4, 5)));
-extern void sendto_lchanops_butone(struct Client *one, struct Client *from,
-    struct Channel *chptr, char *pattern, ...) __attribute__ ((format(printf, 4, 5)));
-extern void sendto_chanopsserv_butone(struct Client *one, struct Client *from,
-    struct Channel *chptr, char *pattern, ...) __attribute__ ((format(printf, 4, 5)));
-extern void sendto_common_channels(struct Client *user, char *pattern, ...)
-    __attribute__ ((format(printf, 2, 3)));
-extern void sendto_match_butone(struct Client *one, struct Client *from, char *mask,
-    int what, ...);
-extern void sendto_lops_butone(struct Client *one, char *pattern, ...)
-    __attribute__ ((format(printf, 2, 3)));
-extern void vsendto_ops(const char *pattern, va_list vl);
-extern void sendto_ops_butone(struct Client *one, struct Client *from, char *pattern, ...)
-    __attribute__ ((format(printf, 3, 4)));
-extern void sendto_ops_helpers_butone(struct Client *one, struct Client *from,
-    char *pattern, ...) __attribute__ ((format(printf, 3, 4)));
-extern void sendto_g_serv_butone(struct Client *one, char *pattern,
-    ...) __attribute__ ((format(printf, 2, 3)));
-extern void sendto_realops(const char *pattern,
-    ...) __attribute__ ((format(printf, 1, 2)));
-extern void vsendto_op_mask(unsigned int mask, const char *pattern,
-    va_list vl);
-extern void sendto_op_mask(unsigned int mask, const char *pattern,
-    ...) __attribute__ ((format(printf, 2, 3)));
-extern void sendbufto_op_mask(unsigned int mask);
-extern void sendbufto_serv_butone(struct Client *one);
-//extern void sendcmdto_one(struct Client *to, struct Client *from, char *cmd, char *token, const char *pattern, ...);
-
-#if defined(ESNET_NEG)
-extern void sendto_channel_tok_butone(struct Client *one, struct Client *from, struct Channel *chptr,  char *pattern, ...);
-extern void sendto_channel_notok_butone(struct Client *one, struct Client *from, struct Channel *chptr,  char *pattern, ...);
-extern void sendto_channel_tok_color_butone(struct Client *one, struct Client *from, struct Channel *chptr,  char *pattern, ...);
-extern void sendto_channel_notok_color_butone(struct Client *one, struct Client *from, struct Channel *chptr,  char *pattern, ...);
-extern void sendto_channel_tok_nocolor_butone(struct Client *one, struct Client *from, struct Channel *chptr,  char *pattern, ...);
-extern void sendto_channel_notok_nocolor_butone(struct Client *one, struct Client *from, struct Channel *chptr,  char *pattern, ...);
-extern void sendto_common_tok_channels(struct Client *acptr, char *pattern, ...);
-extern void sendto_common_notok_channels(struct Client *acptr, char *pattern, ...);
-extern void sendto_channel_tok_butserv(struct Channel *chptr, struct Client *from, char *pattern, ...);
-extern void sendto_channel_notok_butserv(struct Channel *chptr, struct Client *from, char *pattern, ...);
-#endif
-
-extern char sendbuf[2048];
 
 #endif /* INCLUDED_send_h */

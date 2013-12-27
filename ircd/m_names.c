@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_names.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -56,16 +56,16 @@
  * @param[in] filter Selector for list contents, as above.
  */
 void do_names(struct Client* sptr, struct Channel* chptr, int filter)
-{ 
+{
   int mlen;
   int idx;
   int flag;
-  int needs_space; 
-  int len; 
+  int needs_space;
+  int len;
   char buf[BUFSIZE];
   struct Client *c2ptr;
   struct Membership* member;
-  
+
   assert(chptr);
   assert(sptr);
   assert((filter&NAMES_ALL) != (filter&NAMES_VIS));
@@ -77,7 +77,7 @@ void do_names(struct Client* sptr, struct Channel* chptr, int filter)
     *buf = '=';
   else if (SecretChannel(chptr))
     *buf = '@';
- 
+
   len = strlen(chptr->chname);
   strcpy(buf + 2, chptr->chname);
   strcpy(buf + 2 + len, " :");
@@ -92,7 +92,7 @@ void do_names(struct Client* sptr, struct Channel* chptr, int filter)
   /* Iterate over all channel members, and build up the list. */
 
   mlen = strlen(cli_name(&me)) + 10 + strlen(cli_name(sptr));
-  
+
   for (member = chptr->members; member; member = member->next_member)
   {
     c2ptr = member->user;
@@ -126,6 +126,13 @@ void do_names(struct Client* sptr, struct Channel* chptr, int filter)
     }
     strcpy(buf + idx, cli_name(c2ptr));
     idx += strlen(cli_name(c2ptr));
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+    if (HasCap(sptr, CAP_WEB)) {
+      strcat(buf, ":");
+      strcat(buf, c2ptr->webnumeric);
+      idx += 4; /* ':' + Numeric */
+    }
+#endif
     flag = 1;
     if (mlen + idx + NICKLEN + 5 > BUFSIZE)
       /* space, modifier, nick, \r \n \0 */
@@ -137,13 +144,12 @@ void do_names(struct Client* sptr, struct Channel* chptr, int filter)
     }
   }
   if (flag)
-    send_reply(sptr, (filter & NAMES_DEL) ? RPL_DELNAMREPLY : RPL_NAMREPLY, buf); 
+    send_reply(sptr, (filter & NAMES_DEL) ? RPL_DELNAMREPLY : RPL_NAMREPLY, buf);
   if (filter&NAMES_EON) {
-#ifdef ESNET_NEG 
-/*TODO */
-    if (sptr->cli_connect->negociacion & USER_TOK)
-      sendto_one(sptr, ":%s %d %s %s %s :End of /NAMES list", me.name, RPL_ENDOFNAMES, parv[0],
-           ch2ptr ? ch2ptr->chname : para, ch2ptr ? ch2ptr->numeric : "*");
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+    if (HasCap(sptr, CAP_WEB))
+      send_reply(sptr, SND_EXPLICIT | RPL_ENDOFNAMES, "%s %s :End of /NAMES list.",
+                 chptr->chname, chptr->webnumeric);
     else
 #endif
 
@@ -167,12 +173,12 @@ void do_names(struct Client* sptr, struct Channel* chptr, int filter)
  */
 int m_names(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
-  struct Channel *chptr; 
-  struct Channel *ch2ptr; 
+  struct Channel *chptr;
+  struct Channel *ch2ptr;
   struct Client *c2ptr;
-  struct Membership* member; 
+  struct Membership* member;
   char* s;
-  char* para = parc > 1 ? parv[1] : 0; 
+  char* para = parc > 1 ? parv[1] : 0;
   int showingdelayed = 0;
 
   if (parc > 1 && !ircd_strcmp(parv[1], "-D")) {
@@ -193,30 +199,30 @@ int m_names(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     if (s)
       *s++ = '\0';
     /*
-     * Special Case 1: "/names 0". 
-     * Full list as per RFC. 
+     * Special Case 1: "/names 0".
+     * Full list as per RFC.
      */
     if ((*para == '0') || (*para == '\0'))
     {
-      int idx; 
+      int idx;
       int mlen;
       int flag;
       struct Channel *ch3ptr;
-      char buf[BUFSIZE]; 
+      char buf[BUFSIZE];
 
       mlen = strlen(cli_name(&me)) + 10 + strlen(cli_name(sptr));
 
-      /* List all visible channels/visible members */ 
+      /* List all visible channels/visible members */
 
       for (ch2ptr = GlobalChannelList; ch2ptr; ch2ptr = ch2ptr->next)
-      { 
+      {
         if (!ShowChannel(sptr, ch2ptr))
-          continue;                 /* Don't show secret chans. */ 
+          continue;                 /* Don't show secret chans. */
         else if (find_channel_member(sptr, ch2ptr))
           do_names(sptr, ch2ptr, showingdelayed|NAMES_ALL); /* Full list if we're in this chan. */
         else
           do_names(sptr, ch2ptr, showingdelayed|NAMES_VIS);
-      } 
+      }
 
       /* List all remaining users on channel '*' */
 
@@ -236,16 +242,16 @@ int m_names(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
         while (member)
         {
           ch3ptr = member->channel;
-  
+
           if (PubChannel(ch3ptr) || find_channel_member(sptr, ch3ptr))
             showflag = 1;
- 
+
           member = member->next_channel;
         }
 
         if (showflag)               /* Have we already shown them? */
           continue;
- 
+
         strcpy(buf + idx, cli_name(c2ptr));
         idx += strlen(cli_name(c2ptr));
         buf[idx++] = ' ';
@@ -253,6 +259,7 @@ int m_names(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 
         if (mlen + idx + NICKLEN + 3 > BUFSIZE)     /* space, \r\n\0 */
         {
+          buf[idx-1] = '\0';
           send_reply(sptr, RPL_NAMREPLY, buf);
           strcpy(buf, "* * :");
           idx = 5;
@@ -260,7 +267,10 @@ int m_names(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
         }
       }
       if (flag)
+      {
+        buf[idx-1] = '\0';
         send_reply(sptr, RPL_NAMREPLY, buf);
+      }
       send_reply(sptr, RPL_ENDOFNAMES, "*");
     }
     else if ((chptr = FindChannel(para)) != NULL)
@@ -277,11 +287,11 @@ int m_names(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
       else
       {
         /*
-         *  Special Case 3: User isn't on this channel, show all visible users, in 
+         *  Special Case 3: User isn't on this channel, show all visible users, in
          *  non secret channels.
-         */ 
+         */
         do_names(sptr, chptr, showingdelayed|NAMES_VIS|NAMES_EON);
-      } 
+      }
     }
     else
         send_reply(sptr, RPL_ENDOFNAMES, para);

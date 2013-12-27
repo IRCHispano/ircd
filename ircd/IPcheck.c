@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/IPcheck.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1998 Carlo Wood <Run@undernet.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,7 @@
 
 #include "IPcheck.h"
 #include "client.h"
+#include "ddb.h"
 #include "ircd.h"
 #include "match.h"
 #include "msg.h"
@@ -275,6 +276,10 @@ int ip_registry_check_local(const struct irc_in_addr *addr, time_t* next_target_
 {
   struct IPRegistryEntry* entry = ip_registry_find(addr);
   unsigned int free_targets = STARTTARGETS;
+#if defined(DDB)
+  struct Ddb *ddb;
+  int clones = 0;
+#endif
 
   if (0 == entry) {
     entry       = ip_registry_new_entry();
@@ -283,6 +288,14 @@ int ip_registry_check_local(const struct irc_in_addr *addr, time_t* next_target_
     Debug((DEBUG_DNS, "IPcheck added new registry for local connection from %s.", ircd_ntoa(&entry->addr)));
     return 1;
   }
+
+#if defined(DDB)
+  /* Si tiene Iline, no se bloquea por Throttle */
+  ddb = ddb_find_key(DDB_ILINEDB, (char *)ircd_ntoa(&entry->addr));
+  if (ddb)
+      clones = 1;
+#endif
+
   /* Note that this also counts server connects.
    * It is hard and not interesting, to change that.
    * Refuse connection if it would overflow the counter.
@@ -294,7 +307,11 @@ int ip_registry_check_local(const struct irc_in_addr *addr, time_t* next_target_
     return 0;
   }
 
-  if (CONNECTED_SINCE(entry->last_connect) > IPCHECK_CLONE_PERIOD)
+  if ((CONNECTED_SINCE(entry->last_connect) > IPCHECK_CLONE_PERIOD)
+#if defined(DDB)
+       || clones
+#endif
+      )
     entry->attempts = 0;
 
   free_targets = ip_registry_update_free_targets(entry);
@@ -304,9 +321,23 @@ int ip_registry_check_local(const struct irc_in_addr *addr, time_t* next_target_
     --entry->attempts;
 
   if (entry->attempts < IPCHECK_CLONE_LIMIT) {
-    if (next_target_out)
+    if (next_target_out) {
+#if defined(DDB)
+      if (clones)
+        *next_target_out = CurrentTime - (TARGET_DELAY * STARTTARGETS - 1);
+      else
+        *next_target_out = CurrentTime - (TARGET_DELAY * free_targets - 1);
+#else
       *next_target_out = CurrentTime - (TARGET_DELAY * free_targets - 1);
+#endif
+    }
   }
+#if defined(DDB)
+  else if (clones) {
+    Debug((DEBUG_DNS, "IPcheck accepting local connection from %s (DDB Iline).", ircd_ntoa(&entry->addr)));
+    return 1;
+  }
+#endif
   else if ((CurrentTime - cli_since(&me)) > IPCHECK_CLONE_DELAY) {
     /*
      * Don't refuse connection when we just rebooted the server
@@ -378,14 +409,21 @@ int ip_registry_check_remote(struct Client* cptr, int is_burst)
  * of their own.  This "undoes" the effect of ip_registry_check_local()
  * so the client's address is not penalized for the failure.
  * @param[in] addr Address of rejected client.
+ * @param[in] disconnect If true, also count the client as disconnecting.
  */
 static
-void ip_registry_connect_fail(const struct irc_in_addr *addr)
+void ip_registry_connect_fail(const struct irc_in_addr *addr, int disconnect)
 {
   struct IPRegistryEntry* entry = ip_registry_find(addr);
-  if (entry && 0 == --entry->attempts) {
-    Debug((DEBUG_DNS, "IPcheck noting local connection failure for %s.", ircd_ntoa(&entry->addr)));
-    ++entry->attempts;
+  if (entry) {
+    if (0 == --entry->attempts) {
+      Debug((DEBUG_DNS, "IPcheck noting local connection failure for %s.", ircd_ntoa(&entry->addr)));
+      ++entry->attempts;
+    }
+    if (disconnect) {
+      assert(entry->connected > 0);
+      entry->connected--;
+    }
   }
 }
 
@@ -530,11 +568,12 @@ int IPcheck_remote_connect(struct Client *cptr, int is_burst)
  * of their own.  This "undoes" the effect of ip_registry_check_local()
  * so the client's address is not penalized for the failure.
  * @param[in] cptr Client who has been rejected.
+ * @param[in] disconnect If true, also count the client as disconnecting.
  */
-void IPcheck_connect_fail(const struct Client *cptr)
+void IPcheck_connect_fail(const struct Client *cptr, int disconnect)
 {
   assert(IsIPChecked(cptr));
-  ip_registry_connect_fail(&cli_ip(cptr));
+  ip_registry_connect_fail(&cli_ip(cptr), disconnect);
 }
 
 /** Handle a client that has successfully connected.
@@ -571,3 +610,44 @@ unsigned short IPcheck_nr(struct Client *cptr)
   assert(0 != cptr);
   return ip_registry_count(&cli_ip(cptr));
 }
+
+#if defined(DDB)
+/** Check iline of a client.
+ * @param[in] cptr Client whose address to look up.
+ * @return Non-zero if the client should be accepted, zero if they must be killed.
+ */
+int IPcheck_nr_ddb(struct Client *cptr)
+{
+  struct IPRegistryEntry* entry = ip_registry_find(&cli_ip(cptr));
+  struct Ddb *ddb;
+  int clones;
+  int maxclones;
+
+  assert(entry);
+
+  ddb = ddb_find_key(DDB_ILINEDB, (char *)ircd_ntoa(&entry->addr));
+  if (ddb && (clones = atoi(ddb_content(ddb))))
+    maxclones = clones;
+  else /* DDB */
+    maxclones = max_clones;
+
+  if (entry->connected > maxclones)
+  {
+      if ((&entry->addr)->in6_16[0] == htons(0x2002))
+        /* IPv4 or 6to4 */
+        sendcmdto_one(&me, CMD_NOTICE, cptr,
+                      "%C :In the %s IRC Network only allows %d clones for your IP (%s - %s/48)%s%s",
+                      cptr, feature_str(FEAT_NETWORK), maxclones,
+                      ircd_ntoa(&cli_ip(cptr)), ircd_ntoa(&entry->addr),
+                      msg_many_clones ? ". " : "", msg_many_clones ? msg_many_clones : "");
+      else
+        /* IPv6 */
+        sendcmdto_one(&me, CMD_NOTICE, cptr,
+                      "%C :In the %s IRC Network only allows %d clones for your range (%s/64)%s%s",
+                      cptr, feature_str(FEAT_NETWORK), maxclones, ircd_ntoa(&entry->addr),
+                      msg_many_clones ? ". " : "", msg_many_clones ? msg_many_clones : "");
+      return 0;
+  }
+  return 1;
+}
+#endif

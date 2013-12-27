@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_ghost.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2004 Toni Garcia (zoltan) <zoltan@irc-dev.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -84,14 +84,14 @@ int m_ghost(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 
   if (!(acptr = FindUser(parv[1])))
   {
-    sendcmdbotto_one(botname, CMD_NOTICE, cptr, 
+    sendcmdbotto_one(botname, CMD_NOTICE, cptr,
                      "%C :*** The nick %s is not in use.", cptr, parv[1]);
     return 0;
   }
 
   if (!(ddb = ddb_find_key(DDB_NICKDB, parv[1])))
   {
-    sendcmdbotto_one(botname, CMD_NOTICE, cptr, 
+    sendcmdbotto_one(botname, CMD_NOTICE, cptr,
                      "%C :*** The nick %s is not registered", cptr, parv[1]);
     return 0;
   }
@@ -106,15 +106,8 @@ int m_ghost(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   sendto_opmask(0, SNO_SERVKILL,
        "Received KILL message for %C. From %C, Reason: GHOST kill", acptr, cptr);
 
-#if defined(P09_SUPPORT)
-  sendcmdto_lowprot_serv(&me, 9, CMD_KILL, acptr, "%C :GHOST session released by %C",
-      acptr, cptr);
-  sendcmdto_highprot_serv(&me, 10, CMD_KILL, acptr, "%C :GHOST session released by %C",
-      acptr, cptr);
-#else
   sendcmdto_serv(&me, CMD_KILL, acptr, "%C :GHOST session released by %C",
       acptr, cptr);
-#endif
 
   if (MyConnect(acptr))
   {

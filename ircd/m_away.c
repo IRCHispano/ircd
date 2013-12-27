@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_away.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -105,23 +105,11 @@ int m_away(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (user_set_away(cli_user(sptr), away_message))
   {
     if (!was_away)
-#if defined(P09_SUPPORT)
-    {
-      sendcmdto_lowprot_serv(sptr, 9, CMD_AWAY, cptr, ":%s", away_message);
-      sendcmdto_highprot_serv(sptr, 10, CMD_AWAY, cptr, ":%s", away_message);
-    }
-#else
       sendcmdto_serv(sptr, CMD_AWAY, cptr, ":%s", away_message);
-#endif
     send_reply(sptr, RPL_NOWAWAY);
   }
   else {
-#if defined(P09_SUPPORT)
-    sendcmdto_lowprot_serv(sptr, 9, CMD_AWAY, cptr, "");
-    sendcmdto_highprot_serv(sptr, 10, CMD_AWAY, cptr, "");
-#else
     sendcmdto_serv(sptr, CMD_AWAY, cptr, "");
-#endif
     send_reply(sptr, RPL_UNAWAY);
   }
   return 0;
@@ -151,18 +139,8 @@ int ms_away(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return protocol_violation(sptr,"Server trying to set itself away");
 
   if (user_set_away(cli_user(sptr), away_message))
-#if defined(P09_SUPPORT)
-  {
-    sendcmdto_lowprot_serv(sptr, 9, CMD_AWAY, cptr, ":%s", away_message);
-    sendcmdto_highprot_serv(sptr, 10, CMD_AWAY, cptr, ":%s", away_message);
-  } else {
-    sendcmdto_lowprot_serv(sptr, 9, CMD_AWAY, cptr, "");
-    sendcmdto_highprot_serv(sptr, 10, CMD_AWAY, cptr, "");
-  }
-#else
     sendcmdto_serv(sptr, CMD_AWAY, cptr, ":%s", away_message);
   else
     sendcmdto_serv(sptr, CMD_AWAY, cptr, "");
-#endif
   return 0;
 }

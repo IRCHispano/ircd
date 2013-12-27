@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_die.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -61,10 +61,10 @@
 int ms_die(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
   const char *target, *when, *reason;
-  
+
   if (parc < 4)
     return need_more_params(sptr, "DIE");
-        
+
   target = parv[1];
   when = parv[2];
   reason = parv[parc - 1];
@@ -75,26 +75,21 @@ int ms_die(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     != HUNTED_ISME)
       return 0;
   } else /* must forward the message */
-#if defined(P09_SUPPORT)
-    /* Only P10 */
-    sendcmdto_highprot_serv(sptr, 10, CMD_DIE, cptr, "* %s :%s", when, reason);
-#else
     sendcmdto_serv(sptr, CMD_DIE, cptr, "* %s :%s", when, reason);
-#endif
 
   /* OK, the message has been forwarded, but before we can act... */
   if (!feature_bool(FEAT_NETWORK_DIE))
     return 0;
-        
+
   /* is it a cancellation? */
   if (!ircd_strcmp(when, "cancel"))
     exit_cancel(sptr); /* cancel a pending exit */
   else /* schedule an exit */
     exit_schedule(0, atoi(when), sptr, reason);
-                      
+
   return 0;
-}                                    
-                
+}
+ 
 /** Handle a DIE message from an operator.
  *
  * \a parv has the following elements:

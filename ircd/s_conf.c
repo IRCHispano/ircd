@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/s_conf.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -104,7 +104,6 @@ static void killcomment(struct Client* sptr, const char* filename)
   FBFILE*     file = 0;
   char        line[80];
   struct stat sb;
-  struct tm*  tm;
 
   if (NULL == (file = fbopen(filename, "r"))) {
     send_reply(sptr, ERR_NOMOTD);
@@ -113,7 +112,6 @@ static void killcomment(struct Client* sptr, const char* filename)
     return;
   }
   fbstat(&sb, file);
-  tm = localtime((time_t*) &sb.st_mtime);        /* NetBSD needs cast */
   while (fbgets(line, sizeof(line) - 1, file)) {
     char* end = line + strlen(line);
     while (end > line) {
@@ -364,11 +362,6 @@ static
 enum AuthorizationCheckResult attach_iline(struct Client* cptr)
 {
   struct ConfItem* aconf;
-#if defined(DDB)
-  struct Ddb *ddb;
-  int clones;
-  int maxclones;
-#endif
 
   assert(0 != cptr);
 
@@ -388,22 +381,11 @@ enum AuthorizationCheckResult attach_iline(struct Client* cptr)
         && !ipmask_check(&cli_ip(cptr), &aconf->address.addr, aconf->addrbits))
       continue;
 #if defined(DDB)
-    ddb = ddb_find_key(DDB_ILINEDB, (char *)ircd_ntoa(&cli_ip(cptr)));
-    if (ddb && (clones = atoi(ddb_content(ddb))))
-      maxclones = clones;
-    else if (max_clones) /* DDB */
-      maxclones = max_clones;
-    else
-      maxclones = aconf->maximum;
-
-    if (IPcheck_nr(cptr) > maxclones)
-    {
-      sendcmdto_one(&me, CMD_NOTICE, cptr,
-                    "%C :In the %s IRC Network only allows %d clones for your IP (%s)%s%s",
-                    cptr, feature_str(FEAT_NETWORK), maxclones, ircd_ntoa(&cli_ip(cptr)),
-                    msg_many_clones ? ". " : "", msg_many_clones ? msg_many_clones : "");
+    if (max_clones) {
+      if (!IPcheck_nr_ddb(cptr))
+        return ACR_TOO_MANY_FROM_IP;
+    } else if (IPcheck_nr(cptr) > aconf->maximum)
       return ACR_TOO_MANY_FROM_IP;
-    }
 #else
     if (IPcheck_nr(cptr) > aconf->maximum)
       return ACR_TOO_MANY_FROM_IP;
@@ -628,7 +610,7 @@ struct ConfItem* attach_confs_byname(struct Client* cptr, const char* name,
   for (tmp = GlobalConfList; tmp; tmp = tmp->next) {
     if (0 != (tmp->status & statmask) && !IsIllegal(tmp)) {
       assert(0 != tmp->name);
-      if (0 == match(tmp->name, name) || 0 == ircd_strcmp(tmp->name, name)) { 
+      if (0 == match(tmp->name, name) || 0 == ircd_strcmp(tmp->name, name)) {
         if (ACR_OK == attach_conf(cptr, tmp) && !first)
           first = tmp;
       }
@@ -657,7 +639,7 @@ struct ConfItem* attach_confs_byhost(struct Client* cptr, const char* host,
   for (tmp = GlobalConfList; tmp; tmp = tmp->next) {
     if (0 != (tmp->status & statmask) && !IsIllegal(tmp)) {
       assert(0 != tmp->host);
-      if (0 == match(tmp->host, host) || 0 == ircd_strcmp(tmp->host, host)) { 
+      if (0 == match(tmp->host, host) || 0 == ircd_strcmp(tmp->host, host)) {
         if (ACR_OK == attach_conf(cptr, tmp) && !first)
           first = tmp;
       }
@@ -962,7 +944,7 @@ update_uworld_flags(struct Client *cptr)
   struct SLink *sp;
 #if defined(DDB)
   struct Ddb *ddb;
-#endif    
+#endif
 
   assert(cli_serv(cptr) != NULL);
 
@@ -978,8 +960,8 @@ update_uworld_flags(struct Client *cptr)
     ddb = ddb_find_key(DDB_UWORLDDB, cli_name(cptr));
     if (ddb)
       cli_serv(cptr)->flags |= SFLAG_UWORLD;
-    else      
-#endif  
+    else
+#endif
     cli_serv(cptr)->flags &= ~SFLAG_UWORLD;
   }
 
@@ -1028,17 +1010,17 @@ stats_uworld(struct Client* to, const struct StatDesc* sd, char* param)
   struct SLink *sp;
 #if defined(DDB)
   struct Ddb *ddb;
-#endif    
+#endif
 
   for (sp = uworlds; sp; sp = sp->next)
     send_reply(to, RPL_STATSULINE, sp->value.cp);
-    
+
 #if defined(DDB)
   for (ddb = ddb_iterator_first(DDB_UWORLDDB); ddb;
        ddb = ddb_iterator_next())
     send_reply(to, SND_EXPLICIT | RPL_STATSULINE, "U %s (set by DDB)",
                ddb_key(ddb));
-#endif    
+#endif
 }
 
 /** Free all memory associated with service mapping \a smap.
@@ -1138,6 +1120,10 @@ int rehash(struct Client *cptr, int sig)
     restart_resolver();
 
   log_reopen(); /* reopen log files */
+
+#if defined(USE_SSL)
+  ssl_init();
+#endif
 
   auth_close_unused();
   close_listeners();
@@ -1278,7 +1264,7 @@ int find_kill(struct Client *cptr)
      * find active glines
      * added a check against the user's IP address to find_gline() -Kev
      */
-    send_reply(cptr, SND_EXPLICIT | ERR_YOUREBANNEDCREEP, ":%s (expires at %s).", 
+    send_reply(cptr, SND_EXPLICIT | ERR_YOUREBANNEDCREEP, ":%s (expires at %s).",
                      GlineReason(agline), date(GlineExpire(agline)));
     return -2;
   }
@@ -1286,7 +1272,7 @@ int find_kill(struct Client *cptr)
   return 0;
 }
 
-/** Searches for a E-line for a client. 
+/** Searches for a E-line for a client.
  * @param cptr Client to search for.
  * @return 1 if found; 0 not found.
  */
@@ -1296,6 +1282,9 @@ int find_exception(struct Client *cptr)
   const char*      name;
   const char*      password;
   struct ExceptConf* except;
+#if defined(DDB)
+  struct Ddb *ddb;
+#endif
 
   assert(0 != cptr);
 
@@ -1324,16 +1313,14 @@ int find_exception(struct Client *cptr)
     return 1;
   }
 
-#if defined(DDB1)
-    struct db_reg *reg;
-
-    for (reg = db_iterador_init(BDD_EXCEPTIONDB); reg;
-        reg = db_iterador_next())
-    {
-      if ((reg->clave && (match(reg->clave, PunteroACadena(cptr->cli_connect->sockhost)) == 0 ||
-          match(reg->clave, ircd_ntoa_c(cptr)) == 0))
-          && (reg->valor
-          && (match(reg->valor, PunteroACadena(cli_user(cptr)->username)) == 0)))
+#if defined(DDB)
+  for (ddb = ddb_iterator_first(DDB_UWORLDDB); ddb;
+       ddb = ddb_iterator_next())
+  {
+      if ((ddb_key(ddb) && (match(ddb_key(ddb), host) == 0 ||
+          match(ddb_key(ddb), ircd_ntoa(&cli_ip(cptr))) == 0))
+          && (ddb_content(ddb)
+          && (match(ddb_content(ddb), name) == 0)))
         return 1;
     }
 #endif
@@ -1351,7 +1338,7 @@ enum AuthorizationCheckResult conf_check_client(struct Client *cptr)
   enum AuthorizationCheckResult acr = ACR_OK;
 
   if ((acr = attach_iline(cptr))) {
-    Debug((DEBUG_DNS, "ch_cl: access denied: %s[%s]", 
+    Debug((DEBUG_DNS, "ch_cl: access denied: %s[%s]",
           cli_name(cptr), cli_sockhost(cptr)));
     return acr;
   }
@@ -1371,7 +1358,7 @@ int conf_check_server(struct Client *cptr)
   struct ConfItem* c_conf = NULL;
   struct SLink*    lp;
 
-  Debug((DEBUG_DNS, "sv_cl: check access for %s[%s]", 
+  Debug((DEBUG_DNS, "sv_cl: check access for %s[%s]",
         cli_name(cptr), cli_sockhost(cptr)));
 
   if (IsUnknown(cptr) && !attach_confs_byname(cptr, cli_name(cptr), CONF_SERVER)) {
@@ -1430,3 +1417,19 @@ int conf_check_server(struct Client *cptr)
          cli_name(cptr), cli_sockhost(cptr)));
   return 0;
 }
+
+#if defined(USE_SSL)
+int verify_sslclifp(struct Client* cptr, struct ConfItem* aconf)
+{
+  if (!(aconf->sslfp))
+    return 1;
+
+  if (!cli_sslclifp(cptr))
+    return 0;
+
+  if (ircd_strcmp(aconf->sslfp, cli_sslclifp(cptr)) != 0)
+    return 0;
+
+  return 1;
+}
+#endif

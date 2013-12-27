@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_watch.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2002 Toni Garcia (zoltan) <zoltan@irc-dev.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -215,7 +215,7 @@ int m_watch(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
     /* Unknown or not supported parameter.
      * Ignored it :)
      */
-  }		
+  }
 
   return 0;
 }

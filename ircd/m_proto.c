@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_proto.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2000 Kevin L. Mitchell <klmitch@mit.edu>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -56,7 +56,7 @@ int proto_handle_ack(struct Client* cptr, const char* msg)
   /*
    * handle ack here, if option and args supported
    * start option
-   */ 
+   */
   return 0;
 }
 
@@ -85,7 +85,7 @@ int m_proto(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (0 == parc)
     return proto_send_supported(cptr);
 
-  if (parc < 3) 
+  if (parc < 3)
     return need_more_params(sptr, "PROTO");
 
   if (0 == ircd_strcmp(PROTO_REQ, parv[1]))
@@ -93,7 +93,7 @@ int m_proto(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 
   else if (0 == ircd_strcmp(PROTO_ACK, parv[1]))
     return proto_handle_ack(cptr, parv[2]);
-    
+
   else if (0 == ircd_strcmp(PROTO_SUP, parv[1]))
     return 0; /* ignore it */
 

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/ircd_features.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2000 Kevin L. Mitchell <klmitch@mit.edu>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,9 @@ enum Feature {
   FEAT_HIDDEN_HOST,
   FEAT_HIDDEN_IP,
   FEAT_CONNEXIT_NOTICES,
+#if defined(UNDERNET)
   FEAT_OPLEVELS,
+#endif
   FEAT_ZANNELS,
   FEAT_LOCAL_CHANNELS,
   FEAT_TOPIC_BURST,
@@ -215,9 +217,6 @@ enum Feature {
   FEAT_NETWORK_RESTART,
   FEAT_NETWORK_DIE,
 
-#if 1 /* TRANSICION IRC-HISPANO */
-  FEAT_TRANSICION_HISPANO,
-#endif
   FEAT_LAST_F
 };
 

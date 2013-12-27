@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/msg.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -369,6 +369,7 @@ struct Client;
 
 #define MSG_WATCH		"WATCH"		/* WATC */
 #define TOK_WATCH		"WATCH"
+#define CMD_WATCH               MSG_WATCH, TOK_WATCH
 
 #if defined(DDB)
 #define MSG_DB                  "DB"            /* DB */
@@ -390,25 +391,31 @@ struct Client;
 #define MSG_SVSNICK             "SVSNICK"       /* SVSN */
 #define TOK_SVSNICK             "SN"
 #define CMD_SVSNICK             MSG_SVSNICK, TOK_SVSNICK
-
-#define MSG_CONFIG             "CONFIG"
-#define TOK_CONFIG             "CONFIG"
-#define CMD_CONFIG             MSG_CONFIG, TOK_CONFIG
 #endif
 
-#define MSG_SVSMODE    "SVSMODE"
-#define TOK_SVSMODE    "SM"
-#define CMD_SVSMODE            MSG_SVSMODE, TOK_SVSMODE
+#define MSG_SVSMODE             "SVSMODE"
+#define TOK_SVSMODE             "SM"
+#define CMD_SVSMODE             MSG_SVSMODE, TOK_SVSMODE
 
-#define MSG_SVSJOIN    "SVSJOIN"
-#define TOK_SVSJOIN    "SJ"
+#define MSG_SVSJOIN             "SVSJOIN"
+#define TOK_SVSJOIN             "SJ"
 #define CMD_SVSJOIN             MSG_SVSJOIN, TOK_SVSJOIN
 
-#define MSG_SVSPART    "SVSPART"
-#define TOK_SVSPART    "SL"
+#define MSG_SVSKICK             "SVSKICK"
+#define TOK_SVSKICK             "SK"
+#define CMD_SVSKICK             MSG_SVSKICK, TOK_SVSKICK
+
+#define MSG_SVSPART             "SVSPART"
+#define TOK_SVSPART             "SL"
 #define CMD_SVSPART             MSG_SVSPART, TOK_SVSPART
 
+#define MSG_XQUERY		"XQUERY"
+#define TOK_XQUERY		"XQ"
+#define CMD_XQUERY		MSG_XQUERY, TOK_XQUERY
 
+#define MSG_XREPLY		"XREPLY"
+#define TOK_XREPLY		"XR"
+#define CMD_XREPLY		MSG_XREPLY, TOK_XREPLY
 
 /*
  * Constants

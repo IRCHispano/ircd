@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_crypt_smd5.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2002 hikari
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,14 +19,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-/** 
+/**
  * @file
  * @brief Routines for Salted MD5 passwords
  * @version $Id: ircd_crypt_smd5.c,v 1.6 2007-04-19 22:53:48 zolty Exp $
- * 
- * ircd_crypt_smd5 is largely taken from md5_crypt.c from the Linux PAM 
- * source code.  it's been modified to fit in with ircu and some of the 
- * unneeded code has been removed.  the source file md5_crypt.c has the 
+ *
+ * ircd_crypt_smd5 is largely taken from md5_crypt.c from the Linux PAM
+ * source code.  it's been modified to fit in with ircu and some of the
+ * unneeded code has been removed.  the source file md5_crypt.c has the
  * following license, so if any of our opers or admins are in Denmark
  * they better go buy them a drink ;) -- hikari
  *
@@ -57,11 +57,11 @@ static unsigned char itoa64[] = /* 0 ... 63 => ascii - 64 */
  * @param s Pointer to the output string
  * @param v The unsigned long we're working on
  * @param n The number of bytes we're working with
- *  
- * This is used to produce the normal MD5 hash everyone is familiar with.  
- * It takes the value v and converts n bytes of it it into an ASCII string in 
+ *
+ * This is used to produce the normal MD5 hash everyone is familiar with.
+ * It takes the value v and converts n bytes of it it into an ASCII string in
  * 6-bit chunks, the resulting string is put at the address pointed to by s.
- * 
+ *
  */
 static void to64(char *s, unsigned long v, int n)
 {
@@ -75,14 +75,14 @@ static void to64(char *s, unsigned long v, int n)
  * @param key The password we're encrypting
  * @param salt The salt we're using to encrypt it
  * @return The Salted MD5 password of key and salt
- * 
- * Erm does exactly what the brief comment says.  If you think I'm writing a 
+ *
+ * Erm does exactly what the brief comment says.  If you think I'm writing a
  * description of how MD5 works, you have another think coming.  Go and read
- * Applied Cryptography by Bruce Schneier.  The only difference is we use a 
+ * Applied Cryptography by Bruce Schneier.  The only difference is we use a
  * salt at the beginning of the password to perturb it so that the same password
  * doesn't always produce the same hash.
- * 
- */ 
+ *
+ */
 const char* ircd_crypt_smd5(const char* key, const char* salt)
 {
 const char *magic = "$1$";
@@ -207,10 +207,10 @@ return passwd;
 
 /* end borrowed code */
 
-/** Register ourself with the list of crypt mechanisms 
- * Registers the SMD5 mechanism in the list of available crypt mechanisms.  When 
+/** Register ourself with the list of crypt mechanisms
+ * Registers the SMD5 mechanism in the list of available crypt mechanisms.  When
  * we're modular this will be the entry function for the module.
- * 
+ *
  */
 void ircd_register_crypt_smd5(void)
 {
@@ -230,6 +230,6 @@ crypt_mech_t* crypt_mech;
  crypt_mech->crypt_token_size = 6 ;
 
  ircd_crypt_register_mech(crypt_mech);
- 
+
 return;
 }

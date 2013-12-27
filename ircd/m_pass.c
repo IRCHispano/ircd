@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_pass.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -75,7 +75,7 @@ int mr_pass(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 #if defined(DDB)
   if (IsUserPort(cptr))
   {
-    /* 
+    /*
      *   PASS :server_pass[:ddb_pass]
      *   PASS :ddb_pass
      */
@@ -88,7 +88,7 @@ int mr_pass(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
       ddb_pwd = password;
 
     ircd_strncpy(cli_ddb_passwd(cptr), ddb_pwd, DDBPWDLEN);
-  }  
+  }
 #endif
   ircd_strncpy(cli_passwd(cptr), password, PASSWDLEN);
   return cli_auth(cptr) ? auth_set_password(cli_auth(cptr), password) : 0;

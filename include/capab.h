@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/capab.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2004 Kevin L. Mitchell <klmitch@mit.edu>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,11 +37,17 @@
 
 #define CAPLIST	\
 	_CAP(USERPFX, 0, "undernet.org/userpfx")
+#define CAPWEB \
+        _CAP(WEB, FLAG_CAP_WEB, "web")
+#define CAPZLIB \
+        _CAP(ZLIB, FLAG_CAP_ZLIB_IN | FLAG_CAP_ZLIB_OUT, "zlib")
 
 /** Client capabilities */
 enum Capab {
 #define _CAP(cap, flags, name)	CAP_ ## cap
   CAPLIST,
+  CAPWEB,
+  CAPZLIB,
 #undef _CAP
   _CAP_LAST_CAP
 };

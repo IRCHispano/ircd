@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/channel.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996-1997 Carlo Wood
  * Copyright (C) 1990 Jarkko Oikarinen
  *
@@ -70,7 +70,6 @@ struct Client;
 #define CHFL_BANVALID           0x0800  /**< CHFL_BANNED bit is valid */
 #define CHFL_BANNED             0x1000  /**< Channel member is banned */
 #define CHFL_SILENCE_IPMASK     0x2000  /**< silence mask is a CIDR */
-#if defined(UNDERNET)
 #define CHFL_BURST_ALREADY_OPPED    0x04000
                     /**< In oob BURST, but was already
                      * joined and opped
@@ -79,6 +78,7 @@ struct Client;
                     /**, In oob BURST, but was already
                      * joined and voiced
                      */
+#if defined(UNDERNET)
 #define CHFL_CHANNEL_MANAGER    0x10000 /**< Set when creating channel or using
                      * Apass
                      */
@@ -119,10 +119,10 @@ struct Client;
 #define MODE_LIMIT      0x0400      /**< +l Limit */
 #define MODE_REGONLY    0x0800      /**< +R Only +r users may join */
 #define MODE_DELJOINS   0x1000      /**< New join messages are delayed */
-#define MODE_REGISTERED 0x2000    /**< Channel marked as registered */
-#define MODE_NOCOLOUR   0x4000          /**< No mIRC/ANSI colors/bold */
-#define MODE_NOCTCP     0x8000          /**< No channel CTCPs */
-#define MODE_NONOTICE   0x10000         /**< No channel notices */
+#define MODE_REGISTERED 0x2000      /**< Channel marked as registered */
+#define MODE_NOCOLOUR   0x4000      /**< +c No mIRC/ANSI colors/bold */
+#define MODE_NOCTCP     0x8000      /**< +C No channel CTCPs */
+#define MODE_NONOTICE   0x10000     /**< +N No channel notices */
 #define MODE_SAVE   0x20000     /**< save this mode-with-arg 'til
                      * later */
 #define MODE_FREE   0x40000     /**< string needs to be passed to
@@ -134,16 +134,17 @@ struct Client;
 #endif
 #define MODE_WASDELJOINS 0x400000   /**< Not DELJOINS, but some joins
                      * pending */
-#define MODE_NOQUITPARTS 0x800000
+#define MODE_NOQUITPARTS 0x800000   /**< +u */
 
 #define MODE_MODERATENOREG 0x1000000    /**< +M Moderate unauthed users */
+#define MODE_SSLONLY       0x2000000    /**< +z Only ssl users may join */
 
 #if defined(UNDERNET)
 /** mode flags which take another parameter (With PARAmeterS)
  */
 #define MODE_WPARAS     (MODE_CHANOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT|MODE_APASS|MODE_UPASS)
 /** Available Channel modes */
-#define infochanmodes feature_bool(FEAT_OPLEVELS) ? "AbiklmnopstUvrDRcCNuM" : "biklmnopstvrDRcCNuM"
+#define infochanmodes feature_bool(FEAT_OPLEVELS) ? "AbiklmnopstUvrDRcCNuMz" : "biklmnopstvrDRcCNuMz"
 /** Available Channel modes that take parameters */
 #define infochanmodeswithparams feature_bool(FEAT_OPLEVELS) ? "AbkloUv" : "bklov"
 #elif defined(DDB) || defined(SERVICES)
@@ -152,7 +153,7 @@ struct Client;
 #define MODE_WPARAS     (MODE_OWNER|MODE_CHANOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT)
 
 /** Available Channel modes */
-#define infochanmodes "biklmnopstvrRDqcCNuM"
+#define infochanmodes "biklmnopstvrRDqcCNuMz"
 /** Available Channel modes that take parameters */
 #define infochanmodeswithparams "bklovq"
 #else
@@ -161,23 +162,10 @@ struct Client;
 #define MODE_WPARAS     (MODE_CHANOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT)
 
 /** Available Channel modes */
-#define infochanmodes "biklmnopstvrDRcCNuM"
+#define infochanmodes "biklmnopstvrDRcCNuMz"
 /** Available Channel modes that take parameters */
 #define infochanmodeswithparams "bklov"
 #endif
-
-
-/**** VIEJOOOOS ****/
-#define CHFL_DEOPPED		0x40  /* Is de-opped by a server */
-#define CHFL_SERVOPOK		0x80  /* Server op allowed */
-
-/* Channel Visibility macros */
-#define MODE_SENDTS	0x0800      /* TS was 0 during a local user /join; send
-                                 * temporary TS; can be removed when all 2.10 */
-#define MODE_AUTOOP     0x8000
-#define MODE_SECUREOP   0x10000
-/**** FIN VIEJOS */
-
 
 #define HoldChannel(x)          (!(x))
 /** name invisible */
@@ -223,6 +211,8 @@ typedef enum ChannelGetType {
  * existing bugs.
  */
 #define TS_LAG_TIME 86400
+
+
 
 extern const char* const PartFmt1;
 extern const char* const PartFmt2;
@@ -349,11 +339,11 @@ struct Channel {
   struct Ban*        banlist;      /**< List of bans on this channel */
   struct Mode        mode;     /**< This channels mode */
 #if defined(DDB)
-  int                modos_obligatorios;
-  int                modos_prohibidos;
+  int                required_modes;
+  int                forbidden_modes;
 #endif
-#if defined(WEBCHAT)
-  char numeric[4];
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+  char               webnumeric[4];
 #endif
   char               topic[TOPICLEN + 1]; /**< Channels topic */
   char               topic_nick[NICKLEN + 1]; /**< Nick of the person who set
@@ -418,9 +408,6 @@ struct ModeBuf {
 #if defined(DDB)
 #define MODEBUF_DEST_BOTMODE    0x20000 /**< Mode send by Bot */
 #endif
-#if 1 /* TRANSICION IRC-HISPANO */
-#define MODEBUF_DEST_XMODE_JCEA 0x40000
-#endif
 
 #define MB_TYPE(mb, i)      ((mb)->mb_modeargs[(i)].mbm_type)
 #define MB_UINT(mb, i)      ((mb)->mb_modeargs[(i)].mbm_arg.mbma_uint)
@@ -480,6 +467,7 @@ extern const char* find_no_nickchange_channel(struct Client* cptr);
 extern struct Membership* find_channel_member(struct Client* cptr, struct Channel* chptr);
 extern int member_can_send_to_channel(struct Membership* member, int reveal);
 extern int client_can_send_to_channel(struct Client *cptr, struct Channel *chptr, int reveal);
+
 extern void remove_user_from_channel(struct Client *sptr, struct Channel *chptr);
 extern void remove_user_from_all_channels(struct Client* cptr);
 
@@ -494,6 +482,9 @@ extern void add_invite(struct Client *cptr, struct Channel *chptr, struct Client
 extern void del_invite(struct Client *cptr, struct Channel *chptr);
 extern void list_set_default(void); /* this belongs elsewhere! */
 extern void check_spambot_warning(struct Client *cptr);
+
+//extern void RevealDelayedJoinIfNeeded(struct Client *sptr, struct Channel *chptr);
+extern void RevealDelayedJoin(struct Membership *member);
 
 extern void modebuf_init(struct ModeBuf *mbuf, struct Client *source,
              struct Client *connect, struct Channel *chan,
@@ -536,18 +527,9 @@ extern struct Ban *find_ban(struct Client *cptr, struct Ban *banlist);
 extern int apply_ban(struct Ban **banlist, struct Ban *newban, int free);
 extern void free_ban(struct Ban *ban);
 
-/** VIEJOOOOS */
-extern struct SLink *IsMember(struct Client *cptr, struct Channel *chptr);
-extern void remove_user_from_channel(struct Client *sptr, struct Channel *chptr);
-extern int is_chan_op(struct Client *cptr, struct Channel *chptr);
-extern int is_zombie(struct Client *cptr, struct Channel *chptr);
-extern int has_voice(struct Client *cptr, struct Channel *chptr);
-extern void send_channel_modes(struct Client *cptr, struct Channel *chptr);
-extern char *pretty_mask(char *mask);
-extern void del_invite(struct Client *cptr, struct Channel *chptr);
-extern void send_user_joins(struct Client *cptr, struct Client *user);
-
+#ifdef VIEJOS
 extern char *adapta_y_visualiza_canal_flags(struct Channel *chptr, int add, int del);
 extern void mascara_canal_flags(char *modos, int *add, int *del);
+#endif
 
 #endif /* INCLUDED_channel_h */

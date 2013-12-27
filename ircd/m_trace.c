@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_trace.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -93,11 +93,7 @@ void do_trace(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
   } else {
     /* Got "TRACE <tname> :<target>" */
     parc = 3;
-    if (MyUser(sptr) 
-#if defined(P09_SUPPORT)
-        || Protocol(cptr) < 10
-#endif
-    )
+    if (MyUser(sptr) || Protocol(cptr) < 10)
       acptr = find_match_server(parv[2]);
     else
       acptr = FindNServer(parv[2]);

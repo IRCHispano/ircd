@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_ping.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -131,14 +131,13 @@ int m_ping(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 int mo_ping(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
   struct Client* acptr;
-  char *destination, *origin;
+  char *destination;
   assert(0 != cptr);
   assert(cptr == sptr);
 
   if (parc < 2 || EmptyString(parv[1]))
     return send_reply(sptr, ERR_NOORIGIN);
 
-  origin = parv[1];
   destination = parv[2];        /* Will get NULL or pointer (parc >= 2!!) */
 
   if (!EmptyString(destination) && 0 != ircd_strcmp(destination, cli_name(&me))) {
@@ -153,12 +152,12 @@ int mo_ping(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
      * it's pointless to send more than 64 bytes back tho'
      */
     char* origin = parv[1];
-    
+
     /* Is this supposed to be here? */
     acptr = FindClient(origin);
     if (acptr && acptr != sptr)
       origin = cli_name(cptr);
-    
+
     if (strlen(origin) > 64)
       origin[64] = '\0';
     sendcmdto_one(&me, CMD_PONG, sptr, "%C :%s", &me, origin);

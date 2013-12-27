@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_parser.y
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2001 by Andrew Miller, Diana Bruce and ircd-hybrid team
  *
  * This program is free software; you can redistribute it and/or modify
@@ -568,7 +568,6 @@ classusermode: USERMODE '=' QSTRING ';'
 
 connectblock: CONNECT
 {
- maxlinks = 65535;
  flags = CONF_AUTOCONNECT;
 } '{' connectitems '}' ';'
 {
@@ -595,7 +594,10 @@ connectblock: CONNECT
    aconf->conn_class = c_class;
    aconf->address.port = port;
    aconf->host = host;
-   aconf->maximum = maxlinks;
+   /* If the user specified a hub allowance, but not maximum links,
+    * allow an effectively unlimited number of hops.
+    */
+   aconf->maximum = (hub_limit != NULL && maxlinks == 0) ? 65535 : maxlinks;
    aconf->hub_limit = hub_limit;
    aconf->flags = flags;
    lookup_confhost(aconf);
@@ -609,7 +611,7 @@ connectblock: CONNECT
  }
  name = pass = host = origin = hub_limit = NULL;
  c_class = NULL;
- port = flags = 0;
+ port = flags = maxlinks = 0;
 };
 connectitems: connectitem connectitems | connectitem;
 connectitem: connectname | connectpass | connectclass | connecthost
@@ -822,7 +824,8 @@ privtype: TPRIV_CHAN_LIMIT { $$ = PRIV_CHAN_LIMIT; } |
           LOCAL { $$ = PRIV_PROPAGATE; invert = 1; } |
           TPRIV_FORCE_OPMODE { $$ = PRIV_FORCE_OPMODE; } |
           TPRIV_FORCE_LOCAL_OPMODE { $$ = PRIV_FORCE_LOCAL_OPMODE; } |
-          TPRIV_APASS_OPMODE { $$ = PRIV_APASS_OPMODE; } ;
+          TPRIV_APASS_OPMODE { $$ = PRIV_APASS_OPMODE; }
+          ;
 
 yesorno: YES { $$ = 1; } | NO { $$ = 0; };
 
@@ -955,7 +958,7 @@ portssl: SSLPORT '=' YES ';'
 
 portcookies: COOKIES '=' YES ';'
 {
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
   FlagSet(&listen_flags, LISTEN_COOKIES);
 } | COOKIES '=' NO ';'
 {
@@ -1007,6 +1010,7 @@ clientblock: CLIENT
   host = NULL;
   username = NULL;
   c_class = NULL;
+  maxlinks = 0;
   ip = NULL;
   pass = NULL;
   port = 0;

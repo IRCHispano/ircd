@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/dbuf.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Markku Savela
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,12 +26,17 @@
 #include "config.h"
 
 #include "dbuf.h"
+#include "client.h"
 #include "ircd.h"
 #include "ircd_alloc.h"
 #include "ircd_chattr.h"
 #include "ircd_features.h"
 #include "ircd_log.h"
+#include "ircd_zlib.h"
 #include "send.h"
+#if defined(USE_ZLIB)
+#include "zlib.h"
+#endif
 
 /* #include <assert.h> -- Now using assert in ircd_log.h */
 #include <string.h>
@@ -209,6 +214,116 @@ static int dbuf_put_native(struct DBuf *dyn, const char *buf, unsigned int lengt
   }
   return 1;
 }
+
+#if defined(USE_ZLIB)
+/** Append bytes to a ZLIB data buffer.
+ * @param[in] dyn Buffer to append to.
+ * @param[in] buf Data to append.
+ * @param[in] length Number of bytes to append.
+ * @return Non-zero on success, or zero on failure.
+ */
+static int dbuf_put_zlib(struct Client *cptr, struct DBuf *dyn, const char *buf, unsigned int length)
+{
+  static void *tmp = NULL;
+  int flag = Z_NO_FLUSH;
+  int compresion = 0;
+  int estado, f;
+
+  assert(0 != dyn);
+  assert(0 != buf);
+  /*
+   * Pongo BUFSIZE*3, pero si hago el
+   * "include" tengo un monton de problemas,
+   * asi que lo hago a mano.
+   */
+  if (!tmp)
+  {
+    tmp = MyMalloc(512 * 3);
+    if (!tmp)
+      return dbuf_malloc_error(dyn);
+  }
+  if (cptr && MyConnect(cptr) && (cptr->cli_connect->zlib_negociation & ZLIB_OUT))
+  {
+    struct zlib_mburst *p = p_microburst;
+    long length_out = cli_connect(cptr)->comp_out->total_out;
+
+    compresion = !0;
+    cli_connect(cptr)->comp_out->next_in = (void *)buf;
+    cli_connect(cptr)->comp_out->avail_in = length;
+    cli_connect(cptr)->comp_out_total_in += length;
+    cli_connect(cptr)->comp_out->next_out = tmp;
+    cli_connect(cptr)->comp_out->avail_out = 512 * 3;  /* Ojo con esta cifra */
+
+    if (microburst)
+    {
+      estado = deflate(cli_connect(cptr)->comp_out, Z_NO_FLUSH);
+      length_out -= cli_connect(cptr)->comp_out->total_out;
+      if (length_out < 0)
+        length_out = -length_out;
+      cli_connect(cptr)->comp_out_total_out += length_out;
+      while (p && (cptr != p->cptr))
+        p = p->next;
+      if (p == NULL)
+      {
+        p = p_microburst_cache;
+        if (p)
+        {
+          p_microburst_cache = p->next;
+        }
+        else
+        {
+          p = MyMalloc(sizeof(struct zlib_mburst));
+          assert(0 != p);
+        }
+        p->next = p_microburst;
+        p->cptr = cptr;
+        p->dyn = dyn;
+        p_microburst = p;
+      }
+      assert(p->dyn == dyn);
+    }
+    else
+    {
+      estado = deflate(cli_connect(cptr)->comp_out, Z_PARTIAL_FLUSH);
+      flag = Z_PARTIAL_FLUSH;
+      length_out -= cli_connect(cptr)->comp_out->total_out;
+      if (length_out < 0)
+        length_out = -length_out;
+      cli_connect(cptr)->comp_out_total_out += length_out;
+    }
+    assert(Z_OK == estado);
+    buf = tmp;
+    length = (cli_connect(cptr)->comp_out->next_out) - (Bytef *) tmp;
+    if (!length)
+      return 1;
+  }
+
+  while (!0)
+  {
+    long length_out;
+
+    f = dbuf_put_native(dyn, buf, length);
+    if (!compresion || (f < 0) || cli_connect(cptr)->comp_out->avail_out)
+      return f;
+
+    /* Queda mas */
+    send_queued(cptr);
+    cli_connect(cptr)->comp_out->next_out = tmp;
+    cli_connect(cptr)->comp_out->avail_out = 512 * 3;  /* Ojo con esta cifra */
+    length_out = cli_connect(cptr)->comp_out->total_out;
+    estado = deflate(cli_connect(cptr)->comp_out, flag);
+    length_out -= cli_connect(cptr)->comp_out->total_out;
+    if (length_out < 0)
+      length_out = -length_out;
+    cli_connect(cptr)->comp_out_total_out += length_out;
+    assert(Z_OK == estado);
+    buf = tmp;
+    length = (cli_connect(cptr)->comp_out->next_out) - (Bytef *) tmp;
+    if (!length)
+      return f;
+  }
+}
+#endif
 
 /** Append bytes to a data buffer.
  * @param[in] cptr .

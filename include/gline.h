@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/gline.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2000 Kevin L. Mitchell <klmitch@mit.edu>
  * Copyright (C) 1996-1997 Carlo Wood
  * Copyright (C) 1990 Jarkko Oikarinen
@@ -60,7 +60,7 @@ struct Gline {
   struct Gline *gl_next;	/**< Next G-line in linked list. */
   struct Gline**gl_prev_p;	/**< Previous pointer to this G-line. */
   char	       *gl_user;	/**< Username mask (or channel/realname mask). */
-  char	       *gl_host;	/**< Host prtion of mask. */
+  char	       *gl_host;	/**< Host portion of mask. */
   char	       *gl_reason;	/**< Reason for G-line. */
 #if defined(PCRE)
   pcre         *gl_pcre;	/**< PCRE Pointer. */
@@ -69,7 +69,7 @@ struct Gline {
   time_t	gl_lastmod;	/**< Last modification timestamp. */
   time_t	gl_lifetime;	/**< Record expiration timestamp. */
   struct irc_in_addr gl_addr;	/**< IP address (for IP-based G-lines). */
-  unsigned char gl_bits;	/**< Usable bits in gl_addr. */
+  unsigned char gl_bits;	/**< Bits in gl_addr used in the mask. */
   unsigned int	gl_flags;	/**< G-line status flags. */
   enum GlineLocalState gl_state;/**< G-line local state. */
 };
@@ -100,7 +100,8 @@ enum GlineAction {
 #define GLINE_LIFETIME	0x2000	/**< Record lifetime update */
 #define GLINE_REASON	0x4000	/**< Reason update */
 #if defined(PCRE)
-#define GLINE_PCRE		0x8000	/**< PCRE match gline */
+#define GLINE_PCRE      0x8000 /**< PCRE match gline */
+#define GLINE_PCRE_CI   0x10000 /**< PCRE match gline case insensitive */
 #endif
 
 /** Controllable flags that can be set on an actual G-line. */
@@ -125,8 +126,11 @@ enum GlineAction {
 #define GlineIsBadChan(g)	((g)->gl_flags & GLINE_BADCHAN)
 /** Test whether \a g is local to this server. */
 #define GlineIsLocal(g)		((g)->gl_flags & GLINE_LOCAL)
+#if defined(PCRE)
 /** Test whether \a g is a PCRE realname-based G-line. */
-#define GlineIsPCRE(g)      ((g)->gl_flags & GLINE_PCRE)
+#define GlineIsPCRE(g)      	((g)->gl_flags & GLINE_PCRE)
+#define GlineIsPCRECI(g)          ((g)->gl_flags & GLINE_PCRE_CI)
+#endif
 
 /** Return user mask of a G-line. */
 #define GlineUser(g)		((g)->gl_user)
@@ -137,7 +141,7 @@ enum GlineAction {
 /** Return last modification time of a G-line. */
 #define GlineLastMod(g)		((g)->gl_lastmod)
 /** Return expiration time of a G-line. */
-#define GlineExpire(g)      ((g)->gl_expire)
+#define GlineExpire(g)          ((g)->gl_expire)
 
 extern int gline_add(struct Client *cptr, struct Client *sptr, char *userhost,
 		     char *reason, time_t expire, time_t lastmod,

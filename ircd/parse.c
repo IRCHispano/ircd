@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/parse.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -160,16 +160,14 @@ struct Message msgtab[] = {
     TOK_JOIN,
     0, MAXPARA, MFLG_SLOW, 0, NULL,
     /* UNREG, CLIENT, SERVER, OPER, SERVICE */
-//    { m_unregistered, m_join, ms_join, m_join, m_ignore }
-    { m_unregistered, m_join, m_join, m_join, m_ignore }
+    { m_unregistered, m_join, ms_join, m_join, m_ignore }
   },
   {
     MSG_MODE,
     TOK_MODE,
     0, MAXPARA, MFLG_SLOW, 0, NULL,
     /* UNREG, CLIENT, SERVER, OPER, SERVICE */
-//    { m_unregistered, m_mode, ms_mode, m_mode, m_ignore }
-    { m_unregistered, m_mode, m_mode, m_mode, m_ignore }
+    { m_unregistered, m_mode, ms_mode, m_mode, m_ignore }
   },
   {
     MSG_BURST,
@@ -204,8 +202,7 @@ struct Message msgtab[] = {
     TOK_PART,
     0, MAXPARA, MFLG_SLOW, 0, NULL,
     /* UNREG, CLIENT, SERVER, OPER, SERVICE */
-//    { m_unregistered, m_part, ms_part, m_part, m_ignore }
-    { m_unregistered, m_part, m_part, m_part, m_ignore }
+    { m_unregistered, m_part, ms_part, m_part, m_ignore }
   },
   {
     MSG_TOPIC,
@@ -226,8 +223,7 @@ struct Message msgtab[] = {
     TOK_KICK,
     0, MAXPARA, MFLG_SLOW, 0, NULL,
     /* UNREG, CLIENT, SERVER, OPER, SERVICE */
-//    { m_unregistered, m_kick, ms_kick, m_kick, m_ignore }
-    { m_unregistered, m_kick, m_kick, m_kick, m_ignore }
+    { m_unregistered, m_kick, ms_kick, m_kick, m_ignore }
   },
   {
     MSG_WALLOPS,
@@ -521,16 +517,14 @@ struct Message msgtab[] = {
     TOK_OPMODE,
     0, MAXPARA, MFLG_SLOW, 0, NULL,
     /* UNREG, CLIENT, SERVER, OPER, SERVICE */
-//    { m_unregistered, m_not_oper, ms_opmode, mo_opmode, m_ignore }
-    { m_unregistered, m_not_oper, m_ignore, m_ignore, m_ignore }
+    { m_unregistered, m_not_oper, ms_opmode, mo_opmode, m_ignore }
   },
   {
     MSG_CLEARMODE,
     TOK_CLEARMODE,
     0, MAXPARA, MFLG_SLOW, 0, NULL,
     /* UNREG, CLIENT, SERVER, OPER, SERVICE */
-//    { m_unregistered, m_not_oper, ms_clearmode, mo_clearmode, m_ignore }
-    { m_unregistered, m_not_oper, m_ignore, m_ignore, m_ignore }
+    { m_unregistered, m_not_oper, ms_clearmode, mo_clearmode, m_ignore }
   },
   {
     MSG_UPING,
@@ -633,6 +627,20 @@ struct Message msgtab[] = {
     { m_ignore, m_not_oper, ms_asll, mo_asll, m_ignore }
   },
   {
+    MSG_XQUERY,
+    TOK_XQUERY,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+     { m_ignore, m_ignore, ms_xquery, mo_xquery, m_ignore }
+  },
+  {
+    MSG_XREPLY,
+    TOK_XREPLY,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { m_ignore, m_ignore, ms_xreply, m_ignore, m_ignore }
+  },
+  {
     MSG_CAP,
     TOK_CAP,
     0, MAXPARA, 0, 0, NULL,
@@ -704,6 +712,13 @@ struct Message msgtab[] = {
     0, MAXPARA, MFLG_SLOW, 0, NULL,
     /* UNREG, CLIENT, SERVER, OPER, SERVICE */
     { m_ignore, m_ignore, ms_svspart, m_ignore, m_ignore }
+  },
+  {
+    MSG_SVSKICK,
+    TOK_SVSKICK,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { m_ignore, m_ignore, ms_svskick, m_ignore, m_ignore }
   },
 #endif
 
@@ -891,7 +906,6 @@ parse_client(struct Client *cptr, char *buffer, char *bufend)
   char*           s;
   int             i;
   int             paramcount;
-  int             noprefix = 0;
   struct Message* mptr;
   MessageHandler  handler = 0;
 
@@ -909,8 +923,6 @@ parse_client(struct Client *cptr, char *buffer, char *bufend)
     while (*ch == ' ')
       ch++;                     /* Advance to command */
   }
-  else
-    noprefix = 1;
   if (*ch == '\0')
   {
     ServerStats->is_empt++;
@@ -1098,11 +1110,7 @@ int parse_server(struct Client *cptr, char *buffer, char *bufend)
       return 0;
     }
   }
-#if defined(P09_SUPPORT)
-  else if (Protocol(cptr) > 9)  /* Well, not ALWAYS, 2.9 can send no prefix */
-#else
   else
-#endif
   {
     char numeric_prefix[6];
     int  i;

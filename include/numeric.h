@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/numeric.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -264,7 +264,7 @@ extern const struct Numeric* get_error_numeric(int err);
 #define RPL_USERIP           340        /* Undernet extension */
 #define RPL_INVITING         341
 /*      RPL_SUMMONING        342           removed from RFC1459 */
-#define RPL_MSGONLYREG       342  		/* IRC-Dev/Hispano extension */
+#define RPL_MSGONLYREG       342  	/* IRC-Dev/Hispano extension */
 
 #define RPL_ISSUEDINVITE     345        /* Undernet extension */
 #define RPL_INVITELIST       346        /* IRCnet, Undernet extension */
@@ -418,6 +418,7 @@ extern const struct Numeric* get_error_numeric(int err);
 /*	ERR_DESYNC	     484	 Dalnet,PTlink */
 /*	ERR_ATTACKDENY	     484	 unreal */
 /*	ERR_RESTRICTED	     484	   IRCnet extension */
+#define ERR_ISREALSERVICE    485        /* Undernet extension */
 /*      ERR_UNIQOPRIVSNEEDED 485           IRCnet extension */
 /*	ERR_KILLDENY         485	   unreal */
 /*	ERR_CANTKICKADMIN    485	   PTlink */
@@ -425,6 +426,7 @@ extern const struct Numeric* get_error_numeric(int err);
 #define ERR_NONONREG         486
 /*      ERR_CHANTOORECENT    487           IRCnet extension (?) */
 /*      ERR_TSLESSCHAN       488           IRCnet extension (?) */
+#define ERR_NOSSL            488
 #define ERR_VOICENEEDED      489        /* Undernet extension */
 
 #define ERR_NOOPERCLASS      490	/* IRC-Dev/Hispano extension */
@@ -469,7 +471,9 @@ extern const struct Numeric* get_error_numeric(int err);
 /*	ERR_LISTSYNTAX       521	dalnet
 	ERR_WHOSYNTAX	     522        dalnet
 	ERR_WHOLIMEXCEED     523	dalnet */
-#define ERR_QUARANTINED      524       /* Undernet extension -Vampire */
+#define ERR_QUARANTINED      524        /* Undernet extension -Vampire */
+#define ERR_INVALIDKEY       525        /* Undernet extension */
+#define ERR_SSLCLIFP         532
 
 #define ERR_NOTLOWEROPLEVEL  560	/* Undernet extension */
 #define ERR_NOTMANAGER       561	/* Undernet extension */

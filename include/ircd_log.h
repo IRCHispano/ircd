@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/ircd_log.h
  *
- * Copyright (C) 2002-2007 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1999 Thomas Helvey
  *
  * This program is free software; you can redistribute it and/or modify

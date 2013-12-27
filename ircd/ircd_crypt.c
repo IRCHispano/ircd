@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_crypt.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2002 hikari
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,22 +23,22 @@
  * @file
  * @brief Core password encryption routines.
  * @version $Id: ircd_crypt.c,v 1.8 2007-09-20 21:00:31 zolty Exp $
- * 
+ *
  * This is a new look crypto API for ircu, it can handle different
- * password formats by the grace of magic tokens at the beginning of the 
+ * password formats by the grace of magic tokens at the beginning of the
  * password e.g. $SMD5 for Salted MD5, $CRYPT for native crypt(), etc.
  *
- * Currently crypt routines are implemented for: the native crypt() 
+ * Currently crypt routines are implemented for: the native crypt()
  * function, Salted MD5 and a plain text mechanism which should only
  * be used for testing.  I intend to add Blowfish, 3DES and possibly
  * SHA1 support as well at some point, but I'll need to check the
  * possible problems that'll cause with stupid crypto laws.
  *
- * It's also designed to be "ready" for the modularisation of ircu, so 
+ * It's also designed to be "ready" for the modularisation of ircu, so
  * someone get round to doing it, because I'm not doing it ;)
- * 
+ *
  * The plan for Stage B is to semi-modularise the authentication
- * mechanism to allow authentication against some other sources than 
+ * mechanism to allow authentication against some other sources than
  * the conf file (whatever takes someones fancy, kerberos, ldap, sql, etc).
  *
  *                   -- blessed be, hikari.
@@ -64,11 +64,11 @@
 /* evil global */
 crypt_mechs_t* crypt_mechs_root;
 
-/** Add a crypt mechanism to the list 
+/** Add a crypt mechanism to the list
  * @param mechanism Pointer to the mechanism details struct
  * @return 0 on success, anything else on fail.
- * 
- * This routine registers a new crypt mechanism in the loaded mechanisms list, 
+ *
+ * This routine registers a new crypt mechanism in the loaded mechanisms list,
  * making it availabe for comparing passwords.
 */
 int ircd_crypt_register_mech(crypt_mech_t* mechanism)
@@ -103,14 +103,14 @@ crypt_mechs_t* crypt_mech;
   crypt_mech->next = NULL;
   crypt_mechs_root->prev = crypt_mech->prev->next = crypt_mech;
  }
-  
+
  /* we're done */
  Debug((DEBUG_INFO, "ircd_crypt_register_mech: registered mechanism: %s, crypt_function is at 0x%X.", crypt_mech->mech->shortname, &crypt_mech->mech->crypt_function));
  Debug((DEBUG_INFO, "ircd_crypt_register_mech: %s: %s", crypt_mech->mech->shortname, crypt_mech->mech->description));
  return 0;
 }
 
-/** Remove a crypt mechanism from the list 
+/** Remove a crypt mechanism from the list
  * @param mechanism Pointer to the mechanism we want to remove
  * @return 0 on success, anything else on fail.
 */
@@ -155,18 +155,18 @@ crypt_mechs_t* crypt_mech;
    continue;
   }
 
-  Debug((DEBUG_DEBUG, "ircd_crypt: comparing %s with %s", 
+  Debug((DEBUG_DEBUG, "ircd_crypt: comparing %s with %s",
    salt, crypt_mech->mech->crypt_token));
 
   if(0 == ircd_strncmp(crypt_mech->mech->crypt_token, salt, crypt_mech->mech->crypt_token_size))
   {
-   Debug((DEBUG_DEBUG, "ircd_crypt: type is %s", 
+   Debug((DEBUG_DEBUG, "ircd_crypt: type is %s",
     crypt_mech->mech->shortname));
 
    /* before we send this all off to the crypt_function, we need to remove
       the tag from it */
 
-   /* make sure we won't end up with a password comprised entirely of 
+   /* make sure we won't end up with a password comprised entirely of
       a single \0 */
    if(strlen(salt) < crypt_mech->mech->crypt_token_size + 1)
     return NULL;
@@ -187,12 +187,12 @@ crypt_mechs_t* crypt_mech;
    }
    memset(hashed_pass, 0, sizeof(char)*strlen(temp_hashed_pass)
     +crypt_mech->mech->crypt_token_size + 1);
-   ircd_strncpy(hashed_pass, crypt_mech->mech->crypt_token, 
+   ircd_strncpy(hashed_pass, crypt_mech->mech->crypt_token,
     crypt_mech->mech->crypt_token_size);
    ircd_strncpy(hashed_pass + crypt_mech->mech->crypt_token_size, temp_hashed_pass, strlen(temp_hashed_pass));
    Debug((DEBUG_DEBUG, "ircd_crypt: tagged pass is %s", hashed_pass));
   } else {
-   Debug((DEBUG_DEBUG, "ircd_crypt: will try next mechanism at 0x%X", 
+   Debug((DEBUG_DEBUG, "ircd_crypt: will try next mechanism at 0x%X",
     crypt_mech->next));
    crypt_mech = crypt_mech->next;
    continue;
@@ -216,13 +216,13 @@ crypt_mechs_t* crypt_mech;
 }
 
 /** Some basic init.
- * This function loads initalises the crypt mechanisms linked list and 
- * currently loads the default mechanisms (Salted MD5, Crypt() and PLAIN).  
+ * This function loads initalises the crypt mechanisms linked list and
+ * currently loads the default mechanisms (Salted MD5, Crypt() and PLAIN).
  * The last step is only needed while ircu is not properly modular.
- *  
+ *
  * When ircu is modular this will be the entry function for the ircd_crypt
  * module.
- * 
+ *
 */
 void ircd_crypt_init(void)
 {

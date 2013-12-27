@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_silence.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996 Carlo Wood <carlo@runaway.xs4all.nl>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -220,14 +220,8 @@ forward_silences(struct Client *sptr, char *silences, struct Client *dest)
         buf[buf_used] = '\0';
         if (dest)
           sendcmdto_one(sptr, CMD_SILENCE, dest, "%C %s", dest, buf);
-        else {
-#if defined(P09_SUPPORT)
-          sendcmdto_lowprot_serv(sptr, 9, CMD_SILENCE, sptr, "* %s", buf);
-          sendcmdto_highprot_serv(sptr, 10, CMD_SILENCE, sptr, "* %s", buf);
-#else
+        else
           sendcmdto_serv(sptr, CMD_SILENCE, sptr, "* %s", buf);
-#endif
-        }
         buf_used = 0;
       }
       if (buf_used)
@@ -242,14 +236,8 @@ forward_silences(struct Client *sptr, char *silences, struct Client *dest)
         buf[buf_used] = '\0';
         if (dest)
           sendcmdto_one(sptr, CMD_SILENCE, dest, "%C %s", dest, buf);
-        else {
-#if defined(P09_SUPPORT)
-          sendcmdto_lowprot_serv(sptr, 9, CMD_SILENCE, sptr, "* %s", buf);
-          sendcmdto_highprot_serv(sptr, 10, CMD_SILENCE, sptr, "* %s", buf);
-#else
+        else
           sendcmdto_serv(sptr, CMD_SILENCE, sptr, "* %s", buf);
-#endif
-        }
         buf_used = 0;
     }
   }
@@ -300,24 +288,18 @@ int m_silence(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   /* See if the user is requesting a silence list. */
   acptr = sptr;
   if (parc < 2 || EmptyString(parv[1]) || (acptr = FindUser(parv[1]))) {
-    if (cli_user(acptr)) {
+    if (cli_user(acptr) && ((acptr == sptr) || IsChannelService(acptr))) {
       for (sile = cli_user(acptr)->silence; sile; sile = sile->next) {
         send_reply(sptr, RPL_SILELIST, cli_name(acptr),
                    (sile->flags & BAN_EXCEPTION ? "~" : ""),  sile->banstr);
       }
+    } else {
+      send_reply(sptr, ERR_SILECANTBESHOWN, parv[0], parv[1]);
+      return 0;
     }
     send_reply(sptr, RPL_ENDOFSILELIST, cli_name(acptr));
     return 0;
   }
-
-#if 0 /* TODO-ZOLTAN */
-    else if (!(strchr(cp, '@') || strchr(cp, '.') ||
-        strchr(cp, '!') || strchr(cp, '*')))
-    {
-      sendto_one(sptr, err_str(ERR_SILECANTBESHOWN), me.name, parv[0], parv[1]);
-      return -1;
-    }
-#endif
 
   /* The user must be attempting to update their list. */
   forward_silences(sptr, parv[1], NULL);

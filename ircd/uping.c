@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/uping.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1994 Carlo Wood <Run@undernet.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -152,7 +152,7 @@ int uping_init(void)
     return -1;
   if (!socket_add(&upingSock_v6, uping_echo_callback, 0, SS_DATAGRAM,
                   SOCK_EVENT_READABLE, fd)) {
-    log_write(LS_SYSTEM, L_WARNING, 0, 
+    log_write(LS_SYSTEM, L_WARNING, 0,
 		    "UPING: Unable to queue fd to event system");
     close(fd);
     return -1;

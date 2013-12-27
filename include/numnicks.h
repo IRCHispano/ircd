@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/numnicks.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996-1997 Carlo Wood
  *
  * This program is free software; you can redistribute it and/or modify
@@ -75,11 +75,7 @@ struct Client;
 extern void SetRemoteNumNick(struct Client* cptr, const char* yxx);
 extern int  SetLocalNumNick(struct Client* cptr);
 extern void RemoveYXXClient(struct Client* server, const char* yxx);
-#if defined(WEBCHAT)
-extern int SetXXXChannel(struct Channel *chptr);
-extern void RemoveXXXChannel(const char *xxx);
-#endif
-extern void SetServerYXX(struct Client* cptr, 
+extern void SetServerYXX(struct Client* cptr,
                          struct Client* server, const char* yxx);
 extern void ClearServerYXX(const struct Client* server);
 
@@ -96,9 +92,13 @@ extern const char*    inttobase64(char* buf, unsigned int v, unsigned int count)
 extern const char* iptobase64(char* buf, const struct irc_in_addr* addr, unsigned int count, int v6_ok);
 extern void base64toip(const char* s, struct irc_in_addr* addr);
 
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
 extern void buf_to_base64_r(unsigned char *out, const unsigned char *buf, size_t buf_len);
 extern size_t base64_to_buf_r(unsigned char *buf, unsigned char *str);
+extern int SetWebXXXClient(struct Client *cptr);
+extern void RemoveWebXXXClient(const char *xxx);
+extern int SetWebXXXChannel(struct Channel *chptr);
+extern void RemoveWebXXXChannel(const char *xxx);
 #endif
 
 #endif /* INCLUDED_numnicks_h */

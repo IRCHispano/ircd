@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/list.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -342,7 +342,7 @@ void remove_client_from_list(struct Client *cptr)
 
   /* Only try remove cptr from the list if it IS in the list.
    * cli_next(cptr) cannot be NULL here, as &me is always the end
-   * the list, and we never remove &me.    -GW 
+   * the list, and we never remove &me.    -GW
    */
   if(cli_next(cptr))
   {

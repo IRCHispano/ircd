@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_rping.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996 Carlo Wood <carlo@runaway.xs4all.nl>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@
 
 /*
  * Old P10:
- * Sending [:defiant.atomicrevs.net RPING Z Gte- 953863987 524184 :<No client start time>] to 
+ * Sending [:defiant.atomicrevs.net RPING Z Gte- 953863987 524184 :<No client start time>] to
  * alphatest.atomicrevs.net
  * Full P10:
  * Parsing: j RI Z jAA 953865133 0 :<No client start time>

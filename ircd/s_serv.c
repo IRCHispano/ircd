@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/s_serv.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -139,21 +139,11 @@ int server_estab(struct Client *cptr, struct ConfItem *aconf)
     /*
      *  Pass my info to the new server
      */
-#if defined(P09_SUPPORT)
-    if (Protocol(cptr) < 10)
-      sendrawto_one(cptr, MSG_SERVER " %s 1 %Tu %Tu J%s %s%s 0 :%s",
-          cli_name(&me), cli_serv(&me)->timestamp,
-          cli_serv(cptr)->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
-          *(cli_info(&me)) ? cli_info(&me) : "IRCers United");
-    else
-
-#else
-      sendrawto_one(cptr, MSG_SERVER " %s 1 %Tu %Tu J%s %s%s +%s6 :%s",
+    sendrawto_one(cptr, MSG_SERVER " %s 1 %Tu %Tu J%s %s%s +%s6 :%s",
 		  cli_name(&me), cli_serv(&me)->timestamp,
 		  cli_serv(cptr)->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
 		  feature_bool(FEAT_HUB) ? "h" : "",
 		  *(cli_info(&me)) ? cli_info(&me) : "IRCers United");
-#endif
 
 #if defined(DDB)
     ddb_burst(cptr);
@@ -172,9 +162,6 @@ int server_estab(struct Client *cptr, struct ConfItem *aconf)
 
   cli_handler(cptr) = SERVER_HANDLER;
   Count_unknownbecomesserver(UserStats);
-#if defined(P09_SUPPORT)
-  if (Protocol(cptr) > 9)
-#endif
   SetBurst(cptr);
 
 /*    nextping = CurrentTime; */
@@ -209,8 +196,8 @@ int server_estab(struct Client *cptr, struct ConfItem *aconf)
   //ddb_burst(cptr);
 #endif
 
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-  inicia_microburst();
+#if defined(USE_ZLIB)
+  zlib_microburst_start();
 #endif
 
   /*
@@ -225,15 +212,7 @@ int server_estab(struct Client *cptr, struct ConfItem *aconf)
       continue;
     if (!match(cli_name(&me), cli_name(cptr)))
       continue;
-#if defined(P09_SUPPORT)
-    if (Protocol(acptr) < 10)
-      sendcmdto_one(&me, CMD_SERVER, acptr,
-          "%s 2 0 %Tu J%02u %s%s 0 :%s", cli_name(cptr),
-          cli_serv(cptr)->timestamp, Protocol(cptr), NumServCap(cptr),
-          cli_info(cptr));
-    else
-#endif
-      sendcmdto_one(&me, CMD_SERVER, acptr,
+    sendcmdto_one(&me, CMD_SERVER, acptr,
 		  "%s 2 0 %Tu J%02u %s%s +%s%s%s :%s", cli_name(cptr),
 		  cli_serv(cptr)->timestamp, Protocol(cptr), NumServCap(cptr),
 		  IsHub(cptr) ? "h" : "", IsService(cptr) ? "s" : "",
@@ -278,15 +257,6 @@ int server_estab(struct Client *cptr, struct ConfItem *aconf)
 
       if (0 == match(cli_name(&me), cli_name(acptr)))
         continue;
-#if defined(P09_SUPPORT)
-      if (Protocol(cptr) < 10)
-        sendcmdto_one(cli_serv(acptr)->up, CMD_SERVER, cptr,
-            "%s %d 0 %Tu %s%u %s%s 0 :%s", cli_name(acptr),
-            cli_hopcount(acptr) + 1, cli_serv(acptr)->timestamp,
-            protocol_str, Protocol(acptr), NumServCap(acptr),
-            cli_info(acptr));
-      else
-#endif
         sendcmdto_one(cli_serv(acptr)->up, CMD_SERVER, cptr,
 		    "%s %d 0 %Tu %s%u %s%s +%s%s%s :%s", cli_name(acptr),
 		    cli_hopcount(acptr) + 1, cli_serv(acptr)->timestamp,
@@ -304,42 +274,6 @@ int server_estab(struct Client *cptr, struct ConfItem *aconf)
       continue;
     if (IsUser(acptr))
     {
-#if defined(P09_SUPPORT)
-      if (Protocol(cptr) < 10)
-      {
-#ifdef MIGRACION_DEEPSPACE_P10
-        char xxx_buf[25];
-
-        sendcmdto_one(cli_user(acptr)->server, CMD_NICK, cptr,
-              "%s %d %Tu %s %s %s %s :%s",
-              cli_name(acptr), cli_hopcount(acptr) + 1, cli_lastnick(acptr),
-              cli_user(acptr)->username, cli_user(acptr)->realhost,
-              cli_server(acptr)->name,
-              iptobase64(xxx_buf, &cli_ip(acptr), sizeof(xxx_buf), IsIPv6(cptr)),
-              cli_info(acptr));
-#else
-        sendcmdto_one(cli_user(acptr)->server, CMD_NICK, cptr,
-              "%s %d %Tu %s %s %s :%s",
-              cli_name(acptr), cli_hopcount(acptr) + 1, cli_lastnick(acptr),
-              cli_user(acptr)->username, cli_user(acptr)->realhost,
-              cli_user(acptr)->server->cli_name, cli_info(acptr));
-#endif
-        send_umode(cptr, acptr, 0, SEND_UMODES);
-        send_user_joins(cptr, acptr);
-      } else {
-        char xxx_buf[25];
-        char *s = umode_str(acptr);
-        sendcmdto_one(cli_user(acptr)->server, CMD_NICK, cptr,
-              "%s %d %Tu %s %s %s%s%s%s %s%s :%s",
-              cli_name(acptr), cli_hopcount(acptr) + 1, cli_lastnick(acptr),
-              cli_user(acptr)->username, cli_user(acptr)->realhost,
-              *s ? "+" : "", s, *s ? " " : "",
-              iptobase64(xxx_buf, &cli_ip(acptr), sizeof(xxx_buf), IsIPv6(cptr)),
-              NumNick(acptr), cli_info(acptr));
-
-
-      }
-#else
       char xxx_buf[25];
       char *s = umode_str(acptr);
       sendcmdto_one(cli_user(acptr)->server, CMD_NICK, cptr,
@@ -349,7 +283,6 @@ int server_estab(struct Client *cptr, struct ConfItem *aconf)
 		    *s ? "+" : "", s, *s ? " " : "",
 		    iptobase64(xxx_buf, &cli_ip(acptr), sizeof(xxx_buf), IsIPv6(cptr)),
 		    NumNick(acptr), cli_info(acptr));
-#endif
     }
   }
   /*
@@ -363,13 +296,10 @@ int server_estab(struct Client *cptr, struct ConfItem *aconf)
       send_channel_modes(cptr, chptr);
   }
 
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-  completa_microburst();
+#if defined(USE_ZLIB)
+  zlib_microburst_complete();
 #endif
 
-#if defined(P09_SUPPORT)
-  if (Protocol(cptr) > 9)
-#endif
   sendcmdto_one(&me, CMD_END_OF_BURST, cptr, "");
   return 0;
 }

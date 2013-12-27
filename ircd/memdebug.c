@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/memdebug.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1999 Thomas Helvey <tomh@inxpress.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,12 +22,12 @@
  *
  */
 #include <sys/types.h>
-//#include "ircd.h"
+#include "ircd.h"
 #include "ircd_alloc.h"
-//#include "ircd_log.h"
-//#include "client.h"
-//#include "s_debug.h"
-//#include "send.h"
+#include "ircd_log.h"
+#include "client.h"
+#include "s_debug.h"
+#include "send.h"
 #include <stdlib.h>
 #include <string.h>
 

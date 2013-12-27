@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/s_conf.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -54,9 +54,12 @@ struct Message;
 #define CONF_OPERATOR           0x0020     /**< ConfItem describes an Operator block */
 
 #define CONF_AUTOCONNECT        0x0001     /**< Autoconnect to a server */
+#if defined(USE_SSL)
+#define CONF_SSL                0x0002     /**< Connect whit SSL */
+#endif
 #if defined(USE_ZLIB)
-#define CONF_ZLIB_IN            0x0002
-#define CONF_ZLIB_OUT           0x0004
+#define CONF_ZLIB_IN            0x0010
+#define CONF_ZLIB_OUT           0x0020
 #define CONF_ZLIB               (CONF_ZLIB_IN | CONF_ZLIB_OUT)
 #endif
 
@@ -88,6 +91,7 @@ struct ConfItem
   char *name;         /**< Name of peer */
   char *hub_limit;    /**< Mask that limits servers allowed behind
                          this one. */
+  char *sslfp;        /**< SSL certificate fingerprint */
   time_t hold;        /**< Earliest time to attempt an outbound
                          connect on this ConfItem. */
   int dns_pending;    /**< A dns request is pending. */

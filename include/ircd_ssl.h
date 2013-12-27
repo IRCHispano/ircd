@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/ircd_ssl.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2002 Alex Badea <vampire@go.ro>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,10 @@
 
 struct Socket;
 struct Listener;
+
 char *my_itoa(int i);
+extern int bio_spare_fd;
+
 extern IOResult ssl_recv(struct Socket *socket, char* buf, unsigned int length, unsigned int* count_out);
 extern IOResult ssl_sendv(struct Socket *socket, struct MsgQ* buf, unsigned int* count_in, unsigned int* count_out);
 
@@ -55,6 +58,16 @@ extern int ssl_count(void);
 extern void ssl_add_connection(struct Listener *listener, int fd);
 extern void ssl_free(struct Socket *socket);
 extern void ssl_init(void);
+
+extern void report_crypto_errors(void);
+extern int verify_private_key(void);
+extern int generate_challenge(char **, RSA *, struct Client *sptr);
+extern int get_randomness(unsigned char *, int);
+
+extern int save_spare_fd(const char *);
+
+extern char* ssl_get_fingerprint(SSL *ssl);
+extern int ssl_connect(struct Socket* sock);
 
 #endif /* USE_SSL */
 #endif /* INCLUDED_ircd_ssl_h */

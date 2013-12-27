@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_features.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2000 Kevin L. Mitchell <klmitch@mit.edu>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -257,9 +257,9 @@ static void
 set_isupport_chanmodes(void)
 {
 #if defined(UNDERNET)
-    add_isupport_s("CHANMODES", feature_bool(FEAT_OPLEVELS) ? "b,AkU,l,imnpstRDd" : "b,k,l,imnpstRDd");
+    add_isupport_s("CHANMODES", feature_bool(FEAT_OPLEVELS) ? "b,AkU,l,imnpstRDdcCNuMz" : "b,k,l,imnpstRDdcCNuMz");
 #else
-    add_isupport_s("CHANMODES", "b,k,l,imnpstrRDd");
+    add_isupport_s("CHANMODES", "b,k,l,imnpstrRDdcCNuMz");
 #endif
 }
 
@@ -267,6 +267,17 @@ static void
 set_isupport_network(void)
 {
     add_isupport_s("NETWORK", feature_str(FEAT_NETWORK));
+}
+
+/** Update whether #me is a hub or not.
+ */
+static void
+feature_notify_hub(void)
+{
+  if (feature_bool(FEAT_HUB))
+    SetHub(&me);
+  else
+    ClearHub(&me);
 }
 
 /** Sets a feature to the given value.
@@ -316,7 +327,7 @@ typedef void (*feat_report_call)(struct Client* sptr, int marked);
 #define FEAT_MYOPER 0x0200	/**< set to display only to local opers */
 #define FEAT_NODISP 0x0400	/**< feature must never be displayed */
 #if defined(DDB)
-#define FEAT_DDB    0x0800  /**< feature ajusted via DDB */
+#define FEAT_DDB    0x0800	/**< feature ajusted via DDB */
 #endif
 
 #define FEAT_READ   0x1000	/**< feature is read-only (for now, perhaps?) */
@@ -380,7 +391,7 @@ static struct FeatureDesc {
   F_S(PROVIDER, FEAT_NULL, 0, 0),
   F_B(KILL_IPMISMATCH, FEAT_OPER, 0, 0),
   F_B(IDLE_FROM_MSG, 0, 1, 0),
-  F_B(HUB, 0, 0, 0),
+  F_B(HUB, 0, 0, feature_notify_hub),
   F_B(WALLOPS_OPER_ONLY, 0, 0, 0),
   F_B(NODNS, 0, 0, 0),
   F_B(NOIDENT, 0, 0, 0),
@@ -392,7 +403,9 @@ static struct FeatureDesc {
   F_S(HIDDEN_HOST, FEAT_CASE, "users.irc-dev.net", 0),
   F_S(HIDDEN_IP, 0, "127.0.0.1", 0),
   F_B(CONNEXIT_NOTICES, 0, 0, 0),
+#if defined(UNDERNET)
   F_B(OPLEVELS, 0, 1, set_isupport_chanmodes),
+#endif
   F_B(ZANNELS, 0, 1, 0),
   F_B(LOCAL_CHANNELS, 0, 1, set_isupport_chantypes),
   F_B(TOPIC_BURST, 0, 0, 0),
@@ -420,7 +433,7 @@ static struct FeatureDesc {
   F_I(IPCHECK_CLONE_LIMIT, 0, 4, 0),
   F_I(IPCHECK_CLONE_PERIOD, 0, 40, 0),
   F_I(IPCHECK_CLONE_DELAY, 0, 600, 0),
-  F_U(CHANNELLEN, 0, 200, set_isupport_channellen),
+  F_U(CHANNELLEN, 0, 64, set_isupport_channellen),
 
   /* Some misc. default paths */
   F_S(MPATH, FEAT_CASE | FEAT_MYOPER, "ircd.motd", motd_init_local),
@@ -547,9 +560,6 @@ static struct FeatureDesc {
   F_B(NETWORK_RESTART, 0, 0, 0),
   F_B(NETWORK_DIE, 0, 0, 0),
 
-#if 1 /* TRANSICION IRC-HISPANO */
-  F_B(TRANSICION_HISPANO, 0, 1, 0),
-#endif
 #undef F_S
 #undef F_B
 #undef F_I
@@ -624,7 +634,7 @@ feature_set(struct Client* from, const char* const* fields, int count)
     byddb = 1;
     from = NULL;
   }
-#endif  
+#endif
 
   if (from && !HasPriv(from, PRIV_SET))
     return send_reply(from, ERR_NOPRIVILEGES);
@@ -642,7 +652,7 @@ feature_set(struct Client* from, const char* const* fields, int count)
         feat->flags &= ~FEAT_DDB;
       else
         feat->flags |= FEAT_DDB;
-        
+
     } else if (feat->flags & FEAT_DDB) {
       if (from) {
         sendcmdto_one(&me, CMD_NOTICE, from, "%C :The feature has been set by DDB", from);
@@ -650,7 +660,7 @@ feature_set(struct Client* from, const char* const* fields, int count)
       }
       return 0;
     }
-#endif  
+#endif
     if (from && feat->flags & FEAT_READ)
       return send_reply(from, ERR_NOFEATURE, fields[0]);
 
@@ -815,7 +825,7 @@ feature_reset(struct Client* from, const char* const* fields, int count)
       return 0;
      }
 #endif
-  
+
     if (from && feat->flags & FEAT_READ)
       return send_reply(from, ERR_NOFEATURE, fields[0]);
 
@@ -930,7 +940,7 @@ feature_unmark(void)
 #if defined(DDB)
     if (features[i].flags & FEAT_DDB)
       continue;
-#endif 
+#endif
     features[i].flags &= ~FEAT_MARK; /* clear the marks... */
     if (features[i].unmark) /* call the unmark callback if necessary */
       (*features[i].unmark)();
@@ -949,7 +959,7 @@ feature_mark(void)
 #if defined(DDB)
     if (features[i].flags & FEAT_DDB)
       continue;
-#endif    
+#endif
 
     switch (feat_type(&features[i])) {
     case FEAT_NONE:
@@ -1026,6 +1036,8 @@ feature_init(void)
 void
 feature_report(struct Client* to, const struct StatDesc* sd, char* param)
 {
+  char changed;
+  int report;
   int i;
 
   for (i = 0; features[i].type; i++) {
@@ -1034,10 +1046,13 @@ feature_report(struct Client* to, const struct StatDesc* sd, char* param)
 	(features[i].flags & FEAT_OPER && !IsAnOper(to)))
       continue; /* skip this one */
 
+    changed = (features[i].flags & FEAT_MARK) ? 'F' : 'f';
+    report = (features[i].flags & FEAT_MARK) || sd->sd_funcdata;
+
     switch (feat_type(&features[i])) {
     case FEAT_NONE:
       if (features[i].report) /* let the callback handle this */
-	(*features[i].report)(to, features[i].flags & FEAT_MARK ? 1 : 0);
+	(*features[i].report)(to, report);
       break;
 
 
@@ -1045,64 +1060,64 @@ feature_report(struct Client* to, const struct StatDesc* sd, char* param)
 #if defined(DDB)
       if (features[i].flags & FEAT_DDB) {
         send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F %s %d (set by DDB)",
-           features[i].type, features[i].v_int);
+                   features[i].type, features[i].v_int);
         break;
-      } else if (features[i].flags & FEAT_MARK) /* it's been changed */
-#else    
-      if (features[i].flags & FEAT_MARK) /* it's been changed */
-#endif      
-	send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F %s %d",
-		   features[i].type, features[i].v_int);
+      } else if (report) /* it's been changed */
+#else
+      if (report) /* it's been changed */
+#endif
+	send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s %d",
+		   changed, features[i].type, features[i].v_int);
       break;
 
     case FEAT_UINT: /* Report an F-line with unsigned values */
 #if defined(DDB)
       if (features[i].flags & FEAT_DDB) {
         send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F %s %u (set by DDB)",
-           features[i].type, features[i].v_int);
+                   features[i].type, features[i].v_int);
         break;
-      } else if (features[i].flags & FEAT_MARK) /* it's been changed */
-#else      
-      if (features[i].flags & FEAT_MARK) /* it's been changed */
-#endif      
-	send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F %s %u",
-		   features[i].type, features[i].v_int);
+      } else if (report) /* it's been changed */
+#else
+      if (report) /* it's been changed */
+#endif
+	send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s %u",
+		   changed, features[i].type, features[i].v_int);
       break;
 
     case FEAT_BOOL: /* Report an F-line with boolean values */
 #if defined(DDB)
       if (features[i].flags & FEAT_DDB) {
         send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F %s %s (set by DDB)",
-           features[i].type, features[i].v_int ? "TRUE" : "FALSE");
+                   features[i].type, features[i].v_int ? "TRUE" : "FALSE");
         break;
-      } else if (features[i].flags & FEAT_MARK) /* it's been changed */
+      } else if (report) /* it's been changed */
 #else
-      if (features[i].flags & FEAT_MARK) /* it's been changed */
-#endif      
-	send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F %s %s",
-		   features[i].type, features[i].v_int ? "TRUE" : "FALSE");
+      if (report) /* it's been changed */
+#endif
+	send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s %s",
+		   changed, features[i].type, features[i].v_int ? "TRUE" : "FALSE");
       break;
 
     case FEAT_STR: /* Report an F-line with string values */
 #if defined(DDB)
       if (features[i].flags & FEAT_DDB) {
         if (features[i].v_str)
-          send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F %s %s (set by DDB)",
-             features[i].type, features[i].v_str);
+          send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%F %s %s (set by DDB)",
+                     features[i].type, features[i].v_str);
         else
           send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F %s (set by DDB)",
-             features[i].type);
+                     features[i].type);
         break;
-      } else if (features[i].flags & FEAT_MARK) { /* it's been changed */        
-#else                  
-      if (features[i].flags & FEAT_MARK) { /* it's been changed */
-#endif      
+      } else if (report) { /* it's been changed */
+#else
+      if (report) { /* it's been changed */
+#endif
 	if (features[i].v_str)
-	  send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F %s %s",
-		     features[i].type, features[i].v_str);
+	  send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s %s",
+		     changed, features[i].type, features[i].v_str);
 	else /* Actually, F:<type> would reset it; you want F:<type>: */
-	  send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F %s",
-		     features[i].type);
+	  send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s",
+		     changed, features[i].type);
       }
       break;
     }

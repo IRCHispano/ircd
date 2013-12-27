@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/ddb.h
  *
- * Copyright (C) 2002-2007 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2004 Toni Garcia (zoltan) <zoltan@irc-dev.net>
  * Copyright (C) 1999-2004 Jesus Cea Avion <jcea@jcea.es>
  * Copyright (C) 1999-2000 Jordi Murgo <savage@apostols.org>
@@ -68,16 +68,14 @@ struct StatDesc;
 #define DDB_NICKDB      'n'
 /** Operators table of %DDB Distributed Databases. */
 #define DDB_OPERDB      'o'
-/** Privileges table of %DDB Distributed Databases. */
-#define DDB_PRIVDB      'p'
 /** Channel redirections table of %DDB Distributed Databases. */
 #define DDB_CHANREDIRECTDB 'r'
 /** Uworld table of %DDB Distributed Databases. */
 #define DDB_UWORLDDB    'u'
 /** Vhost table of %DDB Distributed Databases. */
 #define DDB_VHOSTDB     'v'
-/** Colour vhost table of %DDB Distributed Databases. */
-#define DDB_COLOURVHOSTDB 'w'
+/** WebIRC table of %DDB Distributed Databases. */
+#define DDB_WEBIRCDB    'w'
 /** Config table of %DDB Distributed Databases. */
 #define DDB_CONFIGDB    'z'
 /** Last table of %DDB Distributed Databases. */
@@ -87,14 +85,19 @@ struct StatDesc;
  * Config keys of config table 'z'
  */
 /** Number of max clones per ip */
-#define DDB_CONFIGDB_MAX_CLONES_PER_IP      "maxclones"
+#define DDB_CONFIGDB_MAX_CLONES_PER_IP      "max.clones"
 /** Message to clients with too many clones from your ip */
-#define DDB_CONFIGDB_MSG_TOO_MANY_FROM_IP   "msgmanyperip"
+#define DDB_CONFIGDB_MSG_TOO_MANY_FROM_IP   "msg.many.per.ip"
 /** Key to crypt ips */
-#define DDB_CONFIGDB_IP_CRYPT_KEY           "ipcryptkey"
+#define DDB_CONFIGDB_IP_CRYPT_KEY           "ipcrypt.key"
 /** Key to crypt cookies */
-#define DDB_CONFIGDB_COOKIE_CRYPT_KEY       "cookiecryptkey"
-
+#define DDB_CONFIGDB_COOKIE_CRYPT_KEY       "cookie.crypt.key"
+/** Key2 to crypt cookies */
+#define DDB_CONFIGDB_COOKIE_CRYPT_KEY2      "cookie.crypt.key2"
+/** Message parting user on SVSKICK */
+#define DDB_CONFIGDB_MSG_PART_SVSKICK       "msg.part.svskick"
+/** Debug Channel for +J users */
+#define DDB_CONFIGDB_DEBUGCHAN_J            "debug.chan.j"
 /*
  * PseudoBots
  */
@@ -129,10 +132,17 @@ struct ddb_stat {
   time_t mtime;     /**< Time of last data modification */
 };
 
+#if defined(DDB_MMAP)
+/** DDB Macro for allocations. */
+#define DdbMalloc(x)    persistent_malloc(x)
+/** DDB Macro for freeing memory. */
+#define DdbFree(x)      persistent_free(x)
+#else
 /** DDB Macro for allocations. */
 #define DdbMalloc(x)    MyMalloc(x)
 /** DDB Macro for freeing memory. */
 #define DdbFree(x)      MyFree(x)
+#endif
 
 /*
  * Prototypes
@@ -190,15 +200,17 @@ extern int max_clones;
 extern char *msg_many_clones;
 extern char *ip_crypt_key;
 extern unsigned int binary_ip_crypt_key[2];
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
 extern int cookie_crypt_key;
 extern unsigned char binary_cookie_crypt_key[32];
+extern int cookie_crypt_key2;
+extern unsigned char binary_cookie_crypt_key2[32];
 #endif
 extern int invis_exception;
 extern int channel_redirections;
 extern char *perso_quit;
 
-#define BDD_CANAL_DEBUG "debugchan"
+#define DDB_CANAL_DEBUG "debugchan"
 
 void reload_db(void);
 void initdb(void);

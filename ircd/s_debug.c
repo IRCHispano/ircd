@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/s_debug.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,9 @@
 #include "channel.h"
 #include "class.h"
 #include "client.h"
-//#include "ddb.h"
+#if defined(DDB)
+#include "ddb.h"
+#endif
 #include "gline.h"
 #include "hash.h"
 #include "ircd_alloc.h"
@@ -102,6 +104,7 @@ const char* debug_serveropts(void)
   AddC('A');
 #endif
 #ifdef  DEBUGMODE
+  AddC('D');
 #endif
 
   if (feature_bool(FEAT_HUB))
@@ -129,14 +132,11 @@ const char* debug_serveropts(void)
 #if defined(PCRE)
   AddC('P');
 #endif
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
   AddC('W');
 #endif
-#if defined(WEBCHAT_HTML)
-  AddC('L');
-#endif
 #if defined(UNDERNET)
-  AddC('+'); AddC('U'); AddC('N'); AddC('E'); AddC('T'); 
+  AddC('+'); AddC('U'); AddC('N'); AddC('E'); AddC('T');
 #endif
 #if defined(DDB)
   AddC('+'); AddC('D'); AddC('D'); AddC('B');
@@ -410,7 +410,7 @@ void count_memory(struct Client *cptr, const struct StatDesc *sd,
    * message is being sent, so the count is affected by the dbufs that
    * are being used to send this message out. If this is not desired, move
    * the dbuf_count_memory call to a place before we start sending messages
-   * and cache DBufAllocCount and DBufUsedCount in variables until they 
+   * and cache DBufAllocCount and DBufUsedCount in variables until they
    * are sent.
    */
   dbuf_count_memory(&dbufs_allocated, &dbufs_used);

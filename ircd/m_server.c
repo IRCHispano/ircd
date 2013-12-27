@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_server.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -94,6 +94,14 @@ parse_protocol(const char *proto)
   return prot;
 }
 
+/** Reason not to accept a server's new announcement. */
+enum lh_type {
+  ALLOWED, /**< The new server link is accepted. */
+  MAX_HOPS_EXCEEDED, /**< The path to the server is too long. */
+  NOT_ALLOWED_TO_HUB, /**< My peer is not allowed to hub for the server. */
+  I_AM_NOT_HUB /**< I have another active server link but not FEAT_HUB. */
+};
+
 /** Check whether the introduction of a new server would cause a loop
  * or be disallowed by leaf and hub configuration directives.
  * @param[in] cptr Neighbor who sent the message.
@@ -113,7 +121,8 @@ check_loop_and_lh(struct Client* cptr, struct Client *sptr, time_t *ghost, const
   struct Client* acptr;
   struct Client* LHcptr = NULL;
   struct ConfItem* lhconf;
-  int active_lh_line = 0, ii;
+  enum lh_type active_lh_line = ALLOWED;
+  int ii;
 
   if (ghost)
     *ghost = 0;
@@ -128,18 +137,22 @@ check_loop_and_lh(struct Client* cptr, struct Client *sptr, time_t *ghost, const
     if (!feature_bool(FEAT_HUB))
       for (ii = 0; ii <= HighestFd; ii++)
         if (LocalClientArray[ii] && IsServer(LocalClientArray[ii])) {
-          active_lh_line = 3;
+          active_lh_line = I_AM_NOT_HUB;
           break;
         }
   }
   else if (hop > lhconf->maximum)
   {
-    active_lh_line = 1;
+    /* Because "maximum" should be 0 for non-hub links, check whether
+     * there is a hub mask -- if not, complain that the server isn't
+     * allowed to hub.
+     */
+    active_lh_line = lhconf->hub_limit ? MAX_HOPS_EXCEEDED : NOT_ALLOWED_TO_HUB;
   }
   else if (lhconf->hub_limit && match(lhconf->hub_limit, host))
   {
     struct Client *ac3ptr;
-    active_lh_line = 2;
+    active_lh_line = NOT_ALLOWED_TO_HUB;
     if (junction)
       for (ac3ptr = sptr; ac3ptr != &me; ac3ptr = cli_serv(ac3ptr)->up)
         if (IsJunction(ac3ptr)) {
@@ -178,18 +191,9 @@ check_loop_and_lh(struct Client* cptr, struct Client *sptr, time_t *ghost, const
      */
     if (0 != ircd_strcmp(cli_name(acptr), host))
     {
-#if defined(P09_SUPPORT)
-      sendcmdto_lowprot_serv(&me, 9, CMD_WALLOPS, cptr,
-                     ":SERVER Numeric Collision: %s != %s",
-                     cli_name(acptr), host);
-      sendcmdto_highprot_serv(&me, 10, CMD_WALLOPS, cptr,
-                     ":SERVER Numeric Collision: %s != %s",
-                     cli_name(acptr), host);
-#else
       sendcmdto_serv(&me, CMD_WALLOPS, cptr,
                      ":SERVER Numeric Collision: %s != %s",
                      cli_name(acptr), host);
-#endif
       return exit_client_msg(cptr, cptr, &me,
           "NUMERIC collision between %s and %s."
           " Is your server numeric correct ?", host, cli_name(acptr));
@@ -199,7 +203,7 @@ check_loop_and_lh(struct Client* cptr, struct Client *sptr, time_t *ghost, const
      */
     if (IsConnecting(acptr))
     {
-      if (!active_lh_line && exit_client(cptr, acptr, &me,
+      if (active_lh_line == ALLOWED && exit_client(cptr, acptr, &me,
           "Just connected via another link") == CPTR_KILLED)
         return CPTR_KILLED;
       /*
@@ -224,18 +228,9 @@ check_loop_and_lh(struct Client* cptr, struct Client *sptr, time_t *ghost, const
     {
       if (!IsServer(sptr))
         return exit_client(cptr, sptr, &me, cli_info(acptr));
-#if defined(P09_SUPPORT)
-      sendcmdto_lowprot_serv(&me, 9, CMD_WALLOPS, cptr,
-                     ":Received :%s SERVER %s from %s !?!",
-                     NumServ(cptr), host, cli_name(cptr));
-      sendcmdto_highprot_serv(&me, 10, CMD_WALLOPS, cptr,
-                     ":Received :%s SERVER %s from %s !?!",
-                     NumServ(cptr), host, cli_name(cptr));
-#else
       sendcmdto_serv(&me, CMD_WALLOPS, cptr,
                      ":Received :%s SERVER %s from %s !?!",
                      NumServ(cptr), host, cli_name(cptr));
-#endif
       return exit_new_server(cptr, sptr, host, timestamp, "%s", cli_info(acptr));
     }
     /*
@@ -333,7 +328,7 @@ check_loop_and_lh(struct Client* cptr, struct Client *sptr, time_t *ghost, const
       else if (cli_from(c2ptr) == cptr || IsServer(sptr))
       {
         struct Client *killedptrfrom = cli_from(c2ptr);
-        if (active_lh_line)
+        if (active_lh_line != ALLOWED)
         {
           /*
            * If the L: or H: line also gets rid of this link,
@@ -346,7 +341,7 @@ check_loop_and_lh(struct Client* cptr, struct Client *sptr, time_t *ghost, const
            * line problem, we don't squit that.
            */
           if (cli_from(c2ptr) == cptr || (LHcptr && a_kills_b_too(c2ptr, LHcptr)))
-            active_lh_line = 0;
+            active_lh_line = ALLOWED;
           else
           {
             /*
@@ -383,12 +378,12 @@ check_loop_and_lh(struct Client* cptr, struct Client *sptr, time_t *ghost, const
       }
       else
       {
-        if (active_lh_line)
+        if (active_lh_line != ALLOWED)
         {
           if (LHcptr && a_kills_b_too(LHcptr, acptr))
             break;
           if (cli_from(acptr) == cptr || (LHcptr && a_kills_b_too(acptr, LHcptr)))
-            active_lh_line = 0;
+            active_lh_line = ALLOWED;
           else
           {
             LHcptr = 0;
@@ -411,38 +406,27 @@ check_loop_and_lh(struct Client* cptr, struct Client *sptr, time_t *ghost, const
     }
   }
 
-  if (active_lh_line)
+  if (active_lh_line != ALLOWED)
   {
-    int killed = 0;
-    if (LHcptr)
-      killed = a_kills_b_too(LHcptr, sptr);
-    else
+    if (!LHcptr)
       LHcptr = sptr;
-    if (active_lh_line == 1)
+    if (active_lh_line == MAX_HOPS_EXCEEDED)
     {
-      if (exit_client_msg(cptr, LHcptr, &me,
-                          "Leaf-only link %s <- %s, check L:",
-                          cli_name(cptr), host) == CPTR_KILLED)
-        return CPTR_KILLED;
+      return exit_client_msg(cptr, LHcptr, &me,
+                             "Maximum hops exceeded for %s at %s",
+                             cli_name(cptr), host);
     }
-    else if (active_lh_line == 2)
+    else if (active_lh_line == NOT_ALLOWED_TO_HUB)
     {
-      if (exit_client_msg(cptr, LHcptr, &me,
-                          "Non-Hub link %s <- %s, check H:",
-                          cli_name(cptr), host) == CPTR_KILLED)
-        return CPTR_KILLED;
+      return exit_client_msg(cptr, LHcptr, &me,
+                             "%s is not allowed to hub for %s",
+                             cli_name(cptr), host);
     }
-    else
+    else /* I_AM_NOT_HUB */
     {
       ServerStats->is_ref++;
-      if (exit_client(cptr, LHcptr, &me, "I'm a leaf, define HUB") == CPTR_KILLED)
-        return CPTR_KILLED;
+      return exit_client(cptr, LHcptr, &me, "I'm a leaf, define the HUB feature");
     }
-    /*
-     * Did we kill the incoming server off already ?
-     */
-    if (killed)
-      return 0;
   }
 
   return 1;
@@ -619,6 +603,16 @@ int mr_server(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
                            "Access denied. No conf line for server %s", cli_name(cptr));
   }
 
+#if defined(USE_SSL)
+  if (!verify_sslclifp(cptr, aconf)) {
+    ++ServerStats->is_ref;
+    sendto_opmask(0, SNO_OLDSNO, "Access denied (SSL fingerprint mismatch) %s",
+                  cli_name(cptr));
+    return exit_client_msg(cptr, cptr, &me,
+                           "No Access (SSL fingerprint mismatch) %s", cli_name(cptr));
+  }
+#endif
+
   if (*aconf->passwd && !!strcmp(aconf->passwd, cli_passwd(cptr))) {
     ++ServerStats->is_ref;
     sendto_opmask(0, SNO_OLDSNO, "Access denied (passwd mismatch) %s",
@@ -691,9 +685,6 @@ int ms_server(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   unsigned short   prot;
   time_t           start_timestamp;
   time_t           timestamp;
-#if 1 /* TRANSICION IRC-HISPANO */
-  int IsP09 = 0;
-#endif  
 
   if (parc < 8)
   {
@@ -718,12 +709,8 @@ int ms_server(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (!prot)
     return exit_client_msg(cptr, sptr, &me, "Bogus protocol (%s)", parv[5]);
   else if (prot < atoi(MINOR_PROTOCOL))
-#if 1 /* TRANSICION IRC-HISPANO */
-    IsP09 = 1;
-#else  
     return exit_new_server(cptr, sptr, host, timestamp,
                            "Incompatible protocol: %s", parv[5]);
-#endif /* TRANSICION IRC-HISPANO */
 
   Debug((DEBUG_INFO, "Got SERVER %s with timestamp [%s] age %Tu (%Tu)",
 	 host, parv[4], start_timestamp, cli_serv(&me)->timestamp));
@@ -763,15 +750,6 @@ int ms_server(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 
   if (*parv[7] == '+')
     set_server_flags(acptr, parv[7] + 1);
-    
-#if 1 /* TRANSICION IRC-HISPANO */
-  if (IsP09)
-  {
-    *parv[5] = 'P';
-     sendto_opmask(0, SNO_NETWORK, "Net junction: %s %s",
-         cli_name(sptr), cli_name(acptr));    
-  }
-#endif  
 
   Count_newremoteserver(UserStats);
   add_client_to_list(acptr);

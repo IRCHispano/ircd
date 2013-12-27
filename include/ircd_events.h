@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/ircd_events.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2001 Kevin L. Mitchell <klmitch@mit.edu>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,9 +33,9 @@
 #include <sys/types.h>	/* time_t */
 #define INCLUDED_sys_types_h
 #endif
-#ifdef USE_SSL
+#if defined(USE_SSL)
 #ifndef INCLUDED_ssl_h
-#include "ssl.h"
+#include "ircd_ssl.h"
 #endif
 #endif
 
@@ -112,9 +112,9 @@ struct Socket {
   enum SocketState s_state;	/**< state socket's in */
   unsigned int	   s_events;	/**< events socket is interested in */
   int		   s_fd;	/**< file descriptor for socket */
-#ifdef USE_SSL
-  SSL*             ssl;         /* if not NULL, use SSL routines on socket */
-#endif  
+#if defined(USE_SSL)
+  SSL*             s_ssl;       /**< if not NULL, use SSL routines on socket */
+#endif
 };
 
 #define SOCK_EVENT_READABLE	0x0001	/**< interested in readable */

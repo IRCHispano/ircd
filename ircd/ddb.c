@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ddb.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2004-2007 Toni Garcia (zoltan) <zoltan@irc-dev.net>
  * Copyright (C) 1998-2003 Jesus Cea Avion <jcea@argo.es> Esnet IRC Network
  *
@@ -91,76 +91,20 @@ static void ddb_table_init(unsigned char table);
 
 
 #if 1 /* DECLARACIONES VIEJAS */
-/*
-** ATENCION: Lo que sigue debe incrementarse cuando se toque alguna estructura de la BDD
-*/
-#define MMAP_CACHE_VERSION 4
-#include "client.h"
-#include "hash.h"
-#include "numnicks.h"
-#include "channel.h"
-#include "ircd_features.h"
-#include <stdlib.h>
-#include "persistent_malloc.h"
-#include <stdarg.h>
-#include <time.h>
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <syslog.h>
-
-#if defined(ESNET_NEG) && defined(ZLIB_ESNET)
-#include "dbuf.h"
-#endif
-
 struct ddb_memory_table {
   unsigned int len;
   char *position;
   char *point_r;
 //  char *puntero_w;
 };
-
-
-/*
-** Si modificamos esta estructura habra que
-** actualizar tambien 'db_die_persistent'.
-*/
-struct portable_stat {
-  dev_t dev;                    /* ID of device containing a directory entry for this file */
-  ino_t ino;                    /* Inode number */
-  off_t size;                   /* File size in bytes */
-  time_t mtime;                 /* Time of last data modification */
-};
-
-/*
-** Si se meten mas datos aqui, hay que acordarse de
-** gestionarlos en el sistema de persistencia.
-*/
-#if defined(BDD_MMAP)
-static struct portable_stat tabla_stats[DDB_TABLE_MAX];
-#endif
-
 #if defined(BDD_MMAP)
 static void *mmap_cache_pos = NULL;
 #endif
-
 static int persistent_hit;
-
 int db_persistent_hit(void)
 {
   return persistent_hit;
 }
-
-#if defined(BDD_MMAP)
-//#define DdbMalloc(a)	persistent_malloc(a)
-//#define DdbFree(a)	persistent_free(a)
-#else
-//#define DdbMalloc(a)	MyMalloc(a)
-//#define DdbFree(a)	MyFree(a)
-#endif
 
 #endif /* DECLARACIONES VIEJAS */
 
@@ -261,21 +205,20 @@ ddb_init(void)
    */
   ddb_resident_table[DDB_BOTDB]          =   256;
   ddb_resident_table[DDB_CHANDB]         =  4096;
-  ddb_resident_table[DDB_CHANDB2]        = 32768;
+  ddb_resident_table[DDB_CHANDB2]        =  4096;
   ddb_resident_table[DDB_EXCEPTIONDB]    =   512;
   ddb_resident_table[DDB_FEATUREDB]      =   256;
-  ddb_resident_table[DDB_ILINEDB]        =   256;
+  ddb_resident_table[DDB_ILINEDB]        =   512;
   ddb_resident_table[DDB_JUPEDB]         =   512;
   ddb_resident_table[DDB_NICKDB]         = 32768;
   ddb_resident_table[DDB_OPERDB]         =   256;
-  ddb_resident_table[DDB_PRIVDB]         =   256;
   ddb_resident_table[DDB_CHANREDIRECTDB] =   256;
   ddb_resident_table[DDB_UWORLDDB]       =   256;
   ddb_resident_table[DDB_VHOSTDB]        =  4096;
-  ddb_resident_table[DDB_COLOURVHOSTDB]  =  1024;
+  ddb_resident_table[DDB_WEBIRCDB]       =   256;
   ddb_resident_table[DDB_CONFIGDB]       =   256;
 
-  if (!ddb_cache()) {
+  if (!ddb_db_cache()) {
     for (table = DDB_INIT; table <= DDB_END; table++)
       ddb_table_init(table);
   }
@@ -313,7 +256,7 @@ static void ddb_table_init(unsigned char table)
     char buf[1024];
 
     log_write(LS_DDB, L_INFO, 0, "WARNING - Table '%c' is corrupt. Droping table...", table);
-    ddb_db_drop(table);
+    ddb_drop(table);
 
     ircd_snprintf(0, buf, sizeof(buf), "Table '%c' is corrupt. Reloading via remote burst...", table);
     ddb_splithubs(NULL, table, buf);
@@ -606,7 +549,7 @@ ddb_burst(struct Client *cptr)
   sendto_opmask(0, SNO_NETWORK, "Bursting DDB tables");
 
 #if defined(USE_ZLIB)
-  zlib_microburst_init();
+  zlib_microburst_start();
 #endif
 
   /* La tabla 'n' es un poco especial... */
@@ -626,7 +569,7 @@ ddb_burst(struct Client *cptr)
 }
 
 /** Initializes %DDB iterator.
- * 
+ *
  * @return ddb_iterator_key pointer.
  */
 static struct Ddb *
@@ -758,6 +701,7 @@ struct Ddb *ddb_find_key(unsigned char table, char *key)
   if (!ddb)
     return NULL;
 
+  /* Lo que sigue lo sustituye */
   key_init = ddb_key(ddb);
   key_end = key_init + strlen(key_init);
   content_init = ddb_content(ddb);
@@ -798,6 +742,20 @@ ddb_reload(void)
   log_write(LS_DDB, L_INFO, 0, "Reload Distributed DataBase...");
 
   /* ddb_init(); */
+
+#if 0
+  for (c = ESNET_BDD; c <= ESNET_BDD_END; c++)
+  {
+    if (tabla_serie[c])
+    {
+      inttobase64(buf, tabla_hash_hi[c], 6);
+      inttobase64(buf + 6, tabla_hash_lo[c], 6);
+      sendto_ops("DB: '%c'. Ultimo registro: %u. HASH: %s",
+          c, tabla_serie[c], buf);
+    }
+  }
+
+#endif
 }
 
 /** Split all Hubs but one.
@@ -923,7 +881,7 @@ void ddb_count_memory(size_t* count_out, size_t* bytes_out)
   *bytes_out = ddbCount * sizeof(struct Ddb);
 }
 
-
+#if 0
 
 
 
@@ -1349,3 +1307,4 @@ void reload_db(void)
     }
   }
 }
+#endif

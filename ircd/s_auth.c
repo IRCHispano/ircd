@@ -1,7 +1,7 @@
-/* 
+/*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/s_auth.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2004 Michael Poole <mdpoole@troilus.org>
  * Copyright (C) 2001 Perry Lorier <isomer@coders.net>
  * Copyright (C) 1999 Thomas Helvey <tomh@inxpress.net>
@@ -41,6 +41,9 @@
 #include "config.h"
 
 #include "s_auth.h"
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+#include "aes.h"
+#endif
 #include "class.h"
 #include "client.h"
 #include "IPcheck.h"
@@ -60,6 +63,7 @@
 #include "list.h"
 #include "msg.h"	/* for MAXPARA */
 #include "numeric.h"
+#include "numnicks.h"
 #include "querycmds.h"
 #include "random.h"
 #include "res.h"
@@ -78,7 +82,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
 #define COOKIELEN      16
 #define COOKIECRYPTLEN 44
 #endif
@@ -96,8 +100,9 @@ enum AuthRequestFlag {
     AR_IAUTH_HURRY,     /**< we told iauth to hurry up */
     AR_IAUTH_USERNAME,  /**< iauth sent a username (preferred or forced) */
     AR_IAUTH_FUSERNAME, /**< iauth sent a forced username */
+    AR_IAUTH_SOFT_DONE, /**< iauth has no objection to client */
     AR_PASSWORD_CHECKED, /**< client password already checked */
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
     AR_COOKIE_ENCRYPTED, /**< Cookie enviada encriptada */
 #endif
     AR_NUM_FLAGS
@@ -115,7 +120,7 @@ struct AuthRequest {
   struct Socket       socket;     /**< socket descriptor for auth queries */
   struct Timer        timeout;    /**< timeout timer for ident and dns queries */
   struct AuthRequestFlags flags;  /**< current state of request */
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
   char                cookie[COOKIELEN]; /**< cookie the user must PONG */
 #else
   unsigned int        cookie;     /**< cookie the user must PONG */
@@ -235,6 +240,104 @@ static int sendto_iauth(struct Client *cptr, const char *format, ...);
 static int preregister_user(struct Client *cptr);
 typedef int (*iauth_cmd_handler)(struct IAuth *iauth, struct Client *cli,
 				 int parc, char **params);
+
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+#if !defined(DDB)
+#error "Error, don't compile without DDB"
+#endif
+void genera_aleatorio(unsigned char *out, int count) {
+    int i;
+    for(i=0;i<count;i++)
+      *out++=(unsigned char) ircrandom();
+}
+
+/*
+ * Esta funcion nos permite rellenar un array de chars con un numero aleatorio
+ */
+void genera_cookie(char *out, int count) {
+    int i;
+    unsigned int tmp=0;
+    int letra=ircrandom()%count;
+    int mod=0;
+    char res;
+    for(i=0;i<count;i++) {
+      mod=i%4;
+      if(mod == 0)
+          tmp=ircrandom();
+
+      if(letra==i) // Me aseguro de que haya una letra min
+        res=((tmp<<(mod*8)) %26)+36;
+      else
+        res=(tmp<<(mod*8)) %62;
+
+      *out++ = (res<10) ? (res+48) : (res<36) ? (res+55) : (res+61);
+    }
+    *out++='\0';
+}
+
+void cifra_cookie(char *out, char *cookie, char *clave_cifrado)
+{
+    aes_context ctx;
+    uint8_t k[32], x[24], v[16], s[8];
+    unsigned char key[45], res[45];
+    int key_len, msg_len;
+    unsigned int i;
+
+    memset(v, 0, sizeof(v));
+    memset(s, 0, sizeof(s));
+    memset(x, 0, sizeof(x));
+    memset(res, 0, COOKIECRYPTLEN+1);
+    msg_len = strlen(cookie);
+    msg_len = (msg_len>16) ? 16 : msg_len;
+
+    strncpy((char *) v, cookie, msg_len);
+    key[44]='\0';
+    res[44]='\0';
+
+    genera_aleatorio(s, sizeof(s));
+    memcpy(k,clave_cifrado,24);
+    memcpy(k+24,s,8);
+
+    aes_setkey_enc(&ctx, k, 256);
+    aes_crypt_ecb(&ctx, AES_ENCRYPT, v, v);
+
+    memcpy(x,s,8);
+    memcpy(x+8,v,16);
+
+    buf_to_base64_r(out, x, sizeof(x));
+}
+
+void descifra_cookie(char *out, char *cookie, char *clave_cifrado)
+{
+    aes_context ctx;
+    uint8_t k[32], v[16], x[24];
+    char key[45], msg[33];
+    int key_len, msg_len;
+    unsigned int i;
+
+    memset(k, 0, sizeof(k));
+    memset(v, 0, sizeof(v));
+    memset(x, 0, sizeof(x));
+    memset(msg, 'A', sizeof(msg));
+    msg_len = strlen(cookie);
+    msg_len = (msg_len>32) ? 32 : msg_len;
+
+    strncpy(msg+(32-msg_len), cookie, (msg_len));
+    msg[32]='\0';
+
+    base64_to_buf_r(x, (unsigned char *) msg);
+    memcpy(k,clave_cifrado,24);
+    memcpy(k+24,x,8);
+    memcpy(v,x+8,16);
+
+    aes_setkey_dec(&ctx, k, 256);
+    aes_crypt_ecb(&ctx, AES_DECRYPT, v, v);
+
+    strncpy(out, (char *)v, COOKIELEN);
+    out[COOKIELEN]='\0';
+}
+
+#endif
 
 /** Set username for user associated with \a auth.
  * @param[in] auth Client authorization request to work on.
@@ -417,6 +520,15 @@ static int check_auth_finished(struct AuthRequest *auth)
 
     aconf = cli_confs(auth->client)->value.aconf;
     assert(aconf != NULL);
+
+#if defined(USE_SSL)
+    if (!verify_sslclifp(auth->client, aconf))
+    {
+      ServerStats->is_ref++;
+      send_reply(auth->client, ERR_SSLCLIFP);
+      return exit_client(auth->client, auth->client, &me, "SSL fingerprint missmatch");
+    }
+#endif
     if (!EmptyString(aconf->passwd)
         && strcmp(cli_passwd(auth->client), aconf->passwd))
     {
@@ -486,6 +598,26 @@ auth_verify_hostname(const char *host, int maxlen)
   return 1; /* it's a valid hostname */
 }
 
+/** Check whether a client already has a CONF_CLIENT configuration
+ * item.
+ *
+ * @return A pointer to the client's first CONF_CLIENT, or NULL if
+ *   there are none.
+ */
+static struct ConfItem *find_conf_client(struct Client *cptr)
+{
+  struct SLink *list;
+
+  for (list = cli_confs(cptr); list != NULL; list = list->next) {
+    struct ConfItem *aconf;
+    aconf = list->value.aconf;
+    if (aconf->status & CONF_CLIENT)
+      return aconf;
+  }
+
+  return NULL;
+}
+
 /** Assign a client to a connection class.
  * @param[in] cptr Client to assign to a class.
  * @return Zero if client is kept, CPTR_KILLED if rejected.
@@ -497,6 +629,10 @@ static int preregister_user(struct Client *cptr)
 
   ircd_strncpy(cli_user(cptr)->host, cli_sockhost(cptr), HOSTLEN);
   ircd_strncpy(cli_user(cptr)->realhost, cli_sockhost(cptr), HOSTLEN);
+
+  if (find_conf_client(cptr)) {
+    return 0;
+  }
 
   switch (conf_check_client(cptr))
   {
@@ -528,7 +664,7 @@ static int preregister_user(struct Client *cptr)
     /* Can this ever happen? */
   case ACR_BAD_SOCKET:
     ++ServerStats->is_ref;
-    IPcheck_connect_fail(cptr);
+    IPcheck_connect_fail(cptr, 0);
     return exit_client(cptr, cptr, &me, "Unknown error -- Try again");
   }
   return 0;
@@ -791,11 +927,12 @@ int auth_ping_timeout(struct Client *cptr)
 
   /* Check for iauth timeout. */
   if (FlagHas(&auth->flags, AR_IAUTH_PENDING)) {
-    sendto_iauth(cptr, "T");
-    if (IAuthHas(iauth, IAUTH_REQUIRED)) {
+    if (IAuthHas(iauth, IAUTH_REQUIRED)
+        && !FlagHas(&auth->flags, AR_IAUTH_SOFT_DONE)) {
       sendheader(cptr, REPORT_FAIL_IAUTH);
       return exit_client_msg(cptr, cptr, &me, "Authorization Timeout");
     }
+    sendto_iauth(cptr, "T");
     FlagClr(&auth->flags, AR_IAUTH_PENDING);
     return check_auth_finished(auth);
   }
@@ -1019,13 +1156,6 @@ void start_auth(struct Client* client)
   }
   auth->port = remote.port;
 
-  /* Try to start DNS lookup. */
-  start_dns_query(auth);
-
-  /* Try to start ident lookup. */
-  if (!feature_bool(FEAT_NOIDENT))
-    start_auth_query(auth);
-
   /* Set required client inputs for users. */
   if (IsUserPort(client)) {
     cli_user(client) = make_user(client);
@@ -1037,6 +1167,13 @@ void start_auth(struct Client* client)
     start_iauth_query(auth);
   }
 
+  /* Try to start DNS lookup. */
+  start_dns_query(auth);
+
+  /* Try to start ident lookup. */
+  if (!feature_bool(FEAT_NOIDENT))
+    start_auth_query(auth);
+
   /* Add client to GlobalClientList. */
   add_client_to_list(client);
 
@@ -1044,7 +1181,7 @@ void start_auth(struct Client* client)
   check_auth_finished(auth);
 }
 
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
 /** Mark that a user has PONGed while unregistered.
  * @param[in] auth Authorization request for client.
  * @param[in] cookie PONG cookie value sent by client.
@@ -1065,7 +1202,7 @@ int auth_set_pong(struct AuthRequest *auth, char *cookie)
     tmp[COOKIELEN] = '\0';
   }
 
-  if (!strncmp(auth->cookie, tmp, COOKIELEN)))
+  if (!strncmp(auth->cookie, tmp, COOKIELEN))
   {
     if (FlagHas(&auth->flags, AR_COOKIE_ENCRYPTED))
       return exit_client(auth->client, auth->client, &me, "Invalid PONG message");
@@ -1138,7 +1275,7 @@ int auth_set_user(struct AuthRequest *auth, const char *username, const char *ho
  */
 int auth_set_nick(struct AuthRequest *auth, const char *nickname)
 {
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
   char tmp[COOKIECRYPTLEN + COOKIELEN + 1];
 #endif
   assert(auth != NULL);
@@ -1148,11 +1285,12 @@ int auth_set_nick(struct AuthRequest *auth, const char *nickname)
    * choose a cookie and send it. -record!jegelhof@cloud9.net
    */
   if (!auth->cookie) {
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
     do {
       genera_cookie(auth->cookie, COOKIELEN);
     } while (!auth->cookie);
-    
+
+#if defined(DDB)
     if (cifrado_cookies && listener_cookies(cli_listener(auth->client))) {
       char *tmp2 = auth->cookie;
       cifra_cookie(tmp, auth->cookie);
@@ -1163,9 +1301,10 @@ int auth_set_nick(struct AuthRequest *auth, const char *nickname)
         tmp2++;
       }
     } else
+#endif
       strncpy(tmp, auth->cookie, COOKIELEN + 1);
 
-    sendrawto_one(auth->client, "PING :%u", tmp);
+    sendrawto_one(auth->client, "PING :%s", tmp);
 #else
     do {
       auth->cookie = ircrandom();
@@ -1198,6 +1337,17 @@ int auth_set_password(struct AuthRequest *auth, const char *password)
 void auth_send_exit(struct Client *cptr)
 {
   sendto_iauth(cptr, "D");
+}
+
+/** Forward an XREPLY on to iauth.
+ * @param[in] sptr Source of the XREPLY.
+ * @param[in] routing Routing information for the original XQUERY.
+ * @param[in] reply Contents of the reply.
+ */
+void auth_send_xreply(struct Client *sptr, const char *routing,
+		      const char *reply)
+{
+  sendto_iauth(NULL, "X %#C %s :%s", sptr, routing, reply);
 }
 
 /** Mark that a user has started capabilities negotiation.
@@ -1248,13 +1398,16 @@ int iauth_do_spawn(struct IAuth *iauth, int automatic)
 
   /* Attempt to allocate a pair of sockets. */
   res = os_socketpair(s_io);
-  if (res)
-    return errno;
-
+  if (res) {
+    res = errno;
+    Debug((DEBUG_INFO, "Unable to create IAuth socketpair: %s", strerror(res)));
+    return res;
+  }
   /* Mark the parent's side of the pair (element 0) as non-blocking. */
   res = os_set_nonblocking(s_io[0]);
   if (!res) {
     res = errno;
+    Debug((DEBUG_INFO, "Unable to make IAuth socket non-blocking: %s", strerror(res)));
     close(s_io[1]);
     close(s_io[0]);
     return res;
@@ -1265,6 +1418,7 @@ int iauth_do_spawn(struct IAuth *iauth, int automatic)
                    SS_CONNECTED, SOCK_EVENT_READABLE, s_io[0]);
   if (!res) {
     res = errno;
+    Debug((DEBUG_INFO, "Unable to register IAuth socket: %s", strerror(res)));
     close(s_io[1]);
     close(s_io[0]);
     return res;
@@ -1274,6 +1428,7 @@ int iauth_do_spawn(struct IAuth *iauth, int automatic)
   res = os_socketpair(s_err);
   if (res) {
     res = errno;
+    Debug((DEBUG_INFO, "Unable to create IAuth stderr: %s", strerror(res)));
     socket_del(i_socket(iauth));
     close(s_io[1]);
     close(s_io[0]);
@@ -1284,6 +1439,7 @@ int iauth_do_spawn(struct IAuth *iauth, int automatic)
   res = os_set_nonblocking(s_err[0]);
   if (!res) {
     res = errno;
+    Debug((DEBUG_INFO, "Unable to make IAuth stderr non-blocking: %s", strerror(res)));
     close(s_err[1]);
     close(s_err[0]);
     socket_del(i_socket(iauth));
@@ -1297,6 +1453,7 @@ int iauth_do_spawn(struct IAuth *iauth, int automatic)
                    SS_CONNECTED, SOCK_EVENT_READABLE, s_err[0]);
   if (!res) {
     res = errno;
+    Debug((DEBUG_INFO, "Unable to register IAuth stderr: %s", strerror(res)));
     close(s_err[1]);
     close(s_err[0]);
     socket_del(i_socket(iauth));
@@ -1310,6 +1467,7 @@ int iauth_do_spawn(struct IAuth *iauth, int automatic)
   if (cpid < 0) {
     /* Error forking the child, still in parent. */
     res = errno;
+    Debug((DEBUG_INFO, "Unable to fork IAuth child: %s", strerror(res)));
     socket_del(i_stderr(iauth));
     close(s_err[1]);
     close(s_err[0]);
@@ -1369,17 +1527,15 @@ int auth_spawn(int argc, char *argv[])
         same = 0;
     }
     /* Check that we have no more pre-existing arguments. */
-    if (iauth->i_argv[ii])
+    if (same && iauth->i_argv[ii])
       same = 0;
-    /* If they are the same and still connected, clear the "closing" flag and exit.*/
+    /* If they are the same and still connected, clear the "closing" flag and exit. */
     if (same && i_GetConnected(iauth)) {
+      Debug((DEBUG_INFO, "Reusing existing IAuth process"));
       IAuthClr(iauth, IAUTH_CLOSING);
       return 2;
     }
-    /* Deallocate old argv elements. */
-    for (ii = 0; iauth->i_argv[ii]; ++ii)
-      MyFree(iauth->i_argv[ii]);
-    MyFree(iauth->i_argv);
+    auth_close_unused();
   }
 
   /* Need to initialize a new connection. */
@@ -1820,6 +1976,14 @@ static int iauth_cmd_hostname(struct IAuth *iauth, struct Client *cli,
   }
   /* Set hostname from params. */
   ircd_strncpy(cli_sockhost(cli), params[0], HOSTLEN);
+  /* If we have gotten here, the user is in a "hurry" state and has
+   * been pre-registered.  Their hostname was set during that, and
+   * needs to be overwritten now.
+   */
+  if (FlagHas(&auth->flags, AR_IAUTH_HURRY)) {
+    ircd_strncpy(cli_user(cli)->host, cli_sockhost(cli), HOSTLEN);
+    ircd_strncpy(cli_user(cli)->realhost, cli_sockhost(cli), HOSTLEN);
+  }
   return 1;
 }
 
@@ -1859,7 +2023,7 @@ static int iauth_cmd_ip_address(struct IAuth *iauth, struct Client *cli,
     memcpy(&auth->original, &cli_ip(cli), sizeof(auth->original));
 
   /* Undo original IP connection in IPcheck. */
-  IPcheck_connect_fail(cli);
+  IPcheck_connect_fail(cli, 0);
   ClearIPChecked(cli);
 
   /* Update the IP and charge them as a remote connect. */
@@ -1881,7 +2045,7 @@ static struct ConfItem *auth_find_class_conf(const char *class_name)
 
   /* Make sure the configuration class is valid. */
   class = find_class(class_name);
-  if (!class)
+  if (!class || !class->valid)
     return NULL;
 
   /* Look for an existing ConfItem for the class. */
@@ -1898,6 +2062,13 @@ static struct ConfItem *auth_find_class_conf(const char *class_name)
                     ConClass(class));
       return NULL;
     }
+    /* make_conf() "helpfully" links the conf into GlobalConfList,
+     * which we do not want, so undo that.  (Ugh.)
+     */
+    if (aconf == GlobalConfList) {
+      GlobalConfList = aconf->next;
+    }
+    /* Back to business as usual. */
     aconf->conn_class = class;
     aconf->next = aconf_list;
     aconf_list = aconf;
@@ -1906,12 +2077,28 @@ static struct ConfItem *auth_find_class_conf(const char *class_name)
   return aconf;
 }
 
+/** Tentatively accept a client in IAuth.
+ * @param[in] iauth Active IAuth session.
+ * @param[in] cli Client referenced by command.
+ * @param[in] parc Number of parameters.
+ * @param[in] params Optional class name for client.
+ * @return Negative (CPTR_KILLED) if the connection is refused, one otherwise.
+ */
+static int iauth_cmd_soft_done(struct IAuth *iauth, struct Client *cli,
+			       int parc, char **params)
+{
+  /* Clear iauth pending flag. */
+  assert(cli_auth(cli) != NULL);
+  FlagSet(&cli_auth(cli)->flags, AR_IAUTH_SOFT_DONE);
+  return 1;
+}
+
 /** Accept a client in IAuth.
  * @param[in] iauth Active IAuth session.
  * @param[in] cli Client referenced by command.
  * @param[in] parc Number of parameters.
  * @param[in] params Optional class name for client.
- * @return One.
+ * @return Negative (CPTR_KILLED) if the connection is refused, one otherwise.
  */
 static int iauth_cmd_done_client(struct IAuth *iauth, struct Client *cli,
 				 int parc, char **params)
@@ -1927,9 +2114,24 @@ static int iauth_cmd_done_client(struct IAuth *iauth, struct Client *cli,
     struct ConfItem *aconf;
 
     aconf = auth_find_class_conf(params[0]);
-    if (aconf)
-      attach_conf(cli, aconf);
-    else
+    if (aconf) {
+      enum AuthorizationCheckResult acr;
+
+      acr = attach_conf(cli, aconf);
+      switch (acr) {
+      case ACR_OK:
+        /* There should maybe be some way to set FLAG_DOID here.. */
+        break;
+      case ACR_TOO_MANY_IN_CLASS:
+        ++ServerStats->is_ref;
+        return exit_client(cli, cli, &me,
+                           "Sorry, your connection class is full - try "
+                           "again later or try another server");
+      default:
+        log_write(LS_IAUTH, L_ERROR, 0, "IAuth: Unexpected AuthorizationCheckResult %d from attach_conf()", acr);
+        break;
+      }
+    } else
       sendto_opmask_ratelimited(NULL, SNO_AUTH, &warn_time,
                                 "iauth tried to use undefined class [%s]",
                                 params[0]);
@@ -1944,7 +2146,8 @@ static int iauth_cmd_done_client(struct IAuth *iauth, struct Client *cli,
  * @param[in] cli Client referenced by command.
  * @param[in] parc Number of parameters.
  * @param[in] params Account name and optional class name for client.
- * @return Non-zero if \a cli authorization should be checked for completion.
+ * @return Negative if the connection is refused, otherwise non-zero
+ *   if \a cli authorization should be checked for completion.
  */
 static int iauth_cmd_done_account(struct IAuth *iauth, struct Client *cli,
 				  int parc, char **params)
@@ -1964,8 +2167,10 @@ static int iauth_cmd_done_account(struct IAuth *iauth, struct Client *cli,
   }
   /* If account has a creation timestamp, use it. */
   assert(cli_user(cli) != NULL);
-  if (params[0][len] == ':')
+  if (params[0][len] == ':') {
     cli_user(cli)->acc_create = strtoul(params[0] + len + 1, NULL, 10);
+    params[0][len] = '\0';
+  }
 
   /* Copy account name to User structure. */
   ircd_strncpy(cli_user(cli)->account, params[0], ACCOUNTLEN);
@@ -2028,6 +2233,55 @@ static int iauth_cmd_challenge(struct IAuth *iauth, struct Client *cli,
   return 0;
 }
 
+/** Send an extension query to a specified remote server.
+ * @param[in] iauth Active IAuth session.
+ * @param[in] cli Client referenced by command.
+ * @param[in] parc Number of parameters (3).
+ * @param[in] params Remote server, routing information, and query.
+ * @return Zero.
+ */
+static int iauth_cmd_xquery(struct IAuth *iauth, struct Client *cli,
+			    int parc, char **params)
+{
+  char *serv;
+  const char *routing;
+  const char *query;
+  struct Client *acptr;
+
+  /* Process parameters */
+  if (EmptyString(params[0])) {
+    sendto_iauth(cli, "E Missing :Missing server parameter");
+    return 0;
+  } else
+    serv = params[0];
+
+  if (EmptyString(params[1])) {
+    sendto_iauth(cli, "E Missing :Missing routing parameter");
+    return 0;
+  } else
+    routing = params[1];
+
+  if (EmptyString(params[2])) {
+    sendto_iauth(cli, "E Missing :Missing query parameter");
+    return 0;
+  } else
+    query = params[2];
+
+  /* Try to find the specified server */
+  if (!(acptr = find_match_server(serv))) {
+    sendto_iauth(cli, "x %s %s :Server not online", serv, routing);
+    return 0;
+  }
+
+  /* If it's to us, do nothing; otherwise, forward the query */
+  if (!IsMe(acptr))
+    /* The "iauth:" prefix helps ircu route the reply to iauth */
+    sendcmdto_one(&me, CMD_XQUERY, acptr, "%C iauth:%s :%s", acptr, routing,
+		  query);
+
+  return 0;
+}
+
 /** Parse a \a message from \a iauth.
  * @param[in] iauth Active IAuth session.
  * @param[in] message Message to be parsed.
@@ -2052,6 +2306,7 @@ static void iauth_parse(struct IAuth *iauth, char *message)
   case 'A': handler = iauth_cmd_config; has_cli = 0; break;
   case 's': handler = iauth_cmd_newstats; has_cli = 0; break;
   case 'S': handler = iauth_cmd_stats; has_cli = 0; break;
+  case 'X': handler = iauth_cmd_xquery; has_cli = 0; break;
   case 'o': handler = iauth_cmd_username_forced; has_cli = 1; break;
   case 'U': handler = iauth_cmd_username_good; has_cli = 1; break;
   case 'u': handler = iauth_cmd_username_bad; has_cli = 1; break;
@@ -2059,6 +2314,7 @@ static void iauth_parse(struct IAuth *iauth, char *message)
   case 'I': handler = iauth_cmd_ip_address; has_cli = 1; break;
   case 'M': handler = iauth_cmd_usermode; has_cli = 1; break;
   case 'C': handler = iauth_cmd_challenge; has_cli = 1; break;
+  case 'd': handler = iauth_cmd_soft_done; has_cli = 1; break;
   case 'D': handler = iauth_cmd_done_client; has_cli = 1; break;
 #if defined(UNDERNET)
   case 'R': handler = iauth_cmd_done_account; has_cli = 1; break;
@@ -2128,7 +2384,7 @@ static void iauth_parse(struct IAuth *iauth, char *message)
 	/* Report mismatch to iauth. */
 	sendto_iauth(cli, "E Mismatch :[%s] != [%s]", params[1],
 		     ircd_ntoa(&cli_ip(cli)));
-      else if (handler(iauth, cli, parc - 3, params + 3))
+      else if (handler(iauth, cli, parc - 3, params + 3) > 0)
 	/* Handler indicated a possible state change. */
 	check_auth_finished(auth);
     }

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/s_auth.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2004 Michael Poole <mdpoole@troilus.org>
  * Copyright (C) 2001 Perry Lorier <isomer@coders.net>
  * Copyright (C) 1992 Darren Reed
@@ -42,7 +42,7 @@ struct StatDesc;
 
 extern void start_auth(struct Client *);
 extern int auth_ping_timeout(struct Client *);
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
 extern int auth_set_pong(struct AuthRequest *auth, char *cookie);
 #else
 extern int auth_set_pong(struct AuthRequest *auth, unsigned int cookie);
@@ -56,6 +56,7 @@ extern void destroy_auth_request(struct AuthRequest *req);
 
 extern int auth_spawn(int argc, char *argv[]);
 extern void auth_send_exit(struct Client *cptr);
+extern void auth_send_xreply(struct Client *sptr, const char *routing, const char *reply);
 extern void auth_mark_closing(void);
 extern void auth_close_unused(void);
 extern void report_iauth_conf(struct Client *cptr, const struct StatDesc *sd, char *param);

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_alloc.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1999 Thomas Helvey <tomh@inxpress.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,9 +26,9 @@
 #include "config.h"
 
 #include "ircd_alloc.h"
-//#include "ircd_log.h"
-//#include "ircd_string.h"
-//#include "s_debug.h"
+#include "ircd_log.h"
+#include "ircd_string.h"
+#include "s_debug.h"
 
 /* #include <assert.h> -- Now using assert in ircd_log.h */
 #include <string.h>
@@ -42,11 +42,11 @@ static OutOfMemoryHandler noMemHandler = nomem_handler;
 static void
 nomem_handler(void)
 {
-  //log_write(LS_SYSTEM, L_CRIT, 0, "Out of memory, exiting");
+  log_write(LS_SYSTEM, L_CRIT, 0, "Out of memory, exiting");
 #ifdef MDEBUG
   assert(0);
 #else
-  //Debug((DEBUG_FATAL, "Out of memory, exiting"));
+  Debug((DEBUG_FATAL, "Out of memory, exiting"));
   exit(2);
 #endif
 }

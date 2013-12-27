@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_connect.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -210,7 +210,7 @@ int mo_connect(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
       }
 
       /*
-       * Look for closest matching server 
+       * Look for closest matching server
        * needed for "/connect blah 4400 *"?
        */
       for (acptr2 = acptr3; acptr2 != &me; acptr2 = cli_serv(acptr2)->up) {

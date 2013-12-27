@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/destruct_event.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2002 Carlo Wood <carlo@alinoe.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -152,12 +152,7 @@ void exec_expired_destruct_events(struct Event* ev)
     {
       struct Channel* chptr = (*list_bottom)->chptr;
       /* Send DESTRUCT message */
-#if defined(P09_SUPPORT)
-      /* Only P10 */
-      sendcmdto_highprot_serv(&me, 10, CMD_DESTRUCT, 0, "%s %Tu", chptr->chname, chptr->creationtime);
-#else
       sendcmdto_serv(&me, CMD_DESTRUCT, 0, "%s %Tu", chptr->chname, chptr->creationtime);
-#endif
       remove_destruct_event(chptr);
       destruct_channel(chptr);
     }

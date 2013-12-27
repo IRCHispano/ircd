@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/handlers.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -104,6 +104,7 @@ extern int m_info(struct Client*, struct Client*, int, char*[]);
 extern int m_invite(struct Client*, struct Client*, int, char*[]);
 extern int m_ison(struct Client*, struct Client*, int, char*[]);
 extern int m_join(struct Client*, struct Client*, int, char*[]);
+extern int m_jupe(struct Client*, struct Client*, int, char*[]);
 extern int m_kick(struct Client*, struct Client*, int, char*[]);
 extern int m_links(struct Client*, struct Client*, int, char*[]);
 extern int m_links_redirect(struct Client*, struct Client*, int, char*[]);
@@ -134,6 +135,7 @@ extern int m_time(struct Client*, struct Client*, int, char*[]);
 extern int m_topic(struct Client*, struct Client*, int, char*[]);
 extern int m_trace(struct Client*, struct Client*, int, char*[]);
 extern int m_unregistered(struct Client*, struct Client*, int, char*[]);
+extern int m_unsupported(struct Client*, struct Client*, int, char*[]);
 extern int m_user(struct Client*, struct Client*, int, char*[]);
 extern int m_userhost(struct Client*, struct Client*, int, char*[]);
 extern int m_userip(struct Client*, struct Client*, int, char*[]);
@@ -145,6 +147,7 @@ extern int m_watch(struct Client*, struct Client*, int, char*[]);
 extern int m_who(struct Client*, struct Client*, int, char*[]);
 extern int m_whois(struct Client*, struct Client*, int, char*[]);
 extern int m_whowas(struct Client*, struct Client*, int, char*[]);
+extern int mo_xquery(struct Client*, struct Client*, int, char*[]);
 
 /*
  * Privileged commands (Admins & Opers & Helpers)
@@ -243,6 +246,7 @@ extern int ms_stats(struct Client*, struct Client*, int, char*[]);
 extern int ms_svsnick(struct Client*, struct Client*, int, char*[]);
 extern int ms_svsmode(struct Client*, struct Client*, int, char*[]);
 extern int ms_svsjoin(struct Client*, struct Client*, int, char*[]);
+extern int ms_svskick(struct Client*, struct Client*, int, char*[]);
 extern int ms_svspart(struct Client*, struct Client*, int, char*[]);
 extern int ms_topic(struct Client*, struct Client*, int, char*[]);
 extern int ms_trace(struct Client*, struct Client*, int, char*[]);
@@ -254,6 +258,8 @@ extern int ms_wallops(struct Client*, struct Client*, int, char*[]);
 extern int ms_wallusers(struct Client*, struct Client*, int, char*[]);
 extern int ms_wallvoices(struct Client*, struct Client*, int, char*[]);
 extern int ms_whois(struct Client*, struct Client*, int, char*[]);
+extern int ms_xquery(struct Client*, struct Client*, int, char*[]);
+extern int ms_xreply(struct Client*, struct Client*, int, char*[]);
 
 #endif /* INCLUDED_handlers_h */
 

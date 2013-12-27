@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/listener.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1999 Thomas Helvey <tomh@inxpress.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -150,10 +150,12 @@ void show_ports(struct Client* sptr, const struct StatDesc* sd,
     if (port && port != listener->addr.port)
       continue;
     len = 0;
-#if defined(USE_SSL)
-    flags[len++] = listener_server(listener) ? 'S' : (listener_ssl(listener) ? 'E' : 'C');
-#else
+
     flags[len++] = listener_server(listener) ? 'S' : 'C';
+
+#if defined(USE_SSL)
+    if (listener_ssl(listener))
+    flags[len++] = 'E';
 #endif
     if (FlagHas(&listener->flags, LISTEN_HIDDEN))
     {
@@ -162,7 +164,7 @@ void show_ports(struct Client* sptr, const struct StatDesc* sd,
       flags[len++] = 'H';
     }
     if (FlagHas(&listener->flags, LISTEN_EXEMPT))
-      flags[len++] = 'X';        
+      flags[len++] = 'X';
     if (FlagHas(&listener->flags, LISTEN_IPV4))
     {
       flags[len++] = '4';
@@ -175,7 +177,7 @@ void show_ports(struct Client* sptr, const struct StatDesc* sd,
       if (listener->fd_v6 < 0)
         flags[len++] = '-';
     }
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
     if (FlagHas(&listener->flags, LISTEN_COOKIES))
       flags[len++] = 'K';
 #endif
@@ -190,8 +192,8 @@ void show_ports(struct Client* sptr, const struct StatDesc* sd,
 }
 
 /*
- * inetport - create a listener socket in the AF_INET domain, 
- * bind it to the port given in 'port' and listen to it  
+ * inetport - create a listener socket in the AF_INET domain,
+ * bind it to the port given in 'port' and listen to it
  * returns true (1) if successful false (0) on error.
  *
  * If the operating system has a define for SOMAXCONN, use it, otherwise
@@ -523,7 +525,7 @@ static void accept_connection(struct Event* ev)
       {
         ++ServerStats->is_ref;
   /*                 11111111112222 2 2 */
-  /*        12345678901234567890123 4 5 */  
+  /*        12345678901234567890123 4 5 */
         send(fd, "ERROR :Use another port\r\n", 25, 0);
         close(fd);
         continue;
@@ -535,7 +537,7 @@ static void accept_connection(struct Event* ev)
       {
         ++ServerStats->is_ref;
   /*                 11111111112222 2 2 */
-  /*        12345678901234567890123 4 5 */            
+  /*        12345678901234567890123 4 5 */
         send(fd, "ERROR :Use another port\r\n", 25, 0);
         close(fd);
         continue;
@@ -550,7 +552,7 @@ static void accept_connection(struct Event* ev)
   /*        123456789012345678901234567890 1 2 */
         send(fd, "ERROR :Server is shutting down\r\n", 32, 0);
         close(fd);
-        continue;        
+        continue;
       }
       ++ServerStats->is_ac;
       /* nextping = CurrentTime; */

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_nick.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -70,7 +70,7 @@ int do_nick_name(char* nick)
   char* ch  = nick;
   char* end = ch + NICKLEN;
   assert(0 != ch);
-  
+
   /* first character in [0..9-] */
   if (*ch == '-' || IsDigit(*ch))
     return 0;
@@ -94,23 +94,23 @@ char *get_random_nick(struct Client* cptr)
   char*          newnick;
   char           nickout[NICKLEN + 1];
   unsigned int   v[2], k[2], x[2];
-  
+
   k[0] = k[1] = x[0] = x[1] = 0;
-  
+
   v[0] = base64toint(cli_yxx(cptr));
   v[1] = base64toint(cli_yxx(&me));
 
   acptr = cptr;
-  
+
   do
   {
     ircd_tea(v, k, x);
     v[1] += 4096;
-    
+
     if (x[0] >= 4294000000ul)
       continue;
 
-#if defined(WEBCHAT_HTML)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
     ircd_snprintf(0, nickout, sizeof(nickout), "webchat-%.6d",
                   (int)(x[0] % 1000000));
 #elif defined(DDB)
@@ -120,15 +120,15 @@ char *get_random_nick(struct Client* cptr)
     ircd_snprintf(0, nickout, sizeof(nickout), "Guest%.6d",
                   (int)(x[0] % 1000000));
 #endif
-                  
+
     nickout[NICKLEN] = '\0';
     newnick = nickout;
-                  
+
     acptr = FindUser(newnick);
   }
   while (acptr);
 
-  return newnick;                                         
+  return newnick;
 }
 
 /** Handle a NICK message from a local connection.
@@ -148,7 +148,6 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   char           nick[NICKLEN + 2];
   char*          arg;
   char*          s;
-  const char*    client_name;
   int            flags = 0;
   int            random_nick = 0;
 #if defined(DDB)
@@ -162,13 +161,8 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (IsServerPort(cptr))
     return exit_client(cptr, cptr, &me, "Use a different port");
 
-  /*
-   * parv[0] will be empty for clients connecting for the first time
-   */
-  client_name = (*(cli_name(sptr))) ? cli_name(sptr) : "*";
-
-#if 0  
-/* TODO-ZOLTAN: Cosas de JCea, comprobar */                     
+#if 0
+/* TODO-ZOLTAN: Cosas de JCea, comprobar */
   /*
    * Not change nick several times BEFORE to have completed your entrance
    * in the network.
@@ -230,7 +224,7 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     arg[IRCD_MIN(NICKLEN, feature_uint(FEAT_NICKLEN))] = '\0';
 
   /* Soporte de nicks ~ */
-#if !defined(DDB)  
+#if !defined(DDB)
   if ((s = strchr(arg, '~')))
     *s = '\0';
 #endif
@@ -245,11 +239,15 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return 0;
   }
 
+  /*
+   * Check if this is a LOCAL user trying to use a reserved (Juped)
+   * nick, if so tell him that it's a nick in use...
+   */
 #if defined(DDB)
  if (!random_nick)
  {
    struct Ddb *regj;
- 
+
    for (regj = ddb_iterator_first(DDB_JUPEDB); regj; regj = ddb_iterator_next())
    {
      if (!match(ddb_key(regj), nick))
@@ -260,16 +258,12 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
      }
    }
  }
-#endif /* defined(DDB) */
-
-  /* 
-   * Check if this is a LOCAL user trying to use a reserved (Juped)
-   * nick, if so tell him that it's a nick in use...
-   */
+#else /* defined(DDB) */
   if (isNickJuped(nick) & !random_nick) {
     send_reply(sptr, ERR_NICKNAMEINUSE, nick);
     return 0;                        /* NICK message ignored */
   }
+#endif
 
   if (!(acptr = FindClient(nick))) {
     /*
@@ -334,7 +328,7 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
    */
   if (IsUnknown(acptr) && MyConnect(acptr)) {
     ServerStats->is_ref++;
-    IPcheck_connect_fail(acptr);
+    IPcheck_connect_fail(acptr, 0);
     exit_client(cptr, acptr, &me, "Overridden by other sign on");
     return set_nick_name(cptr, sptr, nick, parc, parv, flags);
   }
@@ -376,7 +370,7 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
       }
 
       /* Matamos al usuario con un kill */
-      sendto_opmask(0, SNO_SERVKILL, 
+      sendto_opmask(0, SNO_SERVKILL,
           "Received KILL message for %C. From %s, Reason: GHOST kill", acptr, nickwho);
 
       sendcmdto_serv(&me, CMD_KILL, acptr, "%C :GHOST session released by %s",
@@ -456,12 +450,12 @@ int ms_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (IsServer(sptr))
   {
     lastnick = atoi(parv[3]);
-    if (lastnick > OLDEST_TS && !IsBurstOrBurstAck(sptr)) 
+    if (lastnick > OLDEST_TS && !IsBurstOrBurstAck(sptr))
       cli_serv(sptr)->lag = TStime() - lastnick;
   }
   else
   {
-    lastnick = atoi(parv[2]); 
+    lastnick = atoi(parv[2]);
     if (lastnick > OLDEST_TS && !IsBurstOrBurstAck(sptr))
       cli_serv(cli_user(sptr)->server)->lag = TStime() - lastnick;
   }
@@ -474,7 +468,7 @@ int ms_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (!do_nick_name(nick) || strcmp(nick, parv[1]))
   {
     send_reply(sptr, ERR_ERRONEUSNICKNAME, parv[1]);
-    
+
     ++ServerStats->is_kill;
     sendto_opmask(0, SNO_OLDSNO, "Bad Nick: %s From: %s %C", parv[1],
                   parv[0], cptr);
@@ -529,7 +523,7 @@ int ms_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (IsUnknown(acptr) && MyConnect(acptr))
   {
     ServerStats->is_ref++;
-    IPcheck_connect_fail(acptr);
+    IPcheck_connect_fail(acptr, 0);
     exit_client(cptr, acptr, &me, "Overridden by other sign on");
     return set_nick_name(cptr, sptr, nick, parc, parv, 0);
   }

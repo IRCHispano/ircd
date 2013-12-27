@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/engine_devpoll.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2001 Kevin L. Mitchell <klmitch@mit.edu>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -316,7 +316,7 @@ engine_loop(struct Generators* gen)
 	  timer_add(timer_init(&clear_error), error_clear, 0, TT_PERIODIC,
 		    ERROR_EXPIRE_TIME);
 	else if (errors > DEVPOLL_ERROR_THRESHOLD) /* too many errors... */
-	  exit_schedule(1, 0, 0, ""too many /dev/poll errors");
+	  exit_schedule(1, 0, 0, "too many /dev/poll errors");
       }
       /* old code did a sleep(1) here; with usage these days,
        * that may be too expensive

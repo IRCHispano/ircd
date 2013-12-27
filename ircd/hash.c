@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/hash.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1998 Andrea Cocito
  * Copyright (C) 1991 Darren Reed
  *
@@ -316,7 +316,7 @@ struct Channel* hSeekChannel(const char *name)
  */
 struct Watch *hSeekWatch(const char *nick)
 {
-  HASHREGS hashv = strhash(nick);   
+  HASHREGS hashv = strhash(nick);
   struct Watch *wptr = watchTable[hashv];
 
   if (wptr) {
@@ -329,7 +329,7 @@ struct Watch *hSeekWatch(const char *nick)
           watchTable[hashv] = wptr;
           break;
         }
-      }       
+      }
     }
   }
   return wptr;
@@ -404,7 +404,7 @@ int m_hash(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 int isNickJuped(const char *nick, char *reason)
 {
   struct Ddb *ddb;
-  char resbuf[BUFSIZE];  
+  char resbuf[BUFSIZE];
 #if defined(PCRE)
   char nick_low[NICKLEN];
   char *tmp;
@@ -560,8 +560,8 @@ stats_nickjupes(struct Client* to, const struct StatDesc* sd, char* param)
   for (i = 0; i < JUPEHASHSIZE; i++)
     if (jupeTable[i][0])
       send_reply(to, RPL_STATSJLINE, jupeTable[i]);
-      
-#endif      
+
+#endif
 }
 
 /** Send more channels to a client in mid-LIST.

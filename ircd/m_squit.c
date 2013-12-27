@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_squit.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -68,15 +68,15 @@ int ms_squit(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   struct Client *acptr;
   time_t timestamp = 0;
   char *comment = 0;
-  
-  if (parc < 2) 
+
+  if (parc < 2)
     return need_more_params(sptr, "SQUIT");
 
   comment = parv[parc-1];
-  
+
   if (BadPtr(parv[parc - 1]))
   	comment = cli_name(sptr);
-  	
+
   acptr = FindServer(server);
 
   if (!acptr)
@@ -86,7 +86,7 @@ int ms_squit(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     Debug((DEBUG_NOTICE, "Ignoring SQUIT to an unknown server"));
     return 0;
   }
-  
+
   /* If they are squitting me, we reverse it */
   if (IsMe(acptr))
     acptr = cptr; /* Bugfix by Prefect */
@@ -104,7 +104,7 @@ int ms_squit(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     Debug((DEBUG_NOTICE, "Ignoring SQUIT with the wrong timestamp"));
     return 0;
   }
-  
+
   return exit_client(cptr, acptr, sptr, comment);
 }
 
@@ -126,8 +126,8 @@ int mo_squit(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   struct Client *acptr;
   struct Client *acptr2;
   char *comment;
-      
-  if (parc < 2) 
+
+  if (parc < 2)
     return need_more_params(sptr, "SQUIT");
 
   if (parc < 3 || BadPtr(parv[2]))
@@ -145,7 +145,7 @@ int mo_squit(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     if (IsServer(acptr) || IsMe(acptr))
       break;
   }
-  
+
   /* Not found? Bugger. */
   if (!acptr || IsMe(acptr))
     return send_reply(sptr, ERR_NOSUCHSERVER, server);
@@ -160,7 +160,7 @@ int mo_squit(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
       acptr2 = cli_serv(acptr2)->up)
     if (!match(server, cli_name(acptr2)))
       acptr = acptr2;
-  
+
   /* Disallow local opers to squit remote servers */
   if (IsLocOp(sptr) && !MyConnect(acptr))
     return send_reply(sptr, ERR_NOPRIVILEGES);

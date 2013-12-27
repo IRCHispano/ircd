@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/client.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -83,11 +83,11 @@ struct AuthRequest;
 
 /** String containing valid user modes, in no particular order. */
 #if defined(DDB) || defined(SERVICES)
-#define infousermodes "dioOswkgxXrRSaNhBDPCZ"
+#define infousermodes "dioOswkgxXrRSaChBczn"
 #elif defined(UNDERNET)
-#define infousermodes "dioOswkgxXrRcZ"
+#define infousermodes "dioOswkgxXrRczn"
 #else
-#define infousermodes "dioOswkgxXRcZ"
+#define infousermodes "dioOswkgxXRczn"
 #endif
 
 /** Operator privileges. */
@@ -123,10 +123,20 @@ enum Priv
     PRIV_LIST_CHAN, /**< oper can list secret channels */
     PRIV_FORCE_OPMODE, /**< can hack modes on quarantined channels */
     PRIV_FORCE_LOCAL_OPMODE, /**< can hack modes on quarantined local channels */
-    PRIV_UMODE_K, /**< oper can set umode +k (Channel Service) */ 
-    PRIV_UMODE_X, /**< oper can set umode +X (can view hidden host) */
-    PRIV_DBQ, /**< oper can use DBQ (DataBase Query) */
+    PRIV_SEE_SECRET_CHAN, /**< oper can see +s channels in whois */
+    PRIV_CHANSERV, /**< oper can set umode +k (Channel Service) */
+    PRIV_SEE_HIDDEN_HOSTS, /**< oper can set umode +X (can view hidden host) */
+    PRIV_NOIDLE, /**< oper can set umode +I (no idle) */
+    PRIV_WHOIS_NOTICE, /**< oper can set umode +W (whois) */
+    PRIV_WALL, /**< oper can use /wallusers, /wallops */
+    PRIV_CLOSE, /**< oper can use /close */
+    PRIV_ROUTE, /**< oper can use /connect/squit NOTE: you need serverinfo priv to do remote connect */
+    PRIV_ROUTEINFO, /**< oper can use /map, /trace, /asll, /links and view jupe list */
+    PRIV_SERVERINFO, /**< oper can use /get, /stats, /hash, retrieve remote information */
     PRIV_APASS_OPMODE, /**< can hack modes +A/-A/+U/-U */
+#if defined(DDB) || defined(SERVICES)
+    PRIV_DBQ, /**< oper can use DBQ (DataBase Query) */
+#endif
     PRIV_LAST_PRIV /**< number of privileges */
   };
 
@@ -155,6 +165,13 @@ enum Flag
     FLAG_BURST,                     /**< Server is receiving a net.burst */
     FLAG_BURST_ACK,                 /**< Server is waiting for eob ack */
     FLAG_IPCHECK,                   /**< Added or updated IPregistry data */
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+    FLAG_CAP_WEB,
+#endif
+#if defined(USE_ZLIB)
+    FLAG_CAP_ZLIB_IN,
+    FLAG_CAP_ZLIB_OUT,
+#endif
     FLAG_LOCOP,                     /**< Local operator -- SRB */
     FLAG_SERVNOTICE,                /**< server notices such as kill */
     FLAG_OPER,                      /**< Operator */
@@ -167,30 +184,27 @@ enum Flag
 #if defined(UNDERNET)
     FLAG_ACCOUNT,                   /**< account name has been set */
 #elif defined(DDB) || defined(SERVICES)
-    FLAG_NICKREG,                   /**< nick registered */
-    FLAG_NICKSUSPEND,               /**< nick suspended */
-    FLAG_ADMIN,                     /**< nick is Services Admin */
-    FLAG_CODER,                     /**< nick is Services Coder */
-    FLAG_HELPOPER,                  /**< nick is Services Operator */
-    FLAG_BOT,                       /**< nick is Services Bot */
-    FLAG_USERDEAF,                  /**< user cannot received privates */
-    FLAG_USERBLIND,                 /**< user cannot send msg to channel */
-    FLAG_USERNOJOIN,                /**< user join debug channel forever */
+    FLAG_NICKREG,                   /**< +r nick registered */
+    FLAG_NICKSUSPEND,               /**< +S nick suspended */
+    FLAG_ADMIN,                     /**< +a nick is Services Admin */
+    FLAG_CODER,                     /**< +C nick is Services Coder */
+    FLAG_HELPER,                    /**< +h available to help */
+    FLAG_BOT,                       /**< +B nick is Bot */
+    FLAG_USERBITCH,                 /**< +P user bitched */
+    FLAG_USERNOJOIN,                /**< +J user join debug channel forever */
+    FLAG_VHOST_PERSO,               /**< user have vhost perso */
 #endif
-    FLAG_MSGONLYREG,                /**< only privmsg/notices from +r */
-    FLAG_STRIPCOLOUR,               /**< user cannot received colours messages */
-    FLAG_HIDDENHOST,                /**< user's host is hidden */
-    FLAG_VIEWHIDDENHOST,            /**< can view hiddenhost */
-    FLAG_SSL,                       /**< is a user with secure connection */
+    FLAG_MSGONLYREG,                /**< +R only privmsg/notices from +r */
+    FLAG_STRIPCOLOUR,               /**< +c user cannot received colours messages */
+    FLAG_HIDDENHOST,                /**< +x user's host is hidden */
+    FLAG_VIEWHIDDENHOST,            /**< +X can view hiddenhost */
+    FLAG_SSL,                       /**< +z is a user with secure connection */
+    FLAG_NOCHAN,                    /**< +n user's channels are hidden */
+    FLAG_NOIDLE,                    /**< +I: hide idle time */
+    FLAG_WHOIS,                     /**< +W: Whois */
     FLAG_LAST_FLAG,                 /**< number of flags */
     FLAG_LOCAL_UMODES = FLAG_LOCOP, /**< First local mode flag */
     FLAG_GLOBAL_UMODES = FLAG_OPER  /**< First global mode flag */
-/* VIEJO */
-#if 0
-#define MODE_ISWATCH    0x80000000  /* Se enviara WATCH para este nick */
-#define HFLAG_IPVIRTUAL_PERSONALIZADA 0x00000080  /* IP virtual personalizada */
-
-#endif /* 0 */
   };
 
 /** Declare flagset type for operator privileges. */
@@ -252,6 +266,10 @@ struct Connection
   char con_buffer[BUFSIZE];          /**< Incoming message buffer; or
                                         the error that caused this
                                         clients socket to close. */
+#if defined(USE_SSL)
+  char con_sslclifp[BUFSIZE + 1];    /**< SSL client certificate fingerprint if available */
+#endif
+
   struct Socket       con_socket;    /**< socket descriptor for
                                       client */
   struct Timer        con_proc;      /**< process latent messages from
@@ -261,17 +279,14 @@ struct Connection
   struct CapSet       con_active;    /**< Active capabilities (to us) */
   struct AuthRequest* con_auth;      /**< Auth request for client */
 
-/* VIEJOS */
-#if defined(ESNET_NEG)
-  unsigned long negociacion;
 #if defined(USE_ZLIB)
-  z_stream *comp_in;
-  uint64_t comp_in_total_in;
-  uint64_t comp_in_total_out;
-  z_stream *comp_out;
-  uint64_t comp_out_total_in;
-  uint64_t comp_out_total_out;
-#endif
+  unsigned int        zlib_negociation;
+  z_stream           *comp_in;
+  uint64_t            comp_in_total_in;
+  uint64_t            comp_in_total_out;
+  z_stream           *comp_out;
+  uint64_t            comp_out_total_in;
+  uint64_t            comp_out_total_out;
 #endif
 };
 
@@ -290,15 +305,15 @@ struct Client {
   struct Whowas* cli_whowas;      /**< Pointer to ww struct to be freed on quit */
   char           cli_yxx[4];      /**< Numeric Nick: YY if this is a
                                      server, XXX if this is a user */
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+  char           webnumeric[4];
+#endif
   time_t         cli_firsttime;   /**< time client was created */
   time_t         cli_lastnick;    /**< TimeStamp on nick */
   int            cli_marker;      /**< /who processing marker */
   struct Flags   cli_flags;       /**< client flags */
   unsigned int   cli_hopcount;    /**< number of servers to this 0 = local */
   struct irc_in_addr cli_ip;      /**< Real IP of client */
-#if defined(WEBCHAT_HTML)
-  struct irc_in_addr cli_ipreal;  /**< Real IP of client HTML Chat */
-#endif
   short          cli_status;      /**< Client type */
   char cli_name[HOSTLEN + 1];     /**< Unique name of the client, nick or host */
   char cli_username[USERLEN + 1]; /**< Username determined by ident lookup */
@@ -348,13 +363,6 @@ struct Client {
 #define cli_hopcount(cli)	((cli)->cli_hopcount)
 /** Get client IP address. */
 #define cli_ip(cli)		((cli)->cli_ip)
-#if defined(WEBCHAT_HTML)
-/** Get client real IP address. */
-#define cli_ipreal(cli)		(MyConnect(cli) ? (cli)->cli_ipreal : (cli)->cli_ip))
-#else
-/** Get client real IP address. */
-#define cli_ipreal(cli)     ((cli)->cli_ip)
-#endif
 /** Get status bitmask for client. */
 #define cli_status(cli)		((cli)->cli_status)
 /** Return non-zero if the client is local. */
@@ -371,6 +379,10 @@ struct Client {
 #define cli_username(cli)	((cli)->cli_username)
 /** Get client realname (information field). */
 #define cli_info(cli)		((cli)->cli_info)
+#if defined(UNDERNET)
+/** Get client account string. */
+#define cli_account(cli)	(cli_user(cli) ? cli_user(cli)->account : "0")
+#endif
 /** Get client's last channel join time. */
 #define cli_last_join(cli)      (cli_connect(cli)->con_last_join)
 /** Get client's last channel part time. */
@@ -430,10 +442,15 @@ struct Client {
 #define cli_passwd(cli)		con_passwd(cli_connect(cli))
 #if defined(DDB)
 /** Get the client's DDB password (+r). */
-#define cli_ddb_passwd(cli) con_ddb_passwd(cli_connect(cli))
+#define cli_ddb_passwd(cli)     con_ddb_passwd(cli_connect(cli))
 #endif
 /** Get the unprocessed input buffer for a client's connection.  */
 #define cli_buffer(cli)		con_buffer(cli_connect(cli))
+#if defined(USE_SSL)
+/** Get SSL client certificate fingerprint */
+//#define cli_sslclifp(cli)       con_sslclifp(cli_connect(cli))
+#define cli_sslclifp(cli)       cli->cli_connect->con_sslclifp
+#endif
 /** Get the Socket structure for sending to a client. */
 #define cli_socket(cli)		con_socket(cli_connect(cli))
 /** Get Timer for processing waiting messages from the client. */
@@ -507,6 +524,10 @@ struct Client {
 #define con_sockhost(con)	((con)->con_sockhost)
 /** Get the password sent by the remote end of the connection.  */
 #define con_passwd(con)		((con)->con_passwd)
+#if defined(DDB)
+/** Get the DDB password sent by the remote end of the connection.  */
+#define con_ddb_passwd(con)     ((con)->con_ddb_passwd)
+#endif
 /** Get the buffer of unprocessed incoming data from the connection. */
 #define con_buffer(con)		((con)->con_buffer)
 /** Get the Socket for the connection. */
@@ -565,6 +586,7 @@ struct Client {
 /** Return non-zero if the client is a registered user. */
 #define IsUser(x)               (cli_status(x) == STAT_USER)
 
+
 /** Mark a client with STAT_CONNECTING. */
 #define SetConnecting(x)        (cli_status(x) = STAT_CONNECTING)
 /** Mark a client with STAT_HANDSHAKE. */
@@ -594,14 +616,10 @@ struct Client {
 #define ClrFlag(cli, flag)  FlagClr(&cli_flags(cli), flag)
 /** Return non-zero if a flag is set in a client's flags. */
 #define HasFlag(cli, flag)  FlagHas(&cli_flags(cli), flag)
+
 /** Return non-zero if the client is an IRC operator (global or local). */
-#if defined(DDB)
-#define IsAnOper(x)             (IsOper(x) || IsLocOp(x) || IsAdmin(x) || \
-                                 IsCoder(x) || IsHelpOper(x) || IsBot(x))
-#else
 #define IsAnOper(x)             (IsOper(x) || IsLocOp(x))
 /** Return non-zero if the client's connection is blocked. */
-#endif
 #define IsBlocked(x)            HasFlag(x, FLAG_BLOCKED)
 /** Return non-zero if the client's connection is still being burst. */
 #define IsBurst(x)              HasFlag(x, FLAG_BURST)
@@ -625,7 +643,7 @@ struct Client {
 /** Return non-zero if the client caused a net.burst. */
 #define IsJunction(x)           HasFlag(x, FLAG_JUNCTION)
 /** Return non-zero if the client has set mode +O (local operator). */
-#define IsLocOp(x)              (MyUser(x) && HasFlag(x, FLAG_LOCOP))
+#define IsLocOp(x)              (MyConnect(x) && HasFlag(x, FLAG_LOCOP))
 /** Return non-zero if the client has set mode +o (global operator). */
 #define IsOper(x)               HasFlag(x, FLAG_OPER)
 /** Return non-zero if the client has an active UDP ping request. */
@@ -654,10 +672,8 @@ struct Client {
 #define IsViewHiddenHost(x)     HasFlag(x, FLAG_VIEWHIDDENHOST)
 /** Return non-zero if the client has an active PING request. */
 #define IsPingSent(x)           HasFlag(x, FLAG_PINGSENT)
-#if defined(USE_SSL)
 /** Return non-zero if the client has a secure connection. */
 #define IsSSL(x)                HasFlag(x, FLAG_SSL)
-#endif
 #if defined(DDB) || defined(SERVICES)
 /** Return non-zero if the client has set mode +r (nick registered). */
 #define IsNickRegistered(x)     HasFlag(x, FLAG_NICKREG)
@@ -667,21 +683,27 @@ struct Client {
 #define IsAdmin(x)              HasFlag(x, FLAG_ADMIN)
 /** Return non-zero if the client has set mode +N (Network Coder). */
 #define IsCoder(x)              HasFlag(x, FLAG_CODER)
-/** Return non-zero if the client has set mode +h (Help Operator). */
-#define IsHelpOper(x)           HasFlag(x, FLAG_HELPOPER)
+/** Return non-zero if the client has set mode +h (Helper). */
+#define IsHelper(x)             HasFlag(x, FLAG_HELPER)
 /** Return non-zero if the client has set mode +B (Services Bot). */
 #define IsBot(x)                HasFlag(x, FLAG_BOT)
-/** Return non-zero if the client has set mode +D (User Deaf). */
-#define IsUserDeaf(x)           HasFlag(x, FLAG_USERDEAF)
-/** Return non-zero if the client has set mode +P (User Blind). */
-#define IsUserBlind(x)          HasFlag(x, FLAG_USERBLIND)
-/** Return non-zero if the client has set mode +C (User No Join). */
+/** Return non-zero if the client has set mode +P (User Bitch). */
+#define IsUserBitch(x)          HasFlag(x, FLAG_USERBITCH)
+/** Return non-zero if the client has set mode +J (User No Join). */
 #define IsUserNoJoin(x)         HasFlag(x, FLAG_USERNOJOIN)
+/** Return non-zero if the client has perso virtual host.. */
+#define IsHaveVhostPerso(x)     HasFlag(x, FLAG_VHOST_PERSO)
 #endif
 /** Return non-zero if the client has set mode +R. */
 #define IsMsgOnlyReg(x)         HasFlag(x, FLAG_MSGONLYREG)
 /** Return non-zero if the client has set mode +c (Strip Colour). */
 #define IsStripColour(x)        HasFlag(x, FLAG_STRIPCOLOUR)
+/** Return non-zero if the client has set mode +n. */
+#define IsNoChan(x)             HasFlag(x, FLAG_NOCHAN)
+/** Return non-zero if the client has set mode +I. */
+#define IsNoIdle(x)             HasFlag(x, FLAG_NOIDLE)
+/** Return non-zero if the client has set mode +W. */
+#define IsWhois(x)              HasFlag(x, FLAG_WHOIS)
 /** Return non-zero if the client has operator or server privileges. */
 #define IsPrivileged(x)         (IsAnOper(x) || IsServer(x))
 /** Return non-zero if the client's host is hidden. */
@@ -735,10 +757,8 @@ struct Client {
 #define SetViewHiddenHost(x)    SetFlag(x, FLAG_VIEWHIDDENHOST)
 /** Mark a client as having a pending PING. */
 #define SetPingSent(x)          SetFlag(x, FLAG_PINGSENT)
-#if defined(USE_SSL)
 /** Mark a client as secure connection. */
 #define SetSSL(x)               SetFlag(x, FLAG_SSL)
-#endif
 #if defined(DDB) || defined(SERVICES)
 /** Mark a client as having mode +r (nick registered). */
 #define SetNickRegistered(x)    SetFlag(x, FLAG_NICKREG)
@@ -748,21 +768,27 @@ struct Client {
 #define SetAdmin(x)             SetFlag(x, FLAG_ADMIN)
 /** Mark a client as having mode +N (Network Coder). */
 #define SetCoder(x)             SetFlag(x, FLAG_CODER)
-/** Mark a client as having mode +h (Services Operator). */
-#define SetHelpOper(x)          SetFlag(x, FLAG_HELPOPER)
+/** Mark a client as having mode +h (Helper). */
+#define SetHelper(x)            SetFlag(x, FLAG_HELPER)
 /** Mark a client as having mode +B (Services Bot). */
 #define SetBot(x)               SetFlag(x, FLAG_BOT)
-/** Mark a client as having mode +D (User Deaf). */
-#define SetUserDeaf(x)           SetFlag(x, FLAG_USERDEAF)
-/** Mark a client as having mode +P (User Blind). */
-#define SetUserBlind(x)          SetFlag(x, FLAG_USERBLIND)
-/** Mark a client as having mode +C (User No Join). */
-#define SetUserNoJoin(x)         SetFlag(x, FLAG_USERNOJOIN)
+/** Mark a client as having mode +P (User Bitch). */
+#define SetUserBitch(x)         SetFlag(x, FLAG_USERBITCH)
+/** Mark a client as having mode +J (User No Join). */
+#define SetUserNoJoin(x)        SetFlag(x, FLAG_USERNOJOIN)
+/** Mark a client as having perso virtual host. */
+#define SetHaveVhostPerso(x)    SetFlag(x, FLAG_VHOST_PERSO)
 #endif
 /** Mark a client as having mode +R. */
 #define SetMsgOnlyReg(x)         SetFlag(x, FLAG_MSGONLYREG)
 /** Mark a client as having mode +c (Strip Colour). */
 #define SetStripColour(x)        SetFlag(x, FLAG_STRIPCOLOUR)
+/** Mark a client as having mode +n. */
+#define SetNoChan(x)             SetFlag(x, FLAG_NOCHAN)
+/** Mark a client as having mode +I. */
+#define SetNoIdle(x)             SetFlag(x, FLAG_NOIDLE)
+/** Mark a client as having mode +W. */
+#define SetWhois(x)              SetFlag(x, FLAG_WHOIS)
 
 /** Return non-zero if \a sptr sees \a acptr as an operator. */
 #define SeeOper(sptr,acptr) (IsAnOper(acptr) && (HasPriv(acptr, PRIV_DISPLAY) \
@@ -798,57 +824,41 @@ struct Client {
 #define ClearViewHiddenHost(x)  ClrFlag(x, FLAG_VIEWHIDDENHOST)
 /** Clear the client's pending PING flag. */
 #define ClearPingSent(x)        ClrFlag(x, FLAG_PINGSENT)
-#if defined(USE_SSL)
 /** Clear the client's secure connection. */
 #define ClearSSL(x)             ClrFlag(x, FLAG_SSL)
-#endif
 #if defined(DDB) || defined(SERVICES)
 /** Remove mode +r (nick registered) from the client. */
 #define ClearNickRegistered(x)  ClrFlag(x, FLAG_NICKREG)
 /** Remove mode +S (nick suspended) from the client. */
 #define ClearNickSuspended(x)   ClrFlag(x, FLAG_NICKSUSPEND)
-/** Remove mode +h (Help Operator) from the client. */
-#define ClearHelpOper(x)        ClrFlag(x, FLAG_HELPOPER)
 /** Remove mode +A (Services Admin) from the client. */
 #define ClearAdmin(x)           ClrFlag(x, FLAG_ADMIN)
 /** Remove mode +N (Network Coder) from the client. */
 #define ClearCoder(x)           ClrFlag(x, FLAG_CODER)
-/** Remove mode +h (Help Operator) from the client. */
-#define ClearHelpOper(x)        ClrFlag(x, FLAG_HELPOPER)
+/** Remove mode +h (Helper) from the client. */
+#define ClearHelper(x)          ClrFlag(x, FLAG_HELPER)
 /** Remove mode +B (Services Bot) from the client. */
 #define ClearBot(x)             ClrFlag(x, FLAG_BOT)
-/** Remove mode +D (User Deaf) from the client. */
-#define ClearUserDeaf(x)        ClrFlag(x, FLAG_USERDEAF)
-/** Remove mode +P (User Blind) from the client. */
-#define ClearUserBlind(x)       ClrFlag(x, FLAG_USERBLIND)
-/** Remove mode +C (User No Join) from the client. */
+/** Remove mode +P (User Bitch) from the client. */
+#define ClearUserBitch(x)       ClrFlag(x, FLAG_USERBITCH)
+/** Remove mode +J (User No Join) from the client. */
 #define ClearUserNoJoin(x)      ClrFlag(x, FLAG_USERNOJOIN)
+/** Remove flag verso virtualhost from the client. */
+#define ClearHaveVhostPerso(x)  ClrFlag(x, FLAG_VHOST_PERSO)
 #endif
 /** Remove mode +R from the client. */
 #define ClearMsgOnlyReg(x)      ClrFlag(x, FLAG_MSGONLYREG)
 /** Remove mode +c from the client. */
 #define ClearStripColour(x)     ClrFlag(x, FLAG_STRIPCOLOUR)
-#if 0
-#define HMODES_HIDDEN \
-    (HMODE_USERDEAF | HMODE_USERBLIND | HMODE_USERNOJOIN)
+/** Remove mode +n from the client. */
+#define ClearNoChan(x)          ClrFlag(x, FLAG_NOCHAN)
+/** Remove mode +I from the client. */
+#define ClearNoIdle(x)          ClrFlag(x, FLAG_NOIDLE)
+/** Remove mode +W from the client. */
+#define ClearWhois(x)           ClrFlag(x, FLAG_WHOIS)
+/** Clear the client's HUB flag. */
+#define ClearHub(x)             ClrFlag(x, FLAG_HUB)
 
-#define TieneIpVirtualPersonalizada(x)  ((x)->hmodes & HFLAG_IPVIRTUAL_PERSONALIZADA)
-#define SetIpVirtualPersonalizada(x)    ((x)->hmodes |= HFLAG_IPVIRTUAL_PERSONALIZADA)
-#define ClearIpVirtualPersonalizada(x)  ((x)->hmodes &= ~HFLAG_IPVIRTUAL_PERSONALIZADA)
-
-
-#define BorraIpVirtual(x)      do { \
-                                 assert(IsUser(x)); \
-                                 if((x)->cli_user->virtualhost) \
-                                   SlabStringFree((x)->cli_user->virtualhost); \
-                                 (x)->cli_user->virtualhost=NULL; \
-                                 ClearIpVirtualPersonalizada(x); \
-                               } while (0)
-
-
-
-
-#endif /*viejo*/
 /* free flags */
 #define FREEFLAG_SOCKET	0x0001	/**< socket needs to be freed */
 #define FREEFLAG_TIMER	0x0002	/**< timer needs to be freed */

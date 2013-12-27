@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/s_stats.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2000 Joseph Bongaarts
  *
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@
 #include "ircd_log.h"
 #include "ircd_reply.h"
 #include "ircd_string.h"
+#include "ircd_zlib.h"
 #include "listener.h"
 #include "list.h"
 #include "match.h"
@@ -80,13 +81,13 @@
  *       it--not reversed as in ircd.conf!
  */
 
-static void stats_configured_links(struct Client *sptr, 
+static void stats_configured_links(struct Client *sptr,
 			const struct StatDesc* sd, char* param);
 static void stats_crule_list(struct Client* to, const struct StatDesc *sd,
                  char *param);
 static void stats_engine(struct Client *to, const struct StatDesc *sd,
 		char *param);
-static void stats_access(struct Client *to, const struct StatDesc *sd, 
+static void stats_access(struct Client *to, const struct StatDesc *sd,
 		char *param);
 static void stats_klines(struct Client *sptr, const struct StatDesc *sd,
 		char *mask);
@@ -139,9 +140,12 @@ static struct StatDesc statsinfo[] = {
   { 'E', "elines", (STAT_FLAG_OPERFEAT | STAT_FLAG_VARPARAM | STAT_FLAG_CASESENS), FEAT_HIS_STATS_ELINES,
     stats_elines, 0,
     "Exceptions (E-Lines)." },
-  { 'f', "features", STAT_FLAG_OPERFEAT, FEAT_HIS_STATS_FEATURES,
+  { 'f', "features", (STAT_FLAG_OPERFEAT | STAT_FLAG_CASESENS), FEAT_HIS_STATS_FEATURES,
     feature_report, 0,
     "Feature settings." },
+  { 'F', "featuresall", (STAT_FLAG_OPERFEAT | STAT_FLAG_CASESENS), FEAT_HIS_STATS_FEATURES,
+    feature_report, 1,
+    "All feature settings, including defaulted values." },
   { 'g', "glines", STAT_FLAG_OPERFEAT, FEAT_HIS_STATS_GLINES,
     gline_stats, 0,
     "Global bans (G-lines)." },
@@ -235,14 +239,13 @@ stats_configured_links(struct Client *sptr, const struct StatDesc* sd,
   struct ConfItem *tmp;
   unsigned short int port;
   int maximum;
-  char *host, *pass, *name, *username, *hub_limit;
+  char *host, *name, *username, *hub_limit;
 
   for (tmp = GlobalConfList; tmp; tmp = tmp->next)
   {
     if ((tmp->status & sd->sd_funcdata))
     {
       host = BadPtr(tmp->host) ? null : tmp->host;
-      pass = BadPtr(tmp->passwd) ? null : tmp->passwd;
       name = BadPtr(tmp->name) ? null : tmp->name;
       username = BadPtr(tmp->username) ? null : tmp->username;
       hub_limit = BadPtr(tmp->hub_limit) ? null : tmp->hub_limit;
@@ -258,12 +261,13 @@ stats_configured_links(struct Client *sptr, const struct StatDesc* sd,
                    (name[0] == ':' ? "0" : ""), (tmp->name ? tmp->name : "*"),
                    port, get_conf_class(tmp));
       else if (tmp->status & CONF_OPERATOR)
-        send_reply(sptr, RPL_STATSOLINE,
-                   ((FlagHas(&tmp->privs_dirty, PRIV_PROPAGATE)
-                     && FlagHas(&tmp->privs, PRIV_PROPAGATE))
-                    || (FlagHas(&tmp->conn_class->privs_dirty, PRIV_PROPAGATE)
-                        && FlagHas(&tmp->conn_class->privs, PRIV_PROPAGATE)))
-                   ? 'O' : 'o', username, host, name, get_conf_class(tmp));
+      {
+        int global = FlagHas(&tmp->privs_dirty, PRIV_PROPAGATE)
+            ? FlagHas(&tmp->privs, PRIV_PROPAGATE)
+            : FlagHas(&tmp->conn_class->privs, PRIV_PROPAGATE);
+        send_reply(sptr, RPL_STATSOLINE, global ? 'O' : 'o',
+                   username, host, name, get_conf_class(tmp));
+      }
     }
   }
 }
@@ -537,7 +541,7 @@ stats_links(struct Client* sptr, const struct StatDesc* sd, char* name)
    * a wild card based search to list it.
    */
   send_reply(sptr, SND_EXPLICIT | RPL_STATSLINKINFO, "Connection SendQ "
-             "SendM SendKBytes RcveM RcveKBytes :Open since");
+             "SendM SendKBytes %CS RcveM RcveKBytes %CR :Open since");
     for (i = 0; i <= HighestFd; i++)
     {
       if (!(acptr = LocalClientArray[i]))
@@ -556,23 +560,23 @@ stats_links(struct Client* sptr, const struct StatDesc* sd, char* name)
       if (!(!name || wilds) && 0 != ircd_strcmp(name, cli_name(acptr)))
         continue;
       send_reply(sptr, SND_EXPLICIT | RPL_STATSLINKINFO,
-                 "%s %u %u %Lu %u %Lu :%Tu",
+                 "%s %u %u %Lu %u%% %u %Lu %u%% :%Tu",
                  (*(cli_name(acptr))) ? cli_name(acptr) : "<unregistered>",
                  (int)MsgQLength(&(cli_sendQ(acptr))), (int)cli_sendM(acptr),
-                 (cli_sendB(acptr) >> 10), 
-#if defined(USE_ZLIB1)
-                 (IsServer(acptr) && (acptr->cli_connect->negociacion & ZLIB_ESNET_OUT)) ?
-            (int)((acptr->cli_connect->comp_out_total_out * 100.0 /
-            acptr->cli_connect->comp_out_total_in) + 0.5) : 100,
+                 (cli_sendB(acptr) >> 10),
+#if defined(USE_ZLIB)
+                 (IsServer(acptr) && (cli_connect(acptr)->zlib_negociation & ZLIB_OUT)) ?
+                 (int)((cli_connect(acptr)->comp_out_total_out * 100.0 /
+                 cli_connect(acptr)->comp_out_total_in) + 0.5) : 100,
 
 #else
                  100,
 #endif
-                 (int)cli_receiveM(acptr), (cli_receiveB(acptr) >> 10), 
-#if defined(USE_ZLIB1)
-            (IsServer(acptr) && (acptr->cli_connect->negociacion & ZLIB_ESNET_IN)) ?
-            (int)((acptr->cli_connect->comp_in_total_in * 100.0 /
-            acptr->cli_connect->comp_in_total_out) + 0.5) : 100,
+                 (int)cli_receiveM(acptr), (cli_receiveB(acptr) >> 10),
+#if defined(USE_ZLIB)
+                 (IsServer(acptr) && (cli_connect(acptr)->zlib_negociation & ZLIB_IN)) ?
+                 (int)((cli_connect(acptr)->comp_in_total_in * 100.0 /
+                 cli_connect(acptr)->comp_in_total_out) + 0.5) : 100,
 #else
                  100,
 #endif
@@ -590,7 +594,7 @@ stats_modules(struct Client* to, const struct StatDesc* sd, char* param)
 {
 crypt_mechs_t* mechs;
 
-  send_reply(to, SND_EXPLICIT | RPL_STATSLLINE, 
+  send_reply(to, SND_EXPLICIT | RPL_STATSLLINE,
    "Module  Description      Entry Point");
 
  /* atm the only "modules" we have are the crypto mechanisms,
@@ -607,9 +611,9 @@ crypt_mechs_t* mechs;
   if(mechs == NULL)
    return;
 
-  send_reply(to, SND_EXPLICIT | RPL_STATSLLINE, 
-   "%s  %s     0x%X", 
-   mechs->mech->shortname, mechs->mech->description, 
+  send_reply(to, SND_EXPLICIT | RPL_STATSLLINE,
+   "%s  %s     0x%X",
+   mechs->mech->shortname, mechs->mech->description,
    mechs->mech->crypt_function);
 
   mechs = mechs->next;

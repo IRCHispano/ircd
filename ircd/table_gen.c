@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/table_gen.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1998 Andrea Cocito
  *
  * This program is free software; you can redistribute it and/or modify
@@ -67,7 +67,7 @@ static char NTL_toupper_tab[1 + CHAR_MAX - CHAR_MIN]; /* 256 bytes */
 static int NTL_char_attrib[1 + CHAR_MAX - CHAR_MIN];  /* 256 ints = 0.5 to 2 kilobytes */
 
 /*
- * makeTables() 
+ * makeTables()
  * Where we make the tables, edit ONLY this to change the tables.
  */
 
@@ -92,8 +92,8 @@ static void makeTables(void)
 
   markString(NTL_SPACE, "\011\012\013\014\015\040");
 
-  /* Make the derived sets, 
-   * WARNING: The order of these calls is important, some depend on 
+  /* Make the derived sets,
+   * WARNING: The order of these calls is important, some depend on
    * the results of the previous ones ! */
 
   moveMacro(NTL_LOWER | NTL_UPPER, NTL_ALPHA);

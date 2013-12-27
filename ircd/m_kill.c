@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_kill.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -70,7 +70,7 @@ static int do_kill(struct Client* cptr, struct Client* sptr,
    *       have changed the target because of the nickname change.
    */
   sendto_opmask(0, IsServer(sptr) ? SNO_SERVKILL : SNO_OPERKILL,
-                "Received KILL message for %s. From %s Path: %s!%s %s",
+                "Received KILL message for %s from %s Path: %s!%s %s",
                 get_client_name(victim, SHOW_IP), cli_name(sptr),
                 inpath, path, msg);
   log_write_kill(victim, sptr, inpath, path, msg);
@@ -82,15 +82,8 @@ static int do_kill(struct Client* cptr, struct Client* sptr,
    * Client suicide kills are NOT passed on --SRB
    */
   if (IsServer(cptr) || !MyConnect(victim)) {
-#if defined(P09_SUPPORT)
-    sendcmdto_lowprot_serv(sptr, 9, CMD_KILL, cptr, "%C :%s!%s %s", victim,
-                   inpath, path, msg);
-    sendcmdto_highprot_serv(sptr, 10, CMD_KILL, cptr, "%C :%s!%s %s", victim,
-                   inpath, path, msg);
-#else
     sendcmdto_serv(sptr, CMD_KILL, cptr, "%C :%s!%s %s", victim,
                    inpath, path, msg);
-#endif
 
     /*
      * Set FLAG_KILLED. This prevents exit_one_client from sending
@@ -158,23 +151,6 @@ int ms_kill(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   else
     *(msg++) = '\0'; /* Remove first character (space) and terminate path */
 
-#if defined(P09_SUPPORT)
-  if (Protocol(cptr) < 10) {
-    if (!(victim = FindClient(parv[1]))) {
-      /*
-       * If the user has recently changed nick, we automatically
-       * rewrite the KILL for this new nickname--this keeps
-       * servers in synch when nick change and kill collide
-       */
-      if (!(victim = get_history(parv[1], (long)15)))
-        return send_reply(sptr, ERR_NOSUCHNICK, parv[1]);
-
-      sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Changed KILL %s into %s", sptr,
-            parv[1], cli_name(victim));
-    }
-  }
-#endif
-
   if (!(victim = findNUser(parv[1]))) {
     if (IsUser(sptr))
       sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :KILL target disconnected "
@@ -198,11 +174,7 @@ int ms_kill(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
    * Bounce the kill back to the originator, if the client can't be found
    * by the next hop (short lag) the bounce won't propagate further.
    */
-#if defined(P09_SUPPORT)
-  if (MyConnect(victim) && Protocol(cptr) > 9) {
-#else
   if (MyConnect(victim)) {
-#endif
     sendcmdto_one(&me, CMD_KILL, cptr, "%C :%s (Ghost 5 Numeric Collided)",
                   victim, path);
   }

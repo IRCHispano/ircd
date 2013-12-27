@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/ircd.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -53,7 +53,7 @@ struct PendingExit
   char*        message;     /**< Message to emit. */
   time_t       time;        /**< Absolute time at which to exit. */
 };
-        
+
 /*
  * Macros
  */
@@ -66,11 +66,7 @@ struct PendingExit
 /* Miscellaneous defines */
 
 #define UDP_PORT        "7007"  /**< Default port for server-to-server pings. */
-#if defined(P09_SUPPORT)
-#define MINOR_PROTOCOL  "09"	/**< Minimum protocol version supported. */
-#else
 #define MINOR_PROTOCOL  "10"    /**< Minimum protocol version supported. */
-#endif
 #define MAJOR_PROTOCOL  "10"    /**< Current protocol version. */
 #define BASE_VERSION    "u2.10" /**< Base name of IRC daemon version. */
 

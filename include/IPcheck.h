@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/IPcheck.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1998 Carlo Wood <Run@undernet.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,10 +39,13 @@ struct irc_in_addr;
  */
 extern void IPcheck_init(void);
 extern int IPcheck_local_connect(const struct irc_in_addr *ip, time_t *next_target_out);
-extern void IPcheck_connect_fail(const struct Client *cptr);
+extern void IPcheck_connect_fail(const struct Client *cptr, int disconnect);
 extern void IPcheck_connect_succeeded(struct Client *cptr);
 extern int IPcheck_remote_connect(struct Client *cptr, int is_burst);
 extern void IPcheck_disconnect(struct Client *cptr);
 extern unsigned short IPcheck_nr(struct Client* cptr);
+#if defined(DDB)
+extern int IPcheck_nr_ddb(struct Client* cptr);
+#endif
 
 #endif /* INCLUDED_ipcheck_h */

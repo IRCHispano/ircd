@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/s_user.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -210,11 +210,7 @@ int hunt_server_cmd(struct Client *from, const char *cmd, const char *tok,
   }
 
   /* Make sure it's a server */
-#if defined(P09_SUPPORT)
-  if (MyUser(from) || Protocol(one) < 10) {
-#else
   if (MyUser(from)) {
-#endif
     /* Make sure it's a server */
     if (!strchr(to, '*')) {
       if (0 == (acptr = FindClient(to))) {
@@ -284,11 +280,7 @@ int hunt_server_prio_cmd(struct Client *from, const char *cmd, const char *tok,
     return (HUNTED_ISME);
 
   /* Make sure it's a server */
-#if defined(P09_SUPPORT)
-  if (MyUser(from) || Protocol(one) < 10) {
-#else
   if (MyUser(from)) {
-#endif
     /* Make sure it's a server */
     if (!strchr(to, '*')) {
       if (0 == (acptr = FindClient(to))) {
@@ -363,9 +355,6 @@ int register_user(struct Client *cptr, struct Client *sptr)
   char*            tmpstr;
   struct User*     user = cli_user(sptr);
   char             ip_base64[25];
-#if defined(P09_SUPPORT)
-  struct DLink     *lp;
-#endif
 
   user->last = CurrentTime;
   parv[0] = cli_name(sptr);
@@ -377,8 +366,18 @@ int register_user(struct Client *cptr, struct Client *sptr)
 
     Count_unknownbecomesclient(sptr, UserStats);
 
+    /*
+     * Set user's initial modes
+     */
+    tmpstr = (char*)client_get_default_umode(sptr);
+    if (tmpstr) {
+      char *umodev[] = { NULL, NULL, NULL, NULL };
+      umodev[2] = tmpstr;
+      set_user_mode(cptr, sptr, 3, umodev, ALLOWMODES_ANY);
+    }
+
 #if defined(USE_SSL)
-    if (cli_socket(cptr).ssl)
+    if (cli_socket(cptr).s_ssl)
       SetSSL(sptr);
 #endif
 
@@ -406,7 +405,7 @@ int register_user(struct Client *cptr, struct Client *sptr)
 #if defined(USE_SSL)
     if (IsSSL(sptr))
       sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :You are connected to %s with %s", sptr,
-                    cli_name(&me), "test"); /*ssl_get_cipher(cli_socket(sptr).ssl)); */
+                    cli_name(&me), ssl_get_cipher(cli_socket(sptr).s_ssl));
 #endif
 
     send_supported(sptr);
@@ -424,30 +423,13 @@ int register_user(struct Client *cptr, struct Client *sptr)
                     cli_info(sptr), NumNick(cptr) /* two %s's */);
 
     IPcheck_connect_succeeded(sptr);
-    /*
-     * Set user's initial modes
-     */
-    tmpstr = (char*)client_get_default_umode(sptr);
-    if (tmpstr) {
-      char *umodev[] = { NULL, NULL, NULL, NULL };
-      umodev[2] = tmpstr;
-      set_user_mode(cptr, sptr, 3, umodev, ALLOWMODES_ANY);
-    }
-
   }
   else {
     struct Client *acptr = user->server;
 
     if (cli_from(acptr) != cli_from(sptr))
     {
-#if defined(P09_SUPPORT)
-      if (Protocol(cptr) < 10)
-        sendcmdto_one(&me, CMD_KILL, cptr, "%s :%s (%s != %s[%s])",
-                    cli_name(sptr), cli_name(&me), cli_name(user->server), cli_name(cli_from(acptr)),
-                    cli_sockhost(cli_from(acptr)));
-      else
-#endif
-        sendcmdto_one(&me, CMD_KILL, cptr, "%C :%s (%s != %s[%s])",
+      sendcmdto_one(&me, CMD_KILL, cptr, "%C :%s (%s != %s[%s])",
                     sptr, cli_name(&me), cli_name(user->server), cli_name(cli_from(acptr)),
                     cli_sockhost(cli_from(acptr)));
       SetFlag(sptr, FLAG_KILLED);
@@ -489,37 +471,6 @@ int register_user(struct Client *cptr, struct Client *sptr)
     ++UserStats.opers;
 
   tmpstr = umode_str(sptr);
-
-#if defined(P09_SUPPORT)
-  for (lp = cli_serv(&me)->down; lp; lp = lp->next) {
-    if (lp->value.cptr == cptr)
-      continue;
-    if (Protocol(lp->value.cptr) < 10) {
-      /* First send NICK message to all 2.9 servers */
-#ifdef MIGRACION_DEEPSPACE_P10
-      sendcmdto_one(user->server, CMD_NICK, lp->value.cptr,
-              "%s %d %Tu %s %s %s %s :%s",
-              cli_name(sptr), cli_hopcount(sptr) + 1, cli_lastnick(sptr),
-              cli_user(sptr)->username, cli_user(sptr)->realhost,
-              lp->value.cptr->cli_name,
-              iptobase64(ip_base64, &cli_ip(sptr), sizeof(ipbase_64), 1),
-              cli_info(sptr));
-#else
-      sendcmdto_one(user->server, CMD_NICK, lp->value.cptr,
-              "%s %d %Tu %s %s %s :%s",
-              cli_name(sptr), cli_hopcount(sptr) + 1, cli_lastnick(sptr),
-              cli_user(sptr)->username, cli_user(sptr)->realhost,
-              lp->value.cptr->cli_name, cli_info(sptr));
-#endif
-
-      /* If the user has no umode, no need to generate a user MODE */
-      if (*(tmpstr = umode_str(sptr)) && (MyConnect(sptr)
-          || Protocol(cptr) > 9))
-        sendcmdto_one(user->server, CMD_MODE, lp->value.cptr,
-              "%s :%s", cli_name(sptr), tmpstr);
-    }
-  }
-#endif
 
   /* Send full IP address to IPv6-grokking servers. */
   sendcmdto_flag_serv(user->server, CMD_NICK, cptr,
@@ -586,18 +537,20 @@ static const struct UserMode {
   { FLAG_NICKREG,     'r' },
   { FLAG_NICKSUSPEND, 'S' },
   { FLAG_ADMIN,       'a' },
-  { FLAG_CODER,       'N' },
-  { FLAG_HELPOPER,    'h' },
+  { FLAG_CODER,       'C' },
+  { FLAG_HELPER,      'h' },
   { FLAG_BOT,         'B' },
-  { FLAG_USERDEAF,    'D' },
-  { FLAG_USERBLIND,   'P' },
-  { FLAG_USERNOJOIN,  'C' },
+  { FLAG_USERBITCH,   'P' },
+  { FLAG_USERNOJOIN,  'J' },
 #endif
   { FLAG_MSGONLYREG,  'R' },
   { FLAG_STRIPCOLOUR, 'c' },
   { FLAG_HIDDENHOST,  'x' },
   { FLAG_VIEWHIDDENHOST, 'X' },
-  { FLAG_SSL,         'Z' }
+  { FLAG_SSL,         'z' },
+  { FLAG_NOCHAN,      'n' },
+  { FLAG_NOIDLE,      'I' },
+  { FLAG_WHOIS,       'W' }
 };
 
 /** Length of #userModeList. */
@@ -622,9 +575,9 @@ int verify_pass_nick(char *nick, char *cryptpass, char *pass)
   int nicklen = strlen(nick);
 #if 1
   int cont=(nicklen < 16) ? 2 : ((nicklen + 8) / 8);
-#else  
+#else
   int cont = ((nicklen + 8) / 8);
-#endif  
+#endif
   char tmpnick[8 * cont + 1];
   char tmppass[12 + 1];
   unsigned int *p = (unsigned int *)tmpnick;    /* int == 32bits */
@@ -777,7 +730,7 @@ int set_nick_name(struct Client* cptr, struct Client* sptr,
                        "%s :*** It uses \002/NICK %s%spassword\002 for identify",
                        name, nick, IsGhost(flags) ? "!" : ":");
 
-      send_reply(cptr, ERR_NICKNAMEINUSE, nick); 
+      send_reply(cptr, ERR_NICKNAMEINUSE, nick);
       return 0;
     }
   }
@@ -900,7 +853,7 @@ int set_nick_name(struct Client* cptr, struct Client* sptr,
     {
       if (!botname)
         botname = ddb_get_botname(DDB_NICKSERV);
-        
+
       sendcmdbotto_one(botname, CMD_NOTICE, cptr,
                        "%C :*** Password accepted. Welcome to %s",
                        cptr, feature_str(FEAT_NETWORK));
@@ -969,7 +922,7 @@ int set_nick_name(struct Client* cptr, struct Client* sptr,
     if (MyConnect(sptr))
     {
       struct Flags oldflags;
- 
+
       if (IsIdentify(flags))
       {
         oldflags = cli_flags(sptr);
@@ -1023,7 +976,7 @@ add_target(struct Client *sptr, void *target)
 
   targets = cli_targets(sptr);
 
-  /* 
+  /*
    * Already in table?
    */
   for (i = 0; i < MAXTARGETS; ++i) {
@@ -1059,10 +1012,6 @@ int check_target_limit(struct Client *sptr, void *target, const char *name,
   if (IsChannelService(sptr))
     return 0;
 
-  /* If user is invited to channel, give him/her a free target */
-  if (IsChannelName(name) && is_invited(sptr, target))
-    return 0;
-
   /*
    * Same target as last time?
    */
@@ -1080,6 +1029,10 @@ int check_target_limit(struct Client *sptr, void *target, const char *name,
    */
   if (!created) {
     if (CurrentTime < cli_nexttarget(sptr)) {
+      /* If user is invited to channel, give him/her a free target */
+      if (IsChannelName(name) && is_invited(sptr, target))
+        return 0;
+
       if (cli_nexttarget(sptr) - CurrentTime < TARGET_DELAY + 8) {
         /*
          * No server flooding
@@ -1164,7 +1117,7 @@ int whisper(struct Client* source, const char* nick, const char* channel,
     return 0;
   }
 #endif
-          
+
   if (is_notice)
     sendcmdto_one(source, CMD_NOTICE, dest, "%C :%s", dest, text);
   else
@@ -1334,7 +1287,7 @@ hide_hostmask(struct Client *cptr, const char *vhost, unsigned int flag)
       } while (strchr(ipcrypted, ']') || strchr(ipcrypted, '['));
     }
     /* IPv6 */
-    else 
+    else
     {
       strncpy(ipcrypted, cli_user(cptr)->realhost, HOSTLEN);
       strncat(ipcrypted, ".v6", HOSTLEN);
@@ -1524,7 +1477,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
         if (what == MODE_ADD)
           SetLocOp(sptr);
         else
-        { 
+        {
           ClrFlag(sptr, FLAG_OPER);
           ClrFlag(sptr, FLAG_LOCOP);
           if (MyConnect(sptr) && !IsAnOper(sptr))
@@ -1570,7 +1523,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
 	      break;
 #if defined(UNDERNET)
       case 'r':
-	if (what == MODE_ADD) {
+	if (*(p + 1) && (what == MODE_ADD)) {
 	  account = *(++p);
 	  SetAccount(sptr);
 	}
@@ -1601,7 +1554,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
           SetCoder(sptr);
       else
           ClearCoder(sptr);
-      break;        
+      break;
       case 'h':
         if (what == MODE_ADD)
           SetHelpOper(sptr);
@@ -1690,10 +1643,10 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
      * new umode; servers can set it, local users cannot;
      * prevents users from /kick'ing or /mode -o'ing
      */
-    if (!FlagHas(&setflags, FLAG_CHSERV) && !HasPriv(sptr, PRIV_UMODE_K))
+    if (!FlagHas(&setflags, FLAG_CHSERV) && !HasPriv(sptr, PRIV_CHANSERV))
       ClearChannelService(sptr);
-    if (!FlagHas(&setflags, FLAG_VIEWHIDDENHOST) && HasPriv(sptr, PRIV_UMODE_X))
-      ClearViewHiddenHost(sptr);  
+    if (!FlagHas(&setflags, FLAG_VIEWHIDDENHOST) && HasPriv(sptr, PRIV_SEE_HIDDEN_HOSTS))
+      ClearViewHiddenHost(sptr);
     /*
      * only send wallops to opers
      */
@@ -1719,9 +1672,9 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
     if (!FlagHas(&setflags, FLAG_ADMIN))
       ClearAdmin(sptr);
     if (!FlagHas(&setflags, FLAG_CODER))
-      ClearCoder(sptr);      
-    if (!FlagHas(&setflags, FLAG_HELPOPER))
-      ClearHelpOper(sptr);              
+      ClearCoder(sptr);
+    if (!FlagHas(&setflags, FLAG_HELPER))
+      ClearHelpOper(sptr);
     if (!FlagHas(&setflags, FLAG_BOT))
       ClearBot(sptr);
 #endif /* defined(DDB) || defined(SERVICES) */
@@ -1730,7 +1683,10 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
   {
     if ((FlagHas(&setflags, FLAG_OPER) || FlagHas(&setflags, FLAG_LOCOP)) &&
         !IsAnOper(sptr))
+    {
       det_confs_butmask(sptr, CONF_CLIENT & ~CONF_OPERATOR);
+      client_set_privs(sptr, NULL);
+    }
 
     if (SendServNotice(sptr))
     {
@@ -1884,7 +1840,7 @@ void send_umode(struct Client *cptr, struct Client *sptr, struct Flags *old,
     case SEND_UMODES:
       if (flag < FLAG_GLOBAL_UMODES)
         continue;
-      break;      
+      break;
     }
     if (FlagHas(old, flag))
     {

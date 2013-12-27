@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/ircd_zlib.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2003 Jesus Cea Avion <jcea@jcea.es>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,10 +32,26 @@ struct Client;
  * Prototypes
  */
 #if defined(USE_ZLIB)
-void inicia_microburst(void);
-void completa_microburst(void);
-void inicializa_microburst(void);
-void elimina_cptr_microburst(struct Client *cptr);
-#endif
+
+struct zlib_mburst {
+  struct Client *cptr;
+  struct DBuf *dyn;
+  struct zlib_mburst *next;
+};
+
+extern int microburst;
+extern struct zlib_mburst *p_microburst;
+extern struct zlib_mburst *p_microburst_cache;
+
+#define ZLIB_IN   0x1
+#define ZLIB_OUT  0x2
+#define ZLIB_OUT_SPECULATIVE     0x4
+
+extern void zlib_microburst_init(void);
+extern void zlib_microburst_complet(void);
+extern void zlib_microburst_start(void);
+extern void zlib_microburst_delete(struct Client *cptr);
+
+#endif /* USE_ZLIB */
 
 #endif /* INCLUDED_ircd_zlib_h */

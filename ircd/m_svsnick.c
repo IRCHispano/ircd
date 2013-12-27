@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_svsnick.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2004 Toni Garcia (zoltan) <zoltan@irc-dev.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -77,7 +77,7 @@ int ms_svsnick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 #else
   if (parc < 3)
     return 0;
-#endif    
+#endif
 
   if (!cli_uworld(sptr))
   {
@@ -97,7 +97,7 @@ int ms_svsnick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return 0;
 
   if (ircd_strcmp(parv[2], "*"))
-  {  
+  {
     /*
      * Don't let them send make us send back a really long string of
      * garbage

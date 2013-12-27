@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/ircd_crypt.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2002 hikari
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,10 +31,10 @@ struct crypt_mech_s {
  char* shortname;    /* short name of the module */
  char* description;  /* description of the mechanism */
 
- const char* (*crypt_function)(const char *, const char *); 
+ const char* (*crypt_function)(const char *, const char *);
                      /* pointer to the crypt function */
 
- char* crypt_token;  /* what identifies a password string 
+ char* crypt_token;  /* what identifies a password string
                         as belonging to this mechanism */
 
  unsigned int crypt_token_size; /* how long is the token */

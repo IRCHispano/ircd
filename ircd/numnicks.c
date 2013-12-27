@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/numnicks.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996 Carlo Wood
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@
 #include "config.h"
 
 #include "numnicks.h"
+#include "channel.h"
 #include "client.h"
 #include "ircd.h"
 #include "ircd_alloc.h"
@@ -80,9 +81,9 @@
 #define NN_MAX_CLIENT_SHORT 4096  /* (NUMNICKBASE * NUMNICKBASE) */
 /** Number of clients extendeds representable in a numnick. */
 #define NN_MAX_CLIENT_EXT 262144    /* NUMNICKBASE ^ 3 */
-#if defined(WEBCHAT)
-/** Number of channels representable in a numchannel. */
-#define NN_MAX_CHANNELS     262144  /* NUMNICKBASE ^ 3 */
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+/** Number of channels representable in a webnumeric. */
+#define NN_MAX_WEBNUMERICS     262144  /* NUMNICKBASE ^ 3 */
 #endif
 
 /*
@@ -94,9 +95,12 @@ static int ext_numerics = 0;
 static unsigned int lastNNServer = 0;
 /** Array of servers indexed by numnick. */
 static struct Client* server_list[NN_MAX_SERVER];
-#if defined(WEBCHAT)
-/** Array of channels indexed by numchannel. */
-static struct Channel* channel_list[NN_MAX_CHANNELS];
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+/** Array of clients indexed by webnumerics. */
+static struct Client* webclient_list[NN_MAX_WEBNUMERICS];
+/** Array of channels indexed by webnumerics. */
+static struct Channel* webchannel_list[NN_MAX_WEBNUMERICS];
+
 #endif
 
 /* *INDENT-OFF* */
@@ -130,7 +134,7 @@ static const unsigned int convert2n[] = {
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  52,53,54,55,56,57,58,59,60,61, 0, 0, 0, 0, 0, 0, 
+  52,53,54,55,56,57,58,59,60,61, 0, 0, 0, 0, 0, 0,
    0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,
   15,16,17,18,19,20,21,22,23,24,25,62, 0,63, 0, 0,
    0,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,
@@ -260,9 +264,6 @@ void SetServerYXX(struct Client* cptr, struct Client* server, const char* yxx)
 {
   unsigned int index;
 
-#if defined(P09_SUPPORT)
-  if (Protocol(cptr) > 9) {
-#endif
   if (5 == strlen(yxx)) {
     ircd_strncpy(cli_yxx(server), yxx, 2);
     ircd_strncpy(cli_serv(server)->nn_capacity, yxx + 2, 3);
@@ -273,33 +274,6 @@ void SetServerYXX(struct Client* cptr, struct Client* server, const char* yxx)
     cli_serv(server)->nn_capacity[1] = yxx[2];
   }
   cli_serv(server)->nn_mask = base64toint(cli_serv(server)->nn_capacity);
-
-#if defined(P09_SUPPORT)
-  }
-  else {
-    char buffer[1024];
-#if defined(DDB)
-    struct Ddb *ddb;
-
-    strcpy(buffer, "p09:");
-    strcat(buffer, cli_name(server));
-
-    ddb = ddb_find_key(DDB_CONFIGDB, buffer);
-    if (ddb)
-    {
-      *cli_yxx(server) = convert2y[atoi(ddb_content(ddb))];
-      inttobase64(cli_serv(server)->nn_capacity, 63, 2);
-      cli_serv(server)->nn_mask = 63;
-    }
-#else
-    if (!ircd_strcmp(cli_name(server), "services.irc-dev.net")) {
-      *cli_yxx(server) = convert2y[60];
-      inttobase64(cli_serv(server)->nn_capacity, 63, 2);
-      cli_serv(server)->nn_mask = 63;
-    } 
-#endif
-  }
-#endif
 
   index = base64toint(cli_yxx(server));
   if (index >= lastNNServer)
@@ -605,68 +579,71 @@ void base64toip(const char* input, struct irc_in_addr* addr)
   }
 }
 
-#if defined(P09_SUPPORT)
-/*
- * CreateNNforProtocol9server
- *
- * We do not receive numeric nicks from servers behind a protocol 9 link
- * so we generate it ourselfs.
- */
-const char *CreateNNforProtocol9server(const struct Client *server)
-{
-  static char YXX[4];
-  struct Server *serv = cli_serv(server);
-  unsigned int count = 0;
-
-  assert(IsServer(server));
-  assert(9 == Protocol(server));
-
-  YXX[0] = *cli_yxx(server);
-  YXX[3] = 0;
-
-  while (serv->client_list[serv->nn_last])
-  {
-    if (++count == NUMNICKBASE)
-    {
-      assert(count < NUMNICKBASE);
-      return NULL;
-    }
-    if (++serv->nn_last == NUMNICKBASE)
-      serv->nn_last = 0;
-  }
-  inttobase64(YXX + 1, serv->nn_last, 2);
-  if (++serv->nn_last == NUMNICKBASE)
-    serv->nn_last = 0;
-  return YXX;
-}
-#endif
-
-#if defined(WEBCHAT)
-/** Register numeric of new channel.
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+/** Register numeric of new client.
  * See @ref numnicks for more details.
  * Assign a numnick and add it to our channel_list.
- * @param[in] chptr %Channel being created.
- *
-int SetXXXChannel(struct Channel *chptr)
+ * @param[in] cptr %Client being created.
+ */
+int SetWebXXXClient(struct Client *cptr)
 {
   static unsigned int last_cn = 0;
   unsigned int count          = 0;
 
-  while (channel_list[last_cn & (NN_MAX_CHANNELS-1)]) {
-    if (++count == NN_MAX_CHANNELS) {
-      assert(count < NN_MAX_CHANNELS);
+  while (webclient_list[last_cn & (NN_MAX_WEBNUMERICS-1)]) {
+    if (++count == NN_MAX_WEBNUMERICS) {
+      assert(count < NN_MAX_WEBNUMERICS);
       return 0;
     }
-    if (++last_cn == NN_MAX_CHANNELS)
+    if (++last_cn == NN_MAX_WEBNUMERICS)
       last_cn = 0;
   }
 
-  channel_list[last_cn & (NN_MAX_CHANNELS - 1)] = chptr; /* Reserve the numeric ! */
+  webclient_list[last_cn & (NN_MAX_WEBNUMERICS - 1)] = cptr; /* Reserve the numeric ! */
 
-  inttobase64(chptr->numeric, last_cn, 3);
+  inttobase64(cptr->webnumeric, last_cn, 3);
 
-  if (++last_cn == NN_MAX_CHANNELS)
+  if (++last_cn == NN_MAX_WEBNUMERICS)
     last_cn = 0;
+
+  return 1;
+}
+
+/** Remove a client from a client array.
+ * @param[in] xxx Numnick of client to remove.
+ */
+void RemoveWebXXXClient(const char *xxx)
+{
+  assert(0 != xxx);
+  if (*xxx)
+    webclient_list[base64toint(xxx) & (NN_MAX_WEBNUMERICS-1)] = 0;
+}
+
+/** Register numeric of new channel.
+ * See @ref numnicks for more details.
+ * Assign a numnick and add it to our channel_list.
+ * @param[in] chptr %Channel being created.
+ */
+int SetWebXXXChannel(struct Channel *chptr)
+{
+  static unsigned int last_chn = 0;
+  unsigned int count          = 0;
+
+  while (webchannel_list[last_chn & (NN_MAX_WEBNUMERICS-1)]) {
+    if (++count == NN_MAX_WEBNUMERICS) {
+      assert(count < NN_MAX_WEBNUMERICS);
+      return 0;
+    }
+    if (++last_chn == NN_MAX_WEBNUMERICS)
+      last_chn = 0;
+  }
+
+  webchannel_list[last_chn & (NN_MAX_WEBNUMERICS - 1)] = chptr; /* Reserve the numeric ! */
+
+  inttobase64(chptr->webnumeric, last_chn, 3);
+
+  if (++last_chn == NN_MAX_WEBNUMERICS)
+    last_chn = 0;
 
   return 1;
 }
@@ -674,11 +651,11 @@ int SetXXXChannel(struct Channel *chptr)
 /** Remove a channel from a channel array.
  * @param[in] xxx Numnick of channel to remove.
  */
-void RemoveXXXChannel(const char *xxx)
+void RemoveWebXXXChannel(const char *xxx)
 {
   assert(0 != xxx);
   if (*xxx)
-    channel_list[base64toint(xxx) & (NN_MAX_CHANNELS-1)] = 0;
+    webchannel_list[base64toint(xxx) & (NN_MAX_WEBNUMERICS-1)] = 0;
 }
 
 void buf_to_base64_r(unsigned char *out, const unsigned char *buf, size_t buf_len)
@@ -697,7 +674,7 @@ void buf_to_base64_r(unsigned char *out, const unsigned char *buf, size_t buf_le
            out[j + 2] = convert2y[(limb >> 6) & 63];
            out[j + 3] = convert2y[(limb) & 63];
   }
-  
+
   switch (buf_len - i) {
     case 0:
       break;
@@ -731,13 +708,13 @@ size_t base64_to_buf_r(unsigned char *buf, unsigned char *str)
 
   len = strlen((char *) str);
   buf_len = (len * 6 + 7) / 8;
-  
+
   for (i = 0, j = 0, limb = 0; i + 3 < len; i += 4) {
     if (str[i] == '=' || str[i + 1] == '=' || str[i + 2] == '=' || str[i + 3] == '=') {
       if (str[i] == '=' || str[i + 1] == '=') {
         break;
       }
-          
+
       if (str[i + 2] == '=') {
         limb =
                ((uint32_t) convert2n[str[i]] << 6) |
@@ -759,7 +736,7 @@ size_t base64_to_buf_r(unsigned char *buf, unsigned char *str)
                ((uint32_t) convert2n[str[i + 1]] << 12) |
                ((uint32_t) convert2n[str[i + 2]] << 6) |
                ((uint32_t) convert2n[str[i + 3]]);
-          
+
       buf[j] = (unsigned char) (limb >> 16) & 0xff;
       buf[j + 1] = (unsigned char) (limb >> 8) & 0xff;
       buf[j + 2] = (unsigned char) (limb) & 0xff;
@@ -768,8 +745,8 @@ size_t base64_to_buf_r(unsigned char *buf, unsigned char *str)
   }
 
   buf_len = j;
-  
+
   return buf_len;
 }
 
-#endif /* WEBCHAT */
+#endif /* WEBCHAT_FLASH_DEPRECATED */

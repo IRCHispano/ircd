@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_res.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2003 cryogen and Dianora
  * Copyright (C) 1999 Thomas Helvey
  * Copyright (C) 1992 Darren Reed
@@ -68,7 +68,7 @@
 #include <time.h>
 
 #if (CHAR_BIT != 8)
-#error this code needs to be able to address individual octets 
+#error this code needs to be able to address individual octets
 #endif
 
 /** IPv4 resolver UDP socket. */
@@ -251,7 +251,7 @@ restart_resolver(void)
 static void
 add_local_domain(char* hname, size_t size)
 {
-  /* try to fix up unqualified names 
+  /* try to fix up unqualified names
    */
   if (strchr(hname, '.') == NULL)
   {
@@ -659,7 +659,6 @@ proc_answer(struct reslist *request, HEADER* header, char* buf, char* eob)
 {
   char hostbuf[HOSTLEN + 100]; /* working buffer */
   unsigned char *current;      /* current position in buf */
-  int query_class;             /* answer class */
   int type;                    /* answer type */
   int n;                       /* temp count */
   int rd_length;
@@ -713,7 +712,7 @@ proc_answer(struct reslist *request, HEADER* header, char* buf, char* eob)
     type = irc_ns_get16(current);
     current += TYPE_SIZE;
 
-    query_class = irc_ns_get16(current);
+    /* We do not use the class or TTL values. */
     current += CLASS_SIZE;
 
     current += TTL_SIZE;

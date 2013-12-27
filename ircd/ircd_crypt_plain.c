@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_crypt_plain.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2002 hikari
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * @file
  * @brief Routines for PLAIN passwords.
  * @version $Id: ircd_crypt_plain.c,v 1.4 2007-04-19 22:53:48 zolty Exp $
- * 
+ *
  * PLAIN text encryption.  Oxymoron and a half that.
  */
 #include "config.h"
@@ -40,11 +40,11 @@
  * @param key The password
  * @param salt The salt
  * @return The password
- * 
+ *
  * Yes I know it's an oxymoron, but still, it's handy for testing.
- * 
+ *
  * What you need more help with seeing what this does?
- * 
+ *
  */
 const char* ircd_crypt_plain(const char* key, const char* salt)
 {
@@ -54,15 +54,15 @@ const char* ircd_crypt_plain(const char* key, const char* salt)
  Debug((DEBUG_DEBUG, "ircd_crypt_plain: key is %s", key));
  Debug((DEBUG_DEBUG, "ircd_crypt_plain: salt is %s", salt));
 
-  /* yes, that's it.  we just send key back out again, 
+  /* yes, that's it.  we just send key back out again,
      pointless I know */
   return key;
 }
 
-/** register ourself with the list of crypt mechanisms 
- * Registers the PLAIN mechanism in the list of available crypt mechanisms.  
+/** register ourself with the list of crypt mechanisms
+ * Registers the PLAIN mechanism in the list of available crypt mechanisms.
  * When we're modular this will be the entry function for the module.
- * 
+ *
  * -- hikari */
 void ircd_register_crypt_plain(void)
 {
@@ -82,6 +82,6 @@ crypt_mech_t* crypt_mech;
  crypt_mech->crypt_token_size = 7;
 
  ircd_crypt_register_mech(crypt_mech);
- 
+
 return;
 }

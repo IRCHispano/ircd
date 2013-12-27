@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_crypt_native.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990-1991 Armin Gruner
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,10 +23,10 @@
  * @file
  * @brief Native crypt() function routines
  * @version $Id: ircd_crypt_native.c,v 1.7 2007-09-20 21:00:31 zolty Exp $
- * 
+ *
  * Routines for handling passwords encrypted with the system's native crypt()
  * function (typically a DES encryption routine, but can be anything nowadays).
- * 
+ *
  */
 #define _XOPEN_SOURCE 600
 
@@ -47,9 +47,9 @@
  * @param key The password we're encrypting.
  * @param salt The salt we're using to encrypt key
  * @return The encrypted password.
- * 
- * Well this bit is (kinda) intact from the original oper password routines :) 
- * It's a very simple wrapper routine that just calls crypt and returns the 
+ *
+ * Well this bit is (kinda) intact from the original oper password routines :)
+ * It's a very simple wrapper routine that just calls crypt and returns the
  * result.
  *   -- hikari
  */
@@ -83,6 +83,6 @@ crypt_mech_t* crypt_mech;
  crypt_mech->crypt_token_size = 7;
 
  ircd_crypt_register_mech(crypt_mech);
- 
+
 return;
 }

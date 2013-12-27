@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_who.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -139,7 +139,7 @@ static void do_who(struct Client* sptr, struct Client* acptr,
   struct Membership *chan = 0;
 
   static char buf1[512];
-  /* NOTE: with current fields list and sizes this _cannot_ overrun, 
+  /* NOTE: with current fields list and sizes this _cannot_ overrun,
      and also the message finally sent shouldn't ever be truncated */
 
   p1 = buf1;
@@ -290,7 +290,7 @@ static void do_who(struct Client* sptr, struct Client* acptr,
     if (IsHelpOper(acptr))
       *(p1++) = 'h';
     if (IsBot(acptr))
-      *(p1++) = 'B';              
+      *(p1++) = 'B';
 #endif
     if (HasHiddenHost(acptr))
       *(p1++) = 'x';
@@ -360,7 +360,7 @@ static void do_who(struct Client* sptr, struct Client* acptr,
     while ((*p2) && (*(p1++) = *(p2++)));
   }
 
-  /* The first char will always be an useless blank and we 
+  /* The first char will always be an useless blank and we
      need to terminate buf1 */
   *p1 = '\0';
   p1 = buf1;
@@ -415,7 +415,7 @@ int m_who(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
       (mask[1] == '\0' && ((mask[0] == '0') || (mask[0] == '*')))))
     mask = 0;
 
-  /* Evaluate the flags now, we consider the second parameter 
+  /* Evaluate the flags now, we consider the second parameter
      as "matchFlags%fieldsToInclude,querytype"           */
   bitsel = fields = counter = matchsel = 0;
   qrt = 0;
@@ -435,7 +435,7 @@ int m_who(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
           continue;
         case 'x':
         case 'X':
-          if (HasPriv(sptr, PRIV_WHOX))
+          if (HasPriv(sptr, PRIV_WHOX) && IsAnOper(sptr))
           {
             bitsel |= WHOSELECT_EXTRA;
 	    log_write(LS_WHO, L_INFO, LOG_NOSNOTICE, "%#C WHO %s %s", sptr,
@@ -687,7 +687,7 @@ int m_who(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
         }
       }
     }
-    /* Loop through all clients :-\, if we still have something to match to 
+    /* Loop through all clients :-\, if we still have something to match to
        and we can show more clients */
     if ((!(counter < 1)) && matchsel)
       for (acptr = cli_prev(&me); acptr; acptr = cli_prev(acptr))

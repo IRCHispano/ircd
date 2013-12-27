@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/umkpasswd.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2002 hikari
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
  *
  */
 #ifndef INCLUDED_umkpasswd_h
-#define INCLUDED_umkpasswd_h 
+#define INCLUDED_umkpasswd_h
 
 struct umkpasswd_conf_s {
  int debuglevel;	/* you really need me to comment this? */

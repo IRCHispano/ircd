@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_restart.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -60,10 +60,10 @@
 int ms_restart(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
   const char *target, *when, *reason;
-  
+
   if (parc < 4)
     return need_more_params(sptr, "RESTART");
-        
+
   target = parv[1];
   when = parv[2];
   reason = parv[parc - 1];
@@ -74,17 +74,12 @@ int ms_restart(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     != HUNTED_ISME)
       return 0;
   } else /* must forward the message */
-#if defined(P09_SUPPORT)
-    /* Only P10 */
-    sendcmdto_highprot_serv(sptr, 10, CMD_RESTART, cptr, "* %s :%s", when, reason);
-#else
     sendcmdto_serv(sptr, CMD_RESTART, cptr, "* %s :%s", when, reason);
-#endif
 
   /* OK, the message has been forwarded, but before we can act... */
   if (!feature_bool(FEAT_NETWORK_RESTART))
     return 0;
-        
+
   /* is it a cancellation? */
   if (!ircd_strcmp(when, "cancel"))
     exit_cancel(sptr); /* cancel a pending exit */
@@ -93,7 +88,7 @@ int ms_restart(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 
   return 0;
 }
-                                      
+
 /** Handle a RESTART message from an operator connection.
  *
  * \a parv has the following elements:
@@ -112,7 +107,7 @@ int mo_restart(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
   time_t when = 0;
   const char *reason = 0;
-    
+
   if (!HasPriv(sptr, PRIV_RESTART))
     return send_reply(sptr, ERR_NOPRIVILEGES);
 

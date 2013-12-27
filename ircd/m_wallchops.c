@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_wallchops.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -86,7 +86,7 @@ int m_wallchops(struct Client* cptr, struct Client* sptr, int parc, char* parv[]
             return 0;
           }
 #endif
-
+      RevealDelayedJoinIfNeeded(sptr, chptr);
       sendcmdto_channel(sptr, CMD_WALLCHOPS, chptr, cptr,
                         SKIP_DEAF | SKIP_BURST | SKIP_NONOPS,
                         "%H :@ %s", chptr, parv[parc - 1]);
@@ -122,7 +122,7 @@ int ms_wallchops(struct Client* cptr, struct Client* sptr, int parc, char* parv[
     return 0;
 
   if (!IsLocalChannel(parv[1]) && (chptr = FindChannel(parv[1]))) {
-    if (client_can_send_to_channel(sptr, chptr, 0)) {
+    if (client_can_send_to_channel(sptr, chptr, 1)) {
       sendcmdto_channel(sptr, CMD_WALLCHOPS, chptr, cptr,
                         SKIP_DEAF | SKIP_BURST | SKIP_NONOPS,
                         "%H :%s", chptr, parv[parc - 1]);

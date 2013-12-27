@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_rehash.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -66,10 +66,10 @@ int ms_rehash(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
   int flag = 0;
   const char *target;
-    
+
   if (parc < 2)
     return need_more_params(sptr, "REHASH");
-          
+
   target = parv[1];
 
   /* is it a message we should pay attention to? */
@@ -78,19 +78,11 @@ int ms_rehash(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
             1, parc, parv)
     != HUNTED_ISME)
       return 0;
-#if defined(P09_SUPPORT)
-  /* Only P10 */
-  } else if (parc > 2) /* must forward the message with flags */
-    sendcmdto_highprot_serv(sptr, 10, CMD_REHASH, cptr, "* %s", parv[2]);
-  else /* just have to forward the message */
-    sendcmdto_highprot_serv(sptr, 10, CMD_REHASH, cptr, "*");
-#else
   } else if (parc > 2) /* must forward the message with flags */
     sendcmdto_serv(sptr, CMD_REHASH, cptr, "* %s", parv[2]);
   else /* just have to forward the message */
     sendcmdto_serv(sptr, CMD_REHASH, cptr, "*");
-#endif
-  
+
   /* OK, the message has been forwarded, but before we can act... */
   if (!feature_bool(FEAT_NETWORK_REHASH))
     return 0;
@@ -113,14 +105,14 @@ int ms_rehash(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     } else if (*parv[2] == 'q')
       flag = 2;
   }
-   
+
   send_reply(sptr, RPL_REHASHING, configfile);
   sendto_opmask(0, SNO_OLDSNO, "%C is rehashing Server config file", sptr);
   log_write(LS_SYSTEM, L_INFO, 0, "REHASH From %#C", sptr);
-      
+
   return rehash(cptr, flag);
 }
-                                                                                                                                           
+
 /** Handle a REHASH message from an operator connection.
  *
  * \a parv has the following elements:

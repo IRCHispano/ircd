@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_tea.c
  *
- * Copyright (C) 2002-2007 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,13 @@
  */
 #include "config.h"
 
+/*
+ * TEA (cifrado)
+ *
+ * Cifra 64 bits de datos, usando clave de 64 bits (los 64 bits superiores son cero)
+ * Se cifra v[0]^x[0], v[1]^x[1], para poder hacer CBC facilmente.
+ *
+ */
 void ircd_tea(unsigned int v[], unsigned int k[], unsigned int x[])
 {
   unsigned int y = v[0] ^ x[0];

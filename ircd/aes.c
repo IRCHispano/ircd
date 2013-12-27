@@ -24,14 +24,15 @@
  *  http://csrc.nist.gov/encryption/aes/rijndael/Rijndael.pdf
  *  http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf
  */
-
-#include "sys.h"
+#include "config.h"
 #include "aes.h"
 #include "padlock.h"
 
+#include <string.h>
+
 #define POLARSSL_AES_ROM_TABLES
 
-RCSTAG_CC("$Id: aes256.c 256 2008-12-01 14:40:06Z dfmartinez $");
+/* $Id: client.c,v 1.11 2007-04-19 22:53:47 zolty Exp $ */
 
 /*
  * 32-bit integer manipulation macros (little endian)

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/listener.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1999 Thomas Helvey <tomh@inxpress.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -54,7 +54,7 @@ enum ListenerFlag {
   /** Port accepts only server connections. */
   LISTEN_SERVER,
   /** Port is exempt from connection prohibitions. */
-  LISTEN_EXEMPT,    
+  LISTEN_EXEMPT,
   /** Port listens for IPv4 connections. */
   LISTEN_IPV4,
   /** Port listens for IPv6 connections. */
@@ -63,7 +63,7 @@ enum ListenerFlag {
   /** Port listens for SSL connections. */
   LISTEN_SSL,
 #endif
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
   /** Port with encrypted cookies. */
   LISTEN_COOKIES,
 #endif
@@ -95,11 +95,11 @@ struct Listener {
 #if defined(USE_SSL)
 #define listener_ssl(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_SSL)
 #endif
-#if defined(WEBCHAT)
+#if defined(WEBCHAT_FLASH_DEPRECATED)
 #define listener_cookies(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_COOKIES)
 #endif
 
-extern void        add_listener(int port, const char* vaddr_ip, 
+extern void        add_listener(int port, const char* vaddr_ip,
                                 const char* mask,
                                 const struct ListenerFlags *flags);
 extern void        close_listeners(void);

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/struct.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996-1997 Carlo Wood
  * Copyright (C) 1990 Jarkko Oikarinen
  *
@@ -54,9 +54,6 @@ struct Server {
                                    caused a Ghost */
   int             lag;          /**< Approximation of the amount of lag to this server */
   unsigned int    clients;      /**< Number of clients on the server */
-#if defined(P09_SUPPORT)
-  unsigned short nn_last;       /**< Last numeric nick for p9 servers only */
-#endif
   unsigned short  prot;         /**< Major protocol */
   unsigned int    nn_mask;      /**< Number of clients supported by server, minus 1 */
   char          nn_capacity[4]; /**< Numeric representation of server capacity */
@@ -98,31 +95,12 @@ struct User {
   char               host[HOSTLEN + 1];       /**< displayed hostname */
   char               realhost[HOSTLEN + 1];   /**< actual hostname */
 #if defined(DDB)
-  char               virtualhost[HOSTLEN + 1]; /**< virtualhost */
+  char               vhostcrypt[24];          /**< virtualhost */
 #endif
 #if defined(UNDERNET)
   char               account[ACCOUNTLEN + 1]; /**< IRC account name */
   time_t	     acc_create;              /**< IRC account timestamp */
 #endif
 };
-
-
-
-/* PROVISIONAL */
-
-#define MAXLEN         490
-#define QUITLEN        300      /* Hispano extension */
-
-#if defined(ZLIB_ESNET)
-#include "zlib.h"
-
-#define ZLIB_ESNET_IN   0x1
-#define ZLIB_ESNET_OUT  0x2
-#define ZLIB_ESNET_OUT_SPECULATIVE     0x4
-#endif
-
-#if defined(ESNET_NEG)
-#define USER_TOK  0x8
-#endif
 
 #endif /* INCLUDED_struct_h */

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/querycmds.h
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,9 @@ struct UserStatistics {
 
   /* Global counts: */
   unsigned int servers;         /**< Known servers, including #me. */
+  unsigned int pservers;        /**< Pseudoserver Services */
   unsigned int clients;         /**< Registered users. */
+  unsigned int services;        /**< Services */
 
   /* Global user mode changes: */
   unsigned int inv_clients;     /**< Registered invisible users. */

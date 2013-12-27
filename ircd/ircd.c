@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -142,13 +142,13 @@ static void pending_exit(struct PendingExit *pe)
   static int looping = 0;
   enum LogLevel level = pe->restart ? L_WARNING : L_CRIT;
   const char *what = pe->restart ? "restarting" : "terminating";
-      
+
   if (looping++) /* increment looping to prevent looping */
     return;
 
   if (pe->message) {
     sendto_lusers("Server %s: %s", what, pe->message);
-    
+
     if (pe->who) { /* write notice to log */
       log_write(LS_SYSTEM, level, 0, "%s %s server: %s", pe->who, what,
         pe->message);
@@ -172,19 +172,18 @@ static void pending_exit(struct PendingExit *pe)
              cli_name(&me), what);
     }
   }
-                                                      
+
   /* now let's perform the restart or exit */
   flush_connections(0);
-  
+
 #if defined(DDB)
-//  ddb_end();
-    db_persistent_commit();
+  ddb_end();
 #endif
-    
+
   log_close();
   close_connections(!pe->restart ||
             !(thisServer.bootopt & (BOOT_TTY | BOOT_DEBUG | BOOT_CHKCONF)));
-            
+
   if (!pe->restart) { /* just set running = 0 */
     running = 0;
     return;
@@ -192,15 +191,15 @@ static void pending_exit(struct PendingExit *pe)
 
   /* OK, so we're restarting... */
   reap_children();
-    
+
   execv(SPATH, thisServer.argv); /* restart the server */
-      
+
   /* something failed; reopen the logs so we can complain */
   log_reopen();
-          
+
   log_write(LS_SYSTEM, L_CRIT,  0, "execv(%s,%s) failed: %m", SPATH,
         *thisServer.argv);
-                  
+
   Debug((DEBUG_FATAL, "Couldn't restart server \"%s\": %s", SPATH,
      (strerror(errno)) ? strerror(errno) : ""));
   exit(8);
@@ -215,19 +214,19 @@ static void countdown_notice(struct PendingExit *pe, time_t until)
 {
   const char *what = pe->restart ? "restarting" : "terminating";
   const char *units;
-  
+
   if (until >= 60) { /* measure in minutes */
     until /= 60; /* so convert it to minutes */
     units = (until == 1) ? "minute" : "minutes";
   } else
     units = (until == 1) ? "second" : "seconds";
-                
+
   /* send the message */
   if (pe->message)
     sendto_lusers("Server %s in %d %s: %s", what, until, units, pe->message);
   else
     sendto_lusers("Server %s in %d %s...", what, until, units);
-}  
+}
 
 static void exit_countdown(struct Event *ev);
 
@@ -239,17 +238,17 @@ static void exit_countdown(struct Event *ev);
 static void _exit_countdown(struct PendingExit *pe, int do_notice)
 {
   time_t total, next, approx;
-  
+
   if (CurrentTime >= pe->time) { /* time to do the exit */
     pending_exit(pe);
     return;
   }
-  
+
   /* OK, we need to figure out how long to the next message and approximate
    * how long until the actual exit.
    */
   total = pe->time - CurrentTime; /* how long until exit */
-          
+
 #define t_adjust(interval, interval2)       \
   do {                \
     approx = next = total - (total % (interval));   \
@@ -259,8 +258,8 @@ static void _exit_countdown(struct PendingExit *pe, int do_notice)
         next = (interval) - (interval2);      \
     } else /* have to adjust approx... */     \
       approx += (interval);         \
-  } while (0)              
-  
+  } while (0)
+
   if (total > PEND_INT_LONG) /* in the long interval regime */
     t_adjust(PEND_INT_LONG, PEND_INT_MEDIUM);
   else if (total > PEND_INT_MEDIUM) /* in the medium interval regime */
@@ -283,7 +282,7 @@ static void _exit_countdown(struct PendingExit *pe, int do_notice)
   /* issue the warning notices... */
   if (do_notice)
     countdown_notice(pe, approx);
-        
+
   /* reschedule the timer... */
   timer_add(&countdown_timer, exit_countdown, pe, TT_ABSOLUTE, next);
 }
@@ -296,9 +295,9 @@ static void exit_countdown(struct Event *ev)
 {
   if (ev_type(ev) == ET_DESTROY)
     return; /* do nothing with destroy events */
-      
+
   assert(ET_EXPIRE == ev_type(ev));
-        
+
   /* perform the event we were called to do */
   _exit_countdown(t_data(&countdown_timer), 1);
 }
@@ -314,7 +313,7 @@ void exit_cancel(struct Client *who)
 
   if (!t_onqueue(&countdown_timer))
     return; /* it's not running... */
-      
+
   pe = t_data(&countdown_timer); /* get the pending exit data */
   timer_del(&countdown_timer); /* delete the timer */
 
@@ -322,7 +321,7 @@ void exit_cancel(struct Client *who)
     /* issue a notice about the exit being canceled */
     sendto_lusers("Server %s CANCELED",
           what = (pe->restart ? "restart" : "termination"));
-          
+
      /* log the cancellation */
      if (IsUser(who))
        log_write(LS_SYSTEM, L_NOTICE, 0, "Server %s CANCELED by %s!%s@%s", what,
@@ -330,8 +329,8 @@ void exit_cancel(struct Client *who)
      else
        log_write(LS_SYSTEM, L_NOTICE, 0, "Server %s CANCELED by %s", what,
          cli_name(who));
-  }               
-  
+  }
+
   /* release the pending exit structure */
   if (pe->who)
     MyFree(pe->who);
@@ -358,11 +357,11 @@ void exit_schedule(int restart, time_t when, struct Client *who,
 
   /* first, let's cancel any pending exit */
   exit_cancel(0);
-    
+
   /* now create a new pending exit */
   pe = MyMalloc(sizeof(struct PendingExit));
   pe->restart = restart;
-            
+
   pe->time = when + CurrentTime; /* make time absolute */
   if (who) { /* save who issued it... */
     if (IsUser(who)) {
@@ -381,14 +380,14 @@ void exit_schedule(int restart, time_t when, struct Client *who,
 
   /* let's refuse new connections... */
   refuse = 1;
-    
+
   if (!when) { /* do it right now? */
     pending_exit(pe);
     return;
   }
 
   assert(who); /* only people issue delayed exits */
-  
+
   /* issue a countdown notice... */
   countdown_notice(pe, when);
 
@@ -398,11 +397,11 @@ void exit_schedule(int restart, time_t when, struct Client *who,
           restart ? "restart" : "termination", pe->who, pe->message);
   else
     log_write(LS_SYSTEM, L_NOTICE, 0, "Delayed server %s issued by %s...",
-          restart ? "restart" : "termination", pe->who);  
+          restart ? "restart" : "termination", pe->who);
   /* and schedule the timer */
   _exit_countdown(pe, 0);
 }
-                          
+
 /*----------------------------------------------------------------------------
  * API: server_panic
  *--------------------------------------------------------------------------*/
@@ -555,16 +554,16 @@ static void check_pings(struct Event* ev) {
   assert(0 != ev_timer(ev));
 
   next_check += feature_int(FEAT_PINGFREQUENCY);
-  
+
   /* Scan through the client table */
   for (i=0; i <= HighestFd; i++) {
     struct Client *cptr = LocalClientArray[i];
-   
+
     if (!cptr)
       continue;
-     
+
     assert(&me != cptr);  /* I should never be in the local client array! */
-   
+
 
     /* Remove dead clients. */
     if (IsDead(cptr)) {
@@ -574,10 +573,10 @@ static void check_pings(struct Event* ev) {
 
     max_ping = IsRegistered(cptr) ? client_get_ping(cptr) :
       feature_int(FEAT_CONNECTTIMEOUT);
-   
+
     Debug((DEBUG_DEBUG, "check_pings(%s)=status:%s limit: %d current: %d",
 	   cli_name(cptr),
-	   IsPingSent(cptr) ? "[Ping Sent]" : "[]", 
+	   IsPingSent(cptr) ? "[Ping Sent]" : "[]",
 	   max_ping, (int)(CurrentTime - cli_lasttime(cptr))));
 
     /* If it's a server and we have not sent an AsLL lately, do so. */
@@ -600,16 +599,16 @@ static void check_pings(struct Event* ev) {
 
     /* Ok, the thing that will happen most frequently, is that someone will
      * have sent something recently.  Cover this first for speed.
-     * -- 
+     * --
      * If it's an unregistered client and hasn't managed to register within
      * max_ping then it's obviously having problems (broken client) or it's
      * just up to no good, so we won't skip it, even if its been sending
-     * data to us. 
+     * data to us.
      * -- hikari
      */
     if ((CurrentTime-cli_lasttime(cptr) < max_ping) && IsRegistered(cptr)) {
       expire = cli_lasttime(cptr) + max_ping;
-      if (expire < next_check) 
+      if (expire < next_check)
 	next_check = expire;
       continue;
     }
@@ -646,7 +645,7 @@ static void check_pings(struct Event* ev) {
       exit_client_msg(cptr, cptr, &me, "Ping timeout");
       continue;
     }
-    
+
     if (!IsPingSent(cptr))
     {
       /* If we haven't PINGed the connection and we haven't heard from it in a
@@ -656,23 +655,23 @@ static void check_pings(struct Event* ev) {
 
       /* If we're late in noticing don't hold it against them :) */
       cli_lasttime(cptr) = CurrentTime - max_ping;
-      
+
       if (IsUser(cptr))
         sendrawto_one(cptr, MSG_PING " :%s", cli_name(&me));
       else
         sendcmdto_prio_one(&me, CMD_PING, cptr, ":%s", cli_name(&me));
     }
-    
+
     expire = cli_lasttime(cptr) + max_ping * 2;
     if (expire < next_check)
       next_check=expire;
   }
-  
+
   assert(next_check >= CurrentTime);
-  
+
   Debug((DEBUG_DEBUG, "[%i] check_pings() again in %is",
 	 CurrentTime, next_check-CurrentTime));
-  
+
   timer_add(&ping_timer, check_pings, 0, TT_ABSOLUTE, next_check);
 }
 
@@ -791,7 +790,7 @@ static char check_file_access(const char *path, char which, int mode) {
   if (!access(path, mode))
     return 1;
 
-  fprintf(stderr, 
+  fprintf(stderr,
 	  "Check on %cPATH (%s) failed: %s\n"
 	  "Please create this file and/or rerun `configure' "
 	  "using --with-%cpath and recompile to correct this.\n",
@@ -941,7 +940,7 @@ int main(int argc, char **argv) {
   initmsgtree();
   initstats();
 
-  /* we need this for now, when we're modular this 
+  /* we need this for now, when we're modular this
      should be removed -- hikari */
   ircd_crypt_init();
 
@@ -960,7 +959,7 @@ int main(int argc, char **argv) {
 
   debug_init(thisServer.bootopt & BOOT_TTY);
   if (check_pid()) {
-    log_write(LS_SYSTEM, L_CRIT, 0, 
+    log_write(LS_SYSTEM, L_CRIT, 0,
 		    "Failed to acquire PID file lock after fork");
     return 2;
   }
@@ -984,6 +983,9 @@ int main(int argc, char **argv) {
   CurrentTime = time(NULL);
 
   SetMe(&me);
+#if defined(WEBCHAT_FLASH_DEPRECATED)
+  SetWebXXXClient(&me);
+#endif
   cli_magic(&me) = CLIENT_MAGIC;
   cli_from(&me) = &me;
   make_server(&me);
@@ -999,13 +1001,13 @@ int main(int argc, char **argv) {
   cli_lasttime(&me) = cli_since(&me) = cli_firsttime(&me) = CurrentTime;
 
   hAddClient(&me);
+  SetIPv6(&me);
 
   write_pidfile();
   init_counters();
 
 #if defined(DDB)
-//  ddb_init();
-    initdb();
+  ddb_init();
 #endif
 
   Debug((DEBUG_NOTICE, "Server ready..."));

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_links.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -63,7 +63,7 @@ int m_links(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   {
     send_reply(sptr, RPL_ENDOFLINKS, parc < 2 ? "*" : parv[1]);
     sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :%s %s", sptr,
-                  "/LINKS has been disabled; visit ", 
+                  "/LINKS has been disabled; visit ",
                   feature_str(FEAT_HIS_URLSERVERS));
     return 0;
   }
@@ -121,7 +121,7 @@ ms_links(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
    }
    else
      mask = parc < 2 ? 0 : parv[1];
- 
+
    for (acptr = GlobalClientList, collapse(mask); acptr; acptr = cli_next(acptr))
    {
      if (!IsServer(acptr) && !IsMe(acptr))
@@ -132,7 +132,7 @@ ms_links(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
                 cli_hopcount(acptr), cli_serv(acptr)->prot,
                 ((cli_info(acptr))[0] ? cli_info(acptr) : "(Unknown Location)"));
    }
- 
+
    send_reply(sptr, RPL_ENDOFLINKS, BadPtr(mask) ? "*" : mask);
    return 0;
  }

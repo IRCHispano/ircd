@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_string.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1999 Thomas Helvey <tomh@inxpress.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -484,9 +484,11 @@ ircd_aton_ip4(const char *input, unsigned int *output, unsigned char *pbits)
       *pbits = bits;
     return pos;
   case '.':
+    if (++dots > 3)
+      return 0;
     if (input[++pos] == '.')
       return 0;
-    ip |= part << (24 - 8 * dots++);
+    ip |= part << (32 - 8 * dots);
     part = 0;
     if (input[pos] == '*') {
       while (input[++pos] == '*' || input[pos] == '.') ;
@@ -623,6 +625,8 @@ ipmask_parse(const char *input, struct irc_in_addr *ip, unsigned char *pbits)
     default:
       return 0;
     }
+    if (input[pos] != '\0')
+      return 0;
   finish:
     if (colon < 8) {
       unsigned int jj;

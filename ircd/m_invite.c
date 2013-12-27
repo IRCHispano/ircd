@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_invite.c
  *
- * Copyright (C) 2002-2012 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
@@ -140,23 +140,6 @@ int m_invite(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
                   chptr->creationtime);
   }
 
-#if 0
-/* TODO-ZOLTAN: COMPROBARLO */
-  if (!IsLocalChannel(chptr->chname) || MyConnect(acptr)) {
-    if (feature_bool(FEAT_ANNOUNCE_INVITES)) {
-      /* Announce to channel operators. */
-      sendcmdto_channel_butserv_butone(&his, get_error_numeric(RPL_ISSUEDINVITE)->str,
-                                       NULL, chptr, sptr, SKIP_NONOPS,
-                                       "%H %C %C :%C has been invited by %C",
-                                       chptr, acptr, sptr, acptr, sptr);
-      /* Announce to servers with channel operators. */
-      sendcmdto_channel_servers_butone(sptr, NULL, TOK_INVITE, chptr, acptr, SKIP_NONOPS,
-                                       "%s %H %Tu", cli_name(acptr),
-                                       chptr, chptr->creationtime);
-    }
-  }
-#endif
-
   return 0;
 }
 
@@ -190,11 +173,11 @@ int ms_invite(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   struct Client *acptr;
   struct Channel *chptr;
   time_t invite_ts;
-  
+
   if (IsServer(sptr)) {
     /*
      * this will blow up if we get an invite from a server
-     * we look for channel membership in sptr below. 
+     * we look for channel membership in sptr below.
      */
     return protocol_violation(sptr,"Server attempting to invite");
   }
@@ -244,8 +227,10 @@ int ms_invite(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return 0;
   }
 
-  if (is_silenced(sptr, acptr))
+  if (is_silenced(sptr, acptr)) {
+    send_reply(sptr, ERR_ISSILENCING, cli_name(acptr));
     return 0;
+  }
 
   if (MyConnect(acptr)) {
     add_invite(acptr, chptr, sptr);
@@ -254,21 +239,6 @@ int ms_invite(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     sendcmdto_one(sptr, CMD_INVITE, acptr, "%s %H %Tu", cli_name(acptr), chptr,
                   chptr->creationtime);
   }
-
-#if 0
-/*TODO-ZOLTAN: COMPROBARLO */
-  if (feature_bool(FEAT_ANNOUNCE_INVITES)) {
-    /* Announce to channel operators. */
-    sendcmdto_channel_butserv_butone(&his, get_error_numeric(RPL_ISSUEDINVITE)->str,
-                                     NULL, chptr, sptr, SKIP_NONOPS,
-                                     "%H %C %C :%C has been invited by %C",
-                                     chptr, acptr, sptr, acptr, sptr);
-    /* Announce to servers with channel operators. */
-    sendcmdto_channel_servers_butone(sptr, NULL, TOK_INVITE, chptr, acptr, SKIP_NONOPS,
-                                     "%s %H %Tu", cli_name(acptr), chptr,
-                                     chptr->creationtime);
-  }
-#endif
 
   return 0;
 }
