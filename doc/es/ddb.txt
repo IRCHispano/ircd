@@ -1,0 +1,393 @@
+$Id: asll.txt,v 1.1 2005-01-05 18:00:33 zolty Exp $
+
+Documentación del sistema DDB (Distributed DataBase)
+por Toni Garcia - zoltan
+basado en los documentos de Jesús Cea Avión en www.jcea.es/irc/
+última actualización 26 Septiembre 2013
+
+INTRODUCCIÓN
+============
+
+
+SINTAXIS
+========
+
+<prefijo> DB <mascara-target> <numero-serie> <id-tabla> <clave> [[:]contenido>
+
+prefijo = numérico del servidor origen
+mascara-target = máscara del servidor destino o "*" para todos
+numero-serie = número de serie único del registro
+id-tabla = identificación de la tabla a utilizar
+clave = clave única del registro
+contenido = contenido relacionado con la clave. Si no existe es un borrado
+
+
+FUNCIONAMIENTO
+==============
+
+En condiciones normales, sin propagación de mensajes DB, todos los servidores
+tienen la misma base de datos distribuida.
+El único tráfico entre servidores será el habitual del protocolo P10.
+En cualquier momento, un nodo de control (service) modifica un dato y envía
+un mensaje DB a la red.
+
+<prefijo> DB <mascara-target> <numero-serie> <id-tabla> <clave> [[:]contenido>
+
+Para que la propagación se realice, los enlaces han de tener el grifo abierto
+para la tabla. Hay un grifo por cada tabla.
+
+
+---PENDIENTE DE COMPLETAR-----
+
+
+
+
+
+
+TABLAS DE LA DDB
+================
+
+En la Base de Datos Distribuida, los registros se van almacenando en
+unas tablas, cada tabla tiene un uso definido y diferente a las otras
+tablas.
+
+Una tabla se identifica por un caracter alfanumérico minúscula y son
+las siguientes:
+
+
+  a - RESERVADA
+  -------------
+    Tabla reservada para uso futuro
+
+
+  b - Bots
+  --------
+    Tabla para configurar los services virtuales y los registros
+    posibles son:
+
+      - nickserv <máscara>
+        Para los eventos relacionados con los nicks (registro,
+        identificación, jupes, etc..).
+      - chanserv <máscara>
+        Para los eventos relacionados con los canales (modos,
+        registro, etc..).
+      - cloneserv <máscara>
+        Para los eventos relacionados con las ilines.
+
+    El formato de la máscara es nick!username@host, y si no se
+    especifica la máscara, no se muestra el bot virtual sino el
+    nombre del servidor.
+
+
+  c - Channels (canales)
+  ----------------------
+    Tabla para configurar los canales registrados y hay dos tipos de
+    registro:
+
+      - #canal <+modos obligatorios|-modos prohibidos>[:nombre-canal]
+        Da modo +r de canal registrado y se configura un candado de
+        modos, con los modos obligatorios que se no se podrá quitarlos
+        y los modos prohibidos que no se podrá ponerlos.
+        Opcionalmente se puede especificar un nombre de canal que
+        ha de ser equivalente con una combinacion peculiar de
+        minúsculas y mayúsculas.
+        Si no se especifica ningún modo, se pierde el modo +r de canal
+        registrado y deja de hacer efecto el candado de modos.
+
+      - #canal:founder <nick fundador>
+        Da modo +q de fundador al nick que ha de ser registrado, dicho
+        modo permite no recibir kick ni afectar a los bans, teniendo
+        entrada directa al canal.
+        Si no se especifica el nick, el anterior fundador perderá el
+        modo +q.
+        Este registro sólo hace efecto cuando el canal tiene +r.
+
+
+  d - Channels 2 (canales 2)
+  --------------------------
+    Tabla para configurar los registros de usuarios en canales
+    registrados, como recibir OP, por ejemplo.
+    El tipo de registro es el siguiente:
+
+      - #canal:nick <flags>
+        
+    Los flags están sin definir, pues todavía no está implementado en
+    la versión actual del IRCD.
+
+
+  e - Exceptions (excepciones)
+  ----------------------------
+    Tabla para configurar las excepciones a una prohibición de entrada
+    a la red mediante G-line o K-line.
+    Los posibles registros son los siguientes:
+
+      - Host <mensaje>
+      - IP <mensaje>
+      - CIDR <mensaje>
+
+    Para IPs de IPv6 o 6to4 se recomienda el uso de CIDR con un máximo
+    de /64 para IPv6 y de /48 para 6to4.
+    El mensaje es meramente informativo a la hora de hacer consultas,
+    y no se muestra en ningún sitio.
+
+
+  f - Features (características)
+  ------------------------------
+    Tabla para configurar los características del IRCD de manera global
+    prevaleciendo a la configuración local mediante el bloque "Features"
+    del archivo de configuración ircd.conf.
+    El registro tiene el siguiente formato:
+
+      - Feature <valor>
+
+    Hay una lista de todas las características posibles para configurar
+    en el archivo features.txt, excepto LOG que va en la tabla l.
+
+
+  g - RESERVADA
+  -------------
+    Tabla reservada para uso futuro
+
+
+  h - RESERVADA
+  -------------
+    Tabla reservada para uso futuro
+
+
+  i - Ilines (clones)
+  -------------------
+    Tabla para configurar las "ilines", es decir, permisos de clones
+    para tener más conexiones que el limite establecido de clones.
+    El registro tiene el siguiente formato:
+
+      - IP64bit <número clones>
+
+    La IP ha de tener formato de 64 bits, para añadir un permiso de
+    clones para un IPv4, hay que introducir en formato 6to4, usando la
+    dirección de red.
+    El sistema de control de clones, a la hora de comprobar los clones,
+    utiliza /64 para IPv6 y /48 para 6to4/IPv4.
+    Unificar 6to4 y IPv4 tiene la finalidad de impedir que se pueda usar
+    el doble del limite de los clones usando la IPv4 en entornos IPv6.
+    El numero de clones ha de ser un número entre 1 y 65.536.
+
+
+  j - Jupes (prohibicion de uso de nick)
+  --------------------------------------
+    Tabla para configurar las prohibiciones de uso de nicks para que
+    nadie pueda utilizarlos.
+    Los posibles registros son los siguientes:
+
+      - Nick <mensaje>
+      - Máscara <mensaje>
+
+    El nick tiene que estar normalizado a minúsculas, en la máscara
+    se puede utilizar los caracteres "*" y "?" como comodines.
+    El mensaje se muestra al intentar poner el nick y debe ser una
+    descripción de las razones de la prohibición de uso del nick.
+
+
+  k - RESERVADA
+  -------------
+    Tabla reservada para uso futuro
+
+
+  l - Logging (registro en fichero)
+  ---------------------------------
+    Tabla para configurar el servicio de registro en archivos de
+    forma global prevaleciendo a la configuración local mediante el
+    bloque "Features" del archivo de configuración ircd.conf.
+    Los posibles registros son los siguientes:
+
+      - Subsys <facility>
+      - Subsys:file <nombre_archivo>
+      - Subsys:level <nivel>
+      - Subsys:snomask <máscara>
+
+    En el archivo log.txt viene toda la documentación para configurar
+    el syslog.
+
+
+  m - Motd (Mensaje del día)
+  --------------------------
+    Tabla para configurar el MOTD (Mensaje de día) que se muestra al
+    conectar a IRC, y que puede poner normas, anuncios, etc...
+    Permite poner un MOTD de forma global combinando o no con el MOTD
+    local.
+    El registro tiene el siguiente formato:
+
+      - Numero <línea mensaje>
+
+    Empieza por el número 0 y se va incrementando de uno en uno, cada
+    registro es una línea del MOTD.
+    Existe la opción de incluir el MOTD local en cualquier posición,
+    especificando "%LOCALMOTD" en una línea.
+
+
+  n - Nicks
+  ---------
+    Tabla para configurar los registros de nicks para que no se pueda
+    usarlos si no se conoce su contraseña.
+    Los posibles registros son los siguientes:
+
+      - Nick <contraseña encriptada>[+]
+      - Nick *
+
+    El nick tiene que estar normalizado a minúsculas, la contraseña
+    se encripta mediante el algoritmo TEA incluido en el IRCD.
+    Si se añade un "+" al final de la contraseña encriptada marca
+    el nick como suspendido recibiendo modo +S en vez de +r.
+    Si en vez de contraseña, se pone un "*", el nick está en "forbid",
+    es decir, nick prohibido para su uso.
+
+
+  o - Operators (operadores)
+  --------------------------
+    Tabla para configurar los estados y los privilegios de usuarios
+    especiales como Operadores, Administradores, etc... de forma
+    global.
+    El registro tiene el siguiente formato:
+
+      - Nick <flag:privilegio>
+
+    El nick tiene que estar normalizado a minúsculas
+    Siendo flag, un caracter con las siguientes posibilidades:
+          p: preoper, se activa el +h (sin privilegios)
+          h: oper, se activa el +o
+          c: coder, se activa el +Co
+          a: admin, se activa el +ao
+          b: bot, se activa el +Bo
+
+    Siendo privilegio, una mascara de bits con los privilegios que
+    tiene el operador en el ircd. Se puede encontrar más información
+    para configurar los privilegios en el archivo privs.txt
+
+
+  p - Pseudo (comandos atajo)
+  ------------------------------
+    Tabla para configurar los comandos de atajo del IRCD para mandar
+    mensajes a services de forma segura. Localmente se puede
+    especificar dentro del bloque "Pseudo" del ircd.conf.
+    Los posibles registros son los siguientes:
+
+      - Comando <nick@servidor>
+      - Comando <comando_service:nick@servidor>
+
+    El comando no debe existir previamente. Existe la opción de
+    especificar que vaya a un comando concreto de un service.
+
+
+  q - Quarantine (cuarentena en canales)
+  -----------------------------------
+    Tabla para configurar "Quarantine", cuarentena en canales,
+    en que los operadores no pueden utilizar los comandos
+    OPMODE y CLEARMODE para cambiar modos del canal sin ser OP,
+    salvo que el operador tenga privilegio especial para saltar
+    la restriccion. Localmente se puede especificar dentro del
+    bloque "Quarantine" del ircd.conf.
+    El registro tiene el siguiente formato:
+
+      - #canal <mensaje>
+
+    El mensaje se muestra al intentar cambiar modos.
+
+
+  r - Redirections (redirecciones)
+  --------------------------------
+    Tabla para configurar redirecciones de canales, que si un
+    usuario entra en un cierto canal, se redirige automáticamente
+    a otro canal.
+    El registro tiene el siguiente formato:
+
+      - #canal <#canalredireccionado>[,#canal2,...]
+
+    Se puede especificar varios canales separados por comas.
+
+
+  s - RESERVADA
+  -------------
+    Tabla reservada para uso futuro
+
+
+  t - RESERVADA
+  -------------
+    Tabla reservada para uso futuro
+
+
+  u - Ulines (services)
+  ---------------------
+    Tabla para configurar globalmente las líneas Uworld, más
+    conocidas como U-lines. Esto es más eficaz que la
+    configuración local mediante el bloque Uworld del archivo
+    ircd.conf.
+    El registro tiene el siguiente formato:
+
+      - Servidor <mensaje>
+
+    El mensaje es meramente informativo a la hora de hacer consultas,
+    y no se muestra en ningún sitio.
+
+
+  v - Vhost (host virtual)
+  ------------------------
+    Tabla para asociar un host virtual personalizado a un nick,
+    para que se  muestre este en vez del host virtual genérico.
+    El registro tiene el siguiente formato:
+
+      - Nick <vhost>[:vhost color]
+
+    El nick tiene que estar normalizado a minúsculas.
+    Opcionalmente se puede especificar un vhost con colores
+    para que salga en la respuesta al comando WHOIS.
+
+
+  w - WebIRC
+  ----------
+    Tabla para configurar de forma global las autorizaciones para
+    servidores que alojan webchat HTML para utilizar el comando
+    WEBIRC para especificar el host y la IP de la conexión del
+    usuario en vez de usar los del servidor web. Se puede configurar
+    localmente mediante el bloque "Webirc" del archivo de configuración
+    ircd.conf.
+    El registro tiene el siguiente formato:
+
+      - IP <password>[:ident:realname]
+
+    La IP es la que utiliza el servidor web, la contraseña encriptada
+    de la misma forma que el bloque Operator del ircd.conf, y son
+    opcionales el ident y el realname que se prevaleceran a los
+    especificados del USER y WEBIRC.
+
+
+  y - RESERVADA
+  -------------
+    Tabla reservada para uso futuro
+
+
+  z - "Z"onfiguration (configuración)
+  -----------------------------------
+    Tabla para configurar las variables globales relacionadas con
+    la DDB.
+    Los posibles registros son los siguientes:
+
+      - max.clones <numero>
+        Especifica el limite genérico de clones por conexión.
+
+      - msg.many.per.ip <mensaje>
+        Especifica el mensaje cuando se supera el límite de clones.
+
+      - ipcrypt.key <clave>
+        Especifica la clave de cifrado para las ips virtuales
+
+      - cookie.crypt.key <contraseña>
+      - cookie.crypt.key2 <contraseña>
+        Especifica la clave de cifrado para los cookies del webchat
+        de flash.
+
+      - msg.part.svskick <mensaje> ¿Mover a features?
+        Especifica el mensaje de PART que se mostrará a los demás
+        usuarios del canal cuando se ejecuta un SVSKICK.
+
+      - debug.chan.j <canales> ¿Mover a features?
+        Especifica el canal que entrará a los usuarios con modo +J
+        cuando intenta entrar a un canal.
