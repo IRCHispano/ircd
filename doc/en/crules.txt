@@ -46,7 +46,7 @@ Examples
 
 A simple example of a connect rule might be:
 
-connected(*eu.irc-dev*)
+connected("*eu.irc-dev*")
 
 This might be used in a US IRC-Dev server for a Europe CN pair to
 insure that a second Europe link is not allowed if one US-EU link
@@ -56,8 +56,8 @@ city.country.eu.irc-dev.net.
 
 A more interesting example might be:
 
-connected(*eu.irc-dev*) && 
-  ( !direct(*eu.irc-dev*) || via(manhat*, *eu.irc-dev*) )
+connected("*eu.irc-dev*") && 
+  ( !direct("*eu.irc-dev*") || via("manhat*", "*eu.irc-dev*") )
 
 Imagine the Boston IRC-Dev server uses this rule on its Europe CN
 pairs.  This says that if a Europe server is already connected, a
@@ -73,7 +73,7 @@ server is already linked to Manhattan.
 
 A example of the remaining function, directop(), is:
 
-connected(*eu.irc-dev*) || directop()
+connected("*eu.irc-dev*") || directop()
 
 If this line is used on Boston for the Paderborn CN pair, it will allow
 connects to Paderborn only if another Europe server is not already
