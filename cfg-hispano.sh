@@ -12,7 +12,7 @@ then
 fi
 
 echo Configurando IRCD
-./configure --prefix=$1 --with-maxcon=$2
+./configure --prefix=$1 --with-maxcon=$2 --disable-zlib
 
 echo ""
 exit 0

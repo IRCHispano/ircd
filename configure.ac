@@ -496,6 +496,7 @@ dnl AC_OUTPUT
 dnl IRC Network environment
 dnl Default DDB
 ircdev_cv_environment_ddb=yes;
+dnl ircdev_cv_environment_undernet=yes;
 
 dnl --with-ddb-environment allows us to use DDB Environment
 AC_MSG_CHECKING([whether to use DDB Environment (Distributed DataBase)])
@@ -588,7 +589,7 @@ if test x"$ircdev_cv_environment_ddb" = xyes; then
 echo "  IRC Environment:     DDB (Distributed DataBase)"
 elif test x"$ircdev_cv_environment_services" = xyes; then
 echo "  IRC Environment:     Services (Ex TerraIRCU)"
-elif test x"$ircdev_cv_environment_unet" = xyes; then
+elif test x"$ircdev_cv_environment_undernet" = xyes; then
 echo "  IRC Environment:     Undernet"
 else
 echo "  IRC Environment:     None (BUG, mail to zoltan@irc-dev.net)"
