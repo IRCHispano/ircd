@@ -1,0 +1,28 @@
+$Id: asll.txt,v 1.1 2005-01-05 18:00:33 zolty Exp $
+
+Documentación preliminar AsLL, última actualización 13 Junio 2002
+
+Formato de ping servidor-a-servidor:
+
+<prefijo> G !<ts-local> <destino> <ts-local>
+
+prefijo = numérico del servidor origen
+ts-local = timestamp local, como "segundos.milisegundos"
+destino = numérico del servidor destino
+
+El timestamp local también se envía en lugar del campo de
+origen, para que la información RTT se pueda recoger de
+servidores non-AsLL, preservando al mismo tiempo compatibilidad
+con versiones anteriores.
+
+
+Formato de pong servidor-a-servidor:
+
+<prefijo> Z <origen> <destino> <ts-remoto> <diff> <ts-local>
+
+prefijo = numérico del servidor origen
+origen = numérico del servidor origen
+destino = numérico del servidor destino
+ts-remoto = timestamp remoto que se recibió desde un PING AsLL
+diff = diferencia entre el ts local y ts remoto en milisegundos (entero)
+ts-local = timestamp local, como "segundos.milisegundos"

@@ -1,0 +1,99 @@
+$Id: chroot.txt,v 1.1 2005-01-05 18:00:33 zolty Exp $
+
+Usando Chroot con IRCD
+
+Introducción
+
+Muchos administradores de sistemas ejecutan ciertos demonios dentro
+de una "jaula", un área segura del sistema de archivos que el demonio
+no puede salir de ésta.  De esta forma, si el demonio se ve comprometido
+de alguna manera, el atacante no puede salir y afectar al resto del
+sistema en cualquier caso.  Hay problemas con esto --el modo estándar
+de UNIX es con la llamada chroot(), que ha quedado en desuso por el
+estándar UNIX98.  Por otra parte, si un atacante tiene la raíz en la
+jaula, es trivvial conseguir *fuera* de la jaula en muchas circunstancias.
+Sin embargo, todavía es una buena idea, y algunos sistemas se puede
+usar jaulas más seguras que en otros sistemas.
+
+Las versiones antiguas del ircd soportan la operación chroot() en el
+servidor, pero ha habido muchos problemas --chroot() solo puede ser
+llamado desde un proceso que se ejecuta como root, así el ircd tenía
+que ser lazado como root, típicamente mediante por el setuid, y
+entonces tendría que quitar los privilegios después de la llamada a
+chroot().  Por otra parte, el diseño del servidor requiere que el
+binario del servidor esté en DPATH, o el comando /RESTART no iba a
+funcionar.  De hecho, el /RESTART aún no funcionaría porque el
+servidor intentaría cambiar los directorios a un DPATH relativo al
+directorio ráiz actual-- y, por supuesto, el directorio raíz a menudo
+no contiene las librerías compartidas necesarias para el arranque del
+ircd.
+
+Configuración del Servidor para su uso con Chroot
+
+En las versiones del ircd a partir de u2.10.11, todo el código de
+setuid y chroot() ha sido eliminado del servidor.  Todavía es posible
+hacer que el demonio se ejecute en una jaula chroot(), sin embargo,
+a través del uso de un script "wrapper".  Esto requiere que todas
+las rutas compiladas en el servidor estén en relación con el nuevo
+directorio raíz; afortunadamente, este se puede hacer con el script
+de configuración con la opción --witch-chroot=<dir>.  El argumento
+<dir> especifica para indicar el directorio raíz que será la ruta
+de reinicio del servidor, ruta de datos, archivos de configuración
+y de registro de depuración serán todos modificados para ser
+relativos con el directorio raíz.  Si las rutas de datos o de archivos
+de configuración no pueden ser relativas, el configure emitirá un
+mensaje de error y saldrá; si la ruta de reinicio del servidor no
+es relativa al directorio raíz especificada, el configure emitirá
+una advertencia.
+
+Las diversas rutas se hacen en relación con el directorio raíz a
+través del uso de simples cambios en la representación de la cadena.
+Por ejemplo, suponemos que vamos a usar el directorio raíz "/home/ircd";
+si la ruta de datos es "/home/ircd/lib" la ruta de datos que se
+va a compilar en el servidor será simplemente "/lib"; si, por otra
+parte, la ruta de datos especificada es "/usr/local/lib/ircd", el
+configure emitirá un error, ya que no hay forma de generar la ruta
+relativa de datos para el directorio raíz especificado.
+
+Preparación del Directorio Raíz
+
+Los sistemas operativos más modernos utilizan librerías compartidas.
+Cuando se utiliza chroot(), estas bibliotecas son buscadas para la
+relación con el nuevo directorio raíz, y deben estar presentes para
+el proceso a ejecutar.  El directorio raíz debe estar preparado,
+por lo tanto, se copiará esas librerias en el sitio correcto.  Un
+script para este fin se proporciona en tools/mkchroot.  Este script
+se basa en el comando "ldd", que se utiliza para informar qué
+librerías son utilizadas por el programa; sino que también ldd
+mostrará en pantalla la ruta completa de esas librerías.  Si alguna
+de estas condiciones no se cumple, será necesario para localizar
+a las librerías a mano y colocarlas en las rutas apropiadas.  El
+script tools/mkchroot toma como primer argumento de la ruta de acceso
+al directorio que se prepara como el directorio raíz; el siguiente
+argumento debe ser una lista de programas que se ejecuta en ese
+directorio como el directorio raíz.
+
+Uso del Wrapper
+
+También se proporciona en el directorio tools el código fuente de un
+sencillo programa "wrapper" que se puede utilizar para arrancar el
+ircd.  El programa puede ser compilado ejecutando "cc -o wrapper wrapper.c";
+esto debe ser ejecutado como root, pero no lo instale como root, ya
+que puede ser un gran riesgo de seguridad.  Esta herramienta se puede
+utilizar para ajustar el limite de hardware de los archivos de 
+descriptores (fd de file descriptors), así como un directorio raíz, y
+así puede ser útil para el administrador si no desea la operación
+chroot().  Un resumen de las opciones de la línea de comandos de la
+herramienta wrapper puede ser obtenido con la opción "-h".  Para
+establecer el límite de "fd", utilice la opción "-l" seguido del 
+número deseado para el límite de "fd".; para seleccionar un
+directorio raíz alternativo, utilice "-c", seguido del directorio
+raíz deseado.  Debes utilizar la opción "-u" para especificar un
+nombre de usuario (o ID de usuario) que el comando debe ejecutarse
+con dicho usuario; de lo contrario, el comando se ejecutará como root,
+que no es lo que se quiere (y por qué no debes nunca instalar este
+programa con el setuid "root").  Siga la línea de comandos con el
+argumento "--" y la ruta completa al comando que desea ejecutar,
+junto con los argumentos de ese comando.  El "--" indica al programa
+wrapper que deje de interpretar las opciones, y es muy importante si
+debes dar el comando con opciones.
