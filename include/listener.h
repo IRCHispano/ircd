@@ -63,10 +63,6 @@ enum ListenerFlag {
   /** Port listens for SSL connections. */
   LISTEN_SSL,
 #endif
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  /** Port with encrypted cookies. */
-  LISTEN_COOKIES,
-#endif
   /** Sentinel for counting listener flags. */
   LISTEN_LAST_FLAG
 };
@@ -94,9 +90,6 @@ struct Listener {
 #define listener_exempt(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_EXEMPT)
 #if defined(USE_SSL)
 #define listener_ssl(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_SSL)
-#endif
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-#define listener_cookies(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_COOKIES)
 #endif
 
 extern void        add_listener(int port, const char* vaddr_ip,

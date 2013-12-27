@@ -56,13 +56,10 @@ bin_PROGRAMS = convert-conf$(EXEEXT) umkpasswd$(EXEEXT) ircd$(EXEEXT)
 @PCRE_MATCH_TRUE@am__append_1 = \
 @PCRE_MATCH_TRUE@    pcre_match.c
 
-@WEBCHAT_FLASH_DEPRECATED_TRUE@am__append_2 = \
-@WEBCHAT_FLASH_DEPRECATED_TRUE@    aes.c
-
-@ENVIRONMENT_UNDERNET_TRUE@am__append_3 = \
+@ENVIRONMENT_UNDERNET_TRUE@am__append_2 = \
 @ENVIRONMENT_UNDERNET_TRUE@    m_account.c
 
-@ENVIRONMENT_DDB_TRUE@am__append_4 = \
+@ENVIRONMENT_DDB_TRUE@am__append_3 = \
 @ENVIRONMENT_DDB_TRUE@    ddb.c \
 @ENVIRONMENT_DDB_TRUE@    ddb_events.c \
 @ENVIRONMENT_DDB_TRUE@    m_bmode.c \
@@ -76,18 +73,18 @@ bin_PROGRAMS = convert-conf$(EXEEXT) umkpasswd$(EXEEXT) ircd$(EXEEXT)
 @ENVIRONMENT_DDB_TRUE@    m_svspart.c \
 @ENVIRONMENT_DDB_TRUE@    persistent_malloc.c
 
-@ENVIRONMENT_SERVICES_TRUE@am__append_5 = \
+@ENVIRONMENT_SERVICES_TRUE@am__append_4 = \
 @ENVIRONMENT_SERVICES_TRUE@    m_svsnick.c \
 @ENVIRONMENT_SERVICES_TRUE@    m_svsmode.c \
 @ENVIRONMENT_SERVICES_TRUE@    m_svsjoin.c \
 @ENVIRONMENT_SERVICES_TRUE@    m_svskick.c \
 @ENVIRONMENT_SERVICES_TRUE@    m_svspart.c
 
-@ENGINE_POLL_TRUE@am__append_6 = engine_poll.c
-@ENGINE_POLL_FALSE@am__append_7 = engine_select.c
-@ENGINE_DEVPOLL_TRUE@am__append_8 = engine_devpoll.c
-@ENGINE_EPOLL_TRUE@am__append_9 = engine_epoll.c
-@ENGINE_KQUEUE_TRUE@am__append_10 = engine_kqueue.c
+@ENGINE_POLL_TRUE@am__append_5 = engine_poll.c
+@ENGINE_POLL_FALSE@am__append_6 = engine_select.c
+@ENGINE_DEVPOLL_TRUE@am__append_7 = engine_devpoll.c
+@ENGINE_EPOLL_TRUE@am__append_8 = engine_epoll.c
+@ENGINE_KQUEUE_TRUE@am__append_9 = engine_kqueue.c
 subdir = ircd
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in ircd_lexer.c \
 	ircd_parser.c ircd_parser.h
@@ -129,31 +126,30 @@ am__ircd_SOURCES_DIST = IPcheck.c channel.c class.c client.c crule.c \
 	msgq.c numnicks.c opercmds.c os_generic.c packet.c parse.c \
 	querycmds.c random.c s_auth.c s_bsd.c s_conf.c s_debug.c \
 	s_err.c s_misc.c s_numeric.c s_serv.c s_stats.c s_user.c \
-	send.c uping.c userload.c watch.c whowas.c pcre_match.c aes.c \
+	send.c uping.c userload.c watch.c whowas.c pcre_match.c \
 	m_account.c ddb.c ddb_events.c m_bmode.c m_db.c m_dbq.c \
 	m_ghost.c m_svsnick.c m_svsmode.c m_svsjoin.c m_svskick.c \
 	m_svspart.c persistent_malloc.c engine_poll.c engine_select.c \
 	engine_devpoll.c engine_epoll.c engine_kqueue.c
 @PCRE_MATCH_TRUE@am__objects_1 = pcre_match.$(OBJEXT)
-@WEBCHAT_FLASH_DEPRECATED_TRUE@am__objects_2 = aes.$(OBJEXT)
-@ENVIRONMENT_UNDERNET_TRUE@am__objects_3 = m_account.$(OBJEXT)
-@ENVIRONMENT_DDB_TRUE@am__objects_4 = ddb.$(OBJEXT) \
+@ENVIRONMENT_UNDERNET_TRUE@am__objects_2 = m_account.$(OBJEXT)
+@ENVIRONMENT_DDB_TRUE@am__objects_3 = ddb.$(OBJEXT) \
 @ENVIRONMENT_DDB_TRUE@	ddb_events.$(OBJEXT) m_bmode.$(OBJEXT) \
 @ENVIRONMENT_DDB_TRUE@	m_db.$(OBJEXT) m_dbq.$(OBJEXT) \
 @ENVIRONMENT_DDB_TRUE@	m_ghost.$(OBJEXT) m_svsnick.$(OBJEXT) \
 @ENVIRONMENT_DDB_TRUE@	m_svsmode.$(OBJEXT) m_svsjoin.$(OBJEXT) \
 @ENVIRONMENT_DDB_TRUE@	m_svskick.$(OBJEXT) m_svspart.$(OBJEXT) \
 @ENVIRONMENT_DDB_TRUE@	persistent_malloc.$(OBJEXT)
-@ENVIRONMENT_SERVICES_TRUE@am__objects_5 = m_svsnick.$(OBJEXT) \
+@ENVIRONMENT_SERVICES_TRUE@am__objects_4 = m_svsnick.$(OBJEXT) \
 @ENVIRONMENT_SERVICES_TRUE@	m_svsmode.$(OBJEXT) \
 @ENVIRONMENT_SERVICES_TRUE@	m_svsjoin.$(OBJEXT) \
 @ENVIRONMENT_SERVICES_TRUE@	m_svskick.$(OBJEXT) \
 @ENVIRONMENT_SERVICES_TRUE@	m_svspart.$(OBJEXT)
-@ENGINE_POLL_TRUE@am__objects_6 = engine_poll.$(OBJEXT)
-@ENGINE_POLL_FALSE@am__objects_7 = engine_select.$(OBJEXT)
-@ENGINE_DEVPOLL_TRUE@am__objects_8 = engine_devpoll.$(OBJEXT)
-@ENGINE_EPOLL_TRUE@am__objects_9 = engine_epoll.$(OBJEXT)
-@ENGINE_KQUEUE_TRUE@am__objects_10 = engine_kqueue.$(OBJEXT)
+@ENGINE_POLL_TRUE@am__objects_5 = engine_poll.$(OBJEXT)
+@ENGINE_POLL_FALSE@am__objects_6 = engine_select.$(OBJEXT)
+@ENGINE_DEVPOLL_TRUE@am__objects_7 = engine_devpoll.$(OBJEXT)
+@ENGINE_EPOLL_TRUE@am__objects_8 = engine_epoll.$(OBJEXT)
+@ENGINE_KQUEUE_TRUE@am__objects_9 = engine_kqueue.$(OBJEXT)
 am_ircd_OBJECTS = IPcheck.$(OBJEXT) channel.$(OBJEXT) class.$(OBJEXT) \
 	client.$(OBJEXT) crule.$(OBJEXT) dbuf.$(OBJEXT) \
 	destruct_event.$(OBJEXT) fileio.$(OBJEXT) gline.$(OBJEXT) \
@@ -204,7 +200,7 @@ am_ircd_OBJECTS = IPcheck.$(OBJEXT) channel.$(OBJEXT) class.$(OBJEXT) \
 	whowas.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
 	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
 	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
-	$(am__objects_9) $(am__objects_10)
+	$(am__objects_9)
 nodist_ircd_OBJECTS = version.$(OBJEXT)
 ircd_OBJECTS = $(am_ircd_OBJECTS) $(nodist_ircd_OBJECTS)
 am__DEPENDENCIES_1 =
@@ -391,7 +387,7 @@ ircd_SOURCES = IPcheck.c channel.c class.c client.c crule.c dbuf.c \
 	send.c uping.c userload.c watch.c whowas.c $(am__append_1) \
 	$(am__append_2) $(am__append_3) $(am__append_4) \
 	$(am__append_5) $(am__append_6) $(am__append_7) \
-	$(am__append_8) $(am__append_9) $(am__append_10)
+	$(am__append_8) $(am__append_9)
 ircd_LDADD = $(LEXLIB)
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -494,7 +490,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/IPcheck.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/aes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/channel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/class.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client.Po@am__quote@

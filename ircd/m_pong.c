@@ -123,11 +123,7 @@ int mr_pong(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   assert(!IsRegistered(sptr));
 
   ClearPingSent(cptr);
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  return (parc > 1) ? auth_set_pong(cli_auth(sptr), parv[parc - 1]) : 0;
-#else
   return (parc > 1) ? auth_set_pong(cli_auth(sptr), strtoul(parv[parc - 1], NULL, 10)) : 0;
-#endif
 }
 
 /** Handle a PONG message from a normal connection.

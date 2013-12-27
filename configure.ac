@@ -324,16 +324,6 @@ if test x"$unet_cv_enable_pcre" = xyes; then
 fi
 AM_CONDITIONAL(PCRE_MATCH, [test x"$unet_cv_enable_pcre" = xyes])
 
-dnl how about Webchat Flash?
-unet_TOGGLE([webchat], no, [Enable Webchat Flash support (deprecated)],
-    [whether to enable Webchat Flash support])
-
-# Set the preprocessor symbol
-if test x"$unet_cv_enable_webchat" = xyes; then
-    AC_DEFINE([WEBCHAT_FLASH_DEPRECATED], 1, [Enable Webchat Flash support (deprecated)])
-fi
-AM_CONDITIONAL(WEBCHAT_FLASH_DEPRECATED, [test x"$unet_cv_enable_webchat" = xyes])
-
 dnl how about SSL support?
 AC_MSG_CHECKING([whether to enable OpenSSL support])
 AC_ARG_ENABLE([ssl],
@@ -566,7 +556,6 @@ echo "  IPv6:                $unet_cv_enable_ipv6"
 echo "  ZLIB:                $unet_cv_enable_zlib"
 echo "  SSL:                 $unet_cv_enable_ssl"
 echo "  PCRE match:          $unet_cv_enable_pcre"
-echo "  Webchat Flash (Deprecated): $unet_cv_enable_webchat"
 dnl echo "  Profile:             $unet_cv_enable_profile"
 dnl echo "  Pedantic:            $unet_cv_enable_pedantic"
 echo "  Inlines:             $unet_cv_enable_inlines"

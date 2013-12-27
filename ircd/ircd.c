@@ -983,9 +983,6 @@ int main(int argc, char **argv) {
   CurrentTime = time(NULL);
 
   SetMe(&me);
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  SetWebXXXClient(&me);
-#endif
   cli_magic(&me) = CLIENT_MAGIC;
   cli_from(&me) = &me;
   make_server(&me);

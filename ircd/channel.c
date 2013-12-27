@@ -383,9 +383,6 @@ int destruct_channel(struct Channel* chptr)
     chptr->next->prev = chptr->prev;
   hRemChannel(chptr);
   --UserStats.channels;
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  RemoveWebXXXChannel(chptr->webnumeric);
-#endif
   /*
    * make sure that channel actually got removed from hash table
    */
@@ -1440,27 +1437,6 @@ struct Channel *get_channel(struct Client *cptr, char *chname, ChannelGetType fl
 #endif
     GlobalChannelList = chptr;
     hAddChannel(chptr);
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-    if (!SetWebXXXChannel(chptr))
-    {
-      /* No se pudo, borramos */
-      if (chptr->prev)
-        chptr->prev->next = chptr->next;
-      else
-        GlobalChannelList = chptr->next;
-      if (chptr->next)
-        chptr->next->prev = chptr->prev;
-      hRemChannel(chptr);
-      --UserStats.channels;
-      /*
-       * make sure that channel actually got removed from hash table
-       */
-      assert(chptr->hnext == chptr);
-
-      MyFree(chptr);
-      return NULL;
-    }
-#endif
   }
   return chptr;
 }

@@ -165,9 +165,6 @@ enum Flag
     FLAG_BURST,                     /**< Server is receiving a net.burst */
     FLAG_BURST_ACK,                 /**< Server is waiting for eob ack */
     FLAG_IPCHECK,                   /**< Added or updated IPregistry data */
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-    FLAG_CAP_WEB,
-#endif
 #if defined(USE_ZLIB)
     FLAG_CAP_ZLIB_IN,
     FLAG_CAP_ZLIB_OUT,
@@ -305,9 +302,6 @@ struct Client {
   struct Whowas* cli_whowas;      /**< Pointer to ww struct to be freed on quit */
   char           cli_yxx[4];      /**< Numeric Nick: YY if this is a
                                      server, XXX if this is a user */
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  char           webnumeric[4];
-#endif
   time_t         cli_firsttime;   /**< time client was created */
   time_t         cli_lastnick;    /**< TimeStamp on nick */
   int            cli_marker;      /**< /who processing marker */

@@ -57,9 +57,6 @@ static struct capabilities capab_list[] = {
 #define _CAP(cap, flags, name) \
 	{ CAP_ ## cap, #cap, (flags), (name), sizeof(name) - 1 }
   CAPLIST,
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  CAPWEB,
-#endif
   CAPZLIB
 #undef _CAP
 };

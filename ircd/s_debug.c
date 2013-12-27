@@ -132,9 +132,6 @@ const char* debug_serveropts(void)
 #if defined(PCRE)
   AddC('P');
 #endif
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  AddC('W');
-#endif
 #if defined(UNDERNET)
   AddC('+'); AddC('U'); AddC('N'); AddC('E'); AddC('T');
 #endif

@@ -41,9 +41,6 @@
 #include "config.h"
 
 #include "s_auth.h"
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-#include "aes.h"
-#endif
 #include "class.h"
 #include "client.h"
 #include "IPcheck.h"
@@ -82,11 +79,6 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-#define COOKIELEN      16
-#define COOKIECRYPTLEN 44
-#endif
-
 /** Pending operations during registration. */
 enum AuthRequestFlag {
     AR_AUTH_PENDING,    /**< ident connecting or waiting for response */
@@ -102,9 +94,6 @@ enum AuthRequestFlag {
     AR_IAUTH_FUSERNAME, /**< iauth sent a forced username */
     AR_IAUTH_SOFT_DONE, /**< iauth has no objection to client */
     AR_PASSWORD_CHECKED, /**< client password already checked */
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-    AR_COOKIE_ENCRYPTED, /**< Cookie enviada encriptada */
-#endif
     AR_NUM_FLAGS
 };
 
@@ -120,11 +109,7 @@ struct AuthRequest {
   struct Socket       socket;     /**< socket descriptor for auth queries */
   struct Timer        timeout;    /**< timeout timer for ident and dns queries */
   struct AuthRequestFlags flags;  /**< current state of request */
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  char                cookie[COOKIELEN]; /**< cookie the user must PONG */
-#else
   unsigned int        cookie;     /**< cookie the user must PONG */
-#endif
   unsigned short      port;       /**< client's remote port number */
 };
 
@@ -240,104 +225,6 @@ static int sendto_iauth(struct Client *cptr, const char *format, ...);
 static int preregister_user(struct Client *cptr);
 typedef int (*iauth_cmd_handler)(struct IAuth *iauth, struct Client *cli,
 				 int parc, char **params);
-
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-#if !defined(DDB)
-#error "Error, don't compile without DDB"
-#endif
-void genera_aleatorio(unsigned char *out, int count) {
-    int i;
-    for(i=0;i<count;i++)
-      *out++=(unsigned char) ircrandom();
-}
-
-/*
- * Esta funcion nos permite rellenar un array de chars con un numero aleatorio
- */
-void genera_cookie(char *out, int count) {
-    int i;
-    unsigned int tmp=0;
-    int letra=ircrandom()%count;
-    int mod=0;
-    char res;
-    for(i=0;i<count;i++) {
-      mod=i%4;
-      if(mod == 0)
-          tmp=ircrandom();
-
-      if(letra==i) // Me aseguro de que haya una letra min
-        res=((tmp<<(mod*8)) %26)+36;
-      else
-        res=(tmp<<(mod*8)) %62;
-
-      *out++ = (res<10) ? (res+48) : (res<36) ? (res+55) : (res+61);
-    }
-    *out++='\0';
-}
-
-void cifra_cookie(char *out, char *cookie, char *clave_cifrado)
-{
-    aes_context ctx;
-    uint8_t k[32], x[24], v[16], s[8];
-    unsigned char key[45], res[45];
-    int key_len, msg_len;
-    unsigned int i;
-
-    memset(v, 0, sizeof(v));
-    memset(s, 0, sizeof(s));
-    memset(x, 0, sizeof(x));
-    memset(res, 0, COOKIECRYPTLEN+1);
-    msg_len = strlen(cookie);
-    msg_len = (msg_len>16) ? 16 : msg_len;
-
-    strncpy((char *) v, cookie, msg_len);
-    key[44]='\0';
-    res[44]='\0';
-
-    genera_aleatorio(s, sizeof(s));
-    memcpy(k,clave_cifrado,24);
-    memcpy(k+24,s,8);
-
-    aes_setkey_enc(&ctx, k, 256);
-    aes_crypt_ecb(&ctx, AES_ENCRYPT, v, v);
-
-    memcpy(x,s,8);
-    memcpy(x+8,v,16);
-
-    buf_to_base64_r(out, x, sizeof(x));
-}
-
-void descifra_cookie(char *out, char *cookie, char *clave_cifrado)
-{
-    aes_context ctx;
-    uint8_t k[32], v[16], x[24];
-    char key[45], msg[33];
-    int key_len, msg_len;
-    unsigned int i;
-
-    memset(k, 0, sizeof(k));
-    memset(v, 0, sizeof(v));
-    memset(x, 0, sizeof(x));
-    memset(msg, 'A', sizeof(msg));
-    msg_len = strlen(cookie);
-    msg_len = (msg_len>32) ? 32 : msg_len;
-
-    strncpy(msg+(32-msg_len), cookie, (msg_len));
-    msg[32]='\0';
-
-    base64_to_buf_r(x, (unsigned char *) msg);
-    memcpy(k,clave_cifrado,24);
-    memcpy(k+24,x,8);
-    memcpy(v,x+8,16);
-
-    aes_setkey_dec(&ctx, k, 256);
-    aes_crypt_ecb(&ctx, AES_DECRYPT, v, v);
-
-    strncpy(out, (char *)v, COOKIELEN);
-    out[COOKIELEN]='\0';
-}
-
-#endif
 
 /** Set username for user associated with \a auth.
  * @param[in] auth Client authorization request to work on.
@@ -1181,41 +1068,6 @@ void start_auth(struct Client* client)
   check_auth_finished(auth);
 }
 
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-/** Mark that a user has PONGed while unregistered.
- * @param[in] auth Authorization request for client.
- * @param[in] cookie PONG cookie value sent by client.
- * @return Zero if client should be kept, CPTR_KILLED if rejected.
- */
-int auth_set_pong(struct AuthRequest *auth, char *cookie)
-{
-  char tmp[COOKIELEN + COOKIECRYPTLEN + 1];
-
-  assert(auth != NULL);
-  if (!FlagHas(&auth->flags, AR_NEEDS_PONG))
-    return 0;
-
-  if (FlagHas(&auth->flags, AR_COOKIE_ENCRYPTED))
-    descifra_cookie(tmp, cookie);
-  else {
-    strncpy(tmp, cookie, COOKIELEN);
-    tmp[COOKIELEN] = '\0';
-  }
-
-  if (!strncmp(auth->cookie, tmp, COOKIELEN))
-  {
-    if (FlagHas(&auth->flags, AR_COOKIE_ENCRYPTED))
-      return exit_client(auth->client, auth->client, &me, "Invalid PONG message");
-    else
-      send_reply(auth->client, SND_EXPLICIT | ERR_BADPING,
-                 ":To connect, type /QUOTE PONG %u", auth->cookie);
-    return 0;
-  }
-  cli_lasttime(auth->client) = CurrentTime;
-  FlagClr(&auth->flags, AR_NEEDS_PONG);
-  return check_auth_finished(auth);
-}
-#else
 /** Mark that a user has PONGed while unregistered.
  * @param[in] auth Authorization request for client.
  * @param[in] cookie PONG cookie value sent by client.
@@ -1236,7 +1088,6 @@ int auth_set_pong(struct AuthRequest *auth, unsigned int cookie)
   FlagClr(&auth->flags, AR_NEEDS_PONG);
   return check_auth_finished(auth);
 }
-#endif
 
 /** Record a user's claimed username and userinfo.
  * @param[in] auth Authorization request for client.
@@ -1275,9 +1126,6 @@ int auth_set_user(struct AuthRequest *auth, const char *username, const char *ho
  */
 int auth_set_nick(struct AuthRequest *auth, const char *nickname)
 {
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  char tmp[COOKIECRYPTLEN + COOKIELEN + 1];
-#endif
   assert(auth != NULL);
   FlagClr(&auth->flags, AR_NEEDS_NICK);
   /*
@@ -1285,32 +1133,10 @@ int auth_set_nick(struct AuthRequest *auth, const char *nickname)
    * choose a cookie and send it. -record!jegelhof@cloud9.net
    */
   if (!auth->cookie) {
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-    do {
-      genera_cookie(auth->cookie, COOKIELEN);
-    } while (!auth->cookie);
-
-#if defined(DDB)
-    if (cifrado_cookies && listener_cookies(cli_listener(auth->client))) {
-      char *tmp2 = auth->cookie;
-      cifra_cookie(tmp, auth->cookie);
-      FlagSet(&auth->flags, AR_COOKIE_ENCRYPT);
-
-      while(*tmp2) {
-        *tmp2 = toUpper(*tmp2);
-        tmp2++;
-      }
-    } else
-#endif
-      strncpy(tmp, auth->cookie, COOKIELEN + 1);
-
-    sendrawto_one(auth->client, "PING :%s", tmp);
-#else
     do {
       auth->cookie = ircrandom();
     } while (!auth->cookie);
     sendrawto_one(auth->client, "PING :%u", auth->cookie);
-#endif
     FlagSet(&auth->flags, AR_NEEDS_PONG);
   }
   if (IAuthHas(iauth, IAUTH_UNDERNET))

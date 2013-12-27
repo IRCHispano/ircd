@@ -191,11 +191,6 @@ ircd_SOURCES += \
     pcre_match.c
 endif
 	
-if WEBCHAT_FLASH_DEPRECATED
-ircd_SOURCES += \
-    aes.c
-endif
-
 if ENVIRONMENT_UNDERNET
 ircd_SOURCES += \
     m_account.c

@@ -42,11 +42,7 @@ struct StatDesc;
 
 extern void start_auth(struct Client *);
 extern int auth_ping_timeout(struct Client *);
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-extern int auth_set_pong(struct AuthRequest *auth, char *cookie);
-#else
 extern int auth_set_pong(struct AuthRequest *auth, unsigned int cookie);
-#endif
 extern int auth_set_user(struct AuthRequest *auth, const char *username, const char *hostname, const char *servername, const char *userinfo);
 extern int auth_set_nick(struct AuthRequest *auth, const char *nickname);
 extern int auth_set_password(struct AuthRequest *auth, const char *password);

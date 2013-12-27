@@ -181,21 +181,11 @@ void relay_channel_message(struct Client* sptr, const char* name, const char* te
     /* Calcula el color solo una vez */
     strip_color(text, sizeof(buffer_nocolor), buffer_nocolor);
 
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-    sendcmdto_web_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
-                          SKIP_DEAF | SKIP_BURST | SKIP_COLOUR, "%s%s%s", sptr->webnumeric, chptr->webnumeric, text);
-    sendcmdto_web_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
-                          SKIP_DEAF | SKIP_BURST | SKIP_NOCOLOUR, "%s%s%s", sptr->webnumeric, chptr->webnumeric, buffer_nocolor);
-#endif
     sendcmdto_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
                       SKIP_DEAF | SKIP_BURST | SKIP_COLOUR, "%H :%s", chptr, text);
     sendcmdto_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
                       SKIP_DEAF | SKIP_BURST | SKIP_NOCOLOUR, "%H :%s", chptr, buffer_nocolor);
   } else {
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-    sendcmdto_web_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
-                          SKIP_DEAF | SKIP_BURST, "%s%s%s", sptr->webnumeric, chptr->webnumeric, text);
-#endif
     sendcmdto_channel(sptr, CMD_PRIVATE, chptr, cli_from(sptr),
                       SKIP_DEAF | SKIP_BURST, "%H :%s", chptr, text);
   }
@@ -264,21 +254,11 @@ void relay_channel_notice(struct Client* sptr, const char* name, const char* tex
     /* Calcula el color solo una vez */
     strip_color(text, sizeof(buffer_nocolor), buffer_nocolor);
 
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-    sendcmdto_web_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
-                          SKIP_DEAF | SKIP_BURST | SKIP_COLOUR, "%s%s%s", sptr->webnumeric, chptr->webnumeric, text);
-    sendcmdto_web_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
-                          SKIP_DEAF | SKIP_BURST | SKIP_NOCOLOUR, "%s%s%s", sptr->webnumeric, chptr->webnumeric, buffer_nocolor);
-#endif
     sendcmdto_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
                       SKIP_DEAF | SKIP_BURST | SKIP_COLOUR, "%H :%s", chptr, text);
     sendcmdto_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
                       SKIP_DEAF | SKIP_BURST | SKIP_NOCOLOUR, "%H :%s", chptr, buffer_nocolor);
   } else {
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-    sendcmdto_web_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
-                          SKIP_DEAF | SKIP_BURST, "%s%s%s", sptr->webnumeric, chptr->webnumeric, text);
-#endif
     sendcmdto_channel(sptr, CMD_NOTICE, chptr, cli_from(sptr),
                       SKIP_DEAF | SKIP_BURST, "%H :%s", chptr, text);
   }
@@ -565,11 +545,6 @@ void relay_private_notice(struct Client* sptr, const char* name, const char* tex
   if (MyUser(acptr))
     add_target(acptr, sptr);
 
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  if (MyUser(acptr))
-      sendcmdto_one(sptr, CMD_PRIVATE, acptr, "%C :%s", acptr, text);
-  else
-#endif
   sendcmdto_one(sptr, CMD_NOTICE, acptr, "%C :%s", acptr, text);
 }
 
@@ -637,11 +612,6 @@ void server_relay_private_notice(struct Client* sptr, const char* name, const ch
   if (MyUser(acptr))
     add_target(acptr, sptr);
 
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  if (MyUser(acptr))
-      sendcmdto_one(sptr, CMD_PRIVATE, acptr, "%C :%s", acptr, text);
-  else
-#endif
   sendcmdto_one(sptr, CMD_NOTICE, acptr, "%C :%s", acptr, text);
 }
 

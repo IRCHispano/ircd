@@ -650,8 +650,6 @@ ENVIRONMENT_SERVICES_TRUE
 ENVIRONMENT_DDB_FALSE
 ENVIRONMENT_DDB_TRUE
 SSL_C
-WEBCHAT_FLASH_DEPRECATED_FALSE
-WEBCHAT_FLASH_DEPRECATED_TRUE
 PCRE_MATCH_FALSE
 PCRE_MATCH_TRUE
 PCRE_SUBDIR
@@ -772,7 +770,6 @@ enable_asserts
 enable_ipv6
 enable_zlib
 enable_pcre
-enable_webchat
 enable_ssl
 with_openssl_includes
 with_openssl_libs
@@ -1426,7 +1423,6 @@ Optional Features:
   --disable-ipv6          Disable IPv6 support
   --disable-zlib          Disable ZLIB support
   --enable-pcre           Enable PCRE match support
-  --enable-webchat        Enable Webchat Flash support (deprecated)
   --disable-ssl           Disable Secure Sockets Layer support
   --disable-inlines       Disable inlining for a few critical functions
 
@@ -6490,40 +6486,6 @@ else
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable Webchat Flash support" >&5
-$as_echo_n "checking whether to enable Webchat Flash support... " >&6; }
-# Check whether --enable-webchat was given.
-if test "${enable_webchat+set}" = set; then :
-  enableval=$enable_webchat; unet_cv_enable_webchat=$enableval
-else
-  if ${unet_cv_enable_webchat+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  unet_cv_enable_webchat=no
-fi
-
-fi
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $unet_cv_enable_webchat" >&5
-$as_echo "$unet_cv_enable_webchat" >&6; }
-
-# Set the preprocessor symbol
-if test x"$unet_cv_enable_webchat" = xyes; then
-
-$as_echo "#define WEBCHAT_FLASH_DEPRECATED 1" >>confdefs.h
-
-fi
- if test x"$unet_cv_enable_webchat" = xyes; then
-  WEBCHAT_FLASH_DEPRECATED_TRUE=
-  WEBCHAT_FLASH_DEPRECATED_FALSE='#'
-else
-  WEBCHAT_FLASH_DEPRECATED_TRUE='#'
-  WEBCHAT_FLASH_DEPRECATED_FALSE=
-fi
-
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable OpenSSL support" >&5
 $as_echo_n "checking whether to enable OpenSSL support... " >&6; }
 # Check whether --enable-ssl was given.
@@ -7127,10 +7089,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PCRE_MATCH_TRUE}" && test -z "${PCRE_MATCH_FALSE}"; then
   as_fn_error $? "conditional \"PCRE_MATCH\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${WEBCHAT_FLASH_DEPRECATED_TRUE}" && test -z "${WEBCHAT_FLASH_DEPRECATED_FALSE}"; then
-  as_fn_error $? "conditional \"WEBCHAT_FLASH_DEPRECATED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENVIRONMENT_DDB_TRUE}" && test -z "${ENVIRONMENT_DDB_FALSE}"; then
@@ -8638,7 +8596,6 @@ echo "  IPv6:                $unet_cv_enable_ipv6"
 echo "  ZLIB:                $unet_cv_enable_zlib"
 echo "  SSL:                 $unet_cv_enable_ssl"
 echo "  PCRE match:          $unet_cv_enable_pcre"
-echo "  Webchat Flash (Deprecated): $unet_cv_enable_webchat"
 echo "  Inlines:             $unet_cv_enable_inlines"
 echo ""
 echo "  Prefix:              $prefix"

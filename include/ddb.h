@@ -200,12 +200,6 @@ extern int max_clones;
 extern char *msg_many_clones;
 extern char *ip_crypt_key;
 extern unsigned int binary_ip_crypt_key[2];
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-extern int cookie_crypt_key;
-extern unsigned char binary_cookie_crypt_key[32];
-extern int cookie_crypt_key2;
-extern unsigned char binary_cookie_crypt_key2[32];
-#endif
 extern int invis_exception;
 extern int channel_redirections;
 extern char *perso_quit;

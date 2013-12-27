@@ -92,13 +92,4 @@ extern const char*    inttobase64(char* buf, unsigned int v, unsigned int count)
 extern const char* iptobase64(char* buf, const struct irc_in_addr* addr, unsigned int count, int v6_ok);
 extern void base64toip(const char* s, struct irc_in_addr* addr);
 
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-extern void buf_to_base64_r(unsigned char *out, const unsigned char *buf, size_t buf_len);
-extern size_t base64_to_buf_r(unsigned char *buf, unsigned char *str);
-extern int SetWebXXXClient(struct Client *cptr);
-extern void RemoveWebXXXClient(const char *xxx);
-extern int SetWebXXXChannel(struct Channel *chptr);
-extern void RemoveWebXXXChannel(const char *xxx);
-#endif
-
 #endif /* INCLUDED_numnicks_h */

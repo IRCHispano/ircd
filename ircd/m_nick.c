@@ -110,7 +110,7 @@ char *get_random_nick(struct Client* cptr)
     if (x[0] >= 4294000000ul)
       continue;
 
-#if defined(WEBCHAT_FLASH_DEPRECATED)
+#if 0
     ircd_snprintf(0, nickout, sizeof(nickout), "webchat-%.6d",
                   (int)(x[0] % 1000000));
 #elif defined(DDB)

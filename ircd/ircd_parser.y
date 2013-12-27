@@ -204,7 +204,6 @@ static void free_slist(struct SLink **link) {
 %token HIDDEN
 %token EXEMPT
 %token SSLPORT
-%token COOKIES
 %token MOTD
 %token JUPE
 %token NICK
@@ -880,7 +879,7 @@ portblock: PORT '{' portitems '}' ';'
   port = 0;
 };
 portitems: portitem portitems | portitem;
-portitem: portnumber | portvhost | portvhostnumber | portmask | portserver | porthidden | portexempt | portssl | portcookies;
+portitem: portnumber | portvhost | portvhostnumber | portmask | portserver | porthidden | portexempt | portssl;
 portnumber: PORT '=' address_family NUMBER ';'
 {
   if ($4 < 1 || $4 > 65535) {
@@ -953,16 +952,6 @@ portssl: SSLPORT '=' YES ';'
 } | SSLPORT '=' NO ';'
 {
   FlagClr(&listen_flags, LISTEN_SSL);
-#endif
-};
-
-portcookies: COOKIES '=' YES ';'
-{
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  FlagSet(&listen_flags, LISTEN_COOKIES);
-} | COOKIES '=' NO ';'
-{
-  FlagClr(&listen_flags, LISTEN_COOKIES);
 #endif
 };
 

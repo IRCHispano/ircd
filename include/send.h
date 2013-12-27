@@ -105,14 +105,6 @@ extern void sendcmdto_channel(struct Client *from, const char *cmd,
                               struct Client *one, unsigned int skip,
                               const char *pattern, ...);
 
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-/* Send command to all web channel users */
-extern void sendcmdto_web_channel(struct Client *from, const char *cmd,
-                                  const char *tok, struct Channel *to,
-                                  struct Client *one, unsigned int skip,
-                                  const char *pattern, ...);
-#endif
-
 
 #define SKIP_DEAF   0x01    /**< skip users that are +d */
 #define SKIP_BURST  0x02    /**< skip users that are bursting */

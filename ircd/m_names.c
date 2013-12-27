@@ -126,13 +126,6 @@ void do_names(struct Client* sptr, struct Channel* chptr, int filter)
     }
     strcpy(buf + idx, cli_name(c2ptr));
     idx += strlen(cli_name(c2ptr));
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-    if (HasCap(sptr, CAP_WEB)) {
-      strcat(buf, ":");
-      strcat(buf, c2ptr->webnumeric);
-      idx += 4; /* ':' + Numeric */
-    }
-#endif
     flag = 1;
     if (mlen + idx + NICKLEN + 5 > BUFSIZE)
       /* space, modifier, nick, \r \n \0 */
@@ -146,13 +139,6 @@ void do_names(struct Client* sptr, struct Channel* chptr, int filter)
   if (flag)
     send_reply(sptr, (filter & NAMES_DEL) ? RPL_DELNAMREPLY : RPL_NAMREPLY, buf);
   if (filter&NAMES_EON) {
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-    if (HasCap(sptr, CAP_WEB))
-      send_reply(sptr, SND_EXPLICIT | RPL_ENDOFNAMES, "%s %s :End of /NAMES list.",
-                 chptr->chname, chptr->webnumeric);
-    else
-#endif
-
     send_reply(sptr, RPL_ENDOFNAMES, chptr->chname);
   }
 }

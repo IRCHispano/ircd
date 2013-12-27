@@ -177,11 +177,6 @@ void show_ports(struct Client* sptr, const struct StatDesc* sd,
       if (listener->fd_v6 < 0)
         flags[len++] = '-';
     }
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-    if (FlagHas(&listener->flags, LISTEN_COOKIES))
-      flags[len++] = 'K';
-#endif
-
     flags[len] = '\0';
 
     send_reply(sptr, RPL_STATSPLINE, listener->addr.port, listener->ref_count,

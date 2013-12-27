@@ -342,9 +342,6 @@ struct Channel {
   int                required_modes;
   int                forbidden_modes;
 #endif
-#if defined(WEBCHAT_FLASH_DEPRECATED)
-  char               webnumeric[4];
-#endif
   char               topic[TOPICLEN + 1]; /**< Channels topic */
   char               topic_nick[NICKLEN + 1]; /**< Nick of the person who set
                         *  The topic
