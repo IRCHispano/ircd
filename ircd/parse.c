@@ -128,11 +128,6 @@ aMessage msgtab[] = {
 #if defined(ESNET_NEG)
     {CLASS_CONFIG,       MSG_CONFIG,      TOK_CONFIG,      m_config,      0, MAXPARA,   MFLG_SLOW|MFLG_UNREG,      0L},
 #endif
-
-#if !0
-/* Esto hay que quitarlo en algun momento... */
-    {CLASS_RENAME,       MSG_RENAME,      TOK_RENAME,      m_svsnick,     0, MAXPARA,   MFLG_SLOW,      0L},
-#endif
     {CLASS_SVSNICK,      MSG_SVSNICK,     TOK_SVSNICK,     m_svsnick,     0, MAXPARA,   MFLG_SLOW,      0L},
     {CLASS_SVSMODE,      MSG_SVSMODE,     TOK_SVSMODE,     m_svsmode,     0, MAXPARA,   MFLG_SLOW,      0L},
     {CLASS_SVSJOIN,      MSG_SVSJOIN,     TOK_SVSJOIN,     m_svsjoin,     0, MAXPARA,   MFLG_SLOW,      0L},

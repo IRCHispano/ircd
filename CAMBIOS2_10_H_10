@@ -1,3 +1,8 @@
+* 2013/12/31  zoltan@irc-dev.net (u2.10.H.10.206)                CLEANUP
+------------------------------------------------------------------------
+  Eliminamos soporte de RENAME por ser obsoleto. En su lugar se usa
+  SVSNICK.
+
 * 2013/12/31  zoltan@irc-dev.net (u2.10.H.10.205)                    FIX
 ------------------------------------------------------------------------
   Fix de compilacion reportado por donostiarra en entornos FreeBSD.

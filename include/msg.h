@@ -67,14 +67,6 @@
 #define CLASS_CONFIG            LEVEL_QUERY
 #endif
 
-
-#if !0
-/* Esto hay que quitarlo en algun momento... */
-#define MSG_RENAME		"RENAME"
-#define TOK_RENAME		"RENAME"
-#define CLASS_RENAME		LEVEL_PROPAGATE
-#endif
-
 #define MSG_SVSNICK    "SVSNICK"
 #define TOK_SVSNICK    "SN"
 #define CLASS_SVSNICK    LEVEL_PROPAGATE
@@ -87,7 +79,7 @@
 #define TOK_SVSJOIN    "SJ"
 #define CLASS_SVSJOIN    LEVEL_PROPAGATE
 
-#define MSG_SVSPART    "SVSPART" 
+#define MSG_SVSPART    "SVSPART"
 #define TOK_SVSPART    "SL"
 #define CLASS_SVSPART    LEVEL_PROPAGATE
 
