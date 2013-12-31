@@ -837,9 +837,9 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
           a2cptr = user->server;
 #if defined(BDD_VIP)
           if (IsHidden(acptr) && TieneIpVirtualPersonalizada(acptr)) {
-            struct db_reg *reg = db_buscar_registro(transicion_ircd ? BDD_IPVIRTUALDB : BDD_IPVIRTUAL2DB, name);
+            struct db_reg *reg = db_buscar_registro(BDD_IPVIRTUALDB, name);
 
-            if (reg && transicion_ircd) {
+            if (reg) {
               char *vhost;
               char *vhostcolor;
 
@@ -860,10 +860,6 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
                     get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
 
               RunFree(vhost);
-            } else if (reg) {
-              sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
-                  parv[0], name, PunteroACadena(user->username),
-                  reg->valor, PunteroACadena(acptr->info));
             } else {
               /* No deberia ocurrir, por si acaso mostramos la vhost generica */
               sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
@@ -985,11 +981,8 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 name);
 
           if (IsHelpOp(acptr)) {
-            if (transicion_ircd && user->away && !IsAdmin(acptr) && !IsCoder(acptr))
+            if (user->away && !IsAdmin(acptr) && !IsCoder(acptr))
               sendto_one(sptr, rpl_str(RPL_WHOISHELPOP), me.name, parv[0], name);
-            else if (!transicion_ircd)
-              sendto_one(sptr, ":%s %d %s %s :Es un OPERador de los servicios de red",
-                  me.name, RPL_WHOISHELPOP, parv[0], name);
           }
 
           if (IsAdmin(acptr))
@@ -998,7 +991,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
           else if (IsCoder(acptr))
             sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
                 "Es un Desarrollador de la red");
-          else if (IsHelpOp(acptr) && transicion_ircd)
+          else if (IsHelpOp(acptr))
             sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
                 "Es un OPERador de los servicios de red");
           else if (IsAnOper(acptr))
@@ -1042,9 +1035,9 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 #if defined(BDD_VIP)
         if (IsHidden(acptr) && TieneIpVirtualPersonalizada(acptr)) {
-          struct db_reg *reg = db_buscar_registro(transicion_ircd ? BDD_IPVIRTUALDB : BDD_IPVIRTUAL2DB, nick);
+          struct db_reg *reg = db_buscar_registro(BDD_IPVIRTUALDB, nick);
 
-          if (reg && transicion_ircd) {
+          if (reg) {
             char *vhost;
             char *vhostcolor;
 
@@ -1065,10 +1058,6 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
                   get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
 
             RunFree(vhost);
-          } else if (reg) {
-            sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
-                parv[0], name, PunteroACadena(user->username),
-                reg->valor, PunteroACadena(acptr->info));
           } else {
               /* No deberia ocurrir, por si acaso mostramos la vhost generica */
               sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,

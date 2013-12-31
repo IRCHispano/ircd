@@ -983,11 +983,6 @@ int m_opmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   int badop, sendts;
   aChannel *chptr;
 
-  if (!transicion_ircd) {
-    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
-    return 0;
-  }
-
   if (!IsServer(cptr) && !IsAnOper(sptr) && !IsHelpOp(sptr)) {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;
@@ -1499,12 +1494,6 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
   char *bmbuf = bmodebuf, *bpbuf = bparambuf, *nbpbuf = nbparambuf;
   unsigned char *p;
   int invalid_banmask;
-/*
-** Si somos IRCOPs y hemos puesto el flag X, podemos
-** fijar parametros pase lo que pase.
-** jcea@argo.es - 03/Feb/98
-*/
-  int jcea_xmode_esnet = 0;
 
   assert(!IsServer(cptr));
   assert(MyUser(sptr));
@@ -1758,61 +1747,6 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
         /* el modo r no se cambia */
       case 'r':
         break;
-#if defined(XMODE_ESNET)
-      case 'x':
-        /*
-         ** Si somos IRCOPs y hemos puesto el flag X, podemos
-         ** fijar parametros pase lo que pase.
-         ** jcea@argo.es - 03/Feb/98
-         */
-#if defined(OPER_XMODE_ESNET)
-        if (IsOper(sptr) && !transicion_ircd)
-        {
-          if (!is_chan_op(sptr, chptr))
-            jcea_xmode_esnet = !0;
-          break;
-        }
-#endif /* defined(OPER_XMODE_ESNET) */
-#endif /* defined(XMODE_ESNET) */
-
-#if (defined(BDD_OPER_HACK) || defined(BDD_CHAN_HACK))
-        {
-          struct db_reg *reg;
-
-          reg = db_buscar_registro(BDD_CHANDB_OLD, chptr->chname);
-#if defined(BDD_OPER_HACK)
-          /*
-           * Los miembros de la BD de OPERs pueden usar los modos X
-           * Si hack ONLYREG, solo en los canales registrados.
-           *                              1999/06/30 savage@apostols.org
-           */
-          if (
-#if defined(BDD_OPER_HACK_ONLYREG)
-              reg &&
-#endif
-              IsNickRegistered(sptr) && IsHelpOp(sptr) && !transicion_ircd)
-          {
-            if (!is_chan_op(sptr, chptr))
-              jcea_xmode_esnet = !0;
-            break;
-          }
-#endif
-
-#if defined(BDD_OPER_HACK)
-          /*
-           * El fundador de un canal puede usar los modos X en su canal
-           *                              1999/06/30 savage@apostols.org
-           */
-          if (IsNickRegistered(sptr) && !transicion_ircd &&
-              db_es_miembro(BDD_CHANDB_OLD, chptr->chname, sptr->name) == 1)
-          {
-            if (!is_chan_op(sptr, chptr))
-              jcea_xmode_esnet = !0;
-            break;
-          }
-#endif /* BDD_CHAN_HACK */
-        }
-#endif /* (BDD_OPER_HACK || BDD_CHAN_HACK) */
 
       def:
       default:
@@ -1853,12 +1787,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
     }
   }                             /* end of while loop for MODE processing */
 
-/*
-** Si somos IRCOPs y hemos puesto el flag X, podemos
-** fijar parametros pase lo que pase.
-** jcea@argo.es - 03/Feb/98
-*/
-  if (!jcea_xmode_esnet && !botmode
+  if (!botmode
       && !IsServicesBot(sptr) && (!tmp || !(tmp->flags & CHFL_CHANOP)))
   {
     *badop = 0;
@@ -1900,20 +1829,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
         ~(activacion_modos & (MODE_REGCHAN | MODE_DELJOINS));
   }
 
-/*
-** Si somos IRCOPs y hemos puesto el flag X, podemos
-** fijar parametros pase lo que pase.
-** jcea@argo.es - 03/Feb/98
-*/
   whatt = 0;
-
-  if (jcea_xmode_esnet)
-  {
-    bounce = 0;
-    whatt = MODE_ADD;
-    *mbuf++ = '+';
-    *mbuf++ = 'x';
-  }
 
   newmode ^= (newmode ^ oldm.mode) & MODE_REGCHAN;  /* Mantenemos el modo +r antiguo */
   newmode &= ~(chptr->modos_prohibidos);
@@ -2367,13 +2283,6 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
     }                           /* for (; i < opcnt; i++) */
   }                             /* if (opcnt) */
 
-  /* evitemos que quede solo el modo +x */
-  if (jcea_xmode_esnet && *(mbuf - 2) == '+' && *(mbuf - 1) == 'x')
-  {
-    *(mbuf--) = '\0';
-    *(mbuf--) = '\0';
-  }
-
   *mbuf++ = '\0';
   *bmbuf++ = '\0';
 
@@ -2510,12 +2419,6 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
   static char numeric[16];
   char *bmbuf = bmodebuf, *bpbuf = bparambuf, *nbpbuf = nbparambuf;
   time_t newtime = (time_t) 0;
-/*
-** Si somos IRCOPs y hemos puesto el flag X, podemos
-** fijar parametros pase lo que pase.
-** jcea@argo.es - 03/Feb/98
-*/
-  int jcea_xmode_esnet = 0;
 
   assert(IsServer(cptr));
 
@@ -2721,59 +2624,6 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
         /* el modo r no se cambia */
       case 'r':
         break;
-#if defined(XMODE_ESNET)
-      case 'x':
-        /*
-         ** Si somos IRCOPs y hemos puesto el flag X, podemos
-         ** fijar parametros pase lo que pase.
-         ** jcea@argo.es - 03/Feb/98
-         */
-        if (IsOper(sptr) && !transicion_ircd)
-        {
-          if (!is_chan_op(sptr, chptr))
-            jcea_xmode_esnet = !0;
-          break;
-        }
-#endif
-
-#if (defined(BDD_OPER_HACK) || defined(BDD_CHAN_HACK))
-        {
-          struct db_reg *reg;
-
-          reg = db_buscar_registro(BDD_CHANDB_OLD, chptr->chname);
-#if defined(BDD_OPER_HACK)
-          /*
-           * Los miembros de la BD de OPERs pueden usar los modos X
-           * Si hack ONLYREG, solo en los canales registrados.
-           *                              1999/06/30 savage@apostols.org
-           */
-          if (
-#if defined(BDD_OPER_HACK_ONLYREG)
-              reg &&
-#endif
-              IsNickRegistered(sptr) && IsHelpOp(sptr) && !transicion_ircd)
-          {
-            if (!is_chan_op(sptr, chptr))
-              jcea_xmode_esnet = !0;
-            break;
-          }
-#endif
-
-#if defined(BDD_OPER_HACK)
-          /*
-           * El fundador de un canal puede usar los modos X en su canal
-           *                              1999/06/30 savage@apostols.org
-           */
-          if (IsNickRegistered(sptr) && !transicion_ircd &&
-              db_es_miembro(BDD_CHANDB_OLD, chptr->chname, sptr->name) == 1)
-          {
-            if (!is_chan_op(sptr, chptr))
-              jcea_xmode_esnet = !0;
-            break;
-          }
-#endif /* BDD_CHAN_HACK */
-        }
-#endif /* (BDD_OPER_HACK || BDD_CHAN_HACK) */
 
       def:
       default:
@@ -2881,20 +2731,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
     *badop = 0;
   }
 
-/*
-** Si somos IRCOPs y hemos puesto el flag X, podemos
-** fijar parametros pase lo que pase.
-** jcea@argo.es - 03/Feb/98
-*/
   whatt = 0;
-
-  if (jcea_xmode_esnet)
-  {
-    bounce = 0;
-    whatt = MODE_ADD;
-    *mbuf++ = '+';
-    *mbuf++ = 'x';
-  }
 
   newmode ^= (newmode ^ oldm.mode) & MODE_REGCHAN;  /* Mantenemos el modo +r antiguo */
 
@@ -3344,13 +3181,6 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
       }
     }                           /* for (; i < opcnt; i++) */
   }                             /* if (opcnt) */
-
-  /* evitemos que quede solo el modo +x */
-  if (jcea_xmode_esnet && *(mbuf - 2) == '+' && *(mbuf - 1) == 'x')
-  {
-    *(mbuf--) = '\0';
-    *(mbuf--) = '\0';
-  }
 
   *mbuf++ = '\0';
   *bmbuf++ = '\0';

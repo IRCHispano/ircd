@@ -1,3 +1,12 @@
+* 2013/12/31  zoltan@irc-dev.net (u2.10.H.10.203)                CLEANUP
+------------------------------------------------------------------------
+  Por cuestiones operativas, eliminamos las transiciones introducidas en
+  las versiones u2.10.H.10.196 y u2.10.H.10.1969.
+
+  En consecuencia se elimina el XMODE de Jcea y el uso de la tabla w para
+  los vhost de colores.
+  En su lugar se usaran OPMODE y tabla v con separacion ! respectivamente.
+
 * 2013/10/06  zoltan@irc-dev.net (u2.10.H.10.202)                CLEANUP
 ------------------------------------------------------------------------
   Dado que ya hay soporte de Webchat HTML con un estandar mundial, se

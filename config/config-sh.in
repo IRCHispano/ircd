@@ -485,7 +485,6 @@ comment 'Oper commands'
   bool 'Allow Opers to join channels using a master key - ESNET' OPER_JOIN_GOD_ESNET y
   bool 'Allow Opers to became channel service - ESNET' OPER_CHANNEL_SERVICE_ESNET y
   bool 'Local Channel Services has no Flood Control - ESNET' CS_NO_FLOOD_ESNET y
-  bool 'Allow Opers to bypass UWorld mode changes - ESNET' OPER_XMODE_ESNET y
   bool 'Allow local opers to use the REHASH command' LOCOP_REHASH y
   bool 'Allow local opers to use the RESTART command' LOCOP_RESTART
   bool 'Allow local opers to use the DIE command' LOCOP_DIE
@@ -534,7 +533,6 @@ comment 'Mandatory defines (you should leave these untouched)'
       bool 'HISPANO/ESNET: Ocultación de IP de TODOS los usuarios' BDD_VIP2 y
     fi
   fi
-  bool 'HISPANO/ESNET: XMODE Networking' XMODE_ESNET y
   bool 'HISPANO/ESNET: Dinamic Negotiation link-by-link' ESNET_NEG y
   if [ "$ESNET_NEG" = "y" ]; then
     bool 'HISPANO/ESNET: ZLIB compression between servers - ESNET' ZLIB_ESNET y

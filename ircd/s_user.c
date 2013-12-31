@@ -951,7 +951,7 @@ static int user_hmodes[] = {
   HMODE_NICKREGISTERED, 'r',
   HMODE_NICKSUSPENDED,  'S',
   HMODE_ADMIN,          'a',
-  HMODE_CODER,          'E',
+  HMODE_CODER,          'C',
   HMODE_HELPOP,         'h',
   HMODE_HIDDEN,         'x',
   HMODE_HIDDENVIEWER,   'X',
