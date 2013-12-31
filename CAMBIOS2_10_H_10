@@ -1,3 +1,7 @@
+* 2013/12/31  zoltan@irc-dev.net (u2.10.H.10.204)                    FIX
+------------------------------------------------------------------------
+  Fixes de optimizacion.
+
 * 2013/12/31  zoltan@irc-dev.net (u2.10.H.10.203)                CLEANUP
 ------------------------------------------------------------------------
   Por cuestiones operativas, eliminamos las transiciones introducidas en

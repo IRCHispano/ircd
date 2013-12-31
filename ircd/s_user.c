@@ -3053,20 +3053,20 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
 #endif
   }
-  else
-  {                             /* Nick no registrado */
+  else if (MyConnect(sptr))
+  {
+    /* Nick no registrados de usuarios locales.
+     * Los remotos se respetan modos.
+     */
     ClearMsgOnlyReg(sptr);
     ClearHelpOp(sptr);
     ClearAdmin(sptr);
     ClearCoder(sptr);
     ClearServicesBot(sptr);
 #if defined(BDD_VIP) && !defined(BDD_VIP2)
-    if (MyConnect(sptr))
+    if (!db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
     {
-      if (!db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
-      {
-        ClearHidden(sptr);
-      }
+      ClearHidden(sptr);
     }
 #endif
     if (!IsAnOper(sptr))
