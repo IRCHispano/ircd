@@ -23,7 +23,6 @@
 
 #include "sys.h"
 #include <sys/stat.h>
-#include <utmp.h>
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -834,12 +833,12 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
         if (user)
         {
+#if defined(BDD_VIP)
+          struct db_reg *reg = db_buscar_registro(BDD_IPVIRTUALDB, name);
+#endif
           a2cptr = user->server;
 #if defined(BDD_VIP)
-          if (IsHidden(acptr) && TieneIpVirtualPersonalizada(acptr)) {
-            struct db_reg *reg = db_buscar_registro(BDD_IPVIRTUALDB, name);
-
-            if (reg) {
+          if (IsHidden(acptr) && reg) {
               char *vhost;
               char *vhostcolor;
 
@@ -848,24 +847,18 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
                */
               DupString(vhost, reg->valor);
               vhostcolor = strchr(vhost, '!');
-              *vhostcolor++;
 
-              if (vhostcolor)
+              if (vhostcolor) {
+                *vhostcolor++;
                 sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
                     parv[0], name, PunteroACadena(user->username),
                     vhostcolor, PunteroACadena(acptr->info));
-              else
+              } else {
                 sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
                     parv[0], name, PunteroACadena(user->username),
-                    get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
-
+                    vhost, PunteroACadena(acptr->info));
+              }
               RunFree(vhost);
-            } else {
-              /* No deberia ocurrir, por si acaso mostramos la vhost generica */
-              sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
-                  parv[0], name, PunteroACadena(user->username),
-                  get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
-            }
           } else
             sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
                 parv[0], name, PunteroACadena(user->username),
@@ -981,7 +974,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 name);
 
           if (IsHelpOp(acptr)) {
-            if (user->away && !IsAdmin(acptr) && !IsCoder(acptr))
+            if (!user->away && !IsAdmin(acptr) && !IsCoder(acptr))
               sendto_one(sptr, rpl_str(RPL_WHOISHELPOP), me.name, parv[0], name);
           }
 
@@ -1028,16 +1021,16 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
       /* No wildcards */
       if ((acptr = FindUser(nick)))
       {
+#if defined(BDD_VIP)
+        struct db_reg *reg = db_buscar_registro(BDD_IPVIRTUALDB, nick);
+#endif
         found = 2;              /* Make sure we exit the loop after passing it once */
         user = acptr->user;
         name = (!acptr->name) ? "?" : acptr->name;
         a2cptr = user->server;
 
 #if defined(BDD_VIP)
-        if (IsHidden(acptr) && TieneIpVirtualPersonalizada(acptr)) {
-          struct db_reg *reg = db_buscar_registro(BDD_IPVIRTUALDB, nick);
-
-          if (reg) {
+        if (IsHidden(acptr) && reg) {
             char *vhost;
             char *vhostcolor;
 
@@ -1046,24 +1039,18 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
              */
             DupString(vhost, reg->valor);
             vhostcolor = strchr(vhost, '!');
-            *vhostcolor++;
 
-            if (vhostcolor)
+            if (vhostcolor) {
+              *vhostcolor++;
               sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
                   parv[0], name, PunteroACadena(user->username),
                   vhostcolor, PunteroACadena(acptr->info));
-            else
+            } else {
               sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
                   parv[0], name, PunteroACadena(user->username),
-                  get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
-
+                  vhost, PunteroACadena(acptr->info));
+            }
             RunFree(vhost);
-          } else {
-              /* No deberia ocurrir, por si acaso mostramos la vhost generica */
-              sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
-                  parv[0], name, PunteroACadena(user->username),
-                  get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
-          }
         } else
           sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
               parv[0], name, PunteroACadena(user->username),

@@ -45,7 +45,6 @@
 #include <unistd.h>
 #endif
 #include <sys/stat.h>
-#include <utmp.h>
 #include <sys/resource.h>
 #if defined(USE_SYSLOG)
 #include <syslog.h>

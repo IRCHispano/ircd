@@ -1031,15 +1031,16 @@ int m_opmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     if (IsLocalChannel(chptr->chname))
       return 0;
-#if defined(NO_PROTOCOL9)
-    sendto_serv_butone(cptr, ":%s " TOK_OPMODE " %s %s %s",
-        parv[0], chptr->chname, modebuf, parabuf);
-#else
     sendto_lowprot_butone(cptr, 9, ":%s OPMODE %s %s %s",
-        parv[0], chptr->chname, modebuf, parabuf);
-    sendto_highprot_butone(cptr, 10, "%s " TOK_OPMODE " %s %s %s",
-        parv[0], chptr->chname, modebuf, nparabuf);
-#endif
+        sptr->name, chptr->chname, modebuf, parabuf);
+
+    if (IsServer(sptr))
+      sendto_highprot_butone(cptr, 10, "%s " TOK_OPMODE " %s %s %s",
+          NumServ(sptr), chptr->chname, modebuf, nparabuf);
+    else
+      sendto_highprot_butone(cptr, 10, "%s%s " TOK_OPMODE " %s %s %s",
+          NumNick(sptr), chptr->chname, modebuf, nparabuf);
+
     send_hack_notice(IsServer(cptr) ? cptr : &me, sptr, parc, parv, badop, 1);
   }
   return 0;

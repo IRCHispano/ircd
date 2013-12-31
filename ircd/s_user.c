@@ -23,7 +23,6 @@
 
 #include "sys.h"
 #include <sys/stat.h>
-#include <utmp.h>
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
