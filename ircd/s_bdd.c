@@ -2946,6 +2946,10 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (nivel_helper < 10)
         nivel_helper = -1;
       break;
+    case BDD_WEBIRCDB:         /* 'w' */
+      if (nivel_helper < 10)
+        nivel_helper = -1;
+      break;
     case BDD_CONFIGDB:         /* 'z' */
       if (!strcmp(clave, BDD_CLAVE_DE_CIFRADO_DE_IPS) && (nivel_helper < 10))
         nivel_helper = -1;

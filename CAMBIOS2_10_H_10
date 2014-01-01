@@ -1,3 +1,7 @@
+* 2014/01/01  zoltan@irc-dev.net (u2.10.H.10.208)                    FIX
+------------------------------------------------------------------------
+  Ajustes en stats W y DBQ para WEBIRC.
+
 * 2014/01/01  zoltan@irc-dev.net (u2.10.H.10.207)                CLEANUP
 ------------------------------------------------------------------------
   Reorganizamos el sistema antispam.

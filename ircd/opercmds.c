@@ -828,8 +828,6 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
         for (reg = db_iterador_init(BDD_WEBIRCDB); reg;
             reg = db_iterador_next())
         {
-          if (!isDigit(*reg->clave))
-            continue;  /* Provisional mientras se use BDD w para vhosts */
           sendto_one(sptr, rpl_str(RPL_STATSILINE), me.name, sptr->name, 'W',
               reg->clave, "*", 0, 1);
         }
