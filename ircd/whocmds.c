@@ -1009,8 +1009,8 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
             sendto_one(sptr, rpl_str(RPL_WHOISIDLE), me.name,
                 parv[0], name, now - user->last, acptr->firsttime);
 
-         if (IsWhois(acptr))
-            sendto_one(sptr, ":%s NOTICE %s :%s te ha hecho un /WHOIS", me.name, acptr->name, sptr->name);
+         if (IsWhois(acptr) && (sptr != acptr))
+            sendto_one(acptr, ":%s NOTICE %s :%s te ha hecho un /WHOIS", me.name, acptr->name, sptr->name);
         }
         if (found == 2 || total++ >= MAX_WHOIS_LINES)
           break;

@@ -2334,7 +2334,7 @@ void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh,
 
   if (cptr && MyUser(cptr))
     send_umode(cptr, sptr, old, ALL_UMODES, oldh,
-    (IsAnOper(sptr) | IsHelpOp(sptr)) ? ALL_HMODES : ALL_HMODES & ~HMODES_HIDDEN);
+    (IsAnOper(sptr) || IsHelpOp(sptr)) ? ALL_HMODES : ALL_HMODES & ~HMODES_HIDDEN);
 }
 
 /*
