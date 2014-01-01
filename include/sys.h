@@ -23,8 +23,6 @@
 #include "../config/config.h"
 #include "../config/setup.h"
 
-#define MIGRACION_DEEPSPACE_P10
-
 #if defined(__osf__)
 #define _OSF_SOURCE
 #endif
