@@ -1291,7 +1291,7 @@ static int m_message(aClient *cptr, aClient *sptr,
           continue;
 
         /* Los +P solo mandan a un clon */
-        if (MyUser(sptr) && IsUserBitch(sptr) && !irc_in_addr_cmp(&sptr->ip, &acptr->ip))
+        if (MyUser(sptr) && IsUserBitch(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip))
           continue;
 
         if (MyUser(sptr) && IsMsgOnlyReg(acptr) && !IsNickRegistered(sptr)
