@@ -974,7 +974,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 name);
 
           if (IsHelpOp(acptr)) {
-            if (!user->away && !IsAdmin(acptr) && !IsCoder(acptr))
+            if (!user->away && !IsMsgOnlyReg(acptr) && !IsAdmin(acptr) && !IsCoder(acptr))
               sendto_one(sptr, rpl_str(RPL_WHOISHELPOP), me.name, parv[0], name);
           }
 
@@ -1009,7 +1009,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
             sendto_one(sptr, rpl_str(RPL_WHOISIDLE), me.name,
                 parv[0], name, now - user->last, acptr->firsttime);
 
-         if (IsWhois(acptr) && !IsAdmin(sptr) && !IsCoder(sptr))
+         if (IsWhois(acptr))
             sendto_one(sptr, ":%s NOTICE %s :%s te ha hecho un /WHOIS", me.name, acptr->name, sptr->name);
         }
         if (found == 2 || total++ >= MAX_WHOIS_LINES)

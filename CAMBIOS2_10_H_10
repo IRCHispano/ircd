@@ -1,3 +1,13 @@
+* 2014/01/01  zoltan@irc-dev.net (u2.10.H.10.207)                CLEANUP
+------------------------------------------------------------------------
+  Reorganizamos el sistema antispam.
+
+  Se documenta de cara a la transparencia los modos de usuario utilizados:
+
+  - D  No puede mandar texto al canal.
+  - P  No puede mandar ni recibir privados excepto si es/a un clon.
+  - J  Si hace un JOIN, entra a un canal sumidero.
+
 * 2013/12/31  zoltan@irc-dev.net (u2.10.H.10.206)                CLEANUP
 ------------------------------------------------------------------------
   Eliminamos soporte de RENAME por ser obsoleto. En su lugar se usa
@@ -16,7 +26,7 @@
 * 2013/12/31  zoltan@irc-dev.net (u2.10.H.10.203)                CLEANUP
 ------------------------------------------------------------------------
   Por cuestiones operativas, eliminamos las transiciones introducidas en
-  las versiones u2.10.H.10.196 y u2.10.H.10.1969.
+  las versiones u2.10.H.10.196 y u2.10.H.10.199.
 
   En consecuencia se elimina el XMODE de Jcea y el uso de la tabla w para
   los vhost de colores.
@@ -32,7 +42,7 @@
 
 * 2013/10/06  zoltan@irc-dev.net (u2.10.H.10.201)                FEATURE
 ------------------------------------------------------------------------
-  Implementacion del estandar WEBIRC otientado para los webchats HTML
+  Implementacion del estandar WEBIRC orientado para los webchats HTML
   que entran al IRC con la IP del servidor HTTP.
 
   La sintaxis del comando WEBIRC es:

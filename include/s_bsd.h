@@ -242,8 +242,9 @@ extern struct sockaddr_in vserv;
 #define HMODE_NOIDLE                  0x00002000  /* Hide idle time */
 #define HMODE_WHOIS                   0x00004000  /* Whois */
 /* Control de Spam */
-#define HMODE_USERBITCH               0x00008000  /* Usuario puteado, ni manda ni recibe salvo ciertas condiciones */
-#define HMODE_USERNOJOIN              0x00010000  /* Al intentar entrar a un canal entra siempre a uno de debug */
+#define HMODE_USERDEAF                0x00008000  /* Usuario no puede mandar nada al canal */
+#define HMODE_USERBITCH               0x00010000  /* Usuario puteado, ni manda ni recibe salvo ciertas condiciones */
+#define HMODE_USERNOJOIN              0x00020000  /* Al intentar entrar a un canal entra siempre a uno de debug */
 
 #define HFLAG_WEBIRC                  0x01000000  /* Usuario WebIRC */
 
@@ -251,14 +252,14 @@ extern struct sockaddr_in vserv;
 #define SEND_HMODES \
     (HMODE_NICKREGISTERED | HMODE_HELPOP | HMODE_SERVICESBOT | HMODE_HIDDEN | HMODE_HIDDENVIEWER \
        | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG | HMODE_STRIPCOLOR | HMODE_NOCHAN | HMODE_SSL \
-       | HMODE_ADMIN | HMODE_CODER | HMODE_NOIDLE | HMODE_WHOIS | HMODE_USERBITCH | HMODE_USERNOJOIN)
+       | HMODE_ADMIN | HMODE_CODER | HMODE_NOIDLE | HMODE_WHOIS | HMODE_USERDEAF |HMODE_USERBITCH | HMODE_USERNOJOIN)
 
 /* Modos hispano TODOS */
 #define ALL_HMODES \
     (SEND_HMODES)
 
 #define HMODES_HIDDEN \
-    (HMODE_NOIDLE | HMODE_WHOIS | HMODE_USERBITCH | HMODE_USERNOJOIN)
+    (HMODE_NOIDLE | HMODE_WHOIS | HMODE_USERDEAF | HMODE_USERBITCH | HMODE_USERNOJOIN)
 
 /* Macros comprobacion modos hispano */
 #define IsNickRegistered(x)     ((x)->hmodes & HMODE_NICKREGISTERED)
@@ -275,6 +276,7 @@ extern struct sockaddr_in vserv;
 #define IsCoder(x)              ((x)->hmodes & HMODE_CODER)
 #define IsNoIdle(x)             ((x)->hmodes & HMODE_NOIDLE)
 #define IsWhois(x)              ((x)->hmodes & HMODE_WHOIS)
+#define IsUserDeaf(x)           ((x)->hmodes & HMODE_USERDEAF)
 #define IsUserBitch(x)          ((x)->hmodes & HMODE_USERBITCH)
 #define IsUserNoJoin(x)         ((x)->hmodes & HMODE_USERNOJOIN)
 
@@ -297,6 +299,7 @@ extern struct sockaddr_in vserv;
 #define SetCoder(x)             ((x)->hmodes |= HMODE_CODER)
 #define SetNoIdle(x)            ((x)->hmodes |= HMODE_NOIDLE)
 #define SetWhois(x)             ((x)->hmodes |= HMODE_WHOIS)
+#define SetUserDeaf(x)          ((x)->hmodes |= HMODE_USERDEAF)
 #define SetUserBitch(x)         ((x)->hmodes |= HMODE_USERBITCH)
 #define SetUserNoJoin(x)        ((x)->hmodes |= HMODE_USERNOJOIN)
 
@@ -319,6 +322,7 @@ extern struct sockaddr_in vserv;
 #define ClearCoder(x)           ((x)->hmodes &= ~HMODE_CODER)
 #define ClearNoIdle(x)          ((x)->hmodes &= ~HMODE_NOIDLE)
 #define ClearWhois(x)           ((x)->hmodes &= ~HMODE_WHOIS)
+#define ClearUserDeaf(x)        ((x)->hmodes &= ~HMODE_USERDEAF)
 #define ClearUserBitch(x)       ((x)->hmodes &= ~HMODE_USERBITCH)
 #define ClearUserNoJoin(x)      ((x)->hmodes &= ~HMODE_USERNOJOIN)
 

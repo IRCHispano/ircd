@@ -963,11 +963,9 @@ static int user_hmodes[] = {
   HMODE_NOIDLE,         'I',
   HMODE_WHOIS,          'W',
 /* Control Spam */
+  HMODE_USERDEAF,       'D',
   HMODE_USERBITCH,      'P',
   HMODE_USERNOJOIN,     'J',
-/* Provisional, eliminar con transicion ircd activada */
-  HMODE_USERBITCH,      'D',
-  HMODE_USERNOJOIN,     'C',
   0,			0
 };
 
@@ -1229,7 +1227,7 @@ static int m_message(aClient *cptr, aClient *sptr,
             continue;
           }
 
-          if (IsUserBitch(sptr))
+          if (IsUserDeaf(sptr))
             continue;
           if(chptr->mode.mode & MODE_NOCOLOUR) {
             /* Calcula el color solo una vez */
@@ -2335,8 +2333,8 @@ void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh,
   }
 
   if (cptr && MyUser(cptr))
-    send_umode(cptr, sptr, old, ALL_UMODES, oldh, 
-    IsOper(sptr) ? ALL_HMODES : ALL_HMODES & ~HMODES_HIDDEN);
+    send_umode(cptr, sptr, old, ALL_UMODES, oldh,
+    (IsAnOper(sptr) | IsHelpOp(sptr)) ? ALL_HMODES : ALL_HMODES & ~HMODES_HIDDEN);
 }
 
 /*
@@ -3003,6 +3001,9 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!(sethmodes & HMODE_WHOIS))
       ClearWhois(sptr);
 
+    if (!(sethmodes & HMODE_USERDEAF))
+      ClearUserDeaf(sptr);
+
     if (!(sethmodes & HMODE_USERBITCH))
       ClearUserBitch(sptr);
 
@@ -3082,6 +3083,17 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       BorraIpVirtualPerso(sptr);
   }
 #endif
+
+/*
+** Si somos IRCOPs y hemos puesto o quitado el flag D, lo acepta.
+** dfm@unr.com 20090427
+*/
+  if (!IsServer(cptr) && !IsOper(sptr))
+    if(sethmodes & HMODE_USERDEAF)
+      SetUserDeaf(sptr);
+    else
+      ClearUserDeaf(sptr);
+
 
 /*
 ** Si somos IRCOPs y hemos puesto o quitado el flag P, lo acepta.
