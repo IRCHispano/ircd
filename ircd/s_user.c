@@ -1718,6 +1718,9 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   struct ConfItem *aconf;
   char *password;
+#if defined(CRYPT_OPER_PASSWORD)
+  char salt[3];
+#endif /* CRYPT_OPER_PASSWORD */
 
   if (IsRegistered(sptr))
     return 0;
