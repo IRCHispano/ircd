@@ -62,6 +62,8 @@
 #define BDD_MENSAJE_PART_SVSKICK "mensaje.part.svskick"
 #define BDD_CANAL_DEBUG "debugchan"
 #define BDD_TRANSICION_IRCD	"transicion.ircd"
+#define BDD_NETWORK	"network"
+#define BDD_CANAL_OPERS	"operschan"
 /* Para las features de los pseudoBOTS */
 #define BDD_CHANSERV      "ChanServ"
 #define BDD_NICKSERV      "NickServ"
@@ -112,6 +114,8 @@ extern char *mensaje_quit_personalizado;
 extern int compresion_zlib_cliente;
 extern char *mensaje_part_svskick;
 extern int transicion_ircd;
+extern char *network;
+extern char *canal_operadores;
 
 /* -- mman.h no contiene algunas definicieones en plataformas antiguas -- */
 #if !defined(MAP_FAILED)

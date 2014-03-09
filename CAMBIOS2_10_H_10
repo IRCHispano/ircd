@@ -1,3 +1,14 @@
+* 2014/03/09  zoltan@irc-dev.net (u2.10.H.10.209)                    FIX
+------------------------------------------------------------------------
+  Modos de usuarios nuevos en el WHO.
+
+  Modos de usuarios nuevos en el 004 y 005.
+
+  Registro network en tabla z para el nombre de red.
+
+  Registro operschan en tabla z para el canal de disponible para ayuda.
+
+
 * 2014/01/01  zoltan@irc-dev.net (u2.10.H.10.208)                    FIX
 ------------------------------------------------------------------------
   Ajustes en stats W y DBQ para WEBIRC.

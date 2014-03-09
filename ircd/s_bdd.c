@@ -91,6 +91,8 @@ char *mensaje_quit_personalizado = NULL;
 int compresion_zlib_cliente = 1;
 char *mensaje_part_svskick = NULL;
 int transicion_ircd = 0;
+char *network = NULL;;
+char *canal_operadores = NULL;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -619,6 +621,23 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                 mensaje_part_svskick=NULL;
               }
             }
+            else if(!strcmp(c, BDD_NETWORK))
+            {
+              if(network)
+              {
+                RunFree(network);
+                network=NULL;
+              }
+            }
+            else if(!strcmp(c, BDD_CANAL_OPERS))
+            {
+              if(canal_operadores)
+              {
+                RunFree(canal_operadores);
+                canal_operadores=NULL;
+              }
+            }
+
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -1005,6 +1024,14 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if(!strcmp(c, BDD_MENSAJE_PART_SVSKICK))
       {
         SlabStringAllocDup(&mensaje_part_svskick, v, 0);
+      }
+      else if(!strcmp(c, BDD_NETWORK))
+      {
+        SlabStringAllocDup(&network, v, 0);
+      }
+      else if(!strcmp(c, BDD_CANAL_OPERS))
+      {
+        SlabStringAllocDup(&canal_operadores, v, 0);
       }
       break;
     case BDD_IPVIRTUALDB:

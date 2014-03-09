@@ -291,6 +291,10 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
 
     if (IsDeaf(acptr))
       *(p1++) = 'd';
+    if (IsAdmin(acptr))
+      *(p1++) = 'a';
+    if (IsCoder(acptr))
+      *(p1++) = 'C';
     if (IsHelpOp(acptr))
       *(p1++) = 'h';
     if (IsHidden(acptr))
@@ -303,8 +307,14 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
       *(p1++) = 'S';
     if (IsMsgOnlyReg(acptr))
       *(p1++) = 'R';
+    if (IsStripColor(acptr))
+      *(p1++) = 'c';
+    if (IsSSL(acptr))
+      *(p1++) = 'z';
     if (IsServicesBot(acptr))
       *(p1++) = 'B';
+    if (IsNoChan(acptr))
+      *(p1++) = 'n';
     if (IsChannelService(acptr))
       *(p1++) = 'k';
 
@@ -316,6 +326,16 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
         *(p1++) = 'w';
       if (SendDebug(acptr))
         *(p1++) = 'g';
+      if (IsUserDeaf(acptr))
+        *(p1++) = 'D';
+      if (IsUserBitch(acptr))
+        *(p1++) = 'P';
+      if (IsUserNoJoin(acptr))
+        *(p1++) = 'J';
+      if (IsNoIdle(acptr))
+        *(p1++) = 'I';
+      if (IsWhois(acptr))
+        *(p1++) = 'W';
     }
   }
 
@@ -974,8 +994,15 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 name);
 
           if (IsHelpOp(acptr)) {
-            if (!user->away && !IsMsgOnlyReg(acptr) && !IsAdmin(acptr) && !IsCoder(acptr))
-              sendto_one(sptr, rpl_str(RPL_WHOISHELPOP), me.name, parv[0], name);
+            if (!user->away && !IsMsgOnlyReg(acptr) && !IsAdmin(acptr) && !IsCoder(acptr)) {
+              if (canal_operadores) {
+                aChannel *chptr2 = FindChannel(canal_operadores);
+                if (chptr2 && IsMember(acptr, chptr2))
+                  sendto_one(sptr, rpl_str(RPL_WHOISHELPOP), me.name, parv[0], name);
+              } else {
+                 sendto_one(sptr, rpl_str(RPL_WHOISHELPOP), me.name, parv[0], name);
+              }
+            }
           }
 
           if (IsAdmin(acptr))

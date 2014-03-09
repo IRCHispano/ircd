@@ -733,7 +733,7 @@ static int register_user(aClient *cptr, aClient *sptr,
 
   if (MyConnect(sptr))
   {
-    sendto_one(sptr, rpl_str(RPL_WELCOME), me.name, nick, NETWORK_NAME, nick);
+    sendto_one(sptr, rpl_str(RPL_WELCOME), me.name, nick, network ? network : NETWORK_NAME, nick);
     /* This is a duplicate of the NOTICE but see below... */
     sendto_one(sptr, rpl_str(RPL_YOURHOST), me.name, nick, me.name, version);
     sendto_one(sptr, rpl_str(RPL_CREATED), me.name, nick, creation);
@@ -905,7 +905,7 @@ void send_features(aClient *sptr, char *nick)
   char buf[500];
 
   sprintf(buf, "CHANMODES=b,k,l,imnpst");
-  strcat(buf, "crRMCNu");
+  strcat(buf, "crRMCNuz");
   sprintf(buf, "%s CHANTYPES=#&+ KICKLEN=%d MAXBANS=%d", buf, KICKLEN, MAXBANS);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
@@ -918,7 +918,7 @@ void send_features(aClient *sptr, char *nick)
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
   sprintf(buf,
-      "USERIP CPRIVMSG CNOTICE CHARMAPPING=rfc1459 NETWORK=%s",NETWORK_NAME);
+      "USERIP CPRIVMSG CNOTICE CHARMAPPING=rfc1459 NETWORK=%s", network ? network : NETWORK_NAME);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
   sprintf(buf, "MAP SAFELIST QUITLEN=%d AWAYLEN=%d", QUITLEN, AWAYLEN);
@@ -2995,9 +2995,6 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else
       ClearSSL(sptr);
 
-    if (!(sethmodes & HMODE_NOCHAN))
-      ClearNoChan(sptr);
-
     if (!(sethmodes & HMODE_NOIDLE))
       ClearNoIdle(sptr);
 
@@ -3072,8 +3069,10 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       ClearHidden(sptr);
     }
 #endif
-    if (!IsAnOper(sptr))
+    if (!IsAnOper(sptr)) {
       ClearHiddenViewer(sptr);
+      ClearNoChan(sptr);
+    }
   }
 
 /*
@@ -3138,11 +3137,19 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 
 /*
+** El +n solo se lo pueden poner usuarios autorizados
+*/
+  if (MyUser(sptr) && (!(sethmodes & HMODE_NOCHAN))
+      && IsNoChan(sptr) && !get_privs(sptr))
+    ClearNoChan(sptr);
+
+/*
 ** El +X solo se lo pueden poner usuarios autorizados
 */
   if (MyUser(sptr) && (!(sethmodes & HMODE_HIDDENVIEWER))
       && IsHiddenViewer(sptr) && !get_privs(sptr))
     ClearHiddenViewer(sptr);
+
 
   /*
    * Compare new flags with old flags and send string which
@@ -3817,38 +3824,25 @@ int get_status(aClient *sptr)
   reg = db_buscar_registro(BDD_OPERDB, sptr->name);
 
   if (reg) {
-      if (isDigit(*reg->valor)) {
-        /* Sistema antiguo, numerico */
-        int valor;
+      /* Sistema nuevo, por flags */
+      switch (*reg->valor)
+      {
+        case 'a':
+          status |= HMODE_ADMIN | FLAGS_OPER;
+          break;
 
-        valor = atoi(reg->valor);
-        if (valor > 0)
+        case 'c':
+          status |= HMODE_CODER | FLAGS_OPER;
+          break;
+
+        case 'b':
+          status |= HMODE_SERVICESBOT | FLAGS_OPER;
+          break;
+
+        case 'h':
+        case 'p':
           status |= HMODE_HELPOP;
-
-        if (valor >= 10)
-          status |= FLAGS_OPER;
-
-      } else {
-        /* Sistema nuevo, por flags */
-        switch (*reg->valor)
-        {
-          case 'a':
-            status |= HMODE_ADMIN | FLAGS_OPER;
-            break;
-
-          case 'c':
-            status |= HMODE_CODER | FLAGS_OPER;
-            break;
-
-          case 'b':
-            status |= HMODE_SERVICESBOT | FLAGS_OPER;
-            break;
-
-          case 'h':
-          case 'p':
-            status |= HMODE_HELPOP;
-            break;
-        }
+          break;
       }
       return status;
   }
@@ -3873,20 +3867,13 @@ int get_privs(aClient *sptr)
   reg = db_buscar_registro(BDD_OPERDB, sptr->name);
 
   if (reg) {
-      if (isDigit(*reg->valor)) {
-        /* Sistema antiguo, numerico */
+      /* Sistema nuevo, por flags */
+      if (reg->valor[1] != ':')
+        return 0;
+      if (reg->valor[2] == '\0')
+        return 0;
+      privs = atoi(reg->valor + 2);
 
-        if (atoi(reg->valor) >= 5)
-          privs = !0;
-
-      } else {
-        /* Sistema nuevo, por flags */
-        if (reg->valor[1] != ':')
-          return 0;
-        if (reg->valor[2] == '\0')
-          return 0;
-        privs = atoi(reg->valor + 2);
-      }
       return privs;
   }
 
@@ -4173,8 +4160,10 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       ClearHidden(sptr);
 #endif
 #endif
-      if (!IsAnOper(sptr))
+      if (!IsAnOper(sptr)) {
         ClearHiddenViewer(sptr);
+        ClearNoChan(sptr);
+      }
       send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
     }
   }
@@ -5436,8 +5425,10 @@ nickkilldone:
             vhperso = 1;
           }
 #endif
-          if (!IsAnOper(sptr))
+          if (!IsAnOper(sptr)) {
             ClearHiddenViewer(sptr);
+            ClearNoChan(sptr);
+          }
           send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));
         }
       }
@@ -6143,8 +6134,10 @@ nickkilldone:
             ClearServicesBot(sptr);
             --nrof.bots_oficiales;
           }
-          if (!IsAnOper(sptr))
+          if (!IsAnOper(sptr)) {
             ClearHiddenViewer(sptr);
+            ClearNoChan(sptr);
+          }
           send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));
         }
       }
