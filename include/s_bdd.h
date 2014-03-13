@@ -64,6 +64,7 @@
 #define BDD_TRANSICION_IRCD	"transicion.ircd"
 #define BDD_NETWORK	"network"
 #define BDD_CANAL_OPERS	"operschan"
+#define BDD_CONVERSION_UTF	"conversion.utf8"
 /* Para las features de los pseudoBOTS */
 #define BDD_CHANSERV      "ChanServ"
 #define BDD_NICKSERV      "NickServ"
@@ -116,6 +117,7 @@ extern char *mensaje_part_svskick;
 extern int transicion_ircd;
 extern char *network;
 extern char *canal_operadores;
+extern int conversion_utf;
 
 /* -- mman.h no contiene algunas definicieones en plataformas antiguas -- */
 #if !defined(MAP_FAILED)

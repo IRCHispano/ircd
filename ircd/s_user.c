@@ -4617,6 +4617,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
+#if defined(WEBCHAT)
   /* CASO ESPECIAL
    * NICK *
    * Sirve para poner un nick aleatorio
@@ -4626,6 +4627,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
      parv[1] = nuevo_nick_aleatorio(sptr);
      nick_aleatorio = 1;
   }
+#endif
 
   strncpy(nick, parv[1], nicklen + 1);
   nick[nicklen] = 0;

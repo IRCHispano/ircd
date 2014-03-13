@@ -3474,7 +3474,6 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
   return 0;
 }
 
-#ifdef UTF8_TO_LATIN1
 int is_utf8(const unsigned char *src, int n)
 {
   const unsigned char *slim = src + n;
@@ -3550,7 +3549,7 @@ void utf8_to_latin1( unsigned char* src, char *dst ) {
   }
   *dst = '\0';
 }
-#endif /* UTF8_TO_LATIN1 */
+
 /*
  * Remove bells and commas from channel name
  */
@@ -3804,9 +3803,6 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char *p = NULL, *bufptr;
   struct db_reg *ch_redir = NULL;
   char *usernojoin = NULL;
-#ifdef UTF8_TO_LATIN1 /* Esto es por si se quiere activar la conversion */
-  char latin1[BUFSIZE];
-#endif /* UTF8_TO_LATIN1 */
 
   if (IsServer(sptr))           /* Un servidor entrando en un canal? */
     return 0;
@@ -3849,18 +3845,21 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         break;
     }
 
-#ifdef UTF8_TO_LATIN1
   /* Convierto el nombre de canal de UTF8 a LATIN1 para mantener compatibilidad
    * entre mIRCs y para que clients de irc con UTF8 y LATIN1 puedan entrar en
    * los mismos canales y no haya que hacer adaptaciones en services
    */
-  p=parv[1];
-  if(is_utf8(p, strlen(p)))
+  if (conversion_utf)
   {
-    utf8_to_latin1(p, latin1);
-    parv[1]=latin1;
+    char latin1[BUFSIZE];
+
+    p=parv[1];
+    if(is_utf8(p, strlen(p)))
+    {
+      utf8_to_latin1(p, latin1);
+      parv[1]=latin1;
+    }
   }
-#endif /* UTF8_TO_LATIN1 */
 
   keysOrTS = parv[2];           /* Remember where our keys are or the TS is;
                                    parv[2] needs to be NULL for the call to

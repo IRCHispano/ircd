@@ -1,3 +1,13 @@
+* 2014/03/13  zoltan@irc-dev.net (u2.10.H.10.210)                    FIX
+------------------------------------------------------------------------
+  Modifico el parche u2.10.H.10.150, para que sea activable via BDD
+  la conversion UTF8 a LATIN de los join. Es con la entrada conversion.utf
+  en la tabla z de la BDD.
+
+  No permito el NICK * si no esta compilado para WEBCHAT.
+
+  Los +o/h pueden ver los canales de los usuarios con +n.
+
 * 2014/03/09  zoltan@irc-dev.net (u2.10.H.10.209)                    FIX
 ------------------------------------------------------------------------
   Modos de usuarios nuevos en el WHO.
