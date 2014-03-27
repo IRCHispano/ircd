@@ -4739,7 +4739,8 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 
 #if !defined(WEBCHAT)
-    if (!match("webchat-*", nick)) {
+    /* No ponemos MyUser porque podria que aun no sea usuario */
+    if (!match("webchat-*", nick) && !IsServer(cptr)) {
       sendto_one(sptr, err_str(ERR_NICKNAMEINUSE), me.name,
           /* parv[0] is empty when connecting */
           BadPtr(parv[0]) ? "*" : parv[0], nick);

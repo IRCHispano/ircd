@@ -1,3 +1,12 @@
+* 2014/03/27  zoltan@irc-dev.net (u2.10.H.10.212)                    FIX
+------------------------------------------------------------------------
+  Corregido fix que hacia que no se propagase correctamente los nicks
+  webchat-*.
+
+  Durante la investigacion se ha descubierto que el m_nick_local y
+  m_nick_remoto no funciona correctamente. Pero lo dejo asi por los
+  posibles efectos colaterales y que pronto se cambiara de base.
+
 * 2014/03/27  zoltan@irc-dev.net (u2.10.H.10.211)                    FIX
 ------------------------------------------------------------------------
   Los usuarios con +k no estan protegidos a si mismo, es decir, pueden
