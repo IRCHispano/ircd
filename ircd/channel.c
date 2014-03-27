@@ -1564,7 +1564,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
           break;
         }
         /* if the user is +k, prevent a deop from local user */
-        if (whatt == MODE_DEL && IsChannelService(who) && *curr == 'o')
+        if (whatt == MODE_DEL && IsChannelService(who) && *curr == 'o' && (sptr != who))
         {
           sendto_one(cptr,
               IsService(who->user->server) ? err_str(ERR_ISREALSERVICE) : err_str(ERR_ISCHANSERVICE),
@@ -5849,7 +5849,7 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
       !(lp->flags & CHFL_ZOMBIE)) || IsServer(sptr))
   {
     /* if the user is +k, prevent a kick from local user */
-    if (IsChannelService(who) && MyUser(sptr))
+    if (IsChannelService(who) && MyUser(sptr) && (sptr != who))
     {
       sendto_one(sptr,
           IsService(who->user->server) ? err_str(ERR_ISREALSERVICE) : err_str(ERR_ISCHANSERVICE),
