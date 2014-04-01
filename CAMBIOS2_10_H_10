@@ -1,3 +1,7 @@
+* 2014/04/01  zoltan@irc-dev.net (u2.10.H.10.213)                    FIX
+------------------------------------------------------------------------
+  Los +h pueden ver los modos ocultos.
+
 * 2014/03/27  zoltan@irc-dev.net (u2.10.H.10.212)                    FIX
 ------------------------------------------------------------------------
   Corregido fix que hacia que no se propagase correctamente los nicks

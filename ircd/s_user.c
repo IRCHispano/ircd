@@ -3314,7 +3314,7 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if 1 /* ALTERNATIVA SVSMODE A TODOS */
 
   if (MyUser(acptr))
-    send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, IsOper(acptr) ? SEND_HMODES : SEND_HMODES & ~HMODES_HIDDEN);
+    send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, (IsOper(acptr) || IsHelpOp(acptr)) ? SEND_HMODES : SEND_HMODES & ~HMODES_HIDDEN);
 #if !defined(NO_PROTOCOL9)
   sendto_lowprot_butone(cptr, 9, ":%s SVSMODE %s %s", acptr->name, acptr->name, parv[2]);
 #endif
@@ -3353,7 +3353,7 @@ char *umode_str(aClient *cptr, aClient *acptr)
       {
         if (flag & HMODES_HIDDEN)
         {
-          if (IsAnOper(acptr))
+          if (IsAnOper(acptr) || IsHelpOp(acptr))
             *m++ = *(s + 1);
         } else
           *m++ = *(s + 1);
