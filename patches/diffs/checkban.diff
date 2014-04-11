@@ -1,0 +1,203 @@
+Index: include/channel.h
+===================================================================
+--- include/channel.h	(revision 471)
++++ include/channel.h	(working copy)
+@@ -231,6 +231,7 @@
+ extern int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+ extern int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+ extern int m_svskick(aClient *cptr, aClient *sptr, int parc, char *parv[]);
++extern int m_checkban(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+ extern void send_user_joins(aClient *cptr, aClient *user);
+ 
+ extern char *adapta_y_visualiza_canal_flags(aChannel *chptr, int add, int del);
+Index: include/msg.h
+===================================================================
+--- include/msg.h	(revision 471)
++++ include/msg.h	(working copy)
+@@ -98,6 +98,9 @@
+ #define TOK_WEBIRC              "WEBIRC"
+ #define CLASS_WEBIRC            LEVEL_QUERY
+ 
++#define MSG_CHECKBAN            "CHECKBAN"        /* CHECKBAN */
++#define TOK_CHECKBAN            "CHECKBAN"
++#define CLASS_CHECKBAN          LEVEL_QUERY
+ 
+ 
+ #define MSG_PRIVATE		"PRIVMSG"	/* PRIV */
+Index: include/numeric.h
+===================================================================
+--- include/numeric.h	(revision 471)
++++ include/numeric.h	(working copy)
+@@ -428,6 +428,11 @@
+ /*      RPL_JUPELIST         282          Undernet extension */
+ /*      RPL_ENDOFJUPELIST    283          Undernet extension */
+ /*      RPL_FEATURE         284           Undernet extension */
++#define RPL_CKBAN_NICKNF     285
++#define RPL_CKBAN_CHANNF     286
++#define RPL_CKBAN_NOBAN      287
++#define RPL_CKBAN_BAN        288
++#define RPL_CKBAN_END        289
+ /*      RPL_CHANINFO_HANDLE  285          Aircd */
+ /*      RPL_CHANINFO_USERS   286          Aircd */
+ /*      RPL_CHANINFO_CHOPS   287          Aircd */
+Index: ircd/channel.c
+===================================================================
+--- ircd/channel.c	(revision 471)
++++ ircd/channel.c	(working copy)
+@@ -7061,6 +7061,115 @@
+   return (1);
+ }
+ 
++/*
++ * m_checkban
++ *   parv[0] - nick origen
++ *   parv[1] - nick a comprobar
++ *   parv[2] - canal a comprobar
++ *   parv[3] - token
++ *
++ * Comprueba si el nick tiene ban en el canal especificado.
++ */
++int m_checkban(aClient *cptr, aClient *sptr, int parc, char *parv[])
++{
++  aClient *acptr;
++  aChannel *chptr;
++  Reg1 Link *tmp;
++  char *s, *ip_s = NULL;
++  int bans = 0;
++
++  if (!IsAnOper(sptr))
++  {
++    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
++    return 0;
++  }
++
++  if (parc < 4)
++  {
++    sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "CHECKBAN");
++    return 0;
++  }
++
++  acptr = FindUser(parv[1]);
++  if (!acptr)
++  {
++    sendto_one(sptr, rpl_str(RPL_CKBAN_NICKNF), me.name, parv[0], parv[1], parv[3]);
++    return 0;
++  }
++
++  chptr = get_channel(sptr, parv[2], !CREATE);
++  if (!chptr)
++  {
++    sendto_one(sptr, rpl_str(RPL_CKBAN_CHANNF), me.name, parv[0], parv[2], parv[3]);
++    return 0;
++  }
++
++#if !defined(BDD_VIP)
++  s = make_nick_user_host(acptr->name, PunteroACadena(acptr->user->username),
++      PunteroACadena(acptr->user->host));
++#endif
++
++  for (tmp = chptr->banlist; tmp; tmp = tmp->next)
++  {
++    if ((tmp->flags & CHFL_BAN_IPMASK))
++    {
++      if (!ip_s)
++        ip_s =
++            make_nick_user_ip(acptr->name, PunteroACadena(acptr->user->username),
++            &acptr->ip);
++      if (match(tmp->value.ban.banstr, ip_s) == 0)
++      {
++        sendto_one(sptr, rpl_str(RPL_CKBAN_BAN), me.name, parv[0], parv[1], parv[2],
++                   tmp->value.ban.banstr, tmp->value.ban.who, tmp->value.ban.when, parv[3]);
++        bans++;
++        continue;
++      }
++    }
++    else
++#if defined(BDD_VIP)
++    {
++      s = make_nick_user_host(acptr->name, PunteroACadena(acptr->user->username),
++          PunteroACadena(acptr->user->host));
++#endif
++      if (match(tmp->value.ban.banstr, s) == 0)
++      {
++        sendto_one(sptr, rpl_str(RPL_CKBAN_BAN), me.name, parv[0], parv[1], parv[2],
++                   tmp->value.ban.banstr, tmp->value.ban.who, tmp->value.ban.when, parv[3]);
++        bans++;
++        continue;
++      }
++#if defined(BDD_VIP)
++      s = make_nick_user_host(cptr->name, PunteroACadena(cptr->user->username),
++          get_virtualhost(cptr, 0));
++      if (match(tmp->value.ban.banstr, s) == 0)
++      {
++        sendto_one(sptr, rpl_str(RPL_CKBAN_BAN), me.name, parv[0], parv[1], parv[2],
++                   tmp->value.ban.banstr, tmp->value.ban.who, tmp->value.ban.when, parv[3]);
++        bans++;
++        continue;
++      }
++      if (TieneIpVirtualPersonalizada(cptr)) {
++        s = make_nick_user_host(cptr->name, PunteroACadena(cptr->user->username),
++            get_virtualhost(cptr, 1));
++        if (match(tmp->value.ban.banstr, s) == 0)
++        {
++          sendto_one(sptr, rpl_str(RPL_CKBAN_BAN), me.name, parv[0], parv[1], parv[2],
++                     tmp->value.ban.banstr, tmp->value.ban.who, tmp->value.ban.when, parv[3]);
++          bans++;
++          continue;
++        }
++      }
++    }
++#endif
++  }
++
++  if (bans)
++    sendto_one(sptr, rpl_str(RPL_CKBAN_END), me.name, parv[0], parv[1], parv[2], parv[3]);
++  else
++    sendto_one(sptr, rpl_str(RPL_CKBAN_NOBAN), me.name, parv[0], parv[1], parv[2], parv[3]);
++
++}
++
+ void send_user_joins(aClient *cptr, aClient *user)
+ {
+   Reg1 Link *lp;
+Index: ircd/parse.c
+===================================================================
+--- ircd/parse.c	(revision 471)
++++ ircd/parse.c	(working copy)
+@@ -138,6 +138,7 @@
+     {CLASS_WATCH,      MSG_WATCH,      TOK_WATCH,      m_watch,        0, 1,   MFLG_SLOW,      0L},
+ #endif
+     {CLASS_WEBIRC,     MSG_WEBIRC,     TOK_WEBIRC,     m_webirc,       0, MAXPARA,   MFLG_SLOW|MFLG_UNREG,      0L},
++    {CLASS_CHECKBAN,   MSG_CHECKBAN,   TOK_CHECKBAN,   m_checkban,     0, MAXPARA,   MFLG_SLOW,      0L},
+ 
+     {0, (char *)0, (char *)0, (int (*)(aClient *, aClient *, int, char **))0,	0, 0, 0, 0L}
+ }                                                                                                                                   ;
+Index: ircd/s_err.c
+===================================================================
+--- ircd/s_err.c	(revision 471)
++++ ircd/s_err.c	(working copy)
+@@ -713,7 +713,23 @@
+ /* 280 */
+     {RPL_GLIST, "%s@%s " TIME_T_FMT " %s%s (expires at %s)"},
+ /* 281 */
+-    {RPL_ENDOFGLIST, ":End of G-line List"}
++    {RPL_ENDOFGLIST, ":End of G-line List"},
++/* 282 */
++    {0, (char *)NULL},
++/* 283 */
++    {0, (char *)NULL},
++/* 284 */
++    {0, (char *)NULL},
++/* 285 */
++    {RPL_CKBAN_NICKNF, "%s %s"},
++/* 286 */
++    {RPL_CKBAN_CHANNF, "%s %s"},
++/* 287 */
++    {RPL_CKBAN_NOBAN, "%s %s %s"},
++/* 288 */
++    {RPL_CKBAN_BAN, "%s %s %s %s " TIME_T_FMT " %s"},
++/* 288 */
++    {RPL_CKBAN_END, "%s %s %s"}
+ };
+ 
+

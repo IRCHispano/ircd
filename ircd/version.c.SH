@@ -60,14 +60,12 @@ cvsversion=`cat ../.patches`
 #include "h.h"
 #include "s_debug.h"
 #include "patchlevel.h"
+#include "patchlist.h"
 #include "version.h"
 
 const char *generation = "$generation";
 const char *creation = "$creation";
-const char *version = "$cvsversion" PATCH2 PATCH3 PATCH4 PATCH5 PATCH6\
-	PATCH7 PATCH8 PATCH9 PATCH10 PATCH11 PATCH12 PATCH13 PATCH14 PATCH15\
-	PATCH16 PATCH17 PATCH18 PATCH19 PATCH20 PATCH21 PATCH22 PATCH23 PATCH24\
-	PATCH25 PATCH26 PATCH27 PATCH28 PATCH29 PATCH30 PATCH31 PATCH32;
+const char *version = BASE_VERSION RELEASE "$cvsversion" PATCHLIST;
 
 const char *infotext[] = {
     "IRC --",

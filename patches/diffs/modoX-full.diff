@@ -1,0 +1,22 @@
+ diff -urdb ircorig/ircd/send.c ircold/ircd/send.c
+--- ircd/send.c 2014-04-11 20:43:51.170927506 +0200
++++ ircd/send.c  2014-03-03 09:12:42.927789157 +0100
+@@ -412,7 +412,7 @@
+       {
+         strcat(sender, "@");
+ #if defined(BDD_VIP)
+-        strcat(sender, get_visiblehost(from, NULL));
++        strcat(sender, get_visiblehost(from, to));
+ #else
+         strcat(sender, user->host);
+ #endif
+@@ -427,7 +427,7 @@
+     {
+       strcat(sender, "@");
+ #if defined(BDD_VIP)
+-      strcat(sender, get_visiblehost(from, NULL));
++      strcat(sender, get_visiblehost(from, to));
+ #else
+       if (IsUnixSocket(from))
+         strcat(sender, user->host);
+

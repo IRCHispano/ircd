@@ -1,3 +1,21 @@
+* 2014/04/11  zoltan@irc-dev.net (u2.10.H.10.214)                FEATURE
+------------------------------------------------------------------------
+  Con el fin de mas transparencia en el codigo, agrego soporte de parches
+  externos y/o especificos para algun servidor.
+
+  Se agrega el script ircd-patch donde se puede listar, aplicar o revertir
+  parches disponibles en el directorio patches/diffs.
+
+  Se han incluido dos parches:
+
+   - checkban: Implementa el comando checkban que utiliza el bot Ayuda
+     para comprobar la existencia de bans en un canal.
+
+   - modoX-full: Permite ver la IP real en todo en usuarios +X. En la
+     red IRC-Hispano solo se usa en el servidor de los bots.
+
+  Aplicando los parches modifica la version visible del ircd.
+
 * 2014/04/01  zoltan@irc-dev.net (u2.10.H.10.213)                    FIX
 ------------------------------------------------------------------------
   Los +h pueden ver los modos ocultos.

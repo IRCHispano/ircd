@@ -83,6 +83,9 @@ all:
 
 build: ircd chkconf
 
+../include/patchlist.h:
+	 ( cd ..; ./ircd-patch update )
+
 ircd: ${OBJS} ../include/patchlevel.h
 	${SHELL} version.c.SH
 	${CC} ${CFLAGS} ${CPPFLAGS} -c version.c
