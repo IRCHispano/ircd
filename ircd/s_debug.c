@@ -189,7 +189,7 @@ char serveropts[] = {
 #if defined(USE_SYSLOG)
     'Y',
 #endif
-    '.','E','S','N','E','T','.', 
+    '.','I','R','C','-', 'H','I','S','P','A','N','O','.',
 #if CLIENT_FLOOD > 999
     (char)('0' + (CLIENT_FLOOD/1000) % 10),
 #endif
@@ -205,37 +205,25 @@ char serveropts[] = {
 #endif
     (char)('0' + (MAXCHANNELSPERUSER/1) % 10),
     '.',
-#if !0
-/* Esto hay que quitarlo en algun momento... */
-    'N','5','.',
-#endif
     'J','G',
 #if defined(OPER_JOIN_GOD_ESNET)
     '+',
 #else
     '-',
 #endif
-    'C','S','4',
+    'C','S',
 #if defined(OPER_CHANNEL_SERVICE_ESNET)
     '+',
 #else
     '-',
 #endif
-    'C','S','F','3',
+    'C','S','F',
 #if defined(CS_NO_FLOOD_ESNET)
     '+',
 #else
     '-',
 #endif
-#if defined(XMODE_ESNET)
-    'X','M','2',
-#if defined(OPER_XMODE_ESNET)
-    '+',
-#else
-    '-',
-#endif
-#endif
-    'D','B','1','2','3',
+    'D','B',
 #if defined(BDD_MMAP)
     '.',
 #if (BDD_MMAP_SIZE > 99) || (BDD_MMAP_SIZE <10) 
@@ -247,16 +235,16 @@ char serveropts[] = {
 #else
     '-',
 #endif
-    'C','7',
+    'C',
 #if defined(BDD_CLONES)
     '+',
 #else
     '-',
 #endif
-   'C','F','G','5',
+   'C','F','G',
 #if defined(ESNET_NEG)
    '+',
-   '.','Z','1','4',
+   '.','Z',
 #if defined(ZLIB_ESNET)
     '+',
 #else
@@ -265,7 +253,7 @@ char serveropts[] = {
 #else
    '-',
 #endif /* ESNET_NEG */
-   '.','W','1','1',
+   '.','W',
 #if defined (WATCH)
 #if defined(MAXWATCH)
 #if (MAXWATCH > 256) || (MAXWATCH < 96)
@@ -285,7 +273,7 @@ char serveropts[] = {
    '-',
 #endif /* WATCH */
 
-   '.','T','S','6',
+   '.','T','S',
 #if defined (CHECK_TS_LINKS)
    '(',
 #if CHECK_TS_MAX_LINKS > 999
@@ -302,9 +290,7 @@ char serveropts[] = {
 #else
    '-',
 #endif
-   'C','H','2',
-    '.','I','R','C','-', 'H','I','S','P','A','N','O','.','O','R','G',':',
-    'O','2',
+   'C','H',
 #if defined(BDD_OPER_HACK)
     '+',
 #else
@@ -322,7 +308,7 @@ char serveropts[] = {
 #else
     '-',
 #endif
-    'V','I','P','3','9',
+    'V','I','P',
 #if defined(BDD_VIP)
     '+',
 #if defined(BDD_VIP2)
@@ -338,7 +324,7 @@ char serveropts[] = {
 #else
     '-',
 #endif
-    '.','G','7',
+    '.','G',
     '\0'
 };
 

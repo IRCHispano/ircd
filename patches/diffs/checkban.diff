@@ -126,8 +126,8 @@ Index: ircd/channel.c
 +        continue;
 +      }
 +#if defined(BDD_VIP)
-+      s = make_nick_user_host(cptr->name, PunteroACadena(cptr->user->username),
-+          get_virtualhost(cptr, 0));
++      s = make_nick_user_host(acptr->name, PunteroACadena(acptr->user->username),
++          get_virtualhost(acptr, 0));
 +      if (match(tmp->value.ban.banstr, s) == 0)
 +      {
 +        sendto_one(sptr, rpl_str(RPL_CKBAN_BAN), me.name, parv[0], parv[1], parv[2],
@@ -135,9 +135,9 @@ Index: ircd/channel.c
 +        bans++;
 +        continue;
 +      }
-+      if (TieneIpVirtualPersonalizada(cptr)) {
-+        s = make_nick_user_host(cptr->name, PunteroACadena(cptr->user->username),
-+            get_virtualhost(cptr, 1));
++      if (TieneIpVirtualPersonalizada(acptr)) {
++        s = make_nick_user_host(acptr->name, PunteroACadena(acptr->user->username),
++            get_virtualhost(acptr, 1));
 +        if (match(tmp->value.ban.banstr, s) == 0)
 +        {
 +          sendto_one(sptr, rpl_str(RPL_CKBAN_BAN), me.name, parv[0], parv[1], parv[2],

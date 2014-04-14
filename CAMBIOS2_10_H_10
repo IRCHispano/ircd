@@ -1,3 +1,9 @@
+* 2014/04/14  zoltan@irc-dev.net (u2.10.H.10.215)                    FIX
+------------------------------------------------------------------------
+  Limpiamos un poco la version del ircd.
+
+  Fix en el parche de checkban.
+
 * 2014/04/11  zoltan@irc-dev.net (u2.10.H.10.214)                FEATURE
 ------------------------------------------------------------------------
   Con el fin de mas transparencia en el codigo, agrego soporte de parches
