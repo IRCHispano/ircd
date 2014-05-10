@@ -4081,7 +4081,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
        * Notify all other users on the new channel
        */
 #if defined(WEBCHAT)
-      if (MyUser(sptr) && (sptr->negociacion & USER_WEB || sptr->negociacion & USER_WEB2))
+      if (MyUser(sptr) && (sptr->negociacion & USER_WEB2))
         sendto_one(sptr, ":%s JOIN :%s", parv[0], name);
       sendto_channel_web2_butserv(chptr, sptr, "%s%s%s", chptr->webnumeric, sptr->webnumeric, sptr->name);
 #endif
@@ -4309,7 +4309,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * Notify all other users on the new channel
      */
 #if defined(WEBCHAT)
-    if (MyUser(acptr) && (acptr->negociacion & USER_WEB || acptr->negociacion & USER_WEB2))
+    if (MyUser(acptr) && (acptr->negociacion & USER_WEB2))
       sendto_one(acptr, ":%s JOIN :%s", acptr->name, name);
     sendto_channel_web2_butserv(chptr, acptr, "%s%s%s", chptr->webnumeric, acptr->webnumeric, acptr->name);
 #endif
@@ -4489,7 +4489,7 @@ int m_create(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     /* Send user join to the local clients (if any) */
 #if defined(WEBCHAT)
-      if (MyUser(sptr) && (sptr->negociacion & USER_WEB || sptr->negociacion & USER_WEB2))
+      if (MyUser(sptr) && (sptr->negociacion & USER_WEB2))
         sendto_one(sptr, ":%s JOIN :%s", parv[0], name);
       sendto_channel_web2_butserv(chptr, sptr, "%s%s%s", chptr->webnumeric, sptr->webnumeric, sptr->name);
 #endif
@@ -5270,7 +5270,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (member->flags & CHFL_BURST_JOINED)
       {
 #if defined(WEBCHAT)
-        if (MyUser(member->value.cptr) && (member->value.cptr->negociacion & USER_WEB || member->value.cptr->negociacion & USER_WEB2))
+        if (MyUser(member->value.cptr) && (member->value.cptr->negociacion & USER_WEB2))
           sendto_one(member->value.cptr, ":%s JOIN :%s", member->value.cptr, chptr->chname);
         sendto_channel_web2_butserv(chptr, member->value.cptr, "%s%s%s", chptr->webnumeric, member->value.cptr->webnumeric, member->value.cptr->name);
 #endif
@@ -6980,7 +6980,7 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!BadPtr(para))
   {
 #if defined(WEBCHAT)
-    if ((sptr->negociacion & USER_WEB) || (sptr->negociacion & USER_WEB2))
+    if ((sptr->negociacion & USER_WEB2))
       sendto_one(sptr, ":%s %d %s %s %s :End of /NAMES list", me.name, RPL_ENDOFNAMES, parv[0],
            ch2ptr ? ch2ptr->chname : para, ch2ptr ? ch2ptr->webnumeric : "*");
     else

@@ -812,7 +812,7 @@ void sendto_common_channels(aClient *acptr, char *pattern, ...)
       {
         Reg3 aClient *cptr = member->value.cptr;
 #if defined(WEBCHAT)
-        if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker && !((cptr->negociacion & USER_WEB2)))
+        if (MyConnect(cptr) && !(cptr->negociacion & USER_WEB2) && sentalong[cptr->fd] != sentalong_marker)
 #else
         if (MyConnect(cptr) && sentalong[cptr->fd] != sentalong_marker)
 #endif
