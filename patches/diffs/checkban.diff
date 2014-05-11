@@ -182,7 +182,7 @@ Index: ircd/channel.c
 +    len = strlen(chptr->chname) + 5 + strlen(parv[3]);;
 +    strcpy(buf, chptr->chname);
 +    strcat(buf, " ");
-+    strcpy(buf, parv[3]);
++    strcat(buf, parv[3]);
 +    strcat(buf, " :");
 +    idx = len;
 +
@@ -204,7 +204,7 @@ Index: ircd/channel.c
 +
 +        strcpy(buf, chptr->chname);
 +        strcat(buf, " ");
-+        strcpy(buf, parv[3]);
++        strcat(buf, parv[3]);
 +        strcat(buf, " :");
 +        idx = len;
 +        flag = 0;
