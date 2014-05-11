@@ -1,6 +1,6 @@
 Index: include/channel.h
 ===================================================================
---- include/channel.h	(revision 471)
+--- include/channel.h	(revision 474)
 +++ include/channel.h	(working copy)
 @@ -231,6 +231,7 @@
  extern int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[]);
@@ -12,7 +12,7 @@ Index: include/channel.h
  extern char *adapta_y_visualiza_canal_flags(aChannel *chptr, int add, int del);
 Index: include/msg.h
 ===================================================================
---- include/msg.h	(revision 471)
+--- include/msg.h	(revision 474)
 +++ include/msg.h	(working copy)
 @@ -98,6 +98,9 @@
  #define TOK_WEBIRC              "WEBIRC"
@@ -26,9 +26,9 @@ Index: include/msg.h
  #define MSG_PRIVATE		"PRIVMSG"	/* PRIV */
 Index: include/numeric.h
 ===================================================================
---- include/numeric.h	(revision 471)
+--- include/numeric.h	(revision 474)
 +++ include/numeric.h	(working copy)
-@@ -428,6 +428,11 @@
+@@ -428,6 +428,12 @@
  /*      RPL_JUPELIST         282          Undernet extension */
  /*      RPL_ENDOFJUPELIST    283          Undernet extension */
  /*      RPL_FEATURE         284           Undernet extension */
@@ -36,18 +36,43 @@ Index: include/numeric.h
 +#define RPL_CKBAN_CHANNF     286
 +#define RPL_CKBAN_NOBAN      287
 +#define RPL_CKBAN_BAN        288
-+#define RPL_CKBAN_END        289
++#define RPL_CKBAN_OPS        289
++#define RPL_CKBAN_END        290
  /*      RPL_CHANINFO_HANDLE  285          Aircd */
  /*      RPL_CHANINFO_USERS   286          Aircd */
  /*      RPL_CHANINFO_CHOPS   287          Aircd */
 Index: ircd/channel.c
 ===================================================================
---- ircd/channel.c	(revision 471)
+--- ircd/channel.c	(revision 476)
 +++ ircd/channel.c	(working copy)
-@@ -7061,6 +7061,115 @@
+@@ -7061,6 +7061,176 @@
    return (1);
  }
  
++static void send_checkban_status(aClient *sptr, aChannel *chptr, Link *ban, char *parv[])
++{
++  aClient *acptr;
++  int estado = 0; //No esta conectado
++
++  /* Comprobamos estado del baneador */
++  acptr = FindUser(ban->value.ban.who);
++  if (acptr) {
++    Link *is_user = IsMember(acptr, chptr);
++    if (is_user) {
++      if (is_user->flags & CHFL_CHANOP)
++        estado = 4; //Tiene OP
++      else if (is_user->flags & CHFL_VOICE)
++        estado = 3; //Tiene voz
++      else
++        estado = 2; //Esta en canal
++    } else
++      estado = 1; //No esta en el canal
++  }
++
++  sendto_one(sptr, rpl_str(RPL_CKBAN_BAN), me.name, parv[0], parv[1], parv[2],
++             ban->value.ban.banstr, ban->value.ban.who, estado, ban->value.ban.when, parv[3]);
++}
++
 +/*
 + * m_checkban
 + *   parv[0] - nick origen
@@ -120,8 +145,7 @@ Index: ircd/channel.c
 +#endif
 +      if (match(tmp->value.ban.banstr, s) == 0)
 +      {
-+        sendto_one(sptr, rpl_str(RPL_CKBAN_BAN), me.name, parv[0], parv[1], parv[2],
-+                   tmp->value.ban.banstr, tmp->value.ban.who, tmp->value.ban.when, parv[3]);
++        send_checkban_status(sptr, chptr, tmp, parv);
 +        bans++;
 +        continue;
 +      }
@@ -130,8 +154,7 @@ Index: ircd/channel.c
 +          get_virtualhost(acptr, 0));
 +      if (match(tmp->value.ban.banstr, s) == 0)
 +      {
-+        sendto_one(sptr, rpl_str(RPL_CKBAN_BAN), me.name, parv[0], parv[1], parv[2],
-+                   tmp->value.ban.banstr, tmp->value.ban.who, tmp->value.ban.when, parv[3]);
++        send_checkban_status(sptr, chptr, tmp, parv);
 +        bans++;
 +        continue;
 +      }
@@ -140,8 +163,7 @@ Index: ircd/channel.c
 +            get_virtualhost(acptr, 1));
 +        if (match(tmp->value.ban.banstr, s) == 0)
 +        {
-+          sendto_one(sptr, rpl_str(RPL_CKBAN_BAN), me.name, parv[0], parv[1], parv[2],
-+                     tmp->value.ban.banstr, tmp->value.ban.who, tmp->value.ban.when, parv[3]);
++          send_checkban_status(sptr, chptr, tmp, parv);
 +          bans++;
 +          continue;
 +        }
@@ -150,9 +172,49 @@ Index: ircd/channel.c
 +#endif
 +  }
 +
-+  if (bans)
++  if (bans) {
++    Reg2 aClient *c2ptr;
++    Reg3 Link *lp;
++    char buf[BUFSIZE];
++    int flag, idx, len, mlen;
++
++    mlen = strlen(me.name) + 10 + strlen(sptr->name);
++    len = strlen(chptr->chname) + 5 + strlen(parv[3]);;
++    strcpy(buf, chptr->chname);
++    strcat(buf, " ");
++    strcpy(buf, parv[3]);
++    strcat(buf, " :");
++    idx = len;
++
++    for (lp = chptr->members; lp; lp = lp->next)
++    {
++      c2ptr = lp->value.cptr;
++
++      if (lp->flags & CHFL_CHANOP)
++      {
++        strcat(buf, c2ptr->name);
++        strcat(buf, " ");
++        idx += strlen(c2ptr->name) + 1;
++        flag = 1;
++      }
++
++      if (mlen + idx + NICKLEN + 5 > BUFSIZE)
++      {
++        sendto_one(sptr, rpl_str(RPL_CKBAN_OPS), me.name, parv[0], buf);
++
++        strcpy(buf, chptr->chname);
++        strcat(buf, " ");
++        strcpy(buf, parv[3]);
++        strcat(buf, " :");
++        idx = len;
++        flag = 0;
++      }
++    }
++    if (flag)
++      sendto_one(sptr, rpl_str(RPL_CKBAN_OPS), me.name, parv[0], buf);
++
 +    sendto_one(sptr, rpl_str(RPL_CKBAN_END), me.name, parv[0], parv[1], parv[2], parv[3]);
-+  else
++  } else
 +    sendto_one(sptr, rpl_str(RPL_CKBAN_NOBAN), me.name, parv[0], parv[1], parv[2], parv[3]);
 +
 +}
@@ -162,7 +224,7 @@ Index: ircd/channel.c
    Reg1 Link *lp;
 Index: ircd/parse.c
 ===================================================================
---- ircd/parse.c	(revision 471)
+--- ircd/parse.c	(revision 474)
 +++ ircd/parse.c	(working copy)
 @@ -138,6 +138,7 @@
      {CLASS_WATCH,      MSG_WATCH,      TOK_WATCH,      m_watch,        0, 1,   MFLG_SLOW,      0L},
@@ -174,9 +236,9 @@ Index: ircd/parse.c
  }                                                                                                                                   ;
 Index: ircd/s_err.c
 ===================================================================
---- ircd/s_err.c	(revision 471)
+--- ircd/s_err.c	(revision 476)
 +++ ircd/s_err.c	(working copy)
-@@ -713,7 +713,23 @@
+@@ -713,7 +713,25 @@
  /* 280 */
      {RPL_GLIST, "%s@%s " TIME_T_FMT " %s%s (expires at %s)"},
  /* 281 */
@@ -195,9 +257,11 @@ Index: ircd/s_err.c
 +/* 287 */
 +    {RPL_CKBAN_NOBAN, "%s %s %s"},
 +/* 288 */
-+    {RPL_CKBAN_BAN, "%s %s %s %s " TIME_T_FMT " %s"},
-+/* 288 */
++    {RPL_CKBAN_BAN, "%s %s %s %s %d " TIME_T_FMT " %s"},
++/* 289 */
++    {RPL_CKBAN_OPS, "%s"},
++/* 290 */
 +    {RPL_CKBAN_END, "%s %s %s"}
  };
  
-
+ 
