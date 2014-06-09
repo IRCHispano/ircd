@@ -1,3 +1,7 @@
+* 2014/06/09  zoltan@irc-dev.net (u2.10.H.10.217)                    FIX
+------------------------------------------------------------------------
+  Comprobador de -lrt para el check_gettime() en el Configure.
+
 * 2014/05/10  zoltan@irc-dev.net (u2.10.H.10.216)                    FIX
 ------------------------------------------------------------------------
   Fixes en modo WEBCHAT FLASH cuando el usuario es de IRC.
