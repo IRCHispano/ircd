@@ -904,7 +904,7 @@ void send_features(aClient *sptr, char *nick)
 {
   char buf[500];
 
-  sprintf(buf, "CHANMODES=b,k,l,imnpst");
+  sprintf(buf, "CHANMODES=b,k,l,imnpstcRMCNuz");
   strcat(buf, "crRMCNuz");
   sprintf(buf, "%s CHANTYPES=#&+ KICKLEN=%d MAXBANS=%d", buf, KICKLEN, MAXBANS);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
@@ -918,7 +918,7 @@ void send_features(aClient *sptr, char *nick)
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
   sprintf(buf,
-      "USERIP CPRIVMSG CNOTICE CHARMAPPING=rfc1459 NETWORK=%s", network ? network : NETWORK_NAME);
+      "USERIP CPRIVMSG CNOTICE CASEMAPPING=rfc1459 NETWORK=%s", network ? network : NETWORK_NAME);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
   sprintf(buf, "MAP SAFELIST QUITLEN=%d AWAYLEN=%d", QUITLEN, AWAYLEN);
@@ -955,7 +955,6 @@ static int user_hmodes[] = {
   HMODE_HIDDEN,         'x',
   HMODE_HIDDENVIEWER,   'X',
   HMODE_SERVICESBOT,    'B',
-  HMODE_NICKSUSPENDED,  'S',
   HMODE_MSGONLYREG,     'R',
   HMODE_STRIPCOLOR,     'c',
   HMODE_NOCHAN,         'n',
