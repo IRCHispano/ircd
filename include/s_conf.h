@@ -57,6 +57,7 @@
 #define IsConfListenPort(x) ((x)->status & CONF_LISTEN_PORT)
 #define IsConfClient(x)     ((x)->status & CONF_CLIENT)
 
+#define IRCDCONF_DELIMITER	':'
 
 /*=============================================================================
  * Structures

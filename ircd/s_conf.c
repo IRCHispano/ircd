@@ -109,12 +109,12 @@ char *getfield(char *newline, char fs)
 
   end = field = gfline;
 
-  if (fs != ':')
+  if (fs != IRCDCONF_DELIMITER)
   {
     if (*end == fs)
       ++end;
     else
-      fs = ':';
+      fs = IRCDCONF_DELIMITER;
   }
   do
   {
@@ -128,7 +128,7 @@ char *getfield(char *newline, char fs)
       ++end;
     }
   }
-  while (end && fs != ':' && *++end != ':' && *end != '\n');
+  while (end && fs != IRCDCONF_DELIMITER && *++end != IRCDCONF_DELIMITER && *end != '\n');
 
   if (end == NULL)
   {
@@ -912,7 +912,7 @@ int initconf(int opt)
         line[0] == ' ' || line[0] == '\t')
       continue;
     /* Could we test if it's conf line at all?      -Vesa */
-    if (line[1] != ':')
+    if (line[1] != IRCDCONF_DELIMITER)
     {
       Debug((DEBUG_ERROR, "Bad config line: %s", line));
       continue;
@@ -921,7 +921,7 @@ int initconf(int opt)
       free_conf(aconf);
     aconf = make_conf();
 
-    tmp = getfield(line, ':');
+    tmp = getfield(line, IRCDCONF_DELIMITER);
     if (!tmp)
       continue;
     switch (*tmp)
@@ -1021,20 +1021,20 @@ int initconf(int opt)
 
     for (;;)                    /* Fake loop, that I can use break here --msa */
     {
-      if ((tmp = getfield(NULL, ':')) == NULL)
+      if ((tmp = getfield(NULL, IRCDCONF_DELIMITER)) == NULL)
         break;
       DupString(aconf->host, tmp);
       if ((tmp = getfield(NULL, (aconf->status == CONF_KILL
-          || aconf->status == CONF_IPKILL) ? '"' : ':')) == NULL)
+          || aconf->status == CONF_IPKILL) ? '"' : IRCDCONF_DELIMITER)) == NULL)
         break;
       DupString(aconf->passwd, tmp);
-      if ((tmp = getfield(NULL, ':')) == NULL)
+      if ((tmp = getfield(NULL, IRCDCONF_DELIMITER)) == NULL)
         break;
       DupString(aconf->name, tmp);
-      if ((tmp = getfield(NULL, ':')) == NULL)
+      if ((tmp = getfield(NULL, IRCDCONF_DELIMITER)) == NULL)
         break;
       aconf->port = atoi(tmp);
-      tmp = getfield(NULL, ':');
+      tmp = getfield(NULL, IRCDCONF_DELIMITER);
       if (aconf->status & CONF_ME)
       {
         server_port = aconf->port;
