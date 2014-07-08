@@ -221,7 +221,7 @@ static aConfItem *chk_initconf(void)
         *line == ' ' || *line == '\t')
       continue;
 
-    if (line[1] != ':')
+    if (line[1] != IRCDCONF_DELIMITER)
     {
       fprintf(stderr, "ERROR: Bad config line (%s)\n", line);
       continue;
@@ -543,7 +543,7 @@ static char *getfield(char *newline)
     return (NULL);
 
   field = line;
-  if ((end = strchr(line, ':')) == NULL)
+  if ((end = strchr(line, IRCDCONF_DELIMITER)) == NULL)
   {
     line = NULL;
     if ((end = strchr(field, '\n')) == NULL)
