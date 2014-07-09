@@ -1,0 +1,1455 @@
+Index: doc/ejemplo.conf
+===================================================================
+--- doc/ejemplo.conf	(revision 484)
++++ doc/ejemplo.conf	(working copy)
+@@ -30,7 +30,7 @@
+ # servidor es algo meramente descriptivo.
+ 
+ # Empezaremos con la informacion del propio servidor
+-# M:<nombre servidor>:<ip virtual>:<descripcion>:<puerto>:<numeric>
++# M%<nombre servidor>%<ip virtual>%<descripcion>%<puerto>%<numeric>
+ #
+ # El <nombre servidor> ya lo hemos visto antes: Un nombre descriptivo
+ # en la red para nuestro servidor.
+@@ -45,16 +45,16 @@
+ # debe haber otros con el mismo, y su valor no se puede actualizar 
+ # con un REHASH.
+ 
+-# M:devel.irc-hispano.org::Servidor de Desarrollo:4400:1
+-M:devel.irc-hispano.org::Servidor de Desarrollo:4400:1 
++# M%devel.irc-hispano.org%%Servidor de Desarrollo%4400%1
++M%devel.irc-hispano.org%%Servidor de Desarrollo%4400%1 
+ 
+ #
+ # Podemos ver la informacion administrativa de un servidor con el
+ # comando ADMIN. Por convenio, se suele poner siempre al menos una
+ # direccion de e-mail para contactar con el administrador.
+-# A:<linea 1>:<linea 2>:<linea 3>
++# A%<linea 1>%<linea 2>%<linea 3>
+ 
+-A:Servidor de Desarrollo:IRC-Hispano Devel Team:Contacto <devel@irc-dev.net>
++A%Servidor de Desarrollo%IRC-Hispano Devel Team%Contacto <devel@irc-dev.net>
+ 
+ #
+ # Todas las conexiones de un servidor estan asociadas con una cierta "clase
+@@ -63,23 +63,23 @@
+ #
+ # Estas lineas Y se dan a modo de ejemplo pues, en la practica, se pueden
+ # usar los numeros de clase que a uno le de la gana :)
+-# Y:<clase>:<freq ping>:<freq conex>:<max links>:<tamaño sendq>
++# Y%<clase>%<freq ping>%<freq conex>%<max links>%<tamaño sendq>
+ 
+ # Clases de servidores: 90 = todos los enlaces a los que no conectaras;
+ # igual en las clases 80 y/o 70.
+ # 50 = servidor de clientes (leaf). Solo usado si tu servidor es un hub.
+ 
+-Y:90:90:300:1:1700000
+-Y:80:90:300:1:1700000
+-Y:70:90:300:1:1700000
+-Y:50:90:300:10:1700000
++Y%90%90%300%1%1700000
++Y%80%90%300%1%1700000
++Y%70%90%300%1%1700000
++Y%50%90%300%10%1700000
+ 
+ # Clases de clientes. 10 = locales; 2 = todos los .net y .com que no 
+ # esten en Europa; 1 = todos los demas.
+ 
+-Y:10:90:0:100:160000
+-Y:2:90:0:5:80000
+-Y:1:90:0:400:160000
++Y%10%90%0%100%160000
++Y%2%90%0%5%80000
++Y%1%90%0%400%160000
+ 
+ # Esos numeros de clase, son "historicos", y como dijimos antes, se pueden
+ # usar otros sin problema.
+@@ -90,18 +90,18 @@
+ # direcciones, y especificando una clave opcional.
+ #
+ # Con un uso inteligente de las clases y el campo de <max links> de
+-# las lineas Y: se puede permitir entrar a un dominio especifico, pero
++# las lineas Y% se puede permitir entrar a un dominio especifico, pero
+ # rechazar el resto de dominios del mismo nivel, como si fuera creando
+-# una especie de linea K: "inversa".
+-# I:<Mascara IP o indicacion de forzar a resolver>:<password opcional>:<hostmask>::<clase>
++# una especie de linea K% "inversa".
++# I%<Mascara IP o indicacion de forzar a resolver>%<password opcional>%<hostmask>%%<clase>
+ 
+ # Para cada cliente que conecta, su IP es conocida, y se hace una
+ # consulta de dns inverso a dicha IP para obtener el/los(todos) hostname(s).
+ # Cada hostname que pertenece a esa IP se compara con <hostmask>, y
+-# la linea I: se usa cuando cualquiera de ellos encaja; el cliente
++# la linea I% se usa cuando cualquiera de ellos encaja; el cliente
+ # entonces se mostrara con ese hostname en concreto. Si ninguno de
+ # los hostnames encajan, entonces la IP se compara contra el campo
+-# <Mascara IP...>, y si esta concuerda, la linea I: se usa a pesar
++# <Mascara IP...>, y si esta concuerda, la linea I% se usa a pesar
+ # de todo y el cliente mostrara el primer (principal) host si existe.
+ # Si la IP no resuelve, el cliente mostrara la notacion decimal de la IP.
+ # Hay un caso especial para los sockets de los dominios UNIX y las
+@@ -113,9 +113,9 @@
+ # 002 Your host is 2.undernet.org[jolan.ppro], running version ...
+ # Entonces, lo que se usa para comparar es "jolan.ppro".
+ # Por lo tanto, los sockets de dominio unix, y las conexiones al
+-# localhost, tendrian que satisfacer esta linea I:
+-# I:jolan.ppro::foobar::1
+-# Por ultimo, las lineas I: con los campos <Mascara IP....> o 
++# localhost, tendrian que satisfacer esta linea I%
++# I%jolan.ppro%%foobar%%1
++# Por ultimo, las lineas I% con los campos <Mascara IP....> o 
+ # <hostmask> vacios, son ignoradas.
+ 
+ # Esta es la configuracion basica que deja entrar a cualquier IP al
+@@ -124,34 +124,34 @@
+ # IP solo son posibles desde hosts que tengan mapeos DNS directos
+ # e inversos validos.
+ 
+-I:*@*:2:Unresolved::1
+-I:Resolved::*@*::1
++I%*@*%2%Unresolved%%1
++I%Resolved%%*@*%%1
+ 
+ # Si no deseas en el servidor usuarios sin DNS inverso, simplemente
+ # usa esta linea:
+-# I:NotMatchingCrap::*@*::1
++# I%NotMatchingCrap%%*@*%%1
+ 
+ # Aqui, se dejaria entrar solo a usuarios de telefonica:
+-I:Resolved::*@*.ttd.es::2
+-I:Resolved::*@*.telefonica-data.net::2
+-I:Resolved::*@*.rima-tde.net::2
++I%Resolved%%*@*.ttd.es%%2
++I%Resolved%%*@*.telefonica-data.net%%2
++I%Resolved%%*@*.rima-tde.net%%2
+ 
+ # Otro ejemplo
+ # Ahora se listan los dominios .com/.net que se desean permitir...
+ # Esto, es menos trabajoso que hacerlo de la otra manera: poniendo
+-# lineas K: para cada ISP de los USA.
++# lineas K% para cada ISP de los USA.
+ 
+-I:Resolved::*@*.wirehub.net::1
+-I:Resolved::*@*.planete.net::1
+-I:Resolved::*@*.ivg.com::1
+-I:Resolved::*@*.ib.com::1
+-I:Resolved::*@*.ibm.net::1
+-I:Resolved::*@*.hydro.com::1
+-I:Resolved::*@*.NL.net::1
++I%Resolved%%*@*.wirehub.net%%1
++I%Resolved%%*@*.planete.net%%1
++I%Resolved%%*@*.ivg.com%%1
++I%Resolved%%*@*.ib.com%%1
++I%Resolved%%*@*.ibm.net%%1
++I%Resolved%%*@*.hydro.com%%1
++I%Resolved%%*@*.NL.net%%1
+ 
+ # Nosotros mismos. Esto nos asegura poder entrar, independientemente
+ # de lo lleno que este el servidor
+-I:*@213.97.*::*@*.ttd.es::10
++I%*@213.97.*%%*@*.ttd.es%%10
+ 
+ # Se puede poner un numero (0..9) en el campo del password, lo que
+ # hara que el ircd solo acepte un cliente cuando el numero total de
+@@ -159,19 +159,19 @@
+ # El siguiente ejemplo aceptaria al menos una conexion por IP desde
+ # "*.ttd.es" y al menos dos conexiones desde cuentas de acceso
+ # a internet por modem que tengan "*.dial??.*" como hostmask:
+-# I:Resolved:1:*@*.ttd.es::1
+-# I:Resolved:2:*@*.dial??.*::1
++# I%Resolved%1%*@*.ttd.es%%1
++# I%Resolved%2%*@*.dial??.*%%1
+ 
+ # Hay que tener en cuenta que cuando el ircd lee las lineas de configuracion
+ # lo hace en orden inverso a como estan listadas aqui. Por tanto, en
+-# las lineas I: se deben poner primero las mas generales, y poner al
++# las lineas I% se deben poner primero las mas generales, y poner al
+ # final las mas especificas.
+ 
+ #
+ # Es posible mostrar un MOTD (Message of the Day), a un cliente que
+ # conecta dependiendo de su origen.
+-# T:<hostmask>:<path al fichero del motd>
+-# T:*.ttd.es:/usr/ircd/motd.ttd.migracion.txt
++# T%<hostmask>%<path al fichero del motd>
++# T%*.ttd.es%/usr/ircd/motd.ttd.migracion.txt
+ 
+ #
+ # Una de las caracteristicas mas atractivas del IRCd es "Uworld", un
+@@ -187,63 +187,63 @@
+ # las mismas en cada servidor, o los resultados seran impredecibles;
+ #
+ # Hay que destacar, que desde la versión u2.10.H.07.49, se incluye
+-# soporte de U:Lines por BDD, esto se hace en la tabla 'z', con
++# soporte de U%Lines por BDD, esto se hace en la tabla 'z', con
+ # registros formato 'u:nodo', con un valor cualquiera. Por ejemplo:
+ # DB * 1 z u:deep.space *
+ #
+ # Más información sobre este tema en http://www.argo.es/~jcea/irc/esnet3.htm#bdd
+ #
+ # Desde u2.10.H.08.32 se elimina el soporte de jupes de nicks por
+-# lineas U:, ya que es posible 'forbidearlos' mediante un registro
++# lineas U%, ya que es posible 'forbidearlos' mediante un registro
+ # en la BDD.
+ 
+ 
+-# U:<nombre servidor>::*
+-# U:deep.space::*
++# U%<nombre servidor>%%*
++# U%deep.space%%*
+ 
+ #
+ # Cuando se tiene un servidor corriendo, normalmente hay personas o
+ # rangos de usuarios a los que no se quiere permitir acceso al servidor.
+ #
+-# Con este proposito, el ircd tiene "kill lines" (lineas K:).
+-# K:<host/mascara IP>:"<razon opcional>":<mascara username>
++# Con este proposito, el ircd tiene "kill lines" (lineas K%).
++# K%<host/mascara IP>%"<razon opcional>"%<mascara username>
+ #
+ # Es posible, asimismo, usar un fichero como el comentario para el ban.
+ # Se entiende por ban el hecho de no poder entrar al servidor, es analogo
+ # a la terminologia "ban de un canal".
+-# K:<host/mascara IP>:!<path al fichero>:<mascara username>
++# K%<host/mascara IP>%!<path al fichero>%<mascara username>
+ #
+ # El motivo por defecto es "You are banned from this server"
+-# Notese que las lineas K: son locales al servidor; si se banea a una
++# Notese que las lineas K% son locales al servidor; si se banea a una
+ # persona o a un dominio entero de un servidor, aun pueden entrar al
+-# IRC por otro servidor que no les haya puesto (aun?) una linea K:
++# IRC por otro servidor que no les haya puesto (aun?) una linea K%
+ 
+ # Ejemplos...
+ 
+ # Con un simple comentario, usando comillas:
+-# K:*.ono.com:Por favor, use el servidor de su ISP:*
+-# K:*.arrakis.es:Por favor, use el servidor de su ISP:*
++# K%*.ono.com%Por favor, use el servidor de su ISP%*
++# K%*.arrakis.es%Por favor, use el servidor de su ISP%*
+ 
+ # Con un fichero, anteponiendo un "!" antes del nombre del fichero.
+ # El fichero puede contener, por ejemplo, una razon, un enlace a las
+ # normas del servidor y una direccion de contacto.
+-# K:*.jp:!kline/openproxy.txt:*luser
++# K%*.jp%!kline/openproxy.txt%*luser
+ 
+ #
+ # Las "kill lines" basadas en IP, se designan con una "k" minuscula.
+-# El uso es el mismo que el de las K: con la diferencia de que se
++# El uso es el mismo que el de las K% con la diferencia de que se
+ # aplican a todos los host, incluso si una IP tiene un dns inverso
+ # correcto.
+-# k:192.168.*:!klines/intranet.txt:*
++# k%192.168.*%!klines/intranet.txt%*
+ 
+ 
+ #
+ # Si deseas dar acceso a gente que tiene una kline, puedes utilizar
+-# las lineas E: ("Exception lines") que son excepciones a las prohibiciones
+-# de acceso de las lineas K: o las g-lines. Los campos son AND, han de cumplirse todas las
++# las lineas E% ("Exception lines") que son excepciones a las prohibiciones
++# de acceso de las lineas K% o las g-lines. Los campos son AND, han de cumplirse todas las
+ # condiciones para que el usuario pueda saltarse la k-line o g-line.
+ #
+-# E:<Mascara IP/host>:<clave opcional>:<mascara username>:<puerto opcional>
++# E%<Mascara IP/host>%<clave opcional>%<mascara username>%<puerto opcional>
+ #
+ # La mascara ip/host y la mascara username son campos obligatorios, e indica
+ # las mascaras que han de tener los usuarios con kline que queremos que entren
+@@ -253,29 +253,29 @@
+ # el host y como valor el realname, el puerto y el password no se pueden
+ # configurar por BDD.
+ 
+-# E:*.arrakis.es::root:
+-# E:user243.dialup.ono.com::*:
++# E%*.arrakis.es%%root%
++# E%user243.dialup.ono.com%%*%
+ 
+ # La clave, de existir, es la que los usuarios tendran que especificar como clave
+ # del servidor para poder saltarse la k-line.
+ #
+-# E:*.ono.com:plisplas:*:
++# E%*.ono.com%plisplas%*%
+ 
+ # El puerto, de existir, es el puerto por el que tendran que conectar los usuarios 
+ # para poder saltarse la k-line. Tiene que existir el puerto que especificas (P-lines).
+ #
+-# E:192.168.0.15::*:6669
++# E%192.168.0.15%%*%6669
+ 
+ #
+ # Una forma mas flexible de restringir el acceso a tu servidor es
+ # usando las "lineas de restriccion". Estas le dicen al servidor
+ # que lanze un programa (externo), y dependiendo de su resultado, se
+ # deja entrar o no al cliente que intenta conectar. El programa debe
+-# devolver "Y" o "N <razon>" en stdout. El uso de las lineas R: se
++# devolver "Y" o "N <razon>" en stdout. El uso de las lineas R% se
+ # desaconseja y es casi inexistente. Necesita un define en tiempo de
+ # compilacion, consume CPU, y es probable que se elimine en futuras
+ # versiones del ircd.
+-# R:<host/mascara IP>:><nombre programa>:<mascara username>
++# R%<host/mascara IP>%><nombre programa>%<mascara username>
+ 
+ #
+ # Es probable que quieras que tu servidor se conecte a otros servidores
+@@ -283,7 +283,7 @@
+ # Los servidores de IRC se conectan unos a otros formando una red con
+ # topologia de estrella o arbol. No se permiten los bucles.
+ #
+-# En una red, se distinguen dos clases de servidores: "hub" y "leaf".
++# En una red, se distinguen dos clases de servidores% "hub" y "leaf".
+ # Los lead se conectan a los hub, y los hub se conectan entre ellos.
+ # Claro esta, muchos servidores no se pueden clasificar directamente
+ # en una de esas categorias. Existe un sistema predefinido de decision
+@@ -291,11 +291,11 @@
+ # permitir, cuales se dejan establecer a mano, y cuales denegar (a
+ # la fuerza).
+ #
+-# Las clases de conexion (lineas Y:) y las lineas de conexion (tambien
++# Las clases de conexion (lineas Y%) y las lineas de conexion (tambien
+ # conocidas como lineas C) definen a que servidores se puede conectar
+ # un servidor.
+ #
+-# C:<host remoto o IP>:<clave>:<nombre servidor remoto>:<puerto>:<clase>
++# C%<host remoto o IP>%<clave>%<nombre servidor remoto>%<puerto>%<clase>
+ #
+ # Si se desea usar ident, se ha de poner "username@" al nombre del host
+ # o la direccion IP (el primer campo).
+@@ -304,34 +304,34 @@
+ # el intervalo especificado en su clase Y correspondiente.
+ 
+ # Un ejemplo:
+-C:1.2.3.4:clave:test.devel.irc-hispano.org:4400:90
++C%1.2.3.4%clave%test.devel.irc-hispano.org%4400%90
+ 
+ # Si tu servidor arranca en una red mas grande, es probable que se te
+ # asignen uno o dos servidores a los que tu servidor se debe conectar.
+ # Si estos servidores a su vez se conectan a otros servidores que el
+ # tuyo (lo que es probable), necesitas definir el servidor al que te
+ # conectas con permiso para hacer de hub
+-# H:<mascara permitida>::<nombre servidor>
+-H:*.*::test.devel.irc-hispano.org
++# H%<mascara permitida>%%<nombre servidor>
++H%*.*%%test.devel.irc-hispano.org
+ 
+ #
+ # Por supuesto, tambien existe el caso contrario: obligar a un servidor
+ # a ser un leaf. Las lineas L siguen la ley de Murphy: si las usas, hay
+ # grandes probabilidades de que el enrutado falle.
+-# L:<mascara no permitida opcional>::<mascara server>:<max alcance opcional>
++# L%<mascara no permitida opcional>%%<mascara server>%<max alcance opcional>
+ # Por tanto, no se deben usar.
+ 
+ #
+ # Para un sistema de decision de enrutado avanzado y en tiempo real se
+-# pueden usar las lineas D: (del ingles Disallow, "no permitir"). Para
++# pueden usar las lineas D% (del ingles Disallow, "no permitir"). Para
+ # mas informacion, consultar el fichero doc/readme.crules.
+-# D:<mascara server a la que el ircd rehusara conectar>::<regla> 
+-# d:<mascara server a la que el ircd no autoconecctara>::<regla>
+-D:*.america.irc-hispano.org::connected(*.america.irc-hispano.org)
+-d:*.asia.irc-hispano.org::connected(taipei.asia.*)
++# D%<mascara server a la que el ircd rehusara conectar>%%<regla> 
++# d%<mascara server a la que el ircd no autoconecctara>%%<regla>
++D%*.america.irc-hispano.org%%connected(*.america.irc-hispano.org)
++d%*.asia.irc-hispano.org%%connected(taipei.asia.*)
+ 
+-# Para los servidores leaf, se recomienda esta linea d:
+-# d:*::directcon(*)
++# Para los servidores leaf, se recomienda esta linea d%
++# d%*%%directcon(*)
+ 
+ #
+ # Y llegamos a la parte de los "IRC Operatos" (IRCops). El estatus de
+@@ -350,24 +350,24 @@
+ # Dependiendo del make config, a los IRCops locales se les puede denegar
+ # o permitir el uso de REHASH, RESTART, DIE y GLINE (solo localmente).
+ # Los IRCops locales se denotan con una "o" minuscula.
+-# O:<host/mascara IP>:<clave encriptada>:<nick>::<clase>
+-# o:<host/mascara IP>:<clave encriptada>:<nick>::<clase>
++# O%<host/mascara IP>%<clave encriptada>%<nick>%%<clase>
++# o%<host/mascara IP>%<clave encriptada>%<nick>%%<clase>
+ 
+-O:*@*.ttd.es:VRKLDrQKn0jLs:nikolas::10
++O%*@*.ttd.es%VRKLDrQKn0jLs%nikolas%%10
+ 
+ # La clase de conexion es opcional, pero dejandolo vacio hace que las lineas
+-# O: se asocien con la clase 0, que normalmente solo acepta una conexion
++# O% se asocien con la clase 0, que normalmente solo acepta una conexion
+ # a la vez. Si se quiere que los usuarios que vayan a ser IRCops tengan
+ # mas de una conexion por linea O, usa una clase de conexion que permita
+ # mas de una conexion.
+ # Por ejemplo (usando la clase 10 como se muestra abajo):
+-# Y:10:90:0:100:160000
++# Y%10%90%0%100%160000
+ #
+ # En IRC-Hispano, con la presencia de la BDD y las ventajas que aporta, el
+ # uso de o-lines está en extincion.
+ 
+ 
+-# Usando las lineas de puerto (lineas P:) es posible especificar
++# Usando las lineas de puerto (lineas P%) es posible especificar
+ # puertos (tanto AF_UNIX como AF_INET) en los que el ircd escuchara
+ # conexiones.
+ # El puerto por convenio es el 6667, y se usan tambien, por convenio
+@@ -388,14 +388,14 @@
+ # para usar con stunnel y similares.
+ #
+ # La sintaxis es asi:
+-# P:<mascara del host o path>:<flag X(cookie) | flag S(ssl)>::<numero de puerto para el cliente>
++# P%<mascara del host o path>%<flag X(cookie) | flag S(ssl)>%%<numero de puerto para el cliente>
+ 
+-P::::6667
+-P::::6668
+-P::X::6666
+-P::S::6699
+-P:*.es:::6669
+-P:/tmp/.ircd:::7000
++P%%%%6667
++P%%%%6668
++P%%X%%6666
++P%%S%%6699
++P%*.es%%%6669
++P%/tmp/.ircd%%%7000
+ 
+ # En el path, se especifica donde se creara el socket UNIX de escucha del
+ # servidor.
+@@ -406,20 +406,20 @@
+ # These lines allow you to run a CGI:IRC client on your website without
+ # having to set clone exceptions for your websites hostname on your IRCd.
+ # CGI:IRC will send a WEBIRC command along with the clients hostname, ip and
+-# W:Line password. The password needs to be encryopted like O:line passwords.
++# W%Line password. The password needs to be encryopted like O%line passwords.
+ # When the IRCd recieves the command instead of using the hostname of the IRCd
+ # the hostname sent in WEBIRC will be set. All this is done before the client
+ # enters the network completly.
+ #
+-# W:<host/IP>:<pass>:*::
++# W%<host/IP>%<pass>%*%%
+ #
+-# W:134.23.11.11:FserWkqYujbRe:*::
++# W%134.23.11.11%FserWkqYujbRe%*%%
+ 
+ 
+ #
+ # Por ultimo, las lineas F, que es para configurar las propiedades de
+ # del negociado de los enlaces entre los servidores.
+-# F:<propiedades TX>:<propiedades RX>:<nombre servidor>
++# F%<propiedades TX>%<propiedades RX>%<nombre servidor>
+ # Puedes conseguir mas informacion sobre la negociacion en la siguiente web
+ # http://www.argo.es/~jcea/irc/negociacion.htm
+ #
+@@ -439,10 +439,10 @@
+ 
+ # Ejemplos:
+ # Activar ZLIB en el enlace con america.irc-hispano.org
+-# F:Z:Z:america.irc-hispano.org
++# F%Z%Z%america.irc-hispano.org
+ 
+ # Desactivar ZLIB en el enlace con black.hole
+-# F:z:z:black.hole
++# F%z%z%black.hole
+ 
+ # Y aqui termina el fichero de ejemplo de configuracion del ircd
+ # Si tienes dudas, vista http://www.irc-dev.net, o entra en el canal
+Index: ircd/support.c
+===================================================================
+--- ircd/support.c	(revision 484)
++++ ircd/support.c	(working copy)
+@@ -111,6 +111,24 @@
+   return (char *)ircd_ntoa(&cptr->ip);
+ }
+ 
++/* inet6ntoa - return the string notation of a given IPv6 address. */
++char *inet6ntoa(struct in6_addr in)
++{
++    static char buf[INET6_ADDRSTRLEN + 2];
++
++    buf[1] = '\0';
++    if (inet_ntop(AF_INET6, &in, buf + 1, sizeof(buf) - 1))
++    {
++	/* addresses should not start with a ':' character */
++	if (buf[1] == ':')
++	{
++	    buf[0] = '0';
++	    return buf;
++	}
++    }
++    return buf + 1;
++}
++
+ /*
+  * this new faster inet_ntoa was ripped from:
+  * From: Thomas Helvey <tomh@inxpress.net>
+Index: ircd/s_bsd.c
+===================================================================
+--- ircd/s_bsd.c	(revision 484)
++++ ircd/s_bsd.c	(working copy)
+@@ -112,7 +112,11 @@
+ aClient *loc_clients[MAXCONNECTIONS];
+ int highest_fd = 0, udpfd = -1, resfd = -1;
+ unsigned int readcalls = 0;
++#if defined(IPV6)
++static struct sockaddr_in6 mysk;
++#else
+ static struct sockaddr_in mysk;
++#endif
+ static void polludp();
+ 
+ static struct sockaddr *connect_inet(aConfItem *, aClient *, int *);
+@@ -126,8 +130,12 @@
+ #endif
+ static char readbuf[8192];
+ #if defined(VIRTUAL_HOST)
++#if defined(IPV6)
++struct sockaddr_in6 vserv;
++#else
+ struct sockaddr_in vserv;
+ #endif
++#endif
+ static int running_in_background;
+ 
+ #if defined(GODMODE)
+@@ -238,6 +246,14 @@
+  */
+ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
+ {
++#if defined(IPV6)
++  static struct sockaddr_in6 server;
++  int opt;
++  socklen_t len = sizeof(server);
++  char ipname[20];
++  char ipvirtual[20];
++
++#else
+   static struct sockaddr_in server;
+   struct in_addr addr4;
+   int ad[4], opt;
+@@ -260,6 +276,7 @@
+     sscanf(virtual, "%d.%d.%d.%d", &ad[0], &ad[1], &ad[2], &ad[3]);
+     sprintf_irc(ipvirtual, "%d.%d.%d.%d", ad[0], ad[1], ad[2], ad[3]);
+   }
++#endif /* IPV6 */
+   
+   if (cptr != &me)
+   {
+@@ -273,7 +290,11 @@
+    */
+   if (cptr->fd == -1)
+   {
++#if defined(IPV6)
++    cptr->fd = socket(AF_INET6, SOCK_STREAM, 0);
++#else
+     cptr->fd = socket(AF_INET, SOCK_STREAM, 0);
++#endif
+     if (cptr->fd < 0 && errno == EAGAIN)
+     {
+       sendto_ops("opening stream socket %s: No more sockets", cptr->name);
+@@ -301,6 +322,19 @@
+    */
+   if (port)
+   {
++#if defined(IPV6)
++    server.sin6_family = AF_INET6;
++#if !defined(VIRTUAL_HOST)
++    server.sin6_addr = in6addr_any;
++#else
++//    if(virtual && *virtual)
++//      server.sin6_addr.s6_addr = inet_pton(ipvirtual);
++//    else
++      server.sin6_addr = vserv.sin6_addr;
++#endif
++    server.sin6_port = htons(port);
++
++#else /* IPv4 */
+     server.sin_family = AF_INET;
+ #if !defined(VIRTUAL_HOST)
+     server.sin_addr.s_addr = INADDR_ANY;
+@@ -311,6 +345,8 @@
+       server.sin_addr = vserv.sin_addr;
+ #endif
+     server.sin_port = htons(port);
++#endif /* !IPV6 */
++
+     if (bind(cptr->fd, (struct sockaddr *)&server, sizeof(server)) == -1)
+     {
+       report_error("binding stream socket %s: %s", cptr);
+@@ -331,13 +367,22 @@
+   {
+     char buf[1024];
+ 
++#if defined(IPV6)
+     sprintf_irc(buf, rpl_str(RPL_MYPORTIS), PunteroACadena(me.name), "*",
++        ntohs(server.sin6_port));
++#else
++    sprintf_irc(buf, rpl_str(RPL_MYPORTIS), PunteroACadena(me.name), "*",
+         ntohs(server.sin_port));
++#endif
+     write(1, buf, strlen(buf));
+   }
+   if (cptr->fd > highest_fd)
+     highest_fd = cptr->fd;
+ 
++#if defined(IPV6)
++  inet_pton(AF_INET6, ipname, &(cptr->ip));
++  cptr->port = ntohs(server.sin6_port);
++#else
+   /* Pasamos de in_addr a irc_in_addr */
+   addr4.s_addr = inet_addr(ipname);
+   memset(&cptr->ip, 0, sizeof(struct irc_in_addr));
+@@ -346,6 +391,7 @@
+   cptr->ip.in6_16[7] = htons(ntohl(addr4.s_addr) & 65535);
+ 
+   cptr->port = ntohs(server.sin_port);
++#endif
+   listen(cptr->fd, 128);        /* Use listen port backlog of 128 */
+   loc_clients[cptr->fd] = cptr;
+ 
+@@ -558,8 +604,13 @@
+  */
+ static int check_init(aClient *cptr, char *sockn)
+ {
++#if defined(IPV6)
++  struct sockaddr_in6 sk;
++  socklen_t len = sizeof(struct sockaddr_in6);
++#else
+   struct sockaddr_in sk;
+   socklen_t len = sizeof(struct sockaddr_in);
++#endif
+   sockn[HOSTLEN] = 0;
+ 
+ #if defined(UNIXPORT)
+@@ -575,7 +626,11 @@
+   if (isatty(cptr->fd))
+   {
+     strncpy(sockn, me.name, HOSTLEN);
++#if defined(IPV6)
++    memset(&sk, 0, sizeof(struct sockaddr_in6));
++#else
+     memset(&sk, 0, sizeof(struct sockaddr_in));
++#endif
+   }
+   else if (getpeername(cptr->fd, (struct sockaddr *)&sk, &len) == -1)
+   {
+@@ -588,6 +643,16 @@
+     strncpy(sockn, PunteroACadena(cptr->sockhost), HOSTLEN);
+     get_sockhost(cptr, sockn);
+   } else {
++#if defined(IPV6)
++   inet_ntop(AF_INET6, &sk.sin6_addr, sockn, HOSTLEN);
++   if (IN6_IS_ADDR_LOOPBACK(&sk.sin6_addr))
++   {
++     cptr->hostp = NULL;
++     strncpy(sockn, me.name, HOSTLEN);
++   }
++   memcpy(&cptr->ip, &sk.sin6_addr, sizeof(struct in6_addr));
++   cptr->port = ntohs(sk.sin6_port);
++#else
+     strcpy(sockn, inetntoa(sk.sin_addr));
+ 
+     if (inet_netof(sk.sin_addr) == IN_LOOPBACKNET)
+@@ -601,9 +666,14 @@
+     cptr->ip.in6_16[5] = htons(65535);
+     cptr->ip.in6_16[6] = htons(ntohl(sk.sin_addr.s_addr) >> 16);
+     cptr->ip.in6_16[7] = htons(ntohl(sk.sin_addr.s_addr) & 65535);
++#endif
+   }
+ 
++#if defined(IPV6)
++  cptr->port = ntohs(sk.sin6_port);
++#else
+   cptr->port = ntohs(sk.sin_port);
++#endif
+ 
+   return 0;
+ }
+@@ -624,10 +694,12 @@
+   Reg2 struct hostent *hp = NULL;
+   Reg3 int i;
+   enum AuthorizationCheckResult acr;
++#if !defined(IPV6)
+   struct in_addr addr4;
+ 
+   /* Pasamos de irc_in_addr a in_addr */
+   addr4.s_addr = (cptr->ip.in6_16[6] | cptr->ip.in6_16[7] << 16);
++#endif
+ 
+   ClearAccess(cptr);
+   Debug((DEBUG_DNS, "ch_cl: check access for %s[%s]",
+@@ -645,7 +717,11 @@
+   if (hp)
+   {
+     for (i = 0; hp->h_addr_list[i]; i++)
++#if defined(IPV6)
++      if (!memcmp(hp->h_addr_list[i], &cptr->ip, sizeof(struct in6_addr)))
++#else
+       if (!memcmp(hp->h_addr_list[i], &addr4, sizeof(struct in_addr)))
++#endif
+         break;
+     if (!hp->h_addr_list[i])
+     {
+@@ -742,8 +818,12 @@
+ 
+   Debug((DEBUG_DNS, "ch_cl: access ok: %s[%s]", cptr->name, sockname));
+ 
++#if defined(IPV6)
++  if (irc_in_addr_is_loopback(&cptr->ip) || IsUnixSocket(cptr))
++#else
+   if (inet_netof(addr4) == IN_LOOPBACKNET || IsUnixSocket(cptr) ||
+       inet_netof(addr4) == inet_netof(mysk.sin_addr))
++#endif
+   {
+     ircstp->is_loc++;
+   }
+@@ -775,10 +855,12 @@
+   char abuff[HOSTLEN + USERLEN + 2];
+   char sockname[HOSTLEN + 1], fullname[HOSTLEN + 1];
+   int i;
++#if !defined(IPV6)
+   struct in_addr addr4;
+ 
+   /* Pasamos de irc_in_addr a in_addr */
+   addr4.s_addr = (cptr->ip.in6_16[6] | cptr->ip.in6_16[7] << 16);
++#endif
+ 
+   name = cptr->name;
+   Debug((DEBUG_DNS, "sv_cl: check access for %s[%s]", name,
+@@ -858,7 +940,11 @@
+   if (hp)
+   {
+     for (i = 0; hp->h_addr_list[i]; i++)
++#if defined(IPV6)
++      if (!memcmp(hp->h_addr_list[i], &cptr->ip, sizeof(struct in6_addr)))
++#else
+       if (!memcmp(hp->h_addr_list[i], &addr4, sizeof(struct in_addr)))
++#endif
+         break;
+     if (!hp->h_addr_list[i])
+     {
+@@ -914,9 +1000,15 @@
+   if (!hp)
+   {
+     if (!c_conf)
++#if defined(IPV6)
+       c_conf =
++          find_conf_ip(lp, (char *)&cptr->ip, PunteroACadena(cptr->username),
++          CFLAG);
++#else
++      c_conf =
+           find_conf_ip(lp, (char *)&addr4, PunteroACadena(cptr->username),
+           CFLAG);
++#endif
+   }
+   else
+     for (i = 0; hp->h_addr_list[i]; i++)
+@@ -947,8 +1039,13 @@
+   attach_conf(cptr, c_conf);
+   attach_confs(cptr, name, CONF_HUB | CONF_LEAF | CONF_UWORLD);
+ 
++#if defined(IPV6)
++  if ((!c_conf->ipnum.s6_addr) && !IsUnixSocket(cptr))
++    memcpy(&c_conf->ipnum, &cptr->ip, sizeof(struct in6_addr));
++#else
+   if ((c_conf->ipnum.s_addr == INADDR_NONE) && !IsUnixSocket(cptr))
+     memcpy(&c_conf->ipnum, &addr4, sizeof(struct in_addr));
++#endif
+   if (!IsUnixSocket(cptr))
+     get_sockhost(cptr, c_conf->host);
+ 
+@@ -1362,8 +1459,13 @@
+   else
+   {
+     Reg1 char *s, *t;
++#if defined(IPV6)
++    struct sockaddr_in6 addr;
++    socklen_t len = sizeof(struct sockaddr_in6);
++#else
+     struct sockaddr_in addr;
+     socklen_t len = sizeof(struct sockaddr_in);
++#endif
+ 
+     if (getpeername(fd, (struct sockaddr *)&addr, &len) == -1)
+     {
+@@ -1384,6 +1486,11 @@
+      * Copy ascii address to 'sockhost' just in case. Then we
+      * have something valid to put into error messages...
+      */
++#if defined(IPV6)
++    get_sockhost(acptr, inet6ntoa(addr.sin6_addr));
++    memcpy(&acptr->ip, &addr.sin6_addr, sizeof(struct in6_addr));
++    acptr->port = ntohs(addr.sin6_port);
++#else
+     get_sockhost(acptr, inetntoa(addr.sin_addr));
+ 
+     /* Pasamos de sockaddr_in a irc_in_addr */
+@@ -1391,7 +1498,9 @@
+     acptr->ip.in6_16[5] = htons(65535);
+     acptr->ip.in6_16[6] = htons(ntohl(addr.sin_addr.s_addr) >> 16);
+     acptr->ip.in6_16[7] = htons(ntohl(addr.sin_addr.s_addr) & 65535);
++
+     acptr->port = ntohs(addr.sin_port);
++#endif
+ 
+     /*
+      * Check that this socket (client) is allowed to accept
+@@ -1445,7 +1554,11 @@
+   lin.flags = ASYNC_CLIENT;
+   lin.value.cptr = acptr;
+ #if defined(NODNS)
++#if defined(IPV6)
++  if (IN6_IS_ADDR_LOOPBACK(&addr.sin_addr))
++#else
+   if (!strcmp("127.0.0.1", inetntoa(addr.sin_addr)))
++#endif
+   {
+     static struct hostent lhe = { "localhost", NULL, 0, 0, NULL };
+     acptr->hostp = &lhe;
+@@ -1453,7 +1566,11 @@
+   else
+   {
+ #endif
++#if defined(IPV6)
++    Debug((DEBUG_DNS, "lookup %s", ircd_ntoa(&acptr->ip)));
++#else
+     Debug((DEBUG_DNS, "lookup %s", inetntoa(addr.sin_addr)));
++#endif
+     acptr->hostp = gethost_byaddr(&acptr->ip, &lin);
+     if (!acptr->hostp)
+     {
+@@ -2225,8 +2342,13 @@
+   Reg3 char *s;
+   int errtmp, len;
+ 
++#if defined(IPV6)
+   Debug((DEBUG_NOTICE, "Connect to %s[%s] @%s",
++      aconf->name, aconf->host, inet6ntoa(aconf->ipnum)));
++#else
++  Debug((DEBUG_NOTICE, "Connect to %s[%s] @%s",
+       aconf->name, aconf->host, inetntoa(aconf->ipnum)));
++#endif
+ 
+   if ((c2ptr = FindClient(aconf->name)))
+   {
+@@ -2271,7 +2393,11 @@
+    * If we dont know the IP# for this host and itis a hostname and
+    * not a ip# string, then try and find the appropriate host record.
+    */
++#if defined(IPV6)
++  if ((!aconf->ipnum.s6_addr)
++#else
+   if ((!aconf->ipnum.s_addr)
++#endif
+ #if defined(UNIXPORT)
+       && ((aconf->host[2]) != '/')  /* needed for Unix domain -- dl */
+ #endif
+@@ -2285,6 +2411,18 @@
+     //nextdnscheck = 1;
+     s = strchr(aconf->host, '@');
+     s++;                        /* should NEVER be NULL */
++#if defined(IPV6)
++    if (!inet_pton(AF_INET6, s, aconf->ipnum.s6_addr))
++    {
++      aconf->ipnum = in6addr_any;
++      hp = gethost_byname(s, &lin);
++      Debug((DEBUG_NOTICE, "co_sv: hp %p ac %p na %s ho %s",
++          hp, aconf, aconf->name, s));
++      if (!hp)
++        return 0;
++      memcpy(&aconf->ipnum, hp->h_addr, sizeof(struct in6_addr));
++    }
++#else
+     if ((aconf->ipnum.s_addr = inet_addr(s)) == INADDR_NONE)
+     {
+       aconf->ipnum.s_addr = INADDR_ANY;
+@@ -2295,6 +2433,7 @@
+         return 0;
+       memcpy(&aconf->ipnum, hp->h_addr, sizeof(struct in_addr));
+     }
++#endif
+   }
+   cptr = make_client(NULL, STAT_UNKNOWN);
+   cptr->hostp = hp;
+@@ -2432,14 +2571,22 @@
+ 
+ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
+ {
++#if defined(IPV6)
++  static struct sockaddr_in6 server;
++#else
+   static struct sockaddr_in server;
++#endif
+   Reg3 struct hostent *hp;
+ 
+   /*
+    * Might as well get sockhost from here, the connection is attempted
+    * with it so if it fails its useless.
+    */
++#if defined(IPV6)
++  cptr->fd = socket(AF_INET6, SOCK_STREAM, 0);
++#else
+   cptr->fd = socket(AF_INET, SOCK_STREAM, 0);
++#endif
+   if (cptr->fd == -1 && errno == EAGAIN)
+   {
+     sendto_ops("opening stream socket to server %s: No more sockets",
+@@ -2456,8 +2603,17 @@
+     sendto_ops("No more connections allowed (%s)", cptr->name);
+     return NULL;
+   }
++#if defined(IPV6)
++  mysk.sin6_port = 0;
++  memset(&server, 0, sizeof(server));
++  server.sin6_family = AF_INET6;
++  get_sockhost(cptr, aconf->host);
++
++#if defined(VIRTUAL_HOST)
++  mysk.sin6_addr = vserv.sin6_addr;
++#endif
++#else
+   mysk.sin_port = 0;
+-
+   memset(&server, 0, sizeof(server));
+   server.sin_family = AF_INET;
+   get_sockhost(cptr, aconf->host);
+@@ -2465,6 +2621,7 @@
+ #if defined(VIRTUAL_HOST)
+   mysk.sin_addr = vserv.sin_addr;
+ #endif
++#endif
+ 
+   /*
+    * Bind to a local IP# (with unknown port - let unix decide) so
+@@ -2494,6 +2651,22 @@
+    * conf line, whether as a result of the hostname lookup or the ip#
+    * being present instead. If we dont know it, then the connect fails.
+    */
++#if defined(IPV6)
++//  if (isDigit(*aconf->host) && (aconf->ipnum.s6_addr == in6addr_none))
++  if (!inet_pton(AF_INET6, aconf->host, aconf->ipnum.s6_addr))
++  {
++    hp = cptr->hostp;
++    if (!hp)
++    {
++      Debug((DEBUG_FATAL, "%s: unknown host", aconf->host));
++      return NULL;
++    }
++    memcpy(&aconf->ipnum, hp->h_addr, sizeof(struct in6_addr));
++  }
++  memcpy(&server.sin6_addr, &aconf->ipnum, sizeof(struct in6_addr));
++  memcpy(&cptr->ip, &aconf->ipnum, sizeof(struct irc_in_addr));
++  server.sin6_port = htons(((aconf->port > 0) ? aconf->port : portnum));
++#else
+   if (isDigit(*aconf->host) && (aconf->ipnum.s_addr == INADDR_NONE))
+     aconf->ipnum.s_addr = inet_addr(aconf->host);
+   if (aconf->ipnum.s_addr == INADDR_NONE)
+@@ -2509,7 +2682,9 @@
+   memcpy(&server.sin_addr, &aconf->ipnum, sizeof(struct in_addr));
+   memcpy(&cptr->ip, &aconf->ipnum, sizeof(struct in_addr));
+   server.sin_port = htons(((aconf->port > 0) ? aconf->port : portnum));
+-  *lenp = sizeof(server);
++#endif
++ 
++ *lenp = sizeof(server);
+ 
+   CreateClientEvent(cptr);
+ 
+@@ -2573,8 +2748,13 @@
+    * Setup local socket structure to use for binding to.
+    */
+   memset(&mysk, 0, sizeof(mysk));
++#if defined(IPV6)
++  mysk.sin6_family = AF_INET6;
++  mysk.sin6_addr = in6addr_any;
++#else
+   mysk.sin_family = AF_INET;
+   mysk.sin_addr.s_addr = INADDR_ANY;
++#endif
+ 
+   if (!aconf || BadPtr(aconf->host))
+     return;
+@@ -2583,12 +2763,21 @@
+ 
+   if (!BadPtr(aconf->passwd) && 0 != strcmp(aconf->passwd, "*"))
+   {
++#if defined(IPV6)
++    if (!inet_pton(AF_INET6, aconf->passwd, mysk.sin6_addr.s6_addr))
++      mysk.sin6_addr = in6addr_any;
++#if defined(VIRTUAL_HOST)
++    memcpy(&vserv, &mysk, sizeof(struct sockaddr_in6));
++#endif
++
++#else
+     mysk.sin_addr.s_addr = inet_addr(aconf->passwd);
+     if (INADDR_NONE == mysk.sin_addr.s_addr)
+       mysk.sin_addr.s_addr = INADDR_ANY;
+ #if defined(VIRTUAL_HOST)
+     memcpy(&vserv, &mysk, sizeof(struct sockaddr_in));
+ #endif
++#endif
+   }
+   Debug((DEBUG_DEBUG, "local name is %s", get_client_name(&me, TRUE)));
+ }
+@@ -2598,6 +2787,25 @@
+  */
+ int setup_ping(void)
+ {
++#if defined(IPV6)
++  struct sockaddr_in6 from;
++  int on = 1;
++
++  memset(&from, 0, sizeof(from));
++#if defined(VIRTUAL_HOST)
++  from.sin6_addr = vserv.sin6_addr;
++#else
++  from.sin6_addr = in6addr_any;
++#endif
++  from.sin6_port = htons(atoi(UDP_PORT));
++  from.sin6_family = AF_INET6;
++
++  if ((udpfd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
++  {
++    Debug((DEBUG_ERROR, "socket udp : %s", strerror(errno)));
++    return -1;
++  }
++#else
+   struct sockaddr_in from;
+   int on = 1;
+ 
+@@ -2615,6 +2823,7 @@
+     Debug((DEBUG_ERROR, "socket udp : %s", strerror(errno)));
+     return -1;
+   }
++#endif
+   if (setsockopt(udpfd, SOL_SOCKET, SO_REUSEADDR,
+       (OPT_TYPE *)&on, sizeof(on)) == -1)
+   {
+@@ -2662,7 +2871,11 @@
+ static void polludp(void)
+ {
+   Reg1 char *s;
++#if defined(IPV6)
++  struct sockaddr_in6 from;
++#else
+   struct sockaddr_in from;
++#endif
+   int n;
+   socklen_t fromlen = sizeof(from);
+   static time_t last = 0;
+@@ -2768,7 +2981,11 @@
+       aconf = ln.value.aconf;
+       if (hp && aconf)
+       {
++#if defined(IPV6)
++        memcpy(&aconf->ipnum, hp->h_addr, sizeof(struct in6_addr));
++#else
+         memcpy(&aconf->ipnum, hp->h_addr, sizeof(struct in_addr));
++#endif
+         connect_server(aconf, NULL, hp);
+       }
+       else
+@@ -2780,7 +2997,11 @@
+       del_queries((char *)cptr);
+       if (hp)
+       {
++#if defined(IPV6)
++        memcpy(&cptr->ip, hp->h_addr, sizeof(struct in6_addr));
++#else
+         memcpy(&cptr->ip, hp->h_addr, sizeof(struct in_addr));
++#endif
+         if (ping_server(cptr) == -1)
+           end_ping(cptr);
+       }
+@@ -2794,7 +3015,11 @@
+     case ASYNC_CONF:
+       aconf = ln.value.aconf;
+       if (hp && aconf)
++#if defined(IPV6)
++        memcpy(&aconf->ipnum, hp->h_addr, sizeof(struct in6_addr));
++#else
+         memcpy(&aconf->ipnum, hp->h_addr, sizeof(struct in_addr));
++#endif
+       break;
+     default:
+       break;
+Index: ircd/s_ping.c
+===================================================================
+--- ircd/s_ping.c	(revision 484)
++++ ircd/s_ping.c	(working copy)
+@@ -102,16 +102,26 @@
+  */
+ int start_ping(aClient *cptr)
+ {
++#if defined(IPV6)
++  struct sockaddr_in6 remote_addr;
++#else
+   struct sockaddr_in remote_addr;
++#endif
+ 
+   Debug((DEBUG_NOTICE, "start_ping(%p) status %d", cptr, cptr->status));
+ 
+   if (!(cptr->acpt))
+     return -1;
+ 
++#if defined(IPV6)
++  memcpy(&remote_addr.sin6_addr, &cptr->ip, sizeof(struct in6_addr));
++  remote_addr.sin6_port = htons(cptr->port);
++  remote_addr.sin6_family = AF_INET6;
++#else
+   memcpy(&remote_addr.sin_addr, &cptr->ip, sizeof(struct in_addr));
+   remote_addr.sin_port = htons(cptr->port);
+   remote_addr.sin_family = AF_INET;
++#endif
+ 
+   if (MyUser(cptr->acpt) 
+ #if !defined(NO_PROTOCOL9)
+@@ -147,12 +157,23 @@
+  */
+ void send_ping(aClient *cptr)
+ {
++#if defined(IPV6)
++  struct sockaddr_in6 remote_addr;
++  char sockn[HOSTLEN];
++#else
+   struct sockaddr_in remote_addr;
++#endif
+   struct timeval tv;
+ 
++#if defined(IPV6)
++  memcpy(&remote_addr.sin6_addr, &cptr->ip, sizeof(struct in6_addr));
++  remote_addr.sin6_port = htons(cptr->port);
++  remote_addr.sin6_family = AF_INET6;
++#else
+   memcpy(&remote_addr.sin_addr, &cptr->ip, sizeof(struct in_addr));
+   remote_addr.sin_port = htons(cptr->port);
+   remote_addr.sin_family = AF_INET;
++#endif
+ 
+   gettimeofday(&tv, NULL);
+ #if defined(__sun__) || (__GLIBC__ >= 2) || defined(__NetBSD__)
+@@ -161,12 +182,22 @@
+   sprintf((char *)cptr->confs, " %10u%c%6u", tv.tv_sec, '\0', tv.tv_usec);
+ #endif
+ 
++#if defined(IPV6)
++  inet_ntop(AF_INET6, &remote_addr.sin6_addr, sockn, HOSTLEN);
+   Debug((DEBUG_SEND, "send_ping: sending [%s %s] to %s.%d on %d",
+       (char *)cptr->confs, (char *)cptr->confs + 12,
++      sockn, ntohs(remote_addr.sin6_port), cptr->fd));
++
++  if (sendto(cptr->fd, (char *)cptr->confs, 1024, 0,
++      (struct sockaddr *)&remote_addr, sizeof(struct sockaddr_in6)) != 1024)
++#else
++  Debug((DEBUG_SEND, "send_ping: sending [%s %s] to %s.%d on %d",
++      (char *)cptr->confs, (char *)cptr->confs + 12,
+       inetntoa(remote_addr.sin_addr), ntohs(remote_addr.sin_port), cptr->fd));
+ 
+   if (sendto(cptr->fd, (char *)cptr->confs, 1024, 0,
+       (struct sockaddr *)&remote_addr, sizeof(struct sockaddr_in)) != 1024)
++#endif
+   {
+ #if defined(DEBUGMODE)
+     int err = errno;
+@@ -207,16 +238,27 @@
+  */
+ void read_ping(aClient *cptr)
+ {
++#if defined(IPV6)
++  socklen_t addr_len = sizeof(struct sockaddr_in6);
++  struct sockaddr_in6 remote_addr;
++#else
+   socklen_t addr_len = sizeof(struct sockaddr_in);
+   struct sockaddr_in remote_addr;
++#endif
+   struct timeval tv;
+   int len;
+   unsigned long int pingtime;
+   char *s;
+ 
++#if defined(IPV6)
++  memcpy(&remote_addr.sin6_addr, &cptr->ip, sizeof(struct in6_addr));
++  remote_addr.sin6_port = htons(cptr->port);
++  remote_addr.sin6_family = AF_INET6;
++#else
+   memcpy(&remote_addr.sin_addr, &cptr->ip, sizeof(struct in_addr));
+   remote_addr.sin_port = htons(cptr->port);
+   remote_addr.sin_family = AF_INET;
++#endif
+ 
+   gettimeofday(&tv, NULL);
+ 
+@@ -272,12 +314,16 @@
+ 
+ int ping_server(aClient *cptr)
+ {
++#if defined(IPV6)
++  if ((!&cptr->ip)
++#else
+   struct in_addr addr4;
+ 
+   /* Pasamos de irc_in_addr a in_addr */
+   addr4.s_addr = (cptr->ip.in6_16[6] | cptr->ip.in6_16[7] << 16);
+ 
+   if ((!addr4.s_addr)
++#endif
+ #if defined(UNIXPORT)
+       && (cptr->sockhost && (strlen(cptr->sockhost) > 2)
+       && (cptr->sockhost[2]) != '/')
+@@ -285,6 +331,9 @@
+       )
+   {
+     struct hostent *hp;
++#if defined(IPV6)
++    struct in6_addr addr6tmp;
++#endif
+     char *s;
+     Link lin;
+ 
+@@ -298,6 +347,19 @@
+     s = strchr(PunteroACadena(cptr->sockhost), '@');
+     s++;                        /* should never be NULL;
+                                    cptr->sockhost is actually a conf->host */
++#if defined(IPV6)
++    memcpy(&addr6tmp, &cptr->ip, sizeof(struct in6_addr));
++    if (!inet_pton(AF_INET6, s, addr6tmp.s6_addr))
++    {
++      addr6tmp = in6addr_any;
++      hp = gethost_byname(s, &lin);
++      Debug((DEBUG_NOTICE, "ping_sv: hp %p ac %p ho %s", hp, cptr, s));
++      if (!hp)
++        return 0;
++      memcpy(&addr6tmp.s6_addr, hp->h_addr, sizeof(struct in6_addr));
++      memcpy(&cptr->ip, &addr6tmp, sizeof(struct irc_in_addr));
++    }
++#else
+     if ((addr4.s_addr = inet_addr(s)) == INADDR_NONE)
+     {
+       addr4.s_addr = INADDR_ANY;
+@@ -307,6 +369,7 @@
+         return 0;
+       memcpy(&addr4, hp->h_addr, sizeof(struct in_addr));
+     }
++#endif
+   }
+ 
+   /* TODO: Pasar de addr4 a cptr->ip */
+@@ -525,7 +588,11 @@
+   SlabStringAllocDup(&(cptr->sockhost), aconf->host, HOSTLEN);
+   cptr->acpt = sptr;
+   SetAskedPing(sptr);
++#if defined(IPV6)
++  memcpy(&cptr->ip, &aconf->ipnum, sizeof(struct in6_addr));
++#else
+   memcpy(&cptr->ip, &aconf->ipnum, sizeof(struct in_addr));
++#endif
+   SlabStringAllocDup(&(cptr->name), aconf->name, 0);
+   cptr->firsttime = 0;
+ 
+Index: ircd/ircd.c
+===================================================================
+--- ircd/ircd.c	(revision 484)
++++ ircd/ircd.c	(working copy)
+@@ -581,12 +581,21 @@
+               argv[0], p, h_errno);
+           return -1;
+         }
++#if defined(IPV6)
++        if (hep->h_addrtype == AF_INET6 && hep->h_addr_list[0] &&
++            !hep->h_addr_list[1])
++        {
++          memcpy(&vserv.sin6_addr, hep->h_addr_list[0], sizeof(struct in6_addr));
++          vserv.sin6_family = AF_INET6;
++        }
++#else
+         if (hep->h_addrtype == AF_INET && hep->h_addr_list[0] &&
+             !hep->h_addr_list[1])
+         {
+           memcpy(&vserv.sin_addr, hep->h_addr_list[0], sizeof(struct in_addr));
+           vserv.sin_family = AF_INET;
+         }
++#endif
+         else
+         {
+           fprintf(stderr, "%s: Error creating virtual host \"%s\": "
+Index: ircd/res.c
+===================================================================
+--- ircd/res.c	(revision 484)
++++ ircd/res.c	(working copy)
+@@ -1691,4 +1691,3 @@
+       me.name, RPL_STATSDEBUG, sptr->name, sm, im, nm);
+   return ts + sm + im + nm;
+ }
+-
+Index: ircd/s_user.c
+===================================================================
+--- ircd/s_user.c	(revision 484)
++++ ircd/s_user.c	(working copy)
+@@ -2513,7 +2513,9 @@
+     {
+       aConfItem *aconf2;
+       Reg1 Link *tmp, *tmp2;
++#if !defined(IPV6)
+       struct in_addr addr4;
++#endif
+ 
+       /*
+        * Desligamos las clases que tiene el usuario
+@@ -2535,9 +2537,13 @@
+       DupString(aconf2->name, sptr->name);
+       DupString(aconf2->host, PunteroACadena(sptr->sockhost));
+ 
++#if defined (IPV6)
++      memcmp(&aconf2->ipnum, &sptr->ip, sizeof(struct irc_in_addr));
++#else
+       /* Pasamos de irc_in_addr a in_addr */
+       addr4.s_addr = (sptr->ip.in6_16[6] | sptr->ip.in6_16[7] << 16);
+       aconf2->ipnum = addr4;
++#endif
+ 
+       aconf2->status = CONF_CLIENT;
+ 
+Index: ircd/s_conf.c
+===================================================================
+--- ircd/s_conf.c	(revision 484)
++++ ircd/s_conf.c	(working copy)
+@@ -296,7 +296,7 @@
+       {
+         for (i = highest_fd; i >= 0; i--)
+           if (loc_clients[i] && MyUser(loc_clients[i]) &&
+-              loc_clients[i]->ip.s_addr == cptr->ip.s_addr)
++              !irc_in_addr_cmp(loc_clients[i]->ip, cptr->ip))
+             return ACR_TOO_MANY_FROM_IP;  /* Already got one with that ip# */
+       }
+ #endif
+@@ -597,7 +597,11 @@
+       continue;
+     }
+     *s = '@';
++#if defined(IPV6)
++    if (!memcmp(&tmp->ipnum, ip, sizeof(struct in6_addr)))
++#else
+     if (!memcmp(&tmp->ipnum, ip, sizeof(struct in_addr)))
++#endif
+       return tmp;
+   }
+   return NULL;
+@@ -1254,7 +1258,20 @@
+   ln.value.aconf = aconf;
+   ln.flags = ASYNC_CONF;
+ 
++#if defined (IPV6)
+   if (isDigit(*s))
++    inet_pton(AF_INET6, s, aconf->ipnum.s6_addr);
++  else if ((hp = gethost_byname(s, &ln)))
++    memcpy(&(aconf->ipnum), hp->h_addr, sizeof(struct in6_addr));
++
++  if (!aconf->ipnum.s6_addr)
++    goto badlookup;
++  return 0;
++badlookup:
++  if (!aconf->ipnum.s6_addr)
++    memset(&aconf->ipnum, 0, sizeof(struct in6_addr));
++#else
++  if (isDigit(*s))
+     aconf->ipnum.s_addr = inet_addr(s);
+   else if ((hp = gethost_byname(s, &ln)))
+     memcpy(&(aconf->ipnum), hp->h_addr, sizeof(struct in_addr));
+@@ -1265,6 +1282,8 @@
+ badlookup:
+   if (aconf->ipnum.s_addr == INADDR_NONE)
+     memset(&aconf->ipnum, 0, sizeof(struct in_addr));
++#endif
++
+   Debug((DEBUG_ERROR, "Host/server name error: (%s) (%s)",
+       aconf->host, aconf->name));
+   return -1;
+Index: include/s_conf.h
+===================================================================
+--- include/s_conf.h	(revision 484)
++++ include/s_conf.h	(working copy)
+@@ -57,7 +57,11 @@
+ #define IsConfListenPort(x) ((x)->status & CONF_LISTEN_PORT)
+ #define IsConfClient(x)     ((x)->status & CONF_CLIENT)
+ 
++#if defined(IPV6)
++#define IRCDCONF_DELIMITER      '%'
++#else
+ #define IRCDCONF_DELIMITER	':'
++#endif
+ 
+ /*=============================================================================
+  * Structures
+@@ -66,7 +70,11 @@
+ struct ConfItem {
+   unsigned int status;          /* If CONF_ILLEGAL, delete when no clients */
+   unsigned int clients;         /* Number of *LOCAL* clients using this */
++#if defined(IPV6)
++  struct in6_addr ipnum;        /* ip number of host field */
++#else
+   struct in_addr ipnum;         /* ip number of host field */
++#endif
+   char *host;
+   char *passwd;
+   char *name;
+Index: include/res.h
+===================================================================
+--- include/res.h	(revision 484)
++++ include/res.h	(working copy)
+@@ -89,4 +89,12 @@
+ extern void event_expire_cache_callback(int fd, short event, struct event *ev);
+ extern void event_timeout_query_list_callback(int fd, short event, struct event *ev);
+ 
++#ifdef IPV6
++extern void sockaddr_to_irc(const struct sockaddr_in6 *v6, struct irc_sockaddr *irc);
++extern int sockaddr_from_irc(struct sockaddr_in6 *v6, const struct irc_sockaddr *irc, int compat_fd, int family);
++#else
++extern void sockaddr_to_irc(const struct sockaddr_in *v4, struct irc_sockaddr *irc);
++extern int sockaddr_from_irc(struct sockaddr_in *v4, const struct irc_sockaddr *irc, int compat_fd, int family);
++#endif
++
+ #endif /* RES_H */
+Index: include/IPcheck.h
+===================================================================
+--- include/IPcheck.h	(revision 484)
++++ include/IPcheck.h	(working copy)
+@@ -5,7 +5,7 @@
+  * Proto types
+  */
+ 
+-extern int IPcheck_local_connect(aClient *cptr);
++extern int IPcheck_local_connect();
+ extern void IPcheck_connect_fail(aClient *cptr);
+ extern void IPcheck_connect_succeeded(aClient *cptr);
+ extern int IPcheck_remote_connect(aClient *cptr, const char *hostname,
+Index: include/support.h
+===================================================================
+--- include/support.h	(revision 484)
++++ include/support.h	(working copy)
+@@ -15,8 +15,10 @@
+     __attribute__ ((format(printf, 1, 2)));
+ extern char *inetntoa(struct in_addr in);
+ extern char *ircd_ntoa_c(aClient *cptr);
++extern char *inet6ntoa(struct in6_addr in);
+ extern const char* ircd_ntoa(const struct irc_in_addr* addr);
+ extern const char* ircd_ntoa_r(char* buf, const struct irc_in_addr* addr);
++extern const struct irc_in_addr* ircd_ntop(char *host);
+ #define ircd_aton(ADDR, STR) ipmask_parse((STR), (ADDR), NULL)
+ extern int ipmask_parse(const char *in, struct irc_in_addr *mask, unsigned char *bits_ptr);
+ extern int check_if_ipmask(const char *mask);
+Index: include/s_bsd.h
+===================================================================
+--- include/s_bsd.h	(revision 484)
++++ include/s_bsd.h	(working copy)
+@@ -222,8 +222,12 @@
+ extern unsigned int readcalls;
+ extern aClient *loc_clients[MAXCONNECTIONS];
+ #if defined(VIRTUAL_HOST)
++#if defined(IPV6)
++extern struct sockaddr_in6 vserv;
++#else
+ extern struct sockaddr_in vserv;
+ #endif
++#endif
+ 
+ /* Bits de los modos hispano */
+ #define HMODE_NICKREGISTERED          0x00000001  /* Nick is registered (HISPANO/ESNET) */
