@@ -1,0 +1,27 @@
+RELACION DE PARCHES
+-------------------
+
+ * checkban
+   Implementa el comando checkban que indica si un usuario esta baneado
+   en un canal y devuelve lista de @ en el canal. Usado en Chathispano en
+   el servidor del bot cliente [Ayuda].
+
+ * IPv6
+   Agrega soporte de IPv6. En el ircd.conf se delimitan los parametros con
+   el caracter % en vez de :
+   Es un parche beta, esta por pulir.
+   Cosas pendientes por realizar:
+       - Cambiar mensaje de tope de clones.
+       - Adaptar en el campo host/ip de lineas de ircd.conf con
+         soporte CIDR.
+       - Comprobar que se glinea bien tanto IPv4 como IPv6.
+       - Comprobar que se chequea en el ircd.conf ips de IPv6 y IPv4.
+       - Ver que no haya que poner :ffff: para especificar ips de IPv4
+         en los link, olines, etc...
+       - Comprobar que se banea bien tanto IPv4 como IPv6.
+       - Pendiente de adaptar VIRTUAL_HOST.
+
+ * modoX-full
+   Permite que un usuario con +X recibir join, part, quit, etc de un canal
+   con el host de los usuarios en vez del vhost. Usado en Chathispano en
+   servidores de bot cliente como GarbageCollector o [Ayuda].
