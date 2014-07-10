@@ -25,3 +25,8 @@ RELACION DE PARCHES
    Permite que un usuario con +X recibir join, part, quit, etc de un canal
    con el host de los usuarios en vez del vhost. Usado en Chathispano en
    servidores de bot cliente como GarbageCollector o [Ayuda].
+
+ * support
+   Establece un servidor de Soporte donde los usuarios no pueden hablar con
+   nadie excepto con opers (+h) ni entrar otros canales que no sea #opers-help.
+   No estan afectados por glines y hay comandos deshabilitados.
