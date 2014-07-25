@@ -1,3 +1,17 @@
+* 2014/07/25  zoltan@irc-dev.net (u2.10.H.10.219)                FEATURE
+------------------------------------------------------------------------
+  Con el fin de facilitar la transicion al nuevo ircd, el MOTD por BDD
+  va por la tabla m.
+
+    El registro tiene el siguiente formato:
+
+      - Numero <:línea mensaje>
+
+    Empieza por el número 0 y se va incrementando de uno en uno, cada
+    registro es una línea del MOTD.
+    Existe la opción de incluir el MOTD local en cualquier posición,
+    especificando "%LOCALMOTD" en una línea.
+
 * 2014/07/07  zoltan@irc-dev.net (u2.10.H.10.218)                    FIX
 ------------------------------------------------------------------------
   Fix modo +S reportado por varios usuarios.

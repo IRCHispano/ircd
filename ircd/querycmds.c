@@ -460,7 +460,7 @@ int m_motd(aClient *cptr, aClient *sptr, int parc, char *parv[])
       temp = motd;
   }
 
-  reg = db_buscar_registro(BDD_CONFIGDB, "motd.0");
+  reg = db_buscar_registro(BDD_MOTDDB, "0");
 
   if (temp == NULL && (!(reg) || !strcmp(reg->valor, "%LOCALMOTD")))
   {
@@ -500,7 +500,7 @@ int m_motd(aClient *cptr, aClient *sptr, int parc, char *parv[])
       }
       else
         sendto_one(sptr, rpl_str(RPL_MOTD), me.name, parv[0], reg->valor);
-      sprintf(tmp_str, "motd.%d", ++i);
+      sprintf(tmp_str, "%d", ++i);
       reg = db_buscar_registro(BDD_CONFIGDB, tmp_str);
     }
 
