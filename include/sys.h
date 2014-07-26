@@ -103,10 +103,6 @@
 #undef DOTERMCAP
 #endif
 
-#if !defined(UNIXPORT)
-#undef	UNIXPORTPATH
-#endif
-
 #if defined(CLIENT_FLOOD)
 #if (CLIENT_FLOOD > 8000) || (CLIENT_FLOOD < 512)
 #error CLIENT_FLOOD needs redefining.

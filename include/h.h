@@ -40,8 +40,6 @@ typedef struct hashentry aHashEntry;
 typedef struct SLink Link;
 typedef struct DSlink Dlink;
 typedef struct Whowas aWhowas;
-#if defined(WATCH)
 typedef struct Watch aWatch;
-#endif /* WATCH */
 
 #endif /* H_H */

@@ -20,10 +20,8 @@
 #if !defined(M_WATCH_H)
 #define M_WATCH_H
 
-#if defined(WATCH)
 extern int m_watch(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern void chequea_estado_watch(aClient *cptr, int raw);
 extern int borra_lista_watch(aClient *cptr);
-#endif /* WATCH */
 
 #endif /* M_WATCH_H */

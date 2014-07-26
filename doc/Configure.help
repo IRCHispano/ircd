@@ -287,21 +287,6 @@ CMDLINE_CONFIG
   a new conf file that has some extra O-lines.  So don't use this unless
   you're debugging.
 
-Set up a Unix domain socket to connect clients/servers
-UNIXPORT
-  If there are lots of users having an account on the same machine
-  (which is very unlikely because the server needs all cpu ;), then
-  using a UNIX domain socket to connect these clients to is more
-  efficient then letting them connect via TCP/IP.  A UNIX domain
-  socket is a special device that will be created in your File System.
-  Your client must also support connecting to a UNIX domain socket.
-  The name of the special device must be specified in the "ircd.conf"
-  file by means of an extra 'P: line', see doc/example.conf for the
-  syntax.
-  If you don't have many IRC-ing users on the same host as the server,
-  or when your local IRC client doesn't support UNIX domain sockets,
-  specify 'n' here.  Otherwise specify 'y'.
-
 Do you need virtual hosting
 VIRTUAL_HOST
   This is only needed when you want to run two or more servers on the
@@ -331,23 +316,6 @@ HUB
   generally bad for servers in "leaf" positions (they are net.wise located
   too bad to route traffic).  Note that on Undernet all newly linked servers
   are linked as leafs during their test phase, and should specify 'n' here.
-
-Do you want support for the old I:*:ONE:*:: construct
-USEONE
-  Server versions prior to ircu2.10.05 used to use the string "ONE"
-  as password in an I: line to indicate that only one connection was
-  allowed for any given IP number that matched that I: line.
-  This method only counted the *local* connections though.
-  As of ircu2.10.05 you can specifiy a single(!) digit as password
-  which then will allow that many connections from the same IP number.
-  However, now the IP numbers of ALL clients are counted, also those
-  that are connected to other servers.
-  If you do not use the depricated "ONE" password in your ircd.conf,
-  specify 'n' here.  Note that if you you DO use the "ONE" password
-  and you specify 'n' here, then you should change all occurances of
-  "ONE" to "1" (this is the recommended procedure).
-  If you are lazy and you don't want to change the "ONE" passwords
-  into a "1", then specify 'y' here.
 
 Send a short message instead of the MOTD to connecting clients
 NODEFAULTMOTD

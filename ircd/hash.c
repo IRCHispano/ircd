@@ -173,9 +173,7 @@ static HASHMEMS hash_weight_table[CHAR_MAX - CHAR_MIN + 1];
    so that I can use one hash function and one transformation map */
 static aClient *clientTable[HASHSIZE];
 static aChannel *channelTable[HASHSIZE];
-#if defined(WATCH)
 static aWatch *watchTable[HASHSIZE];
-#endif /* WATCH */
 
 /* This is what the hash function will consider "equal" chars, this function 
    MUST be transitive, if HASHEQ(y,x)&&HASHEQ(y,z) then HASHEQ(y,z), and MUST
@@ -194,9 +192,7 @@ void hash_init(void)
   {
     channelTable[l] = (aChannel *)NULL;
     clientTable[l] = (aClient *)NULL;
-#if defined(WATCH)
     watchTable[l] = (aWatch *) NULL;
-#endif
   };
 
   /* Here is to what we "map" a char before working on it */
@@ -471,7 +467,6 @@ int db_hash_registro(char *clave, int hash_size)
   return (unsigned int)(strhash(clave) & (hash_size - 1));
 }
 
-#if defined(WATCH)
 /*
  * FUNCIONES HASH de WATCH.
  *
@@ -548,8 +543,6 @@ aWatch *hSeekWatch(char *nick)
   return wptr;
 
 }
-
-#endif /* WATCH */
 
 void list_next_channels(aClient *cptr)
 {

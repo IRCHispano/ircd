@@ -2018,10 +2018,8 @@ static void add_gline(aClient *cptr, aClient *sptr, char *host, char *comment,
   char cptr_info_low[REALLEN+1];
   char *tmp;
 
-#if defined(BADCHAN)
   if (*host == '#' || *host == '&' || *host == '+')
     gtype = 1;                  /* BAD CHANNEL */
-#endif
 
   if (!lifetime) /* si no me ponen tiempo de vida uso el tiempo de expiracion */
     lifetime = expire;
@@ -2057,10 +2055,8 @@ static void add_gline(aClient *cptr, aClient *sptr, char *host, char *comment,
   if (local)
     SetGlineIsLocal(agline);
 
-#if defined(BADCHAN)
   if (gtype)
     return;
-#endif
 
   for (fd = highest_fd; fd >= 0; --fd)  /* get the users! */
     if ((acptr = loc_clients[fd]) && !IsMe(acptr))
@@ -2134,10 +2130,6 @@ static void add_gline(aClient *cptr, aClient *sptr, char *host, char *comment,
     }
 }
 
-#if !defined(BADCHAN)
-#error "Mala configuracion, activa por favor el BADCHAN en el make config"
-#endif
-
 /*
  * m_gline
  *
@@ -2182,7 +2174,6 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
     a2gline = agline;
   }
 
-#if defined(BADCHAN)
   /* Remove expired bad channels */
   for (agline = badchan, a2gline = NULL; agline; agline = agline->next)
   {
@@ -2196,7 +2187,6 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     a2gline = agline;
   }
-#endif
 
 
   if (IsServer(cptr)) /* Si la gline la manda un servidor */
@@ -2287,10 +2277,8 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
     user = parv[2];
     *(host++) = '\0';       /* break up string at the '@' */
   }
-#if defined(BADCHAN)
   if (*host == '#' || *host == '&' || *host == '+')
     gtype = 1;              /* BAD CHANNEL GLINE */
-#endif
 
   for (agline = (gtype) ? badchan : gline, a2gline = NULL; agline;
       agline = agline->next)
@@ -2450,13 +2438,11 @@ int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
       user = parv[1];
       *(host++) = '\0';         /* break up string at the '@' */
     }
-#if defined(BADCHAN)
     if (*host == '#' || *host == '&' || *host == '+')
 #if !defined(LOCAL_BADCHAN)
       return 0;
 #else
       gtype = 1;                /* BAD CHANNEL */
-#endif
 #endif
 
     for (agline = gtype ? badchan : gline, a2gline = NULL; agline;

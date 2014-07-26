@@ -140,9 +140,6 @@ char serveropts[] = {
 #if defined(IDLE_FROM_MSG)
     'M',
 #endif
-#if defined(USEONE)
-    'O',
-#endif
 #if defined(NO_OPER_DEOP_LCHAN)
     'o',
 #endif
@@ -176,15 +173,6 @@ char serveropts[] = {
 #endif
 #if defined(VIRTUAL_HOST)
     'v',
-#endif
-#if defined(BADCHAN)
-   'W',
-#if defined(LOCAL_BADCHAN)
-   'w',
-#endif
-#endif
-#if defined(UNIXPORT)
-    'X',
 #endif
 #if defined(USE_SYSLOG)
     'Y',
@@ -254,7 +242,6 @@ char serveropts[] = {
    '-',
 #endif /* ESNET_NEG */
    '.','W',
-#if defined (WATCH)
 #if defined(MAXWATCH)
 #if (MAXWATCH > 256) || (MAXWATCH < 96)
 #error Valor MAXWATCH erroneo. Rango permitido 96-256. Ejecuta el "make config" de nuevo y reajusta el valor.
@@ -268,11 +255,7 @@ char serveropts[] = {
 #endif
     (char)('0' + (MAXWATCH/10) % 10),
     (char)('0' + (MAXWATCH/1) % 10),
-    ')', '+',
-#else
-   '-',
-#endif /* WATCH */
-
+    ')',
    '.','T','S',
 #if defined (CHECK_TS_LINKS)
    '(',

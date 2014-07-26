@@ -36,7 +36,6 @@
 
 #include <assert.h>
 
-#if defined(WATCH)
 /*
 ** El mIRC (al menos hasta el 20020530) envia todos los WATCH
 ** de golpe al conectarnos, independientemente de que le tengamos
@@ -56,9 +55,7 @@
 de los clientes por flood. Reduzca MAXWATCH o incremente CLIENT_FLOOD en 'make config'.
 */
 #endif
-#endif
 
-#if defined(WATCH)
 /*
  * FUNCIONES DE WATCH
  *
@@ -561,5 +558,3 @@ int m_watch(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }                             /* Final del for del strtoken */
   return 0;
 }
-
-#endif /* WATCH */

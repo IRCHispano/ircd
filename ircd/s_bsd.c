@@ -30,9 +30,6 @@
 #if defined(SOL2)
 #include <sys/filio.h>
 #endif
-#if defined(UNIXPORT)
-#include <sys/un.h>
-#endif
 #include <stdio.h>
 #if defined(HAVE_STROPTS_H)
 #include <stropts.h>
@@ -119,11 +116,6 @@ static struct sockaddr *connect_inet(aConfItem *, aClient *, int *);
 static int completed_connection(aClient *);
 static int check_init(aClient *, char *);
 static void do_dns_async(), set_sock_opts(int, aClient *);
-#if defined(UNIXPORT)
-static struct sockaddr *connect_unix(aConfItem *, aClient *, int *);
-static void add_unixconnection(aClient *, int);
-static char unixpath[256];
-#endif
 static char readbuf[8192];
 #if defined(VIRTUAL_HOST)
 struct sockaddr_in vserv;
@@ -354,84 +346,6 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
   return 0;
 }
 
-#if defined(UNIXPORT)
-/*
- * unixport
- *
- * Create a socket and bind it to a filename which is comprised of the path
- * (directory where file is placed) and port (actual filename created).
- * Set directory permissions as rwxr-xr-x so other users can connect to the
- * file which is 'forced' to rwxrwxrwx (different OS's have different need of
- * modes so users can connect to the socket).
- */
-int unixport(aClient *cptr, char *path, unsigned short int port)
-{
-  struct sockaddr_un un;
-
-  cptr->fd = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (cptr->fd == -1 && errno == EAGAIN)
-  {
-    sendto_ops("error opening unix domain socket %s: No more sockets",
-        cptr->name);
-    return -1;
-  }
-  if (cptr->fd == -1)
-  {
-    report_error("error opening unix domain socket %s: %s", cptr);
-    return -1;
-  }
-  else if (cptr->fd >= MAXCLIENTS)
-  {
-    sendto_ops("No more connections allowed (%s)", cptr->name);
-    close(cptr->fd);
-    cptr->fd = -1;
-    return -1;
-  }
-
-  un.sun_family = AF_UNIX;
-#if HAVE_MKDIR
-  mkdir(path, 0755);
-#else
-  if (chmod(path, 0755) == -1)
-  {
-    sendto_ops("error 'chmod 0755 %s': %s", path, strerror(errno));
-#if defined(USE_SYSLOG)
-    syslog(LOG_WARNING, "error 'chmod 0755 %s': %s", path, strerror(errno));
-#endif
-    close(cptr->fd);
-    cptr->fd = -1;
-    return -1;
-  }
-#endif
-  sprintf_irc(unixpath, "%s/%u", path, port);
-  unlink(unixpath);
-  strncpy(un.sun_path, unixpath, sizeof(un.sun_path) - 1);
-  un.sun_path[sizeof(un.sun_path) - 1] = 0;
-  SlabStringAllocDup(&(cptr->name), me.name, 0);
-  errno = 0;
-  get_sockhost(cptr, unixpath);
-
-  if (bind(cptr->fd, (struct sockaddr *)&un, strlen(unixpath) + 2) == -1)
-  {
-    report_error("error binding unix socket %s: %s", cptr);
-    close(cptr->fd);
-    return -1;
-  }
-  if (cptr->fd > highest_fd)
-    highest_fd = cptr->fd;
-  listen(cptr->fd, 5);
-  chmod(unixpath, 0777);
-  cptr->flags |= FLAGS_UNIX;
-  cptr->port = 0;
-  loc_clients[cptr->fd] = cptr;
-
-  CreateREvent(cptr, event_connection_callback);
-
-  return 0;
-}
-
-#endif
-
 /*
  * init_sys
  */
@@ -561,15 +475,6 @@ static int check_init(aClient *cptr, char *sockn)
   struct sockaddr_in sk;
   socklen_t len = sizeof(struct sockaddr_in);
   sockn[HOSTLEN] = 0;
-
-#if defined(UNIXPORT)
-  if (IsUnixSocket(cptr))
-  {
-    strncpy(sockn, PunteroACadena(cptr->acpt->sockhost), HOSTLEN);
-    get_sockhost(cptr, sockn);
-    return 0;
-  }
-#endif
 
   /* If descriptor is a tty, special checking... */
   if (isatty(cptr->fd))
@@ -805,13 +710,6 @@ int check_server(aClient *cptr)
       return -1;
     }
   }
-#if defined(UNIXPORT)
-  if (IsUnixSocket(cptr))
-  {
-    if (!c_conf)
-      c_conf = find_conf(lp, name, CFLAG);
-  }
-#endif
 
   /*
    * If the servername is a hostname, either an alias (CNAME) or
@@ -1485,55 +1383,6 @@ aClient *add_connection(aClient *cptr, int fd, int type)
   return acptr;
 }
 
-#if defined(UNIXPORT)
-static void add_unixconnection(aClient *cptr, int fd)
-{
-  aClient *acptr;
-  aConfItem *aconf = NULL;
-
-  acptr = make_client(NULL, STAT_UNKNOWN);
-
-  /*
-   * Copy ascii address to 'sockhost' just in case. Then we
-   * have something valid to put into error messages...
-   */
-  SlabStringAllocDup(&(acptr->sockhost), PunteroACadena(me.name), HOSTLEN);
-  if (cptr != &me)
-    aconf = cptr->confs->value.aconf;
-  if (aconf)
-  {
-    if (IsIllegal(aconf))
-    {
-      ircstp->is_ref++;
-      acptr->fd = -2;
-      free_client(acptr);
-      close(fd);
-      return;
-    }
-    else
-      aconf->clients++;
-  }
-  acptr->fd = fd;
-  if (fd > highest_fd)
-    highest_fd = fd;
-  loc_clients[fd] = acptr;
-  acptr->acpt = cptr;
-  SetUnixSock(acptr);
-  memcpy(&acptr->ip, &me.ip, sizeof(struct in_addr));
-
-  Count_newunknown(nrof);
-  add_client_to_list(acptr);
-  set_non_blocking(acptr->fd, acptr);
-  set_sock_opts(acptr->fd, acptr);
-
-  CreateClientEvent(acptr);
-
-  SetAccess(acptr);
-  return;
-}
-
-#endif
-
 /*
  * read_packet
  *
@@ -1979,13 +1828,8 @@ void event_connection_callback(int loc_fd, short event, aClient *cptr)
     /*
      * Use of add_connection (which never fails :) meLazy
      */
-#if defined(UNIXPORT)
-    if (IsUnixSocket(cptr))
-      add_unixconnection(cptr, fd);
-    else
-#endif
-      if (!add_connection(cptr, fd, ADCON_SOCKET))
-        return;
+    if (!add_connection(cptr, fd, ADCON_SOCKET))
+      return;
     //nextping = now;
     if (!cptr->acpt)
       cptr->acpt = &me;
@@ -2145,14 +1989,6 @@ int add_listener(aConfItem *aconf)
   cptr->acpt = cptr;
   cptr->from = cptr;
   SlabStringAllocDup(&(cptr->name), aconf->host, 0);
-#if defined(UNIXPORT)
-  if (*aconf->host == '/')
-  {
-    if (unixport(cptr, aconf->host, aconf->port))
-      cptr->fd = -2;
-  }
-  else
-#endif
   if(test_listen_port(aconf)) { // Si intento a~adir un puerto que ya escucha
     free_client(cptr);
     return 0;
@@ -2200,13 +2036,6 @@ void close_listeners(void)
 
     if (IsIllegal(aconf) && aconf->clients == 0)
     {
-#if defined(UNIXPORT)
-      if (IsUnixSocket(cptr))
-      {
-        sprintf_irc(unixpath, "%s/%u", aconf->host, aconf->port);
-        unlink(unixpath);
-      }
-#endif
       if(cptr->evread)
         event_del(cptr->evread);
 
@@ -2271,11 +2100,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
    * If we dont know the IP# for this host and itis a hostname and
    * not a ip# string, then try and find the appropriate host record.
    */
-  if ((!aconf->ipnum.s_addr)
-#if defined(UNIXPORT)
-      && ((aconf->host[2]) != '/')  /* needed for Unix domain -- dl */
-#endif
-      )
+  if ((!aconf->ipnum.s_addr))
   {
     Link lin;
 
@@ -2304,14 +2129,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
   SlabStringAllocDup(&(cptr->name), aconf->name, HOSTLEN);
   SlabStringAllocDup(&(cptr->sockhost), aconf->host, HOSTLEN);
 
-#if defined(UNIXPORT)
-  if (aconf->host[2] == '/')    /* (/ starts a 2), Unix domain -- dl */
-    svp = connect_unix(aconf, cptr, &len);
-  else
-    svp = connect_inet(aconf, cptr, &len);
-#else
   svp = connect_inet(aconf, cptr, &len);
-#endif
 
   if (!svp)
   {
@@ -2515,51 +2333,6 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
 
   return (struct sockaddr *)&server;
 }
-
-#if defined(UNIXPORT)
-/*
- * connect_unix
- *
- * Build a socket structure for cptr so that it can connet to the unix
- * socket defined by the conf structure aconf.
- */
-static struct sockaddr *connect_unix(aConfItem *aconf, aClient *cptr, int *lenp)
-{
-  static struct sockaddr_un sock;
-
-  cptr->fd = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (cptr->fd == -1 && errno == EAGAIN)
-  {
-    sendto_ops("Unix domain connect to host %s failed: No more sockets",
-        cptr->name);
-    return NULL;
-  }
-  if (cptr->fd == -1)
-  {
-    report_error("Unix domain connect to host %s failed: %s", cptr);
-    return NULL;
-  }
-  else if (cptr->fd >= MAXCLIENTS)
-  {
-    sendto_ops("No more connections allowed (%s)", cptr->name);
-    return NULL;
-  }
-
-  get_sockhost(cptr, aconf->host);
-  /* +2 needed for working Unix domain -- dl */
-  strncpy(sock.sun_path, aconf->host + 2, sizeof(sock.sun_path) - 1);
-  sock.sun_path[sizeof(sock.sun_path) - 1] = 0;
-  sock.sun_family = AF_UNIX;
-  *lenp = strlen(sock.sun_path) + 2;
-
-  SetUnixSock(cptr);
-
-  CreateClientEvent(cptr);
-
-  return (struct sockaddr *)&sock;
-}
-
-#endif
 
 /*
  * Find the real hostname for the host running the server (or one which

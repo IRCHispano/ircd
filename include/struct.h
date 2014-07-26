@@ -233,10 +233,8 @@ struct User {
   struct Client *server;        /* client structure of server */
   struct SLink *channel;        /* chain of channel pointer blocks */
   struct SLink *silence;        /* chain of silence pointer blocks */
-#if defined(WATCH)
   struct SLink *watch;          /* Cadena de punteros a lista aWatch */
   int cwatch;                   /* Contador de entradas de lista WATCH */
-#endif                          /* WATCH */
   char *away;                   /* pointer to away message */
   time_t last;
   unsigned int refcnt;          /* Number of times this block is referenced */

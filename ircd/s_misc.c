@@ -641,15 +641,12 @@ static void exit_one_client(aClient *bcptr, char *comment)
     while ((lp = bcptr->user->silence))
       del_silence(bcptr, lp->value.cp);
 
-#if defined(WATCH)
     /*
      * Eliminamos su lista de watch.
      * Y ademas avisamos a sus contactos de su salida :)
      */
     borra_lista_watch(bcptr);
     chequea_estado_watch(bcptr, RPL_LOGOFF);
-
-#endif /* WATCH */
 
     if (MyConnect(bcptr) && bcptr->passwd)
       RunFree(bcptr->passwd);

@@ -87,12 +87,9 @@
 #define TOK_SVSKICK    "SK"
 #define CLASS_SVSKICK    LEVEL_PROPAGATE
 
-
-#if defined(WATCH)
 #define MSG_WATCH              "WATCH"         /* Comando WATCH */
 #define TOK_WATCH              "WATCH"
 #define CLASS_WATCH            LEVEL_QUERY
-#endif
 
 #define MSG_WEBIRC              "WEBIRC"         /* WEBIRC */
 #define TOK_WEBIRC              "WEBIRC"

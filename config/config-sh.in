@@ -309,7 +309,6 @@ EOF
       echo "   SECURITY: Then don't install the daemon SUID or SGID !"
     fi
   fi
-  bool 'Set up a Unix domain socket to connect clients/servers' UNIXPORT
   bool 'Do you need virtual hosting' VIRTUAL_HOST
   PREV_HUB=$HUB
   bool 'Will you connect to more then one server at a time' HUB
@@ -365,15 +364,6 @@ comment 'Logging (filenames are either full paths or files within DPATH)'
   bool 'Do you want to log the use of /WHO x% (recommended)' CONFIG_LOG_WHOX y
     if [ "$CONFIG_LOG_WHOX" = "y" ]; then
       string '   Give the path and(or) filename of this log file' WPATH 'whox.log'
-    fi
-
-comment 'Bad Channel G-Lines allow operators to add channel masks to a list which prohibits local clients from being able joining channels which match the mask.  Remote BadChan Glines allow Uworld to add or remove channels from the servers internal list of badchans'
-  bool 'Do you want to enable Bad Channel G-lines' BADCHAN y
-    if [ "$BADCHAN" = "y" ]; then
-      echo " "
-      echo " WARNING DO _NOT_ USE LOCAL BADCHANNEL GLINES ON UNDERNET"
-      echo " Use of LOCAL BAD Channel G-Lines can be cause for REMOVAL"
-      bool 'Allow LOCAL BAD Channel G-lines' LOCAL_BADCHAN
     fi
 
   bool 'Do you want to log G-lines to a separate file' CONFIG_LOG_GLINES
@@ -460,7 +450,6 @@ comment 'Configuration'
     define_bool R_LINES_REHASH $R_LINES_REHASH
     define_bool R_LINES_OFTEN $R_LINES_OFTEN
   fi
-  bool 'Do you want support for the old I:*:ONE:*:: construct (read help text!)' USEONE n
   bool 'Send a short message instead of the MOTD to connecting clients' NODEFAULTMOTD y
 endmenu
 
@@ -552,10 +541,7 @@ comment 'Mandatory defines (you should leave these untouched)'
   int 'KILL nick chase time limit (30)' KILLCHASETIMELIMIT 30
   int 'Max number of channels per user (recommended: 5)' MAXCHANNELSPERUSER 10
   int 'Max number of silence masks (25!)' MAXSILES 25
-  bool 'Enable notifies nicks witch WATCH' WATCH y
-  if [ "$WATCH" = "y" ]; then
-    int 'Max number of WATCH entries (96)' MAXWATCH 96
-  fi
+  int 'Max number of WATCH entries (96)' MAXWATCH 96
   int 'Expected average banmask length (40!)' AVBANLEN 40
   eval define_macro MAXSILELENGTH \'\($AVBANLEN * MAXSILES\)\'
   echo '* These are default values, used for class 0:'

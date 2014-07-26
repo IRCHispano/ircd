@@ -388,28 +388,12 @@ static aConfItem *chk_initconf(void)
 
     if (aconf->status & CONF_LISTEN_PORT)
     {
-#if defined(UNIXPORT)
-      struct stat sb;
-
-      if (!aconf->host)
-        fprintf(stderr, "\tERROR: %s\n", "null host field in P-line");
-      else if (strchr(aconf->host, '/'))
-      {
-        if (stat(aconf->host, &sb) == -1)
-        {
-          fprintf(stderr, "\tERROR: (%s) ", aconf->host);
-          perror("stat");
-        }
-        else if ((sb.st_mode & S_IFMT) != S_IFDIR)
-          fprintf(stderr, "\tERROR: %s not directory\n", aconf->host);
-      }
-#else
       if (!aconf->host)
         fprintf(stderr, "\tERROR: %s\n", "null host field in P-line");
       else if (strchr(aconf->host, '/'))
         fprintf(stderr, "\t%s\n", "WARNING: / present in P-line "
             "for non-UNIXPORT configuration");
-#endif
+
       aconf->confClass = get_class(0, 0);
       goto print_confline;
     }

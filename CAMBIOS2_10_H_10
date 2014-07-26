@@ -1,3 +1,11 @@
+* 2014/07/26  zoltan@irc-dev.net (u2.10.H.10.220)                CLEANUP
+------------------------------------------------------------------------
+  Eliminado soporte de UNIXPORT por carecer de sentido hoy en dia.
+  Idem con USEONE.
+
+  Eliminadas compilaciones condicionales de BADCHAN y WATCH por ser
+  features obligatorias.
+
 * 2014/07/25  zoltan@irc-dev.net (u2.10.H.10.219)                FEATURE
 ------------------------------------------------------------------------
   Con el fin de facilitar la transicion al nuevo ircd, el MOTD por BDD

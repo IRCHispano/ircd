@@ -327,12 +327,8 @@ static Numeric numeric_errors[] = {
 /* 511 */
     {ERR_SILELISTFULL, "%s :Your silence list is full - "
                        "Su lista de \"Silence\" está llena"},
-#if defined(WATCH)
-    {ERR_TOOMANYWATCH, "%s :Maximum size for WATCH-list is %d entries"},
-#else
 /* 512 */
-    {0, (char *)NULL},
-#endif /* WATCH */
+    {ERR_TOOMANYWATCH, "%s :Maximum size for WATCH-list is %d entries"},
 /* 513 */
     {ERR_BADPING, (char *)NULL},
 /* 514 */
@@ -716,8 +712,6 @@ static Numeric numeric_replies[] = {
     {RPL_ENDOFGLIST, ":End of G-line List"}
 };
 
-
-#if defined(WATCH)
 /*
  * Numericos de watch
  */
@@ -743,7 +737,6 @@ static Numeric watch_replies[] = {
 /* 607 */
     {RPL_ENDOFWATCHLIST, ":End of WATCH %c"}
 };
-#endif /* WATCH */
 
 
 /* *INDENT-ON* */
@@ -828,7 +821,6 @@ char *rpl_str(int numeric)
   return numbuff;
 }
 
-#if defined(WATCH)
 char *watch_str(int numeric)
 {
   Reg1 Numeric *nptr;
@@ -856,5 +848,3 @@ char *watch_str(int numeric)
 
   return numbuff;
 }
-
-#endif /* WATCH */

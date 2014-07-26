@@ -291,15 +291,6 @@ enum AuthorizationCheckResult attach_Iline(aClient *cptr, struct hostent *hp,
         if (IPcheck_nr(cptr) > nr)
           return ACR_TOO_MANY_FROM_IP;  /* Already got nr with that ip# */
       }
-#if defined(USEONE)
-      else if (!strcmp(aconf->passwd, "ONE"))
-      {
-        for (i = highest_fd; i >= 0; i--)
-          if (loc_clients[i] && MyUser(loc_clients[i]) &&
-              loc_clients[i]->ip.s_addr == cptr->ip.s_addr)
-            return ACR_TOO_MANY_FROM_IP;  /* Already got one with that ip# */
-      }
-#endif
     }
     return attach_conf(cptr, aconf);
   }
@@ -627,9 +618,6 @@ static aConfItem *find_conf_entry(aConfItem *aconf, unsigned int mask)
         (BadPtr(aconf->passwd) && !BadPtr(bconf->passwd)))
       continue;
     if (!BadPtr(bconf->passwd) && (!isDigit(*bconf->passwd) || bconf->passwd[1])
-#if defined(USEONE)
-        && strCasediff(bconf->passwd, "ONE")
-#endif
         && strCasediff(bconf->passwd, aconf->passwd))
       continue;
 

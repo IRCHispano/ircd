@@ -50,10 +50,7 @@ RCSTAG_CC("$Id$");
 #if defined(DEBUGMODE)
 static struct liststats {
   int inuse;
-} cloc, crem, users, servs, links, classs, aconfs
-#if defined(WATCH)
-   , watchs
-#endif                          /* WATCH */
+} cloc, crem, users, servs, links, classs, aconfs, watchs
    ;
 #endif
 
@@ -69,9 +66,7 @@ void initlists(void)
   memset(&links, 0, sizeof(links));
   memset(&classs, 0, sizeof(classs));
   memset(&aconfs, 0, sizeof(aconfs));
-#if defined(WATCH)
   memset(&watchs, 0, sizeof(watchs));
-#endif
 }
 
 #endif
@@ -466,11 +461,9 @@ aGline *make_gline(char *host, char *reason,
   Reg4 aGline *agline;
   const char *error_str;
   int erroffset;
-#if defined(BADCHAN)
   int gtype = 0;
   if (*host == '#' || *host == '&' || *host == '+')
     gtype = 1;                  /* BAD CHANNEL GLINE */
-#endif
 
   agline = (struct Gline *)RunMalloc(sizeof(aGline)); /* alloc memory */
   DupString(agline->host, host);  /* copy vital information */
@@ -494,13 +487,12 @@ aGline *make_gline(char *host, char *reason,
       SetGlineIsIpMask(agline);
   }
 
-#if defined(BADCHAN)
   if (gtype)
   {
     agline->next = badchan;     /* link it into the list */
     return (badchan = agline);
   }
-#endif
+
   agline->next = gline;         /* link it into the list */
   return (gline = agline);
 }
@@ -565,13 +557,11 @@ void free_gline(aGline *agline, aGline *pgline)
     pgline->next = agline->next;  /* squeeze agline out */
   else
   {
-#if defined(BADCHAN)
     if (*agline->host == '#' || *agline->host == '&' || *agline->host == '+')
     {
       badchan = agline->next;
     }
     else
-#endif
       gline = agline->next;
   }
 
@@ -584,7 +574,6 @@ void free_gline(aGline *agline, aGline *pgline)
   RunFree(agline);
 }
 
-#if defined(BADCHAN)
 int bad_channel(char *name)
 {
   aGline *agline;
@@ -602,9 +591,7 @@ int bad_channel(char *name)
   return 0;
 }
 
-#endif /* BADCHAN */
 
-#if defined(WATCH)
 /*
  * Listas de WATCH
  *
@@ -651,7 +638,6 @@ void free_watch(aWatch * wptr)
 
 }
 
-#endif /* WATCH */
 
 #if defined(DEBUGMODE)
 void send_listinfo(aClient *cptr, char *name)
@@ -692,13 +678,11 @@ void send_listinfo(aClient *cptr, char *name)
       tmp = aconfs.inuse * sizeof(aConfItem));
   mem += tmp;
   inuse += aconfs.inuse,
-#if defined(WATCH)
       sendto_one(cptr, ":%s %d %s :Watchs: inuse: %d(%d)",
       me.name, RPL_STATSDEBUG, name, watchs.inuse,
       tmp = watchs.inuse * sizeof(aWatch));
   mem += tmp;
   inuse += watchs.inuse,
-#endif /* WATCH */
       sendto_one(cptr, ":%s %d %s :Totals: inuse %d %d",
       me.name, RPL_STATSDEBUG, name, inuse, mem);
 }

@@ -19,9 +19,7 @@ struct SLink {
     aClient *cptr;
     struct Channel *chptr;
     struct ConfItem *aconf;
-#if defined(WATCH)
     aWatch *wptr;
-#endif
     char *cp;
     struct {
       char *banstr;
@@ -43,15 +41,12 @@ struct DSlink {
   } value;
 };
 
-#if defined(WATCH)
 struct Watch {
   struct Watch *next;
   struct SLink *watch;          /* Cadena de punteros a lista aUser */
   char *nick;                   /* Nick */
   time_t lasttime;              /* TS de ultimo cambio de estado del nick */
 };
-
-#endif /* WATCH */
 
 /*=============================================================================
  * Proto types
@@ -79,12 +74,8 @@ extern aGline *make_gline(char *host, char *reason, char *name,
 extern aGline *find_gline(aClient *cptr, aGline **pgline);
 extern void free_gline(aGline *agline, aGline *pgline);
 extern void send_listinfo(aClient *cptr, char *name);
-#if defined(BADCHAN)
 extern int bad_channel(char *name);
-#endif
-#if defined(WATCH)
 extern aWatch *make_watch(char *nick);
 extern void free_watch(aWatch * wptr);
-#endif /* WATCH */
 
 #endif /* LIST_H */

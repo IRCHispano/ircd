@@ -178,9 +178,7 @@
 #define ERR_ISSILENCING      510  /* Hispano extension */
 #define ERR_SILELISTFULL     511  /* Undernet extension */
 /*      ERR_NOSUCHGLINE      512          Undernet extension */
-#if defined(WATCH)
 #define ERR_TOOMANYWATCH     512  /* Dalnet extension */
-#endif /* WATCH */
 /*      ERR_NOTIFYFULL       512          Aircd */
 #define ERR_BADPING	     513    /* Undernet extension */
 /*      ERR_NEEDPONG        513           Dalnet extension */
@@ -450,7 +448,6 @@
 /*      RPL_END_CHANINFO     299          Aircd */
 
 
-#if defined(WATCH)
 /*
  * Numericos para WATCH
  *
@@ -465,7 +462,6 @@
 #define RPL_NOWOFF           605  /* Dalnet extension */
 #define RPL_WATCHLIST        606  /* Dalnet extension */
 #define RPL_ENDOFWATCHLIST   607  /* Dalnet extension */
-#endif /* WATCH */
 
 
 /*      RPL_MAPMORE          610          Unreal */

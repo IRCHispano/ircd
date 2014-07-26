@@ -25,9 +25,6 @@
 #if HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
-#if defined(UNIXPORT)
-#include <sys/un.h>
-#endif
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -277,12 +274,7 @@ int ping_server(aClient *cptr)
   /* Pasamos de irc_in_addr a in_addr */
   addr4.s_addr = (cptr->ip.in6_16[6] | cptr->ip.in6_16[7] << 16);
 
-  if ((!addr4.s_addr)
-#if defined(UNIXPORT)
-      && (cptr->sockhost && (strlen(cptr->sockhost) > 2)
-      && (cptr->sockhost[2]) != '/')
-#endif
-      )
+  if ((!addr4.s_addr))
   {
     struct hostent *hp;
     char *s;

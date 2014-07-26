@@ -596,9 +596,6 @@ static int register_user(aClient *cptr, aClient *sptr,
 
     if (!BadPtr(aconf->passwd)
         && !(isDigit(*aconf->passwd) && !aconf->passwd[1])
-#if defined(USEONE)
-        && strcmp("ONE", aconf->passwd)
-#endif
         && strcmp(PunteroACadena(sptr->passwd), aconf->passwd))
     {
       ircstp->is_ref++;
@@ -886,15 +883,12 @@ static int register_user(aClient *cptr, aClient *sptr,
           sptr->snomask, sptr->snomask);
   }
 
-#if defined(WATCH)
   /*
    * Avisamos a sus contactos que el nick
    * ha entrado en la red.
    * (Nuevo usuario local)
    */
   chequea_estado_watch(sptr, RPL_LOGON);
-
-#endif /* WATCH */
 
   return 0;
 }
@@ -926,9 +920,7 @@ void send_features(aClient *sptr, char *nick)
   sprintf(buf, "%s XMODE", buf);
 #endif
   sprintf(buf, "%s FNC GHOST", buf);
-#if defined(WATCH)
   sprintf(buf, "%s WATCH=%d", buf, MAXWATCH);
-#endif
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 }
 
@@ -3182,13 +3174,11 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sptr->snomask, sptr->snomask);
   }
 
-#if defined(WATCH)
   if (IsWatch(sptr))
   {
     chequea_estado_watch(sptr, RPL_LOGON);
     ClearWatch(sptr);
   }
-#endif
 
   return 0;
 }
@@ -4194,13 +4184,11 @@ void rename_user(aClient *sptr, char *nick_nuevo)
   if (sptr->name)
   {
     hRemClient(sptr);
-#if defined(WATCH)
     /*
      * Avisamos a sus contactos que el nick
      * ha salido (ha cambiado de nick).
      */
     chequea_estado_watch(sptr, RPL_LOGOFF);
-#endif /* WATCH */
   }
   SlabStringAllocDup(&(sptr->name), nick_nuevo, 0);
   hAddClient(sptr);
@@ -4328,14 +4316,11 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 
   }
 
-#if defined(WATCH)
   /*
    * Avisamos a sus contactos que el nick
    * ha entrado (ha cambiado de nick).
    */
   chequea_estado_watch(sptr, RPL_LOGON);
-
-#endif /* WATCH */
 }
 
 /*
@@ -5279,15 +5264,12 @@ nickkilldone:
     SlabStringAllocDup(&(sptr->user->host), parv[5], HOSTLEN);
     return register_user(cptr, sptr, sptr->name, parv[4]);
 
-#if defined(WATCH)
     /*
      * Avisamos a sus contactos que el nick
      * ha entrado en la red.
      * (Nuevo usuario remoto)
      */
     chequea_estado_watch(sptr, RPL_LOGON);
-
-#endif /* WATCH */
 
   }
   else if (sptr->name)
@@ -5388,7 +5370,6 @@ nickkilldone:
       {
         int of, oh;
 
-#if defined(WATCH)
         /*
          * Avisamos a sus contactos que el nick
          * ha salido (ha cambiado de nick).
@@ -5396,7 +5377,6 @@ nickkilldone:
          */
         if (!nick_equivalentes)
             chequea_estado_watch(sptr, RPL_LOGOFF);
-#endif /* WATCH */
 
         of = sptr->flags;
         oh = sptr->hmodes;
@@ -5684,7 +5664,6 @@ nickkilldone:
     send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));
   }
 
-#if defined(WATCH)
   /*
    * Avisamos a sus contactos que el nick
    * ha entrado (ha puesto el nick).
@@ -5695,7 +5674,6 @@ nickkilldone:
   {
     chequea_estado_watch(sptr, RPL_LOGON);
   }
-#endif /* WATCH */
 
   return 0;
 }
@@ -6076,15 +6054,12 @@ nickkilldone:
     SlabStringAllocDup(&(sptr->user->host), parv[5], HOSTLEN);
     return register_user(cptr, sptr, sptr->name, parv[4]);
 
-#if defined(WATCH)
     /*
      * Avisamos a sus contactos que el nick
      * ha entrado en la red.
      * (Nuevo usuario remoto)
      */
     chequea_estado_watch(sptr, RPL_LOGON);
-
-#endif /* WATCH */
 
   }
   else if (sptr->name)
@@ -6106,7 +6081,6 @@ nickkilldone:
       {
         int of, oh;
 
-#if defined(WATCH)
         /*
          * Avisamos a sus contactos que el nick
          * ha salido (ha cambiado de nick).
@@ -6114,7 +6088,6 @@ nickkilldone:
          */
         if (!nick_equivalentes)
             chequea_estado_watch(sptr, RPL_LOGOFF);
-#endif /* WATCH */
 
         of = sptr->flags;
         oh = sptr->hmodes;
@@ -6185,7 +6158,6 @@ nickkilldone:
 ** Se llega aqui cuando hay un cambio de nick o el usuario entra
 */
 
-#if defined(WATCH)
   /*
    * Avisamos a sus contactos que el nick
    * ha entrado (ha puesto el nick).
@@ -6207,7 +6179,6 @@ nickkilldone:
       SetWatch(sptr);
     }
   }
-#endif /* WATCH */
 
   return 0;
 }

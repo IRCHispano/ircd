@@ -3935,13 +3935,11 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         if(activar_redireccion_canales && (ch_redir = db_buscar_registro(BDD_CHANREDIRECTDB, name)))
           name=ch_redir->valor;
 
-#if defined(BADCHAN)
         if (bad_channel(name) && !IsAnOper(sptr))
         {
           sendto_one(sptr, err_str(ERR_BADCHANNAME), me.name, parv[0], name);
           continue;
         }
-#endif
 
         /*
          * Local client is first to enter previously nonexistant

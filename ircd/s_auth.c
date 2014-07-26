@@ -25,9 +25,6 @@
 #if HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
-#if defined(UNIXPORT)
-#include <sys/un.h>
-#endif
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif

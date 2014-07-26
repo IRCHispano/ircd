@@ -72,14 +72,12 @@ extern int m_hash(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 
 int db_hash_registro(char *clave, int hash_size);
 
-#if defined(WATCH)
 extern int hAddWatch(aWatch * wptr);
 extern int hRemWatch(aWatch * wptr);
 extern aWatch *hSeekWatch(char *nick);
 
 #define SeekWatch(nick)          hSeekWatch((nick))
 #define FindWatch(nick)          (BadPtr((nick))?NULL:SeekWatch(nick))
-#endif /* WATCH */
 
 extern void list_next_channels(struct Client *cptr);
 
