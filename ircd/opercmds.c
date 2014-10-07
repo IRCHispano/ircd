@@ -216,8 +216,8 @@ static unsigned int report_array[19][3] = {
   {CONF_EXCEPTION, RPL_STATSELINE, 'E'},
   {CONF_WEBIRC, RPL_STATSILINE, 'W'},
 #if defined(ESNET_NEG)
-  {CONF_NEGOTIATION, RPL_STATSKLINE, 'F'},
-  {CONF_NEGOTIATION, RPL_STATSKLINE, 'f'},
+  {CONF_NEGOTIATION, RPL_STATSKLINE, 'N'},
+  {CONF_NEGOTIATION, RPL_STATSKLINE, 'n'},
 #endif
   {0, 0}
 };
@@ -567,18 +567,6 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       }
       sendto_one(sptr, rpl_str(RPL_STATSENGINE), me.name, sptr->name, event_get_method());
       break;
-#if defined(ESNET_NEG)
-    case 'f':
-    case 'F':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
-      {
-        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
-        return 0;
-      }
-      report_configured_links(sptr, CONF_NEGOTIATION);
-      break;
-#endif
 
     case 'H':
     case 'h':
@@ -716,6 +704,18 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_one(sptr, rpl_str(RPL_STATSCOMMANDS),
               me.name, parv[0], mptr->cmd, mptr->count, mptr->bytes);
       break;
+#if defined(ESNET_NEG)
+    case 'n':
+    case 'N':
+      /* Solo ircops y opers tienen acceso */
+      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
+      report_configured_links(sptr, CONF_NEGOTIATION);
+      break;
+#endif
     case 'o':
     case 'O':
       /* Solo ircops y opers tienen acceso */

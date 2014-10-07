@@ -935,12 +935,6 @@ int initconf(int opt)
       case 'e':
         aconf->status = CONF_EXCEPTION;
         break;
-#if defined(ESNET_NEG)
-      case 'F':
-      case 'f':
-        aconf->status = CONF_NEGOTIATION;
-        break;
-#endif
       case 'H':                /* Hub server line */
       case 'h':
         aconf->status = CONF_HUB;
@@ -967,6 +961,12 @@ int initconf(int opt)
       case 'm':
         aconf->status = CONF_ME;
         break;
+#if defined(ESNET_NEG)
+      case 'N':
+      case 'n':
+        aconf->status = CONF_NEGOTIATION;
+        break;
+#endif
       case 'O':
         aconf->status = CONF_OPERATOR;
         break;
