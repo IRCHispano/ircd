@@ -239,10 +239,18 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
     while ((*p2) && (*(p1++) = *(p2++)));
   }
 
-  if (!fields || (fields & WHO_FIELD_HOS))
+  if (fields & WHO_FIELD_HOS)
   {
 #if defined(BDD_VIP)
     Reg3 char *p2 = get_visiblehost(acptr, sptr);
+#else
+    Reg3 char *p2 = acptr->user->host;
+#endif
+    *(p1++) = ' ';
+    while ((*p2) && (*(p1++) = *(p2++)));
+  } else if (!fields) {
+#if defined(BDD_VIP)
+    Reg3 char *p2 = get_visiblehost(acptr, NULL);
 #else
     Reg3 char *p2 = acptr->user->host;
 #endif
