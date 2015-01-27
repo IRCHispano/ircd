@@ -23,7 +23,7 @@
 CC=gcc
 CFLAGS=-W -Wall -g -ggdb
 
-all: misc.o aes256.o tea.o cifranick ipreal ipvirtual cifraping descifraping cifratexto descifratexto
+all: misc.o aes256.o tea.o cifranick ipreal ipvirtual cifraping descifraping cifratexto descifratexto numerictoip iptonumeric
 
 tea.o: tea.c tea.h
 	$(CC) $(CFLAGS) -c -o tea.o tea.c
@@ -54,11 +54,17 @@ ipreal: ipreal.c tea.o misc.o
 
 ipvirtual: ipvirtual.c tea.o misc.o
 	$(CC) $(CFLAGS) -o ipvirtual ipvirtual.c tea.o misc.o
+
+numerictoip: numerictoip.c misc.o
+	$(CC) $(CFLAGS) -o numerictoip numerictoip.c misc.o
+
+iptonumeric: iptonumeric.c misc.o
+	$(CC) $(CFLAGS) -o iptonumeric iptonumeric.c misc.o
 	
 install:       
 	@echo 'Ya esta instalado, no hacia falta ;-).'
 
 clean:
-	/bin/rm -f cifranick ipreal ipvirtual core cifraping descifraping cifratexto descifratexto *.c~ *.o
+	/bin/rm -f cifranick ipreal ipvirtual core cifraping descifraping cifratexto descifratexto numerictoip iptonumeric *.c~ *.o
 
 distclean: clean
