@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
     struct irc_in_addr ip;
     unsigned char bits;
     char ip_base64[25];
+    int i;
 
     if (argc != 2) {
         printf("Uso: %s IP\n", argv[0]);
@@ -51,6 +52,10 @@ int main(int argc, char *argv[])
         printf("Formato de IP incorrecto\n");
         return 1;
     }
+
+    for (i = 0; i < 8; i++)
+        printf("Valor de in6_16[%d]: %u\n", i, ip.in6_16[i]);
+
 
     iptobase64(ip_base64, &ip, sizeof(ip_base64), 1);
 
