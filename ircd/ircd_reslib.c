@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_reslib.c
  *
- * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2015 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1996-1999 by Internet Software Consortium
  * Copyright (C) 1993 by Digital Equipment Corporation
  * Copyright (C) 1985-1993 The Regents of the University of California

@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/m_burst.c
  *
- * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2015 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 1995-1997 Carlo Wood <carlo@runaway.xs4all.nl>
  * Copyright (C) 1990 Jarkko Oikarinen
  *

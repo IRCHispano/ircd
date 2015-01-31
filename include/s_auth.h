@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, include/s_auth.h
  *
- * Copyright (C) 2002-2014 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2015 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2004 Michael Poole <mdpoole@troilus.org>
  * Copyright (C) 2001 Perry Lorier <isomer@coders.net>
  * Copyright (C) 1992 Darren Reed
