@@ -1,3 +1,9 @@
+* 2015/02/01 zoltan@irc-dev.net      (u2.10.H.11.alpha09)          UPDATE
+  -----------------------------------------------------------------------
+  Se ha decidido usar librerias del sistema para ZLIB y PCRE.
+
+  Procedemos a eliminar del codigo fuente las librerias externas, asi como
+  modificar el configure.
 
 * 2013/08/15 zoltan@irc-dev.net      (u2.10.H.11.alpha08)          UPDATE
   -----------------------------------------------------------------------

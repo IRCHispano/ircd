@@ -12,7 +12,7 @@ then
 fi
 
 echo Configurando IRCD
-./configure --prefix=$1 --with-maxcon=$2 --disable-zlib
+./configure --prefix=$1 --with-maxcon=$2 --enable-pcre --with-undernet-environment
 
 echo ""
 exit 0

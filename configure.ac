@@ -109,6 +109,14 @@ AC_CHECK_TYPE([struct ssl_st],
               [unet_have_ssl=yes],
               [unet_have_ssl=no],
 [#include <openssl/ssl.h>])
+AC_CHECK_TYPE([z_stream],
+              [unet_have_zlib=yes],
+              [unet_have_zlib=no],
+[#include <zlib.h>])
+AC_CHECK_TYPE([pcre],
+              [unet_have_pcre=yes],
+              [unet_have_pcre=no],
+[#include <pcre.h>])
 
 dnl Check for socklen_t.  In traditional BSD this is an int, but some
 dnl OSes use a different type.  Test until we find something that will
@@ -296,33 +304,32 @@ if test x"$unet_cv_enable_ipv6" = xyes; then
 fi
 
 dnl how about ZLIB support?
-unet_TOGGLE([zlib], yes, [Disable ZLIB support],
-    [whether to enable ZLIB])
+unet_TOGGLE([zlib], $unet_have_zlib, [Disable ZLIB support],
+    [whether to enable ZLIB],
+[# Prohibit ZLIB support if z_stream doesn't exist
+if test x"$unet_have_zlib" = xno; then
+    unet_cv_enable_zlib=no
+fi])
 
 # Set the preprocessor symbol
 if test x"$unet_cv_enable_zlib" = xyes; then
     AC_DEFINE([USE_ZLIB], 1, [Enable ZLIB support])
-    AC_CONFIG_SUBDIRS([libs/zlib])
-    ZLIB_SUBDIR="libs/zlib"
-    LIBS="$LIBS -L../libs/zlib -lz"
-    CFLAGS="$CFLAGS -I../libs/zlib"
-    AC_SUBST(ZLIB_SUBDIR)
+    LIBS="$LIBS -lz"
 fi
 
 dnl how about PCRE support?
-unet_TOGGLE([pcre], no, [Enable PCRE match support],
-    [whether to enable PCRE match])
+unet_TOGGLE([pcre], $unet_have_pcre, [Disable PCRE support],
+    [whether to enable PCRE],
+[# Prohibit PCRE support if pcre doesn't exist
+if test x"$unet_have_pcre" = xno; then
+    unet_cv_enable_pcre=no
+fi])
 
 # Set the preprocessor symbol
 if test x"$unet_cv_enable_pcre" = xyes; then
     AC_DEFINE([PCRE], 1, [Enable PCRE match support])
-    AC_CONFIG_SUBDIRS([libs/pcre])
-    PCRE_SUBDIR="libs/pcre"
-    LIBS="$LIBS -L../libs/pcre -lpcreposix -lpcre"
-    CFLAGS="$CFLAGS -I../libs/pcre"
-    AC_SUBST(PCRE_SUBDIR)
+    LIBS="$LIBS -lpcreposix -lpcre"
 fi
-AM_CONDITIONAL(PCRE_MATCH, [test x"$unet_cv_enable_pcre" = xyes])
 
 dnl how about SSL support?
 AC_MSG_CHECKING([whether to enable OpenSSL support])
@@ -485,8 +492,8 @@ dnl AC_OUTPUT
 
 dnl IRC Network environment
 dnl Default DDB
-ircdev_cv_environment_ddb=yes;
-dnl ircdev_cv_environment_undernet=yes;
+dnl ircdev_cv_environment_ddb=yes;
+ircdev_cv_environment_undernet=yes;
 
 dnl --with-ddb-environment allows us to use DDB Environment
 AC_MSG_CHECKING([whether to use DDB Environment (Distributed DataBase)])

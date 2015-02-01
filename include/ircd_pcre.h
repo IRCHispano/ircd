@@ -25,6 +25,8 @@
 #ifndef INCLUDED_pcre_h
 #define INCLUDED_pcre_h
 
+#if defined(USE_PCRE)
+
 #ifndef INCLUDED_pcre_h
 #include "pcre.h"
 #endif
@@ -34,6 +36,8 @@
 extern int match_pcre(pcre *re, char *subject);
 extern int match_pcre_str(char *regexp, char *subject);
 extern int match_pcre_ci(pcre *re, char *subject);
+
+#endif /* USE_PCRE */
 
 #endif /* INCLUDED_pcre_match_h */
 

@@ -1,5 +1,5 @@
 /* Hecho por FreeMind */
-#include "pcre_match.h"
+#include "ircd_pcre.h"
 #include "config.h"
 #include "s_debug.h"
 #include "struct.h"
@@ -10,6 +10,7 @@
 #include "ircd_chattr.h"
 #include "ircd_string.h"
 
+#if defined(USE_PCRE)
 int match_pcre(pcre *re, char *subject)
 {
   int rc,i;
@@ -81,3 +82,4 @@ int match_pcre_ci(pcre *re, char *subject) {
   MyFree(low);
   return res;
 }
+#endif

@@ -70,6 +70,7 @@ ircd_SOURCES = \
     ircd_log.c \
     ircd_md5.c \
     ircd_parser.y \
+    ircd_pcre.c \
     ircd_relay.c \
     ircd_reply.c \
     ircd_res.c \
@@ -186,11 +187,6 @@ ircd_SOURCES = \
     watch.c \
     whowas.c
 
-if PCRE_MATCH
-ircd_SOURCES += \
-    pcre_match.c
-endif
-	
 if ENVIRONMENT_UNDERNET
 ircd_SOURCES += \
     m_account.c
