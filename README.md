@@ -14,7 +14,7 @@ repositorios publicos para tener la ultima versio del IRCD.
 Este documento enumera las diferentes ramas del repositorio.
 
 
-###RAMA OFICIAL
+### RAMA OFICIAL
 
  * IRCD 2.10.H.10 Oficial
 
@@ -25,7 +25,7 @@ Este documento enumera las diferentes ramas del repositorio.
 
 
 
-###RAMA DE DESARROLLO
+### RAMA DE DESARROLLO
 
  * IRCD 2.10.H.11
 
@@ -36,7 +36,7 @@ Este documento enumera las diferentes ramas del repositorio.
 
 
 
-###Ejemplo
+### Ejemplo
 
 Ejemplo de descarga de la ultima version en produccion del IRCD de IRC-Hispano
 
