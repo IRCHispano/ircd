@@ -1,0 +1,498 @@
+$Id: iauth.txt,v 1.3 2007-12-11 23:49:05 zolty Exp $
+
+PANORAMA
+========
+
+El protocolo iauth utilizado se basa en el de  irc2.11.1, con
+cambios menores para apoyar protocolos de desafío-respuesta y
+login-in de conexión.  La referencia de iaut-internals.txt de esa versión
+y código fuente puede ser útil. Para mayor claridad, este documento utiliza
+"servidor" para referirse a cualquier servidor de IRC con la implementación
+de este protocolo, "ircu" para referirse al ircd de Undernet, y "ircd" para
+referirse al ircd de IRCnet.
+
+Ciertos mensajes se retransmiten a los operadores interesados. El ircu
+implementa mediante el uso de la máscara 131072 (SNO_AUTH) de los avisos del
+servidor (modo +s). El ircd implementa usando el canal local &AUTH.
+
+ARRANCANDO IAUTH
+================
+
+La ruta de acceso al programa iauth se especifica en el archivo de configuración
+del servidor. El servidor genera este programa al leer el archivo de
+configuración o cuando la anterior instancia iauth termina. Para proteger
+contra una serie de fallos, el servidor no volverá a arrancar una instancia de
+iauth que haya arrancado en los últimos cinco segundos. Una operación de
+recarga (rehash) debe eliminar este comportamiento. El servidor y la instancia
+iauth se comunican a través del "stdin" y "stdout" de la instancia iauth.
+
+Cada mensaje del servidor a la instancia iauth es una sola línea. La línea
+comienza con un entero identificador de cliente. Este puede ser -1 para indicar
+que no hay un cliente en particular o un número no negativo para indicar que hay
+cliente conectado al servidor.
+
+Cuando el servidor se inicia la instancia iauth, éste envía una línea formateada
+como "-1 M irc.example.org 20000" para indicar su nombre y un límite máximo
+exclusivo de número de identificadores válidos de cliente. En este ejemplo, el
+número de posible identificador de cliente sería entre 0 y 19999 ambos inclusive.
+Este límite máximo se llama MAXCONNECTIONS en el código del servidor.
+
+Cuando se inicia la instancia iauth, éste envía un mensaje "V" para indicar su
+versión.
+
+El servidor debe proporcionar subcomandos /stats que informan la versión de la
+instancia de iauth, la configuración y las estadísticas.
+
+Los formatos de línea en ambas direcciones son de estilo-IRC en el formato:
+El espacio separa argumentos y los dos puntos (:) en el inicio de un argumento
+que el resto de la línea es un argumento. Para evitar problemas, los argumentos
+de direcciones IPv6 con dos puntos, deben ser prefijados con un 0 -- por ejemplo,
+::1 se envía como 0::1.
+
+Cuando la instancia iauth envía mensajes que se refieren a un cliente particular,
+que el cliente es identificado por tres parámetros a partir del mensaje de
+Introducción del Cliente del servidor (<id>, <ipremoto> y <puertoremoto>).
+Si alguno de estos no están de acuerdo con los datos de usuario del servidor,
+es un error.
+
+ESTADOS DEL CLIENTE
+===================
+
+Cada cliente es conceptualmente en uno de cuatro estados: GONE, REGISTER,
+HURRY o NORMAL. Cada cliente se inicia en el estado GONE. Ciertos mensajes del
+del servidor señala la transición de un cliente de un estado a otro, y algunos
+mensajes de la instancia iauth causa un estado transitiorio.
+
+Para ser pedante, el estado REGISTER es una colección de sub-estados desde
+ciertos comandos que debe ocurrir como máximo, y/o al menos una vez durante
+el estado REGISTER. Las distinciones entre estos sub-estados son motivo de
+distracción y no tiene importancia, por lo que se describen como un estado y
+las limitaciones de repetición se describen para cada comando.
+
+La justificación para el estado HURRY es dar entrada explícita a la
+instancia iauth sobre cuando el servidor cree que se ha enviado el conjunto
+de datos completo para el cliente. En lugar de definir el conjunto completo de
+información de este documento de protocolo, que se deja en el servidor.
+el ircd no indica este estado.
+
+The rationale for the HURRY state is to give explicit input to the
+iauth instance as to when the server believes it has sent the complete
+set of data for the client.  Rather than defining the complete set of
+information in this protocol document, that is left to the server.
+ircd does not indicate this state.
+
+
+POLÍTICAS Y CASOS DE USO
+========================
+
+La aplicación histórica de iauth ha sido bloquear a los usuarios que
+parecen ser drones/bots/spam, antes de que tengan la oportunidad de molestar en
+la red, y sin afectar a otros usuarios en el mismo host (como las K-lines/G-lines).
+Este protocolo se extiende esa aplicación mediante la adición del mensaje 'n'
+de servidor y permite el intercambio de desafío-respuesta con el cliente.
+
+Con el tiempo sería bueno que se moviese las búsquedas de DNS y ident al iauth,
+y quitar ese código desde el servidor de IRC. ircd ya lo hace esto;
+desde ircu no lo hace, y añade el mensaje 'u' de servidor.
+
+Para proxies de confianza, este protocolo da la capacidad para los clientes
+conecten a través de esos proxies para mostrar con su username real (ident),
+dirección IP real y nombre de host. Las mismas funciones permiten a otros
+clientes utilizar obfuscación de iauth, por ejemplo, para ocultar la dirección
+IP para los operadores.
+
+Este protocolo permite el "login-on-connect", por ejemplo, los clientes que
+envían su nombre de cuenta y contraseña en el comando PASS, a través del
+mensaje 'R' de iauth.
+
+Este protocolo permite iauth para asignar un cliente a una clase particular
+especificando un nombre de clase en el mensaje 'D' o 'R' de iauth.
+
+MENSAJES DEL SERVIDOR
+=====================
+
+X - Ejemplo de Descripción de Mensaje
+Sintaxis: <id> X <varios> <argumentos>
+Ejemplo: 5 X argumentos variados
+Estados: REGISTER(1), HURRY, NORMAL
+Siguiente Estado: -
+Comentarios: Este es un ejemplo de descripción del mensaje. Cada mensaje es un
+  carácter individual. El campo Estados indica que el estado que establece el
+  mensaje que puede ocurrir y cualquier restricción sobre el número de veces
+  que el mensaje puede ser enviado en esos estados (restricciones sólo tiene
+  sentido cuando el Siguiente Estado es -). El campo Siguiente Estado indica que
+  estado nuevo está implícito en el mensaje; un guión indica que no hay estado
+  que implique cambio. Este es un ejemplo, no una descripción de la mensaje 'X'
+  real.
+Compatibilidad: Si creemos que el comportamiento del ircu es diferente al del
+  ircd, esto describe el comportamiento o las expectativas del ircd.
+
+C - Introducción del Cliente
+Sintaxis: <id> C <ipremoto> <puertoremoto> <iplocal> <puertolocal>
+Ejemplo: 5 C 192.168.1.10 23367 192.168.0.1 6667
+Estados: GONE
+Siguiente Estado: REGISTER
+Comentarios: Indica que <puertolocal> en <iplocal> ha aceptado una conexión
+  de cliente desde <puertoremoto> en <ipremoto>.
+
+D - Desconexión del Cliente
+Sintaxis: <id> D
+Ejemplo: 5 D
+Estados: REGISTER, HURRY, NORMAL
+Siguiente Estado: GONE
+Comentarios: Indica que un cliente se desconecta del servidor.
+
+N - Recepción del Hostname
+Sintaxis: <id> N <hostname>
+Ejemplo: 5 N host-1-10.example.org
+Estados: REGISTER(1)
+Siguiente Estado: -
+Comentarios: Indica que el servidor ha recibido información del hostname para
+  un cliente. Solo uno de 'N' y 'd' es enviado.
+
+d - Timeout del Hostname
+Sintaxis: <id> d
+Ejemplo: 5 d
+Estados: REGISTER(1)
+Siguiente Estado: -
+Comentarios: Indica que el servidor no ha recibido información del hostname
+  para un cliente en un tiempo estipulado. Solo uno de 'N' y 'd' es enviado.
+
+P - Contraseña del Cliente
+Sintaxis: <id> P :<password ...>
+Ejemplo: 5 P :buddha n1rvan4
+Estados: REGISTER
+Siguiente Estado: -
+Comentarios: Indica la información de contraseña del cliente. Esto puede ser
+  una contraseña tradicional del cliente, una cuenta y frase de paso, o la
+  respuesta a un desafío (ver el mensaje 'C' de iauth). Este mensaje es
+  habilitado mediante la solicitud de la política A.
+
+U - Username del Cliente
+Sintaxis: <id> U <username> <hostname> <servername> :<userinfo ...>
+Ejemplo: 5 U buddha bodhisattva.example.com irc.undernet.org :Gautama Siddhartha
+Estados: REGISTER(1+)
+Siguiente Estado: -
+Comentarios: Indica el nombre de usuario reclamado por el cliente y la
+  información de "GECOS", junto con el hostname del cliente y el servidor.
+  Esta información no es confiable. Este mensaje se activa mediante la 
+  solicitud de la política A.
+Compatibilidad: El ircd solo envía el parametro <username>.
+
+u - Username del Cliente
+Sintaxis: <id> u <username>
+Ejemplo: 5 u notbuddha
+Estados: REGISTER(1)
+Siguiente Estado: -
+Comentarios: Indica un nombre de usuario más fiable para el cliente.
+Compatibilidad: Este es una extensión de Undernet y el ircd no envía esto.
+
+n - Nick del Cliente
+Sintaxis: <id> n <nick>
+Ejemplo: 5 n Buddha
+Estados: REGISTER(1+), HURRY
+Siguiente Estado: -
+Comentarios: Indica el nick pedido por el cliente.
+Compatibilidad: Este es una extensión de Undernet y el ircd no envía esto.
+  Se habilita por la instancia iauth solicitando la política U.
+  
+H - Hurry Up (Darse prisa)
+Sintaxis: <id> H <clase>
+Ejemplo: 5 H Others
+Estados: REGISTER
+Siguiente Estado: HURRY
+Comentarios: Indica que el servidor está listo para registrar el cliente
+  excepto si se necesita una respuesta desde el servidor iauth. El parametro
+  <clase> es una clase de conexión provisional para el usuario, se utilizará
+  a menos que iauth prevalezca en un mensaje 'D' o 'R'.
+Compatibilidad: Este es una extensión de Undernet y el ircd no envía esto.
+  Se habilita por la instancia iauth solicitando la política U.
+
+T - Cliente Registrado
+Sintaxis: <id> T
+Ejemplo: 5 T
+Estados: HURRY
+Siguiente Estado: NORMAL
+Comentarios: Indica que el servidor se cansó de esperar a iauth para terminar
+  y se está aceptando el cliente. Este mensaje debería nunca enviar cuando
+  la política R está en vigor.
+Compatibilidad: El ircd permite este mensaje para clientes en estado REGISTER.
+
+E - Error
+Sintaxis: <id> E <tipo> :<texto adicional>
+Ejemplo: 5 E Gone
+Estados: N/A
+Siguiente Estado: -
+Comentarios: Indica que un mensaje recibido desde la instancia iauth podría
+  no ser interpretado racionalmente. Esto puede ser debido a que el cliente
+  no se ha encontrado, el cliente estaba en un estado inadecuado para el
+  mensaje, o por otras razones. El parametro <tipo> especifica el tipo general
+  de error y <texto adicionl> proporciona detalles. El <id> puede ser -1.
+  
+M - Nombre y Capacidad del Servidor
+Sintaxis: <id> M <servidor> <capacidad>
+Ejemplo: -1 M irc.example.org 20000
+Estados: GONE(1)
+Siguiente Estado: -
+Comentarios: Indica el nombre del servidor y el límite máximo de identificadores
+  de clientes.
+Compatibilidad: El ircd no incluye la información de <capacidad>.
+  El <id> debe ser ignorado: El ircd envía 0 y el ircu envía -1.
+  
+X - Extension Query Reply
+Sintaxis: <id> X <servidor> <routing> :<respuesta>
+Ejemplo: -1 X channels.undernet.org 5/127.0.0.1/6667 :OK kev Logged in
+Estados: N/A
+Siguiente Estado: -
+Comentarios: Se utiliza para entregar la respuesta de una consulta extendida
+  a la instancia iauth. El parametro <servidor> indica el origen de la
+  respuesta. El parametro <routing> es el mismo que se uso en el mensaje 'X'
+  de la instancia iauth, y se puede utilizar para emparejar la respuesta con
+  la solicitud original. El parametro <respuesta> contiene el texto de la
+  respuesta.
+Compatibilidad: Este es una extensión de Undernet y el ircd no envía esto.
+
+x - Extension Query Server Not Linked
+Sintaxis: <id> x <servidor> <routing> :Server not online
+Ejemplo: -1 x channels.undernet.org 5/127.0.0.1/6667 :Server not online
+Estados: N/A
+Siguiente Estado: -
+Comentarios: Se utiliza para indicar a la instancia iauth que el servidor
+  especificado en el mensaje 'X' no está actualmente vinculado en la red.
+  Esto no va a detectar la consulta extendida será perdido en la ruptura
+  de la red, por lo tanto las instancias iauth deberían tener implementado
+  un mecanismo de timeout para las consultas extendidas.
+Compatibilidad: Este es una extensión de Undernet y el ircd no envía esto.
+
+MENSAJES DE IAUTH
+=================
+
+X - Ejemplo de Descripción de Mensaje
+Sintaxis: X <argumentos>
+Ejemplo: X something
+Notificación: yes
+Estados: N/A
+Siguiente Estado: N/A
+Comentarios: Este es un ejemplo de descripción del mensaje. Cada mensaje es un
+  caracter individual. Si el campo Notificación está presente y dice que Sí,
+  los operadores interesados (con SNO_AUTH ajustado) deben ser notificados
+  del mensaje. El campo de Estados, cuando está presente, indica que
+  Estados aceptan este mensaje. Los clientes en otros Estados deben ignorar
+  el mensaje o tratarlo como un error. El campo Siguiente Estado, cuando está
+  presente, indica cúal debe ser el siguiente estado para el cliente.
+  Esto es un ejemplo, no una descripción del mensaje 'X' real.
+Compatibilidad: Si creemos que el comportamiento del ircu es diferente al del
+  ircd, esto describe el comportamiento o las expectativas del ircd.  
+
+> - Notificación del Operador
+Sintaxis: > :<texto de mensaje>
+Ejemplo: > :Hello Operators!
+Notificación: Sí
+Comentarios: Contiene un mensaje que la instancia iauth quiere enviar a los
+  operadores interesados.
+
+G - Ajusta Nivel de Depuración
+Sintaxis: G <nivel>
+Ejemplo: G 1
+Notificación: Sí
+Comentarios: Establece un nivel de depuración para el extremo del servidor
+  de la conversación de iauth. Cuando está activado, los mensajes de depuración
+  se deben enviar al mismo canal (grupo, máscara, etc..) como otras
+  notificaciones de iauth.
+  El nivel 0 de depuración suprime la salida de lo relacionado con el iauth,
+  un número positivo se activan los mensajes de depuración de iauth.
+
+O - Ajusta Opciones de Políticas
+Sintaxis: O <opciones>
+Ejemplo: O RTAWU
+Notificación: Sí
+Comentarios: Establece las opciones de política para la conversación iauth.
+  Las opciones antiguas de políticas deben ser olvidados. Las opciones de
+  política validas son:
+   A - Enviar información de nombre de usuario y contraseña.
+       Esto causa que el servidor envía los mensajes 'U' y 'P'.
+   R - Requerir a los clientes a ser aprobados antes de ser registrados.
+       Cuando esta política está en vigor, afecta al comportamiento del
+       tiempo del proceso de registro; para más detalles, consulte la
+       documentación para el mensaje 'T' de servidor
+   T - Cuando la política 'R' está en vigor, y el servidor iauth no responde
+       para un cliente, esto hace que el servidor cuente el número de clientes
+       rechazados, para enviar un mensaje periódico de advertencia para los
+       operadores interesados cuando la instancia iauth responde de nuevo.
+   U - Envía nick, username confirmado y la información de "hurry".
+       Esto causa que el servidor envíe los mensajes 'n', 'u' y 'H'.
+   W - Permite un tiempo extra para iauth para las respuestas basadas en
+       hostname.
+       Cuando esta política está en vigor y un mensaje DNS ('N' o 'd') es
+       enviado para un cliente, el tiempo de espera del registro del cliente es
+       extendido o restablecido.
+Compatibilidad: La política 'U' es una extensión de Undernet y no es reconocida
+  por el ircd.
+
+V - Versión del Programa iauth
+Sintaxis: V :<version string>
+Ejemplo: V :Undernet-iauthu v1.0
+Notificación: Sí
+Comentarios: Indica la versión del programa iauth. Esto sólo debería ser
+  utilizado en los mensajes de diagnóstico, y no debe cambiar el comportamiento
+  de protocolo.
+  
+a - Inicio de nueva configuración
+Sintaxis: a
+Ejemplo: a
+Notificación: Sí
+Comentarios: Indica que una nueva configuración está siendo cargado por la
+  instancia iauth. Todos los registros de configuración en caché deben borrarse.
+
+A - Información de Configuración
+Sintaxis: A <hosts?> <modulo> :<opciones>
+Ejemplo: A * rfc931
+Notificación: Sí
+Comentarios: Indica nueva información de configuración.
+
+s - Inicio de nuevas estadísticas
+Sintaxis: s
+Ejemplo: s
+Notificación: Sí
+Comentarios: Indica que se enviará un nuevo conjunto de estadísticas. Todos
+  los registros de estadísticas en caché deben borrarse.
+
+S - Información de Estadísticas
+Sintaxis: S <modulo> :<información modulo>
+Ejemplo: S rfc931 connected 0 unix 0 other 0 bad 0 out of 0
+Notificación: Sí
+Comentarios: Indica información nueva o adicional de estadísticas.
+
+o - Username Forzado
+Sintaxis: o <id> <ipremoto> <puertoremoto> <username>
+Ejemplo: o 5 192.168.1.10 23367 bubba
+Estados: REGISTER, HURRY
+Siguiente Estado: -
+Comentarios: ndica que el nombre de usuario se debe utilizar para el cliente
+  especificado si la comprobación normal sería prohibir el username.
+
+U - Username Confiable
+Sintaxis: U <id> <ipremoto> <puertoremoto> <username>
+Ejemplo: U 5 192.168.1.10 23367 buddha
+Estados: REGISTER, HURRY
+Siguiente Estado: -
+Comentarios: Indica que la instancia iauth cree que <username> es preciso
+  para el cliente especificado.
+
+u - Username no Confiable
+Sintaxis: u <id> <ipremoto> <puertoremoto> <username>
+Ejemplo: u 5 192.168.1.10 23367 enlightened_one
+Estados: REGISTER, HURRY
+Siguiente Estado: -
+Comentarios: Indica que la instancia iauth no confía en el <username> para
+  ser exacto, pero no tiene otros username de confianza.
+
+N - Hostname del Cliente
+Sintaxis: N <id> <ipremoto> <puertoremoto> <hostname>
+Ejemplo: N 5 192.168.1.10 23367 buddha.example.org
+Estados: REGISTER, HURRY
+Siguiente Estado: -
+Comentarios: Indica que la instancia iauth cree que el cliente especificado
+  debe utlizar el hostname dado.
+Compatibilidad: Este es una extensión de Undernet y el ircd no soporta este
+  mensaje.
+
+I - Dirección IP del Cliente
+Sintaxis: I <id> <ipactual> <puertoremoto> <ipnueva>
+Ejemplo: I 5 192.168.1.10 23367 127.128.129.130
+Estados: REGISTER, HURRY
+Siguiente Estado: -
+Comentarios: Indica que la instancia iauth espera que el servidor
+  presente y trate el cliente para usar <ipnueva>. Esto significa que
+  futuros mensajes iauth relacionados con el cliente debe usar <nuevaip>
+  como el parametro <ipremoto>.
+Compatibilidad: Este es una extensión de Undernet y el ircd no soporta este
+  mensaje.
+
+M - Ajusta Modo del Usuario
+Sintaxis: M <id> <ipremoto> <puertoremoto> +<cambio modos>
+Ejemplo: M 5 192.168.1.10 23367 +iwg
+Estados: REGISTER, HURRY
+Siguiente Estado: -
+Comentarios: Indica una ajuste de cambios de modo de usuario que se aplicará
+ al cliente.
+Compatibilidad: Este es una extensión de Undernet y el ircd no soporta este
+  mensaje.
+
+C - Desafío del Usuario
+Sintaxis: C <id> <ipremoto> <puertoremoto> :<challenge string>
+Ejemplo: C 5 192.168.1.10 23367 :In which year did Columbus sail the ocean blue?
+Estados: REGISTER, HURRY
+Siguiente Estado: -
+Comentarios: Indica que la cadena de desafío debe ser enviada al usuario
+  especificado, por ejemplo, vía NOTICE AUTH :*** <challenge string>.
+  El cliente responde enviando PASS :<respuesta>, que debería ser retransmitida
+  a traves del mensaje P del servidor. Esto requiere que la política 'A' esté
+  en vigor.
+Compatibilidad: Este es una extensión de Undernet y el ircd no soporta este
+  mensaje.
+
+k - Kill del Cliente en Silencio
+Sintaxis: k <id> <ipremoto> <puertoremoto> :<motivo>
+Ejemplo: k 5 192.168.1.10 23367 :Open proxy found.
+Estados: REGISTER, HURRY, NORMAL
+Siguiente Estado: GONE
+Comentarios: Indica que el cliente especificado debe ser desconectado
+  por la razón dada sin notificar a los operadores.
+Compatibilidad: El ircu no usa el mismo mecanismo de notificación que el ircd,
+  does not use the same notification mechanism as
+  ircd, los operadores son notificados usando SNO_CONNEXIT de todas las formas.
+
+K - Kill de Cliente
+Sintaxis: K <id> <ipremoto> <puertoremoto> :<motivo>
+Ejemplo: K 5 192.168.1.10 23367 :We don't like you.
+Estados: REGISTER, HURRY, NORMAL
+Siguiente Estado: GONE
+Comentarios: Indica que el cliente especificado debe ser desconectado
+  por la razón indicada. Los operadores deben ser notificados.
+
+d - Comprobación "Soft" Done
+Sintaxis: d <id> <ipremoto> <puertoremoto>
+Ejemplo: d 5 192.168.1.10 23367
+Estados: REGISTER, HURRY
+Siguiente Estado: -
+Comentarios: Indica que la instancia iauth no tiene inconveniente en dejar
+  el cliente especificado en la red, pero que algún trabajo adicional está
+  en proceso. En particular, una cuenta y/o una clase de conexión podría
+  estar disponible más tarde.
+Compatibilidad: Este es una extensión de Undernet y el ircd no soporta este
+  mensaje.
+
+D - Comprobación Done
+Sintaxis: D <id> <ipremoto> <puertoremoto> [clase]
+Ejemplo: D 5 192.168.1.10 23367
+Estados: REGISTER, HURRY
+Siguiente Estado: NORMAL
+Comentarios: Indica que la instancia iauth cree que el cliente especificado
+  debe ser permitido en la red. Si el parámetro clase es dado, el cliente
+  debe ser asignado a esa clase.
+Compatibilidad: La especificación de la clase es una extensión Undernet y el
+  ircd no soporta ese parámetro.
+
+R - Usuario Registrado
+Sintaxis: R <id> <ipremoto> <puertoremoto> <cuenta> [clase]
+Ejemplo: R 5 192.168.1.10 23367 Buddha
+Estados: REGISTER, HURRY
+Siguiente Estado: NORMAL
+Comentarios: Indica que la instancia iauth cree que el cliente especificado
+  debe ser permitido en la red, pre-autenticado en la lista de cuentas. Si el
+  parámetro clase es dado, el cliente debe ser asignado a esa clase. 
+Compatibilidad: Este es una extensión de Undernet y el ircd no soporta este
+  mensaje.
+
+X - Query Extendida
+Sintaxis: X <servidor> <routing> :<query>
+Ejemplo: X channels.undernet.org 5/127.0.0.1/6667 :login kev pass
+Comentarios: Utilizado por la instancia iauth para enviar una consulta de
+  extensión al servidor especificado por el parámetro <servidor>. El parámetro
+  <routing> no es interpretado por los servidores; se devolverá sin cambios
+  el mensaje de respuesta de la query extendida (el mensaje 'X' de servidor)
+  y puede ser usado para emparejar la consulta con su respuesta. El parámetro
+  <query> es enviado a <servidor>.
+Compatibilidad: Este es una extensión de Undernet y el ircd no soporta este
+  mensaje.
