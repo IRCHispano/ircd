@@ -1,7 +1,7 @@
-diff --git a/ircd/s_serv.c b/ircd/s_serv.c
+diff --git ircd/s_serv.c ircd/s_serv.c
 index 571ff60..ccb6082 100644
---- a/ircd/s_serv.c
-+++ b/ircd/s_serv.c
+--- ircd/s_serv.c
++++ ircd/s_serv.c
 @@ -768,9 +768,10 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
              IsIPv6(acptr) ? "6" : "", PunteroACadena(acptr->info));
  #if !defined(NO_PROTOCOL9)
@@ -103,8 +103,8 @@ index 571ff60..ccb6082 100644
          send_umode(cptr, acptr, 0, SEND_UMODES, 0, SEND_HMODES);
 diff --git a/ircd/s_user.c b/ircd/s_user.c
 index 0755a8f..90130e7 100644
---- a/ircd/s_user.c
-+++ b/ircd/s_user.c
+--- ircd/s_user.c
++++ ircd/s_user.c
 @@ -820,10 +820,12 @@ static int register_user(aClient *cptr, aClient *sptr,
  #else /* Remove the following when all servers are 2.10 */
  
