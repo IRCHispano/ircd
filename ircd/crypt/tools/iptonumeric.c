@@ -41,7 +41,9 @@ int main(int argc, char *argv[])
     struct irc_in_addr ip;
     unsigned char bits;
     char ip_base64[25];
+#ifdef DEBUG
     int i;
+#endif
 
     if (argc != 2) {
         printf("Uso: %s IP\n", argv[0]);
@@ -53,9 +55,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+#ifdef DEBUG
     for (i = 0; i < 8; i++)
         printf("Valor de in6_16[%d]: %u\n", i, ip.in6_16[i]);
-
+#endif
 
     iptobase64(ip_base64, &ip, sizeof(ip_base64), 1);
 

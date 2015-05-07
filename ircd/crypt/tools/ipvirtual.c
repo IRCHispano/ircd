@@ -22,7 +22,7 @@
  *
  * -- zoltan
  *
- * $Id$
+ * $Id: ipvirtual.c 256 2008-12-01 14:40:06Z dfmartinez $
  */
 
 
@@ -42,69 +42,87 @@
 int main(int argc, char *argv[])
 {
     unsigned int v[2], k[2], x[2];
-    int ts=0;
+    int ts = 0;
+    int i = 0;
     char clave[12 + 1];
     char virtualhost[22];
-    struct hostent *hp;
-    struct in_addr addr;
+    struct irc_in_addr ip;
+    unsigned char bits;
 
-    if(argc!=3) {
+    if(argc != 3) {
         printf("Uso: %s password IP\n", argv[0]);
         return 1;
     }
 
-    hp = gethostbyname((char *)argv[2]);
-
-    if (hp==NULL) {
-      return 1;
+    if (!ipmask_parse(argv[2], &ip, &bits)) {
+        printf("Formato de IP incorrecto\n");
+        return 1;
     }
 
-    memcpy(&addr,hp->h_addr,hp->h_length);
+    for (i = 0; i < 8; i++)
+        printf("Valor de in6_16[%d]: %u\n", i, ip.in6_16[i]);
 
     strncpy(clave, argv[1], 12);
     clave[12] = '\0';
 
-    /* resultado */
-    x[0] = x[1] = 0;
-
-    while (1)
+    /* IPv4 */
+    if (irc_in_addr_is_ipv4(&ip))
     {
-      char tmp;
+        do {
+            char tmp;
 
-    /* resultado */
-    x[0] = x[1] = 0;
+            x[0] = x[1] = 0;
 
-    /* valor */
-    tmp = clave[6];
-    clave[6] = '\0';
-    k[0] = base64toint(clave);
-    clave[6] = tmp;
-    k[1] = base64toint(clave + 6);
+            tmp = clave[6];
+            clave[6] = '\0';
+            k[0] = base64toint(clave);
+            clave[6] = tmp;
+            k[1] = base64toint(clave + 6);
 
-    v[0] = (k[0] & 0xffff0000) + ts;
-    v[1] = ntohl((unsigned long)addr.s_addr);
+            v[0] = (k[0] & 0xffff0000) + ts;
+            v[1] = (ntohs(ip.in6_16[6]) << 16) | ntohs(ip.in6_16[7]);
 
-    tea(v, k, x);
+            tea(v, k, x);
 
-    /* formato direccion virtual: qWeRty.AsDfGh.virtual */
-    inttobase64(virtualhost, x[0], 6);
-    virtualhost[6] = '.';
-    inttobase64(virtualhost + 7, x[1], 6);
-    strcpy(virtualhost + 13, ".virtual");
+            /* Virtualhost format: qWeRty.AsDfGh.v4 */
+            inttobase64(virtualhost, x[0], 6);
+            virtualhost[6] = '.';
+            inttobase64(virtualhost + 7, x[1], 6);
+            strncpy(virtualhost + 13, ".virtual", 64);
 
-    /* el nombre de Host es correcto? */
-    if (!strchr(virtualhost, '[') &&
-        !strchr(virtualhost, ']'))
-      break;                    /* nice host name */
-    else
-    {
-      if (++ts == 65536)
-      {                         /* No deberia ocurrir nunca */
-        strcpy(virtualhost, "Soy pepe");
-        break;
-      }
+            /* No deber�a ocurrir nunca... */
+            if (++ts == 65535)
+            {
+                strncpy(virtualhost, ircd_ntoa(&ip), 64);
+                strncat(virtualhost, ".virtual", 64);
+                break;
+            }
+        } while (strchr(virtualhost, ']') || strchr(virtualhost, '['));
     }
-  }
-  printf("Resultado: %s\n", virtualhost);
-  exit(EXIT_SUCCESS);
+    else /* IPv6 */
+    {
+        char tmp;
+
+        x[0] = x[1] = 0;
+
+        tmp = clave[6];
+        clave[6] = '\0';
+        k[0] = base64toint(clave);
+        clave[6] = tmp;
+        k[1] = base64toint(clave + 6);
+
+        v[0] = ntohs((unsigned long)ip.in6_16[0]) << 16 | ntohs((unsigned long)ip.in6_16[1]);
+        v[1] = ntohs((unsigned long)ip.in6_16[2]) << 16 | ntohs((unsigned long)ip.in6_16[3]);
+
+        tea(v, k, x);
+
+        /* formato direccion virtual: qWeRty.AsDfGh.virtual6 */
+        inttobase64(virtualhost, x[0], 6);
+        virtualhost[6] = '.';
+        inttobase64(virtualhost + 7, x[1], 6);
+        strncpy(virtualhost + 13, ".v6", 64);
+    }
+
+    printf("Resultado: %s => %s\n", ircd_ntoa(&ip), virtualhost);
+    exit(EXIT_SUCCESS);
 }

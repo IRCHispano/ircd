@@ -21,8 +21,8 @@
  * Programa para sacar la IP Real a partir de una IP Virtual.
  *
  * -- zoltan
- * 
- * $Id$
+ *
+ * $Id: ipreal.c 256 2008-12-01 14:40:06Z dfmartinez $
  */
 
 
@@ -41,46 +41,95 @@
 int main(int argc, char *argv[])
 {
     unsigned int v[2], k[2], x[2];
+    struct irc_in_addr ip;
+    int lenvirtual;
     char tmpvirt[7];
     char clave[12+1];
     char tmp;
-    char resultado[16];
-    
 
-    if(argc!=3) {
+    if (argc != 3) {
         printf("Uso: %s password ip_virtual\n", argv[0]);
-        printf("NOTA: En el campo de ip virtual lo que haya despues de caracter 13 sera ignorado\n\n");
         return 1;
     }
 
-    if(argv[2][6]!='.') {
-      printf("Formato de ip virtual incorrecto\n");
-      return 1;
+    memset(&ip, 0, sizeof(struct irc_in_addr));
+
+    lenvirtual = strlen(argv[2]);
+
+    /* IPv4 AjyuN7.C9aa7L.virtual 21 caracteres */
+    if (lenvirtual == 21) {
+        if (argv[2][6] != '.' || argv[2][13] != '.' || !strstr(argv[2], ".virtual")) {
+            printf("Formato de Vhost incorrecto\n");
+            return 1;
+        }
+
+        strncpy(clave, argv[1], 12);
+        clave[12] = '\0';
+
+        strncpy(tmpvirt, argv[2], 6);
+        tmpvirt[6] = '\0';
+
+        v[0] = base64toint(tmpvirt);
+        strncpy(tmpvirt, argv[2] + 7, 6);
+        tmpvirt[6] = '\0';
+        v[1] = base64toint(tmpvirt);
+
+        /* resultado */
+        x[0] = x[1] = 0;
+
+        /* valor */
+        tmp = clave[6];
+        clave[6] = '\0';
+        k[0] = base64toint(clave);
+        clave[6] = tmp;
+        k[1] = base64toint(clave + 6);
+
+        untea(v, k, x);
+
+        ip.in6_16[5] = htons(65535);
+        ip.in6_16[6] = htons(x[1] >> 16);
+        ip.in6_16[7] = htons(x[1] & 65535);
+
+    /* IPv6 AjyuNL.C9aaN7.v6 16 caracteres */
+    } else if (lenvirtual == 16) {
+        if (argv[2][6] != '.' || argv[2][13] != '.' || !strstr(argv[2], ".v6")) {
+            printf("Formato de Vhost incorrecto\n");
+            return 1;
+        }
+
+        strncpy(clave, argv[1], 12);
+        clave[12] = '\0';
+
+        strncpy(tmpvirt, argv[2], 6);
+        tmpvirt[6] = '\0';
+
+        v[0] = base64toint(tmpvirt);
+        strncpy(tmpvirt, argv[2] + 7, 6);
+        tmpvirt[6] = '\0';
+        v[1] = base64toint(tmpvirt);
+
+        /* resultado */
+        x[0] = x[1] = 0;
+
+        /* valor */
+        tmp = clave[6];
+        clave[6] = '\0';
+        k[0] = base64toint(clave);
+        clave[6] = tmp;
+        k[1] = base64toint(clave + 6);
+
+        untea(v, k, x);
+
+        ip.in6_16[0] = htons(x[0] >> 16);
+        ip.in6_16[1] = htons(x[0] & 65535);
+        ip.in6_16[2] = htons(x[1] >> 16);
+        ip.in6_16[3] = htons(x[1] & 65535);
+
+    } else {
+        printf("Formato de Vhost incorrecto\n");
+        return 1;
     }
 
-    strncpy(clave, argv[1], 12);
-    clave[12] = '\0';
-    strncpy(tmpvirt,argv[2],6);
-    tmpvirt[6] = '\0';
-
-    v[0]=base64toint(tmpvirt);
-    strncpy(tmpvirt,argv[2]+7,6);
-    tmpvirt[6] = '\0';
-    v[1]=base64toint(tmpvirt);
-
-    /* resultado */
-    x[0] = x[1] = 0;
-
-    /* valor */
-    tmp = clave[6];
-    clave[6] = '\0';
-    k[0] = base64toint(clave);
-    clave[6] = tmp;
-    k[1] = base64toint(clave + 6);
-
-    untea(v, k, x);
-    inetoa_r(resultado, x[1]);
-    printf("Resultado: %s\n", resultado);
-
+    printf("Resultado: %s => %s\n", argv[2], ircd_ntoa(&ip));
     exit(EXIT_SUCCESS);
 }

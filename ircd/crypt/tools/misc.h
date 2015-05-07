@@ -17,6 +17,8 @@
 #ifndef MISC_H_
 #define MISC_H_
 
+#undef DEBUG
+
 #define DUMP(s, i, buf, sz)  {printf(s);                   \
                               for (i = 0; i < (sz);i++)    \
                                   printf("%02x ", (unsigned char) buf[i]); \

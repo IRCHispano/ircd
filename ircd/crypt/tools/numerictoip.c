@@ -39,8 +39,10 @@
 int main(int argc, char *argv[])
 {
     struct irc_in_addr ip;
+#ifdef DEBUG
     unsigned int debug;
     int i;
+#endif
 
     if (argc != 2) {
         printf("Uso: %s numerico\n", argv[0]);
@@ -49,6 +51,7 @@ int main(int argc, char *argv[])
 
     base64toip(argv[1], &ip);
 
+#ifdef DEBUG
     for (i = 0; i < 8; i++)
         printf("Valor de in6_16[%d]: %u\n", i, ip.in6_16[i]);
 
@@ -56,6 +59,8 @@ int main(int argc, char *argv[])
         debug = base64toint(argv[1]);
         printf("Valor de int: %u\n", debug);
     }
+#endif
+
     printf("Conversion: %s => %s\n", argv[1], ircd_ntoa(&ip));
     exit(EXIT_SUCCESS);
 }
