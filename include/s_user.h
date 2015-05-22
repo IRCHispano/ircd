@@ -49,6 +49,7 @@ extern int m_cprivmsg(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_cnotice(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_user(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_webirc(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+extern int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_away(aClient *cptr, aClient *sptr, int parc, char *parv[]);

@@ -95,6 +95,10 @@
 #define TOK_WEBIRC              "WEBIRC"
 #define CLASS_WEBIRC            LEVEL_QUERY
 
+/* We are using PPROXY as PROXY is defined in Linux's glibc socket.h */
+#define MSG_PPROXY		"PROXY"		/* PROXY */
+#define TOK_PROXY		"PROXY"
+#define CLASS_PROXY		LEVEL_QUERY
 
 
 #define MSG_PRIVATE		"PRIVMSG"	/* PRIV */

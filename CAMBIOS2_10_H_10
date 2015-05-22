@@ -1,3 +1,11 @@
+* 2015/05/22  daijo@chathispano.com (u2.10.H.10.225)             FEATURE
+------------------------------------------------------------------------
+  Implementacion inicial del protocolo PROXY. Este cambio inicial solo
+  permite su configuracion a traves de la BBDD, utilizando la tabla 'w'
+  y una clave "proxy" donde se definiran una o mas IPs separadas por
+  coma de los proxies autorizados a conectar. HAproxy debe ser tener la
+  opcion 'send-proxy' habilitada.
+
 * 2015/02/16  zoltan@irc-dev.net (u2.10.H.10.224)                CLEANUP
 ------------------------------------------------------------------------
   Eliminamos el parche u2.10.H.10.187 de deep.space para pasar a ser

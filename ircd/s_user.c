@@ -1803,6 +1803,102 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char *parv[])
   return 0;
 }
 
+/*
+ * m_proxy
+ *
+ * parv[0] = prefix
+ * parv[1] = protocolo (TCP4, TCP6 o UNKNOWN)
+ * parv[2] = direccion ip del cliente origen
+ * parv[3] = direccion ip del servidor proxy
+ * parv[4] = puerto origen del cliente origen
+ * parv[5] = puerto destino del servidor proxy
+ *
+ * Ver: http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt
+ */
+int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  struct ConfItem *aconf;
+  struct hostent *he;
+  struct db_reg *reg;
+  unsigned short access_allowed = 0;
+
+  if (IsRegistered(sptr))
+    return 0;
+
+  if (IsServer(sptr))
+    return 0;
+
+  if (IsServerPort(sptr))
+    return exit_client(sptr, sptr, &me, "Use a different port");
+
+  if (parc < 6)
+  {
+    sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "PROXY");
+    return 0;
+  }
+
+  /*
+   * Recorre la tabla 'w' buscando la clave "proxy". En esta clave
+   * busca una lista de direcciones IP separadas por coma que seran
+   * las autorizadas a conectar utilizando el protocolo PROXY
+   */
+  for (reg = db_iterador_init(BDD_WEBIRCDB); reg; reg = db_iterador_next())
+  {
+    if (strcmp(reg->clave, "proxy") == 0)
+    {
+      char *current, *ipaddress = NULL;
+      for (current = strtoken(&ipaddress, reg->valor, ",");
+           current;
+           current = strtoken(&ipaddress, NULL, ","))
+      {
+          if (strcmp(sptr->sockhost, current) == 0)
+          {
+            access_allowed = 1;
+            break;
+          }
+      }
+    }
+  }
+
+  if (access_allowed == 0)
+    return exit_client(sptr, sptr, &me, "PROXY Not authorized from your address");
+
+  IPcheck_connect_fail(sptr);
+  IPcheck_disconnect(sptr);
+
+  if (strcmp(parv[1], "TCP4") == 0)
+  {
+    struct in_addr inaddr;
+
+    inet_aton(parv[2], &inaddr);
+
+    memset(&sptr->ip, 0, sizeof(struct irc_in_addr));
+    sptr->ip.in6_16[5] = htons(65535);
+    sptr->ip.in6_16[6] = htons(ntohl(inaddr.s_addr) >> 16);
+    sptr->ip.in6_16[7] = htons(ntohl(inaddr.s_addr) & 65535);
+
+    sptr->hostp = gethostbyaddr(&inaddr, sizeof inaddr, AF_INET);
+  }
+  else if (strcmp(parv[1], "TCP6") == 0) {
+#if defined(IPV6)
+    struct sockaddr_in6 inaddr6;
+    inet_pton(AF_INET6, parv[2], &(inaddr6.sin6_addr));
+    memcpy(&(sptr->ip), &(inaddr6.sin6_addr), sizeof(struct irc_in_addr));
+    sptr->hostp = gethostbyaddr(&inaddr6, sizeof inaddr6, AF_INET6);
+#else
+    return exit_client(sptr, sptr, &me, "PROXY TCP6 protocol is not supported");
+#endif
+  }
+  else {
+    return exit_client(sptr, sptr, &me, "PROXY UNKNOWN protocol");
+  }
+
+  IPcheck_local_connect(sptr);
+
+  SlabStringAllocDup(&(sptr->sockhost), parv[2], HOSTLEN);
+  SetWebIRC(sptr);
+}
+
 
 /*
  * m_quit
