@@ -1851,7 +1851,7 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
            current;
            current = strtoken(&ipaddress, NULL, ","))
       {
-          if (strcmp(sptr->sockhost, current) == 0)
+          if (strcmp(parv[3], current) == 0)
           {
             access_allowed = 1;
             break;

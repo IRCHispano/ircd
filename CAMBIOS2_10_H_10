@@ -1,3 +1,9 @@
+* 2015/08/10  daijo@chathispano.com (u2.10.H.10.225)                 FIX
+------------------------------------------------------------------------
+  La comprobacion de IP que conecta mediante PROXY debe hacerse sobre la
+  IP del propio servidor PROXY (entregada en parv[3]) en lugar de sobre
+  la IP del usuario origen (sptr->sockhost).
+
 * 2015/05/22  daijo@chathispano.com (u2.10.H.10.225)             FEATURE
 ------------------------------------------------------------------------
   Implementacion inicial del protocolo PROXY. Este cambio inicial solo
