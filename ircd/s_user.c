@@ -1825,6 +1825,9 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (IsRegistered(sptr))
     return 0;
 
+  if (IsWebIRC(sptr))
+    return 0;
+
   if (IsServer(sptr))
     return 0;
 
@@ -1847,7 +1850,16 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (strcmp(reg->clave, "proxy") == 0)
     {
       char *current, *ipaddress = NULL;
-      for (current = strtoken(&ipaddress, reg->valor, ",");
+      char *reg_valor = NULL;
+
+      /*
+       * Copio reg->valor en reg_valor para evitar la corrupcion
+       * de memoria que ocurre al iterar en reg->valor si este posee
+       * el caracter ','. Copiado de channel.c
+       */
+      DupString(reg_valor, reg->valor);
+
+      for (current = strtoken(&ipaddress, reg_valor, ",");
            current;
            current = strtoken(&ipaddress, NULL, ","))
       {
@@ -1857,6 +1869,8 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
             break;
           }
       }
+
+      RunFree(reg_valor);
     }
   }
 

@@ -1,3 +1,11 @@
+* 2015/10/11  daijo@chathispano.com (u2.10.H.10.226)                 FIX
+------------------------------------------------------------------------
+  Arreglado un error de corrupcion de memoria a la hora de recorrer los
+  proxies autorizados a conectar mediante protocolo PROXY.
+
+  Una vez enviado el comando PROXY con exito, las siguientes llamadas al
+  mismo son ignoradas.
+
 * 2015/05/22  daijo@chathispano.com (u2.10.H.10.225)             FEATURE
 ------------------------------------------------------------------------
   Implementacion inicial del protocolo PROXY. Este cambio inicial solo
