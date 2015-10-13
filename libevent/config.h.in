@@ -192,6 +192,10 @@
 /* Define if kqueue works correctly with pipes */
 #undef HAVE_WORKING_KQUEUE
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Name of package */
 #undef PACKAGE
 

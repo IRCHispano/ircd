@@ -5,7 +5,8 @@ dnl Copyright (c) 1997, by Carlo Wood <carlo@runaway.xs4all.nl>
 dnl Make sure we are in the correct directory (someone could have run
 dnl 'configure' with a wrong '--srcdir'); Note that a bug in autoconf
 dnl forces us to have srcdir == dir where configure resides (config):
-AC_INIT(config-sh.in)
+AC_INIT
+AC_CONFIG_SRCDIR([config-sh.in])
 
 dnl 'configure' must be run from within 'config/'.
 AC_CONFIG_AUX_DIR(.)
@@ -15,17 +16,17 @@ dnl (Generate config/setup.h from config/setup.h.in):
 AC_CONFIG_HEADER(setup.h)
 
 dnl Demand at least version 2.13 of autoconf
-AC_PREREQ(2.13)
+AC_PREREQ([2.69])
 
 dnl This should be done early.
 AC_PROG_CC
 
 dnl UNIX Variants
 dnl Allow the use of BSD functions on AIX.
-AC_AIX
+AC_USE_SYSTEM_EXTENSIONS
 dnl Allow the use of POSIX functions on several OS.
-AC_ISC_POSIX
-AC_MINIX
+AC_SEARCH_LIBS([strerror],[cposix])
+AC_USE_SYSTEM_EXTENSIONS
 dnl ANSIfy the C compiler whenever possible.
 AM_PROG_CC_STDC
 dnl Use -O3 instead of -O2.
@@ -73,7 +74,18 @@ dnl Checks for library functions.
 AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MEMCMP
 AC_FUNC_SETVBUF_REVERSED
-AC_TYPE_SIGNAL
+AC_DIAGNOSE([obsolete],[your code may safely assume C89 semantics that RETSIGTYPE is void.
+Remove this warning and the `AC_CACHE_CHECK' when you adjust the code.])dnl
+AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([#include <sys/types.h>
+#include <signal.h>
+],
+		 [return *(signal (0, 0)) (0) == 1;])],
+		   [ac_cv_type_signal=int],
+		   [ac_cv_type_signal=void])])
+AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
+		    (`int' or `void').])
+
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(strchr memcpy memmove)
 AC_CHECK_FUNCS(gethostname gettimeofday mkdir strerror strtoken)
@@ -86,12 +98,12 @@ dnl Check if the type socklen_t is defined anywhere
 AC_DEFUN(AC_C_SOCKLEN_T,
 [AC_CACHE_CHECK(for socklen_t, ac_cv_c_socklen_t,
 [
-  AC_TRY_COMPILE([
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
     #include <sys/types.h>
     #include <sys/socket.h>
-  ],[
+  ]], [[
     socklen_t foo;
-  ],[
+  ]])],[
     ac_cv_c_socklen_t=yes
   ],[
     ac_cv_c_socklen_t=no
@@ -108,11 +120,11 @@ dnl Comprueba si el tipo uintptr_t esta definido
 AC_DEFUN(AC_C_UINTPTR_T,
 [AC_CACHE_CHECK(for uintptr_t, ac_cv_c_uintptr_t,
 [
-  AC_TRY_COMPILE([
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
     #include <stdint.h>
-  ],[
+  ]], [[
     uintptr_t foo;
-  ],[
+  ]])],[
     ac_cv_c_uintptr_t=yes
   ],[
     ac_cv_c_uintptr_t=no
@@ -178,4 +190,6 @@ AC_SUBST(ac_cv_header_syslog_h)
 AC_SUBST(unet_cv_func_poll_syscall)
 
 dnl Finally really generate all output files:
-AC_OUTPUT(config-sh configuretool ../Makefile ../ircd/Makefile ../doc/Makefile Makefile, [echo timestamp > stamp-h;],)
+AC_CONFIG_FILES([config-sh configuretool ../Makefile ../ircd/Makefile ../doc/Makefile Makefile])
+AC_CONFIG_COMMANDS([default],[echo timestamp > stamp-h;],[])
+AC_OUTPUT
