@@ -160,7 +160,7 @@ static void move_marker(void)
  * The function that actually prints out the WHO reply for a client found
  */
 static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
-    int fields, char *qrt)
+    int fields, int extra, char *qrt)
 {
   Reg1 char *p1;
   Reg2 aChannel *chptr;
@@ -239,18 +239,10 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
     while ((*p2) && (*(p1++) = *(p2++)));
   }
 
-  if (fields & WHO_FIELD_HOS)
+  if (!fields || (fields & WHO_FIELD_HOS))
   {
 #if defined(BDD_VIP)
-    Reg3 char *p2 = get_visiblehost(acptr, sptr);
-#else
-    Reg3 char *p2 = acptr->user->host;
-#endif
-    *(p1++) = ' ';
-    while ((*p2) && (*(p1++) = *(p2++)));
-  } else if (!fields) {
-#if defined(BDD_VIP)
-    Reg3 char *p2 = get_visiblehost(acptr, NULL);
+    Reg3 char *p2 = get_visiblehost(acptr, extra ? sptr : NULL);
 #else
     Reg3 char *p2 = acptr->user->host;
 #endif
@@ -342,7 +334,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
         *(p1++) = 'J';
       if (IsNoIdle(acptr))
         *(p1++) = 'I';
-      if (IsWhois(acptr))
+      if (IsWhois(acptr) && (IsAdmin(sptr) || IsCoder(sptr) || acptr==sptr))
         *(p1++) = 'W';
     }
   }
@@ -587,7 +579,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               continue;
             if (!(isthere || (SHOW_MORE(sptr, counter))))
               break;
-            do_who(sptr, acptr, chptr, fields, qrt);
+            do_who(sptr, acptr, chptr, fields, bitsel & WHOSELECT_EXTRA, qrt);
           }
         }
       }
@@ -597,7 +589,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             IsHelpOp(acptr) ||
             IsAnOper(acptr)) && Process(acptr) && SHOW_MORE(sptr, counter))
         {
-          do_who(sptr, acptr, NULL, fields, qrt);
+          do_who(sptr, acptr, NULL, fields, bitsel & WHOSELECT_EXTRA, qrt);
         }
       }
     }
@@ -678,7 +670,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 #endif
           if (!SHOW_MORE(sptr, counter))
             break;
-          do_who(sptr, acptr, chptr, fields, qrt);
+          do_who(sptr, acptr, chptr, fields, bitsel & WHOSELECT_EXTRA, qrt);
         }
 
     /* Loop through all clients :-\, if we still have something to match to 
@@ -731,7 +723,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 #endif
         if (!SHOW_MORE(sptr, counter))
           break;
-        do_who(sptr, acptr, NULL, fields, qrt);
+        do_who(sptr, acptr, NULL, fields, bitsel & WHOSELECT_EXTRA, qrt);
       }
   }
 
@@ -1039,7 +1031,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
          if (IsSSL(acptr))
           sendto_one(sptr, rpl_str(RPL_WHOISSSL), me.name, parv[0], name);
 
-         if (MyConnect(acptr) && (!ocultar_servidores ||
+         if (MyConnect(acptr) && (!IsNoIdle(acptr) && !IsAnOper(sptr)) && (!ocultar_servidores ||
                   (sptr == acptr || IsAnOper(sptr) || IsHelpOp(sptr) || parc >= 3)))
             sendto_one(sptr, rpl_str(RPL_WHOISIDLE), me.name,
                 parv[0], name, now - user->last, acptr->firsttime);

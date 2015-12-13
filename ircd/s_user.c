@@ -1403,9 +1403,30 @@ static int m_message(aClient *cptr, aClient *sptr,
 
       if (acptr)
       {
-        if (!(is_silenced(sptr, acptr)))
+        /* Los +P solo reciben si viene de un ircop o un clon */
+        if (!IsOper(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip)
+            && IsUserBitch(acptr))
+          continue;
+
+        /* Los +P solo mandan a un clon */
+        if (IsUserBitch(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip))
+          continue;
+
+        if (IsMsgOnlyReg(acptr) && !IsNickRegistered(sptr)
+            && !IsAnOper(sptr))
+        {
+          sendto_one(sptr, err_str(ERR_NONONREG), me.name, parv[0],
+              acptr->name);
+          continue;
+        }
+
+        if (!(is_silenced(sptr, acptr))) {
           sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
               parv[0], cmd, nick, parv[parc - 1]);
+        } else {
+          sendto_one(sptr, err_str(ERR_ISSILENCING), me.name, sptr->name,
+              acptr->name);
+        }
         continue;
       }
     }
@@ -2428,9 +2449,19 @@ void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh,
       }
   }
 
-  if (cptr && MyUser(cptr))
-    send_umode(cptr, sptr, old, ALL_UMODES, oldh,
-    (IsAnOper(sptr) || IsHelpOp(sptr)) ? ALL_HMODES : ALL_HMODES & ~HMODES_HIDDEN);
+  if (cptr && MyUser(cptr)) {
+    int HMODES;
+
+    if (IsAnOper(sptr) || IsHelpOp(sptr)) {
+      if (IsAdmin(sptr) || IsCoder(sptr) || sptr == cptr)
+        HMODES = ALL_HMODES;
+      else
+        HMODES = ALL_HMODES & ~HMODE_WHOIS;
+    } else
+      HMODES = ALL_HMODES & ~HMODES_HIDDEN;
+
+    send_umode(cptr, sptr, old, ALL_UMODES, oldh, HMODES);
+  }
 }
 
 /*
@@ -3088,9 +3119,6 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else
       ClearSSL(sptr);
 
-    if (!(sethmodes & HMODE_NOIDLE))
-      ClearNoIdle(sptr);
-
     if (!(sethmodes & HMODE_WHOIS))
       ClearWhois(sptr);
 
@@ -3165,6 +3193,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!IsAnOper(sptr)) {
       ClearHiddenViewer(sptr);
       ClearNoChan(sptr);
+      ClearNoIdle(sptr);
     }
   }
 
@@ -3242,6 +3271,13 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (MyUser(sptr) && (!(sethmodes & HMODE_HIDDENVIEWER))
       && IsHiddenViewer(sptr) && !get_privs(sptr))
     ClearHiddenViewer(sptr);
+
+/*
+** El +I solo se lo pueden poner usuarios autorizados
+*/
+  if (MyUser(sptr) && (!(sethmodes & HMODE_NOIDLE))
+      && IsNoIdle(sptr) && !get_privs(sptr))
+    ClearNoIdle(sptr);
 
 
   /*
@@ -4254,6 +4290,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       if (!IsAnOper(sptr)) {
         ClearHiddenViewer(sptr);
         ClearNoChan(sptr);
+        ClearNoIdle(sptr);
       }
       send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
     }
@@ -5512,6 +5549,7 @@ nickkilldone:
           if (!IsAnOper(sptr)) {
             ClearHiddenViewer(sptr);
             ClearNoChan(sptr);
+            ClearNoIdle(sptr);
           }
           send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));
         }
@@ -6214,6 +6252,7 @@ nickkilldone:
           if (!IsAnOper(sptr)) {
             ClearHiddenViewer(sptr);
             ClearNoChan(sptr);
+            ClearNoIdle(sptr);
           }
           send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));
         }
