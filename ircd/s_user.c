@@ -3180,6 +3180,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * Los remotos se respetan modos.
      */
     ClearMsgOnlyReg(sptr);
+    ClearNoChan(sptr);
     ClearHelpOp(sptr);
     ClearAdmin(sptr);
     ClearCoder(sptr);
@@ -3192,7 +3193,6 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
     if (!IsAnOper(sptr)) {
       ClearHiddenViewer(sptr);
-      ClearNoChan(sptr);
       ClearNoIdle(sptr);
     }
   }
@@ -3259,10 +3259,10 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 
 /*
-** El +n solo se lo pueden poner usuarios autorizados
+** El +n solo se lo pueden poner usuarios con +r
 */
   if (MyUser(sptr) && (!(sethmodes & HMODE_NOCHAN))
-      && IsNoChan(sptr) && !get_privs(sptr))
+      && IsNoChan(sptr) && !IsNickRegistered(sptr))
     ClearNoChan(sptr);
 
 /*
@@ -4264,6 +4264,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       ClearNickRegistered(sptr);
       ClearNickSuspended(sptr);
       ClearMsgOnlyReg(sptr);
+      ClearNoChan(sptr);
 
       /* 23-Oct-2003: mount@irc-dev.net
        *
@@ -4289,7 +4290,6 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 #endif
       if (!IsAnOper(sptr)) {
         ClearHiddenViewer(sptr);
-        ClearNoChan(sptr);
         ClearNoIdle(sptr);
       }
       send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
@@ -5525,6 +5525,7 @@ nickkilldone:
           ClearNickRegistered(sptr);
           ClearNickSuspended(sptr);
           ClearMsgOnlyReg(sptr);
+          ClearNoChan(sptr);
           if (IsHelpOp(sptr))
           {
             ClearHelpOp(sptr);
@@ -5548,7 +5549,6 @@ nickkilldone:
 #endif
           if (!IsAnOper(sptr)) {
             ClearHiddenViewer(sptr);
-            ClearNoChan(sptr);
             ClearNoIdle(sptr);
           }
           send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));
@@ -5778,6 +5778,7 @@ nickkilldone:
       ClearNickRegistered(sptr);  /* por si era nuevo */
       ClearNickSuspended(sptr);
       ClearMsgOnlyReg(sptr);
+      ClearNoChan(sptr);
       ClearHelpOp(sptr);
       ClearAdmin(sptr);
       ClearCoder(sptr);
@@ -6237,6 +6238,7 @@ nickkilldone:
           ClearNickRegistered(sptr);
           ClearNickSuspended(sptr);
           ClearMsgOnlyReg(sptr);
+          ClearNoChan(sptr);
           if (IsHelpOp(sptr))
           {
             ClearHelpOp(sptr);
@@ -6251,7 +6253,6 @@ nickkilldone:
           }
           if (!IsAnOper(sptr)) {
             ClearHiddenViewer(sptr);
-            ClearNoChan(sptr);
             ClearNoIdle(sptr);
           }
           send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));

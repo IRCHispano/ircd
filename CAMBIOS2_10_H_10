@@ -1,3 +1,7 @@
+* 2016/01/15  zoltan@irc-dev.net (u2.10.H.10.229)                FEATURE
+------------------------------------------------------------------------
+  Modo +n disponible para usuarios +r
+
 * 2015/02/16  zoltan@irc-dev.net (u2.10.H.10.228)                    FIX
 ------------------------------------------------------------------------
   Fix en PONG remoto que hace matar los hubs.
