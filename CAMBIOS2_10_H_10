@@ -1,3 +1,8 @@
+* 2016/02/01  zoltan@irc-dev.net (u2.10.H.10.230)                    FIX
+------------------------------------------------------------------------
+  En los Clones siempre por IP, usar primero host y despues IP da muchos
+  problemas.
+
 * 2016/01/15  zoltan@irc-dev.net (u2.10.H.10.229)                FEATURE
 ------------------------------------------------------------------------
   Modo +n disponible para usuarios +r

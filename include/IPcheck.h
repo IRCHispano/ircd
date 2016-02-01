@@ -14,8 +14,7 @@ extern void IPcheck_disconnect(aClient *cptr);
 extern unsigned short IPcheck_nr(aClient *cptr);
 
 #if defined(BDD_CLONES)
-extern int IPbusca_clones(char *host);
-extern int IPbusca_clones_cptr(aClient *cptr);
+extern int IPbusca_clones(aClient *cptr);
 #endif
 
 #endif /* IPCHECK_H */

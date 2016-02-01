@@ -342,7 +342,7 @@ int IPcheck_local_connect(aClient *cptr)
 ** Si lo que sigue no se verifica, Throttle.
 ** Si tiene Iline, no debe bloquearlo por throttle
 */
-  if (IPbusca_clones_cptr(cptr) != -1)
+  if (IPbusca_clones(cptr) != -1)
     clones = !0;
 #endif
 
@@ -374,6 +374,7 @@ int IPcheck_local_connect(aClient *cptr)
   if (++(entry->connect_attempts) == 0) /* Check for overflow */
     --(entry->connect_attempts);
   if (entry->connect_attempts <= IPCHECK_CLONE_LIMIT)
+  {
 #if defined(BDD_CLONES)
     if (clones)
       cptr->nexttarget = now - (TARGET_DELAY * (STARTTARGETS - 1));
@@ -382,6 +383,7 @@ int IPcheck_local_connect(aClient *cptr)
 #else
     cptr->nexttarget = now - (TARGET_DELAY * (FREE_TARGETS(entry) - 1));
 #endif
+  }
   else
   {
 #if defined(BDD_CLONES)
@@ -586,31 +588,18 @@ unsigned short IPcheck_nr(aClient *cptr)
 }
 
 #if defined(BDD_CLONES)
-int IPbusca_clones(char *host)
+int IPbusca_clones(aClient *cptr)
 {
   struct db_reg *reg;
 
-  reg = db_buscar_registro(ESNET_CLONESDB, host);
-  if (reg == NULL)
-    return -1;
-  return atoi(reg->valor);
-}
-
-int IPbusca_clones_cptr(aClient *cptr)
-{
-  char host_buf[HOSTLEN + 1];
-  struct hostent *hp;
-  const char *hname;
-
   if (!IsUnixSocket(cptr))
   {
-    int i;
-
-    strcpy(host_buf, ircd_ntoa(&cptr->ip));
-    if (IPbusca_clones(host_buf) != -1) /* HIT! */
-      return 0;
+    reg = db_buscar_registro(ESNET_CLONESDB, (char *)ircd_ntoa(&cptr->ip));
+    if (reg == NULL) {
+        return -1;
+    }
+    return atoi(reg->valor);
   }
   return -1;
 }
-
 #endif

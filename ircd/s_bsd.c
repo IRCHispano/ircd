@@ -520,7 +520,6 @@ static int check_init(aClient *cptr, char *sockn)
 enum AuthorizationCheckResult check_client(aClient *cptr)
 {
   char buf[HOSTLEN + 1 + 1024];
-  char host_buf[HOSTLEN + 1];
   int num_clones = -1;
   int iline = 0;
   struct db_reg *reg;
@@ -572,28 +571,7 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
 */
 
 #if defined(BDD_CLONES)
-
-  if (hp)
-  {
-    for (i = 0, hname = hp->h_name; hname; hname = hp->h_aliases[i++])
-    {
-      strncpy(host_buf, hname, HOSTLEN);
-      host_buf[HOSTLEN] = '\0';
-      num_clones = IPbusca_clones(host_buf);
-      if (num_clones != -1)
-        break;                  /* Tenemos un HIT! */
-    }
-/*
-** Nos quedamos con el nombre canonico
-*/
-    strncpy(host_buf, hp->h_name, HOSTLEN);
-    host_buf[HOSTLEN] = '\0';
-  }
-  else
-  {
-    strcpy(host_buf, ircd_ntoa(&cptr->ip));
-    num_clones = IPbusca_clones(host_buf);
-  }
+  num_clones = IPbusca_clones(cptr);
 
 /*
 ** Clones permitidos para los
@@ -625,7 +603,7 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
 */
     sendto_one(cptr,
         ":%s NOTICE %s :En esta red solo se permiten %d clones para tu IP (%s)%s",
-        me.name, cptr->name, num_clones, host_buf, buf);
+        me.name, cptr->name, num_clones, ircd_ntoa(&cptr->ip), buf);
 
 /*
 ** Si tiene Iline no debemos permitir
