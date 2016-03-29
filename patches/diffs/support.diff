@@ -1,38 +1,62 @@
-Index: ircd/whocmds.c
-===================================================================
---- ircd/whocmds.c	(revisión: 487)
-+++ ircd/whocmds.c	(copia de trabajo)
-@@ -406,6 +406,12 @@
-   if (IsServer(sptr))
+--- include/numeric.h
++++ include/numeric.h
+@@ -113,6 +113,11 @@
+ 
+ /*      ERR_HOSTILENAME             455           Unreal */
+ 
++#define ERR_SUPPORT_NOJOIN 456
++#define ERR_SUPPORT_DISABLES 457
++#define ERR_SUPPORT_NOTSAY 458
++#define ERR_SUPPORT_NOTSAY_OPER 459
++
+ /*      ERR_NOHIDING        459           Unreal */
+ /*      ERR_NOTFORHALFOPS    460          Unreal */
+ #define ERR_NEEDMOREPARAMS   461
+--- include/s_bsd.h
++++ include/s_bsd.h
+@@ -247,6 +247,7 @@ extern struct sockaddr_in vserv;
+ #define HMODE_USERNOJOIN              0x00020000  /* Al intentar entrar a un canal entra siempre a uno de debug */
+ 
+ #define HFLAG_WEBIRC                  0x01000000  /* Usuario WebIRC */
++#define HFLAG_SOPORTE                 0x02000000
+ 
+ /* Modos hispano  a propagar */
+ #define SEND_HMODES \
+--- ircd/channel.c
++++ ircd/channel.c
+@@ -3813,6 +3813,12 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
      return 0;
+   }
  
-+  if (MyConnect(sptr))
++  if (strchr(parv[1], ',') || strCasecmp("#opers_help", parv[1]))
 +  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0]);
++    sendto_one(sptr, err_str(ERR_SUPPORT_NOJOIN), me.name, parv[0]);
 +    return 0;
 +  }
 +
-   /* Let's find where is our mask, and if actually contains something */
-   mask = ((parc > 1) ? parv[1] : NULL);
-   if (parc > 3 && parv[3])
-@@ -764,6 +770,12 @@
-   int found, len, mlen, total;
-   static char buf[512];
+   if (MyUser(sptr) && IsUserNoJoin(sptr)) {
+     struct db_reg *reg = db_buscar_registro(BDD_CONFIGDB, BDD_CANAL_DEBUG);
+     if (reg) {
+@@ -6803,6 +6809,16 @@ int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
  
-+  if (MyConnect(sptr))
-+  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0]);
-+    return 0;
+   sendto_one(sptr, rpl_str(RPL_LISTSTART), me.name, parv[0]);
+ 
++  /* Solo #opers_help */
++  chptr = FindChannel("#opers_help");
++  if (chptr) {
++    sendto_one(sptr, rpl_str(RPL_LIST), me.name, parv[0],
++        chptr->chname, chptr->users - number_of_zombies(chptr), PunteroACadena(chptr->topic));
 +  }
 +
-   if (parc < 2)
++  sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, parv[0]);
++  return 0;
++
+   if (!show_channels)
    {
-     sendto_one(sptr, err_str(ERR_NONICKNAMEGIVEN), me.name, parv[0]);
-Index: ircd/list.c
-===================================================================
---- ircd/list.c	(revisión: 487)
-+++ ircd/list.c	(copia de trabajo)
-@@ -511,6 +511,9 @@
+     if (args.max_users > args.min_users + 1 && args.max_time > args.min_time &&
+--- ircd/list.c
++++ ircd/list.c
+@@ -503,6 +503,9 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
    char cptr_info_low[REALLEN+1];
    char *tmp;
  
@@ -42,50 +66,88 @@ Index: ircd/list.c
    /* Paso el realname a minusculas para matcheo en pcre */
    strncpy(cptr_info_low, PunteroACadena(cptr->info), REALLEN);
    cptr_info_low[REALLEN]='\0';
-Index: ircd/querycmds.c
-===================================================================
---- ircd/querycmds.c	(revisión: 487)
-+++ ircd/querycmds.c	(copia de trabajo)
-@@ -125,6 +125,12 @@
+--- ircd/m_watch.c
++++ ircd/m_watch.c
+@@ -409,7 +409,7 @@ int m_watch(aClient *cptr, aClient *sptr, int parc, char *parv[])
+         /*
+          * Comprobamos si la lista esta llena o no.
+          */
+-        if (cptr->user->cwatch >= MAXWATCH)
++        if (cptr->user->cwatch >= 0)
+         {
+           sendto_one(cptr, err_str(ERR_TOOMANYWATCH), me.name,
+               cptr->name, nick, MAXWATCH);
+--- ircd/map.c
++++ ircd/map.c
+@@ -112,6 +112,11 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask,
+  */
+ int m_map(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+ {
++  if (MyConnect(sptr))
++  {
++    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0], "MAP");
++    return 0;
++  }
+ 
+   if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
+   {
+--- ircd/opercmds.c
++++ ircd/opercmds.c
+@@ -319,6 +319,12 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
+   unsigned char stat = parc > 1 ? parv[1][0] : '\0';
+   Reg1 int i;
+ 
++  if (MyConnect(sptr))
++  {
++    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0], "STATS");
++    return 0;
++  }
++
+   /* Solo ircops y opers tienen acceso a hacer stats remotos */
+   if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
+   {
+--- ircd/querycmds.c
++++ ircd/querycmds.c
+@@ -125,6 +125,12 @@ int m_version(aClient *cptr, aClient *sptr, int parc, char *parv[])
  {
    Reg1 aClient *acptr;
  
 +  if (MyConnect(sptr))
 +  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0]);
++    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0], "VERSION");
 +    return 0;
 +  }
 +
    if (MyConnect(sptr) && parc > 1)
    {
      if (IsUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
-@@ -159,6 +165,12 @@
+@@ -159,6 +165,12 @@ int m_info(aClient *cptr, aClient *sptr, int parc, char *parv[])
  {
    const char **text = infotext;
  
 +  if (MyConnect(sptr))
 +  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0]);
++    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0], "INFO");
 +    return 0;
 +  }
 +
    if (hunt_server(1, cptr, sptr, MSG_INFO, TOK_INFO, ":%s", 1, parc, parv) == HUNTED_ISME)
    {
      while (text[2])
-@@ -199,6 +211,12 @@
+@@ -199,6 +211,12 @@ int m_links(aClient *cptr, aClient *sptr, int parc, char *parv[])
    char *mask;
    aClient *acptr;
  
 +  if (MyConnect(sptr))
 +  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0]);
++    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0], "LINKS");
 +    return 0;
 +  }
 +
    if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
    {
      /* Links especial solo mostrando services*/
-@@ -295,9 +313,9 @@
+@@ -295,9 +313,9 @@ int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
  
    if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr))) {
      sendto_one(sptr, ":%s 265 %s :Current local users: %d Max: %d",
@@ -97,7 +159,7 @@ Index: ircd/querycmds.c
    }
    else
    {
-@@ -328,7 +346,7 @@
+@@ -328,7 +346,7 @@ int m_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
  
    if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr)))
      sendto_one(sptr, rpl_str(RPL_LUSERCLIENT), me.name, parv[0],
@@ -106,7 +168,7 @@ Index: ircd/querycmds.c
    else
      sendto_one(sptr, rpl_str(RPL_LUSERCLIENT), me.name, parv[0],
          nrof.clients - nrof.inv_clients, nrof.inv_clients, nrof.servers);
-@@ -340,16 +358,16 @@
+@@ -340,16 +358,16 @@ int m_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
          nrof.unknowns);
    if (nrof.channels > 0)
      sendto_one(sptr, rpl_str(RPL_LUSERCHANNELS), me.name, parv[0],
@@ -126,27 +188,32 @@ Index: ircd/querycmds.c
    else
      sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],
          max_connection_count, max_client_count);
-Index: ircd/map.c
-===================================================================
---- ircd/map.c	(revisión: 487)
-+++ ircd/map.c	(copia de trabajo)
-@@ -112,6 +112,11 @@
-  */
- int m_map(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
- {
-+  if (MyConnect(sptr))
-+  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0]);
-+    return 0;
-+  }
- 
-   if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
-   {
-Index: ircd/s_user.c
-===================================================================
---- ircd/s_user.c	(revisión: 487)
-+++ ircd/s_user.c	(copia de trabajo)
-@@ -1284,6 +1284,23 @@
+--- ircd/s_err.c
++++ ircd/s_err.c
+@@ -205,13 +205,16 @@ static Numeric numeric_errors[] = {
+ /* 455 */
+     {0, (char *)NULL},
+ /* 456 */
+-    {0, (char *)NULL},
++    {ERR_SUPPORT_NOJOIN, ":Solo puedes acceder al canal #opers_help para pedir ayuda."},
+ /* 457 */
+-    {0, (char *)NULL},
++    {ERR_SUPPORT_DISABLES, "%s :Comando deshabilitado en Soporte. Acude a #opers_help para recibir ayuda."},
+ /* 458 */
+-    {0, (char *)NULL},
++    {ERR_SUPPORT_NOTSAY, "%s :No puedes hablar con otros usuarios. Solo con un OPERador de la Red. "
++                          "Dirigete a #opers_help para ponerte en contacto con un OPERador."},
+ /* 459 */
+-    {0, (char *)NULL},
++    {ERR_SUPPORT_NOTSAY_OPER, "%s :No puedes hablar con un OPERador de la Red a no ser que este te "
++                              "haya hablado primero. Dirigete a #opers_help para ponerte en contacto "
++                              "con un OPERador"},
+ /* 460 */
+     {0, (char *)NULL},
+ /* 461 */
+--- ircd/s_user.c
++++ ircd/s_user.c
+@@ -1268,6 +1268,23 @@ static int m_message(aClient *cptr, aClient *sptr,
          if (MyUser(sptr) && check_target_limit(sptr, acptr, acptr->name, 0))
            continue;
  
@@ -170,33 +237,33 @@ Index: ircd/s_user.c
          /* Los +P solo reciben si viene de un ircop o un clon */
          if (MyUser(sptr) && !IsOper(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip)
              && IsUserBitch(acptr))
-@@ -2679,6 +2696,12 @@
+@@ -2804,6 +2821,12 @@ int m_userhost(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
    char *p = NULL, *sbuf;
    aClient *acptr;
  
 +  if (MyConnect(sptr))
 +  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0]);
++    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0], "USERHOST");
 +    return 0;
 +  }
 +
    if (parc < 2)
    {
      sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "USERHOST");
-@@ -2729,6 +2752,12 @@
+@@ -2854,6 +2877,12 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
    char *p = NULL, *sbuf;
    aClient *acptr;
  
 +  if (MyConnect(sptr))
 +  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0]);
++    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0], "USERIP");
 +    return 0;
 +  }
 +
    if (parc < 2)
    {
      sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "USERIP");
-@@ -2791,6 +2820,7 @@
+@@ -2916,6 +2945,7 @@ int m_ison(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
    len = strlen(buf);
    buf[sizeof(buf) - 1] = 0;
  
@@ -204,7 +271,7 @@ Index: ircd/s_user.c
    for (s = strtoken(&p, *++pav, " "); s; s = strtoken(&p, NULL, " "))
      if ((acptr = FindUser(s)))
      {
-@@ -2801,6 +2831,7 @@
+@@ -2926,6 +2956,7 @@ int m_ison(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
        strcat(buf, " ");
        len++;
      }
@@ -212,20 +279,20 @@ Index: ircd/s_user.c
    sendto_one(sptr, "%s", buf);
    return 0;
  }
-@@ -3723,6 +3754,12 @@
+@@ -3851,6 +3882,12 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
    aClient *acptr;
    char c, *cp;
  
 +  if (MyConnect(sptr))
 +  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0]);
++    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0], "SILENCE");
 +    return 0;
 +  }
 +
    if (MyUser(sptr))
    {
      acptr = sptr;
-@@ -5568,6 +5605,8 @@
+@@ -5688,6 +5725,8 @@ nickkilldone:
     if (auto_invisible && !excepcion_invisible)
       SetInvisible(sptr);
  
@@ -234,7 +301,7 @@ Index: ircd/s_user.c
     if (find_port_ssl(sptr))
       SetSSL(sptr);
  
-@@ -5645,6 +5684,7 @@
+@@ -5765,6 +5804,7 @@ nickkilldone:
            SetOper(sptr);
            nrof.opers++;
          }
@@ -242,137 +309,46 @@ Index: ircd/s_user.c
  
        } else {
          ClearHelpOp(sptr);
-Index: ircd/whowas.c
-===================================================================
---- ircd/whowas.c	(revisión: 487)
-+++ ircd/whowas.c	(copia de trabajo)
-@@ -333,6 +333,12 @@
-   int max = -1, found = 0;
-   char *p, *nick, *s;
+--- ircd/whocmds.c
++++ ircd/whocmds.c
+@@ -406,6 +406,12 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+   if (IsServer(sptr))
+     return 0;
  
 +  if (MyConnect(sptr))
 +  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0]);
++    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0], "WHO");
++    return 0;
++  }
++
+   /* Let's find where is our mask, and if actually contains something */
+   mask = ((parc > 1) ? parv[1] : NULL);
+   if (parc > 3 && parv[3])
+@@ -764,6 +770,12 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
+   int found, len, mlen, total;
+   static char buf[512];
+ 
++  if (MyConnect(sptr))
++  {
++    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0], "WHOIS");
 +    return 0;
 +  }
 +
    if (parc < 2)
    {
      sendto_one(sptr, err_str(ERR_NONICKNAMEGIVEN), me.name, parv[0]);
-Index: ircd/channel.c
-===================================================================
---- ircd/channel.c	(revisión: 487)
-+++ ircd/channel.c	(copia de trabajo)
-@@ -3813,6 +3813,12 @@
-     return 0;
-   }
- 
-+  if (strchr(parv[1], ',') || strCasecmp("#opers_help", parv[1]))
-+  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_NOJOIN), me.name, parv[0]);
-+    return 0;
-+  }
-+
-   if (MyUser(sptr) && IsUserNoJoin(sptr)) {
-     struct db_reg *reg = db_buscar_registro(BDD_CONFIGDB, BDD_CANAL_DEBUG);
-     if (reg) {
-@@ -6805,6 +6811,16 @@
- 
-   sendto_one(sptr, rpl_str(RPL_LISTSTART), me.name, parv[0]);
- 
-+  /* Solo #opers_help */
-+  chptr = FindChannel("#opers_help");
-+  if (chptr) {
-+    sendto_one(sptr, rpl_str(RPL_LIST), me.name, parv[0],
-+        chptr->chname, chptr->users - number_of_zombies(chptr), PunteroACadena(chptr->topic));
-+  }
-+
-+  sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, parv[0]);
-+  return 0;
-+
-   if (!show_channels)
-   {
-     if (args.max_users > args.min_users + 1 && args.max_time > args.min_time &&
-Index: ircd/s_err.c
-===================================================================
---- ircd/s_err.c	(revisión: 487)
-+++ ircd/s_err.c	(copia de trabajo)
-@@ -205,13 +205,16 @@
- /* 455 */
-     {0, (char *)NULL},
- /* 456 */
--    {0, (char *)NULL},
-+    {ERR_SUPPORT_NOJOIN, "%s :Solo puedes acceder al canal #opers_help para pedir ayuda."},
- /* 457 */
--    {0, (char *)NULL},
-+    {ERR_SUPPORT_DISABLES, "%s :Comando deshabilitado en Soporte. Acude a #opers_help para recibir ayuda."},
- /* 458 */
--    {0, (char *)NULL},
-+    {ERR_SUPPORT_NOTSAY, "%s :No puedes hablar con otros usuarios. Solo con un OPERador de la Red. "
-+                          "Dirigete a #opers_help para ponerte en contacto con un OPERador."},
- /* 459 */
--    {0, (char *)NULL},
-+    {ERR_SUPPORT_NOTSAY_OPER, "%s :No puedes hablar con un OPERador de la Red a no ser que este te "
-+                              "haya hablado primero. Dirigete a #opers_help para ponerte en contacto "
-+                              "con un OPERador"},
- /* 460 */
-     {0, (char *)NULL},
- /* 461 */
-Index: ircd/opercmds.c
-===================================================================
---- ircd/opercmds.c	(revisión: 487)
-+++ ircd/opercmds.c	(copia de trabajo)
-@@ -319,6 +319,12 @@
-   unsigned char stat = parc > 1 ? parv[1][0] : '\0';
-   Reg1 int i;
+--- ircd/whowas.c
++++ ircd/whowas.c
+@@ -333,6 +333,12 @@ int m_whowas(aClient *cptr, aClient *sptr, int parc, char *parv[])
+   int max = -1, found = 0;
+   char *p, *nick, *s;
  
 +  if (MyConnect(sptr))
 +  {
-+    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0]);
++    sendto_one(sptr, err_str(ERR_SUPPORT_DISABLES), me.name, parv[0], "WHOWAS");
 +    return 0;
 +  }
 +
-   /* Solo ircops y opers tienen acceso a hacer stats remotos */
-   if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
+   if (parc < 2)
    {
-Index: ircd/m_watch.c
-===================================================================
---- ircd/m_watch.c	(revisión: 487)
-+++ ircd/m_watch.c	(copia de trabajo)
-@@ -412,7 +412,7 @@
-         /*
-          * Comprobamos si la lista esta llena o no.
-          */
--        if (cptr->user->cwatch >= MAXWATCH)
-+        if (cptr->user->cwatch >= 0)
-         {
-           sendto_one(cptr, err_str(ERR_TOOMANYWATCH), me.name,
-               cptr->name, nick, MAXWATCH);
-Index: include/s_bsd.h
-===================================================================
---- include/s_bsd.h	(revisión: 487)
-+++ include/s_bsd.h	(copia de trabajo)
-@@ -247,6 +247,7 @@
- #define HMODE_USERNOJOIN              0x00020000  /* Al intentar entrar a un canal entra siempre a uno de debug */
- 
- #define HFLAG_WEBIRC                  0x01000000  /* Usuario WebIRC */
-+#define HFLAG_SOPORTE                 0x02000000
- 
- /* Modos hispano  a propagar */
- #define SEND_HMODES \
-Index: include/numeric.h
-===================================================================
---- include/numeric.h	(revisión: 487)
-+++ include/numeric.h	(copia de trabajo)
-@@ -113,6 +113,11 @@
- 
- /*      ERR_HOSTILENAME             455           Unreal */
- 
-+#define ERR_SUPPORT_NOJOIN 456
-+#define ERR_SUPPORT_DISABLES 457
-+#define ERR_SUPPORT_NOTSAY 458
-+#define ERR_SUPPORT_NOTSAY_OPER 459
-+
- /*      ERR_NOHIDING        459           Unreal */
- /*      ERR_NOTFORHALFOPS    460          Unreal */
- #define ERR_NEEDMOREPARAMS   461
+     sendto_one(sptr, err_str(ERR_NONICKNAMEGIVEN), me.name, parv[0]);
