@@ -1,5 +1,5 @@
 diff --git a/include/numeric.h b/include/numeric.h
-index e4aa27b..24de9a6 100644
+index e4aa27b..5914a5c 100644
 --- include/numeric.h
 +++ include/numeric.h
 @@ -113,6 +113,11 @@
@@ -14,18 +14,42 @@ index e4aa27b..24de9a6 100644
  /*      ERR_NOHIDING        459           Unreal */
  /*      ERR_NOTFORHALFOPS    460          Unreal */
  #define ERR_NEEDMOREPARAMS   461
+@@ -261,6 +266,9 @@
+ #define RPL_TOPICWHOTIME     333  /* Undernet extension */
+ #define RPL_LISTUSAGE	     334  /* Undernet extension */
+ 
++#define RPL_GLINE_MASK       335
++#define RPL_GLINE_REASON     336
++
+ #define RPL_WHOISSSL         337
+ #define RPL_WHOISACTUALLY    338        /* Undernet extension, dalnet */
+ /*      RPL_CHANPASSOK       338           IRCnet extension */
 diff --git a/include/s_bsd.h b/include/s_bsd.h
-index 84b43e5..e5aaaff 100644
+index 84b43e5..a8e3ac5 100644
 --- include/s_bsd.h
 +++ include/s_bsd.h
-@@ -247,6 +247,7 @@ extern struct sockaddr_in vserv;
+@@ -247,6 +247,8 @@ extern struct sockaddr_in vserv;
  #define HMODE_USERNOJOIN              0x00020000  /* Al intentar entrar a un canal entra siempre a uno de debug */
  
  #define HFLAG_WEBIRC                  0x01000000  /* Usuario WebIRC */
 +#define HFLAG_SOPORTE                 0x02000000
++#define HFLAG_GLINED                  0x04000000
  
  /* Modos hispano  a propagar */
  #define SEND_HMODES \
+diff --git a/include/struct.h b/include/struct.h
+index 31bfaca..3255302 100644
+--- include/struct.h
++++ include/struct.h
+@@ -199,6 +199,8 @@ struct Client {
+   
+   struct event *evcheckping;    /* Evento para controlar cuando se debe revisar el ping */
+   struct timeval *tm_checkping; /* Temporizador del chequeo del proximo ping */
++  char *gline_mask;
++  char *gline_reason;
+ };
+ 
+ struct Server {
 diff --git a/ircd/channel.c b/ircd/channel.c
 index dab4a62..035bcb9 100644
 --- ircd/channel.c
@@ -70,20 +94,6 @@ index dab4a62..035bcb9 100644
    if (!show_channels)
    {
      if (args.max_users > args.min_users + 1 && args.max_time > args.min_time &&
-diff --git a/ircd/list.c b/ircd/list.c
-index bd16063..a14f597 100644
---- ircd/list.c
-+++ ircd/list.c
-@@ -503,6 +503,9 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
-   char cptr_info_low[REALLEN+1];
-   char *tmp;
- 
-+  /* Nos saltamos las glines */
-+  return NULL;
-+
-   /* Paso el realname a minusculas para matcheo en pcre */
-   strncpy(cptr_info_low, PunteroACadena(cptr->info), REALLEN);
-   cptr_info_low[REALLEN]='\0';
 diff --git a/ircd/m_watch.c b/ircd/m_watch.c
 index 7c2087e..50c877c 100644
 --- ircd/m_watch.c
@@ -214,8 +224,26 @@ index 71463ad..33c6b0b 100644
    else
      sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],
          max_connection_count, max_client_count);
+diff --git a/ircd/s_conf.c b/ircd/s_conf.c
+index b366974..9143e6e 100644
+--- ircd/s_conf.c
++++ ircd/s_conf.c
+@@ -1475,6 +1475,13 @@ int find_kill(aClient *cptr)
+     sendto_one(cptr, ":%s %d %s " TIME_T_FMT " :%s (expires at %s).",
+         me.name, ERR_YOUREBANNEDCREEP, name,
+         agline->expire, comment, date(agline->expire));
++
++    /* Nos saltamos la Gline y recopilamos informacion */
++    cptr->flags |= HFLAG_GLINED;
++    DupString(cptr->gline_mask, agline->host);
++    DupString(cptr->gline_reason, agline->reason);
++
++    return 0;
+   }
+   else
+     agline = NULL;              /* if a gline was found, it was inactive */
 diff --git a/ircd/s_err.c b/ircd/s_err.c
-index 978e5ba..d10d2fd 100644
+index 978e5ba..231f677 100644
 --- ircd/s_err.c
 +++ ircd/s_err.c
 @@ -205,13 +205,16 @@ static Numeric numeric_errors[] = {
@@ -239,6 +267,35 @@ index 978e5ba..d10d2fd 100644
  /* 460 */
      {0, (char *)NULL},
  /* 461 */
+@@ -409,9 +412,9 @@ static Numeric numeric_replies[] = {
+ /* 334 */
+     {RPL_LISTUSAGE, ":%s"},
+ /* 335 */
+-    {0, (char *)NULL},
++    {RPL_GLINE_MASK, "%s :Gline Mask: %s" },
+ /* 336 */
+-    {0, (char *)NULL},
++    {RPL_GLINE_REASON, "%s :%s" },
+ /* 337 */
+     {RPL_WHOISSSL, "%s :conecta de forma segura con SSL"},
+ /* 338 */
+diff --git a/ircd/s_misc.c b/ircd/s_misc.c
+index b01e4ac..f76b191 100644
+--- ircd/s_misc.c
++++ ircd/s_misc.c
+@@ -653,6 +653,12 @@ static void exit_one_client(aClient *bcptr, char *comment)
+     if (MyConnect(bcptr) && bcptr->passbdd)
+       RunFree(bcptr->passbdd);
+ 
++    if (MyConnect(bcptr) && bcptr->gline_mask)
++      RunFree(bcptr->gline_mask);
++
++    if (MyConnect(bcptr) && bcptr->gline_reason)
++      RunFree(bcptr->gline_reason);
++
+     if (IsInvisible(bcptr))
+       --nrof.inv_clients;
+ 
 diff --git a/ircd/s_user.c b/ircd/s_user.c
 index 722790d..9aaddd2 100644
 --- ircd/s_user.c
@@ -340,7 +397,7 @@ index 722790d..9aaddd2 100644
        } else {
          ClearHelpOp(sptr);
 diff --git a/ircd/whocmds.c b/ircd/whocmds.c
-index 4f25cb0..c78f3b8 100644
+index 4f25cb0..58447d1 100644
 --- ircd/whocmds.c
 +++ ircd/whocmds.c
 @@ -406,6 +406,12 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
@@ -369,6 +426,18 @@ index 4f25cb0..c78f3b8 100644
    if (parc < 2)
    {
      sendto_one(sptr, err_str(ERR_NONICKNAMEGIVEN), me.name, parv[0]);
+@@ -1031,6 +1043,11 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
+          if (IsSSL(acptr))
+           sendto_one(sptr, rpl_str(RPL_WHOISSSL), me.name, parv[0], name);
+ 
++         if (MyConnect(acptr) && (acptr->flags & HFLAG_GLINED) && (IsAnOper(sptr) || IsHelpOp(sptr))) {
++          sendto_one(sptr, rpl_str(RPL_GLINE_MASK), me.name, parv[0], name, acptr->gline_mask);
++          sendto_one(sptr, rpl_str(RPL_GLINE_REASON), me.name, parv[0], name, acptr->gline_reason);
++         }
++
+          if (MyConnect(acptr) && (!IsNoIdle(acptr) && !IsAnOper(sptr)) && (!ocultar_servidores ||
+                   (sptr == acptr || IsAnOper(sptr) || IsHelpOp(sptr) || parc >= 3)))
+             sendto_one(sptr, rpl_str(RPL_WHOISIDLE), me.name,
 diff --git a/ircd/whowas.c b/ircd/whowas.c
 index be5064c..655da27 100644
 --- ircd/whowas.c
