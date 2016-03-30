@@ -455,3 +455,4 @@ index be5064c..655da27 100644
    if (parc < 2)
    {
      sendto_one(sptr, err_str(ERR_NONICKNAMEGIVEN), me.name, parv[0]);
+
