@@ -225,7 +225,7 @@ index 71463ad..33c6b0b 100644
      sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],
          max_connection_count, max_client_count);
 diff --git a/ircd/s_conf.c b/ircd/s_conf.c
-index b366974..9143e6e 100644
+index b366974..decfbda 100644
 --- ircd/s_conf.c
 +++ ircd/s_conf.c
 @@ -1475,6 +1475,13 @@ int find_kill(aClient *cptr)
@@ -234,7 +234,7 @@ index b366974..9143e6e 100644
          agline->expire, comment, date(agline->expire));
 +
 +    /* Nos saltamos la Gline y recopilamos informacion */
-+    cptr->flags |= HFLAG_GLINED;
++    cptr->hmodes |= HFLAG_GLINED;
 +    DupString(cptr->gline_mask, agline->host);
 +    DupString(cptr->gline_reason, agline->reason);
 +
@@ -297,14 +297,14 @@ index b01e4ac..f76b191 100644
        --nrof.inv_clients;
  
 diff --git a/ircd/s_user.c b/ircd/s_user.c
-index 722790d..9aaddd2 100644
+index 722790d..7523b07 100644
 --- ircd/s_user.c
 +++ ircd/s_user.c
 @@ -1268,6 +1268,23 @@ static int m_message(aClient *cptr, aClient *sptr,
          if (MyUser(sptr) && check_target_limit(sptr, acptr, acptr->name, 0))
            continue;
  
-+        if (MyUser(sptr) && (sptr->flags & HFLAG_SOPORTE) && (IsHelpOp(acptr) || !strCasediff(acptr->name, "{ayuda}")))
++        if (MyUser(sptr) && (sptr->hmodes & HFLAG_SOPORTE) && (IsHelpOp(acptr) || !strCasediff(acptr->name, "{ayuda}")))
 +        {
 +          sendto_one(sptr, err_str(ERR_SUPPORT_NOTSAY_OPER), me.name, parv[0], acptr->name);
 +          continue;
@@ -316,9 +316,9 @@ index 722790d..9aaddd2 100644
 +          continue;
 +        }
 +
-+        if (!MyUser(sptr) && (acptr->flags & HFLAG_SOPORTE) && (IsHelpOp(sptr) || !strCasediff(sptr->name, "{ayuda}")))
-+          acptr->flags &= ~HFLAG_SOPORTE;
-+        else if (!MyUser(sptr) && (acptr->flags & HFLAG_SOPORTE))
++        if (!MyUser(sptr) && (acptr->hmodes & HFLAG_SOPORTE) && (IsHelpOp(sptr) || !strCasediff(sptr->name, "{ayuda}")))
++          acptr->hmodes &= ~HFLAG_SOPORTE;
++        else if (!MyUser(sptr) && (acptr->hmodes & HFLAG_SOPORTE))
 +          continue;
 +
          /* Los +P solo reciben si viene de un ircop o un clon */
@@ -383,7 +383,7 @@ index 722790d..9aaddd2 100644
     if (auto_invisible && !excepcion_invisible)
       SetInvisible(sptr);
  
-+   sptr->flags |= HFLAG_SOPORTE;
++   sptr->hmodes |= HFLAG_SOPORTE;
 +
     if (find_port_ssl(sptr))
       SetSSL(sptr);
@@ -397,7 +397,7 @@ index 722790d..9aaddd2 100644
        } else {
          ClearHelpOp(sptr);
 diff --git a/ircd/whocmds.c b/ircd/whocmds.c
-index 4f25cb0..58447d1 100644
+index 4f25cb0..021d37d 100644
 --- ircd/whocmds.c
 +++ ircd/whocmds.c
 @@ -406,6 +406,12 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
@@ -430,7 +430,7 @@ index 4f25cb0..58447d1 100644
           if (IsSSL(acptr))
            sendto_one(sptr, rpl_str(RPL_WHOISSSL), me.name, parv[0], name);
  
-+         if (MyConnect(acptr) && (acptr->flags & HFLAG_GLINED) && (IsAnOper(sptr) || IsHelpOp(sptr))) {
++         if (MyConnect(acptr) && (acptr->hmodes & HFLAG_GLINED) && (IsAnOper(sptr) || IsHelpOp(sptr))) {
 +          sendto_one(sptr, rpl_str(RPL_GLINE_MASK), me.name, parv[0], name, acptr->gline_mask);
 +          sendto_one(sptr, rpl_str(RPL_GLINE_REASON), me.name, parv[0], name, acptr->gline_reason);
 +         }
@@ -455,4 +455,3 @@ index be5064c..655da27 100644
    if (parc < 2)
    {
      sendto_one(sptr, err_str(ERR_NONICKNAMEGIVEN), me.name, parv[0]);
-
