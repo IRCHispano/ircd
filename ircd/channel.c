@@ -599,6 +599,10 @@ int can_send(aClient *cptr, aChannel *chptr)
     {
       return (MODE_MSGNONREG);
     }
+    if (MsgOnlyRegAndWebChannel(chptr) && !IsNickRegistered(cptr) && !IsWebIRC(cptr))
+    {
+      return (MODE_MSGNONWEB);
+    }
   }
 
   if (chptr->mode.mode & MODE_MODERATED && flag)
@@ -1343,7 +1347,7 @@ static int canal_flags[] = {
   MODE_MSGNONREG, 'M', MODE_NOCTCP, 'C',
   MODE_NONOTICE, 'N', MODE_NOQUITPARTS, 'u',
   MODE_DELJOINS, 'D', MODE_NOCOLOUR, 'c',
-  MODE_SSLONLY, 'z',
+  MODE_SSLONLY, 'z', MODE_MSGNONWEB, 'W',
   0x0, 0x0
 };
 
@@ -5029,6 +5033,20 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 modebuf[mblen2++] = 'z';
               break;
             }
+            case 'W':
+            {
+              int tmp;
+              prev_mode &= ~MODE_MSGNONWEB;
+              if (!(tmp = netride ||
+                  (current_mode->mode & MODE_MSGNONWEB)) || wipeout)
+              {
+                bmodebuf[mblen++] = 'W';
+                current_mode->mode |= MODE_MSGNONWEB;
+              }
+              if (!tmp)
+                modebuf[mblen2++] = 'W';
+              break;
+            }
             case 'n':
             {
               int tmp;
@@ -5405,6 +5423,8 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       cancel_mode(sptr, chptr, 'D', NULL, &count);
     if ((prev_mode & MODE_SSLONLY))
       cancel_mode(sptr, chptr, 'z', NULL, &count);
+    if ((prev_mode & MODE_MSGNONWEB))
+      cancel_mode(sptr, chptr, 'W', NULL, &count);
 
     prev_mode &= ~(MODE_REGCHAN); /* Mantenemos estos modos aunque el canal que llega sea mas antiguo */
     current_mode->mode &= ~prev_mode;

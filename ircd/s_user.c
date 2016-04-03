@@ -1273,8 +1273,8 @@ static int m_message(aClient *cptr, aClient *sptr,
             && IsUserBitch(acptr))
           continue;
 
-        /* Los +P solo mandan a un clon */
-        if (MyUser(sptr) && IsUserBitch(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip))
+        /* Los +P solo mandan a un clon o a un Bot */
+        if (MyUser(sptr) && IsUserBitch(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip) && !IsServicesBot(acptr))
           continue;
 
         if (MyUser(sptr) && IsMsgOnlyReg(acptr) && !IsNickRegistered(sptr)

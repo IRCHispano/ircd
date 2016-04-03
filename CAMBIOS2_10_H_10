@@ -1,3 +1,8 @@
+* 2016/04/04  zoltan@irc-dev.net (u2.10.H.10.231)                FEATURE
+------------------------------------------------------------------------
+  Nuevo modo +W de canal que solo permite hablar en el canal a los @,+,
+  nicks registrados y usuarios que entran por WEBIRC.
+ 
 * 2016/02/01  zoltan@irc-dev.net (u2.10.H.10.230)                    FIX
 ------------------------------------------------------------------------
   En los Clones siempre por IP, usar primero host y despues IP da muchos

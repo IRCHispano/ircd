@@ -96,11 +96,13 @@
 #define MODE_WASDELJOINS 0x400000
 #define MODE_NOCOLOUR    0x800000
 #define MODE_SSLONLY     0x1000000
+#define MODE_MSGNONWEB   0x2000000
 
 #define RegisteredChannel(x)    ((x) && ((x)->mode.mode & MODE_REGCHAN))
 #define RestrictedChannel(x)    ((x) && ((x)->mode.mode & MODE_REGNICKS))
 #define MsgOnlyRegChannel(x)   ((x) && ((x)->mode.mode & MODE_MSGNONREG))
 #define SSLOnlyChannel(x)      ((x) && ((x)->mode.mode & MODE_SSLONLY))
+#define MsgOnlyRegAndWebChannel(x) ((x) && ((x)->mode.mode & MODE_MSGNONWEB))
 
 extern int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_opmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
