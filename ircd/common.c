@@ -374,11 +374,6 @@ static void makeTables(void)
   moveMacro(NTL_DIGIT | NTL_ALPHA, NTL_IRCNK);
   markString(NTL_IRCNK, "-_`");
 
-  markRange(NTL_LOWERHISPANO, 'a', 'z');
-  markRange(NTL_UPPERHISPANO, 'A', 'Z');
-  moveMacro(NTL_DIGIT | NTL_LOWERHISPANO | NTL_UPPERHISPANO, NTL_IRCNKHISPANO);
-  markString(NTL_IRCNKHISPANO, "-_");
-
   moveMacro(NTL_ALNUM, NTL_IRCUI);
   markRange(NTL_IRCUI, '\xe0', '\xf6');
   markRange(NTL_IRCUI, '\xf8', '\xfe');

@@ -60,9 +60,6 @@
 #define NTL_IRCHN 0x4000        /*    Hostnames charset (weak, RFC 1033)  */
 #define NTL_IRCIP 0x8000        /*    Numeric IPs charset (DIGIT and .)   */
 #define NTL_EOL  0x10000        /*    \r\n                                */
-#define NTL_LOWERHISPANO 0x20000
-#define NTL_UPPERHISPANO 0x40000
-#define NTL_IRCNKHISPANO 0x80000
 
 /*=============================================================================
  * Structures
@@ -89,7 +86,6 @@
 #define isIrcCh(c)        (NTL_char_attrib[(c)-CHAR_MIN] & NTL_IRCCH)
 #define isIrcCl(c)        (NTL_char_attrib[(c)-CHAR_MIN] & NTL_IRCCL)
 #define isIrcNk(c)        (NTL_char_attrib[(c)-CHAR_MIN] & NTL_IRCNK)
-#define isIrcNkHispano(c) (NTL_char_attrib[(c)-CHAR_MIN] & NTL_IRCNKHISPANO)
 #define isIrcUi(c)        (NTL_char_attrib[(c)-CHAR_MIN] & NTL_IRCUI)
 #define isIrcHn(c)        (NTL_char_attrib[(c)-CHAR_MIN] & NTL_IRCHN)
 #define isIrcIp(c)        (NTL_char_attrib[(c)-CHAR_MIN] & NTL_IRCIP)
@@ -108,7 +104,6 @@
 #define strIsIrcCh(s)     (strChattr(s) & NTL_IRCCH)
 #define strIsIrcCl(s)     (strChattr(s) & NTL_IRCCL)
 #define strIsIrcNk(s)     (strChattr(s) & NTL_IRCNK)
-#define strIsIrcNkHispano(s) (strChattr(s) & NTL_IRCNKHISPANO)
 #define strIsIrcUi(s)     (strChattr(s) & NTL_IRCUI)
 #define strIsIrcHn(s)     (strChattr(s) & NTL_IRCHN)
 #define strIsIrcIp(s)     (strChattr(s) & NTL_IRCIP)

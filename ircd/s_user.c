@@ -4795,32 +4795,6 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-#ifndef NO_NICKS_HISPANO
-  reg = db_buscar_registro(ESNET_NICKDB, nick);
-
-  if (!reg && !strIsIrcNkHispano(nick)) {
-    int i = 0;
-
-    /* Tiene caracteres no compatibles */
-    while (nick[i] != 0) {
-     if (!isIrcNkHispano(nick[i]))
-       nick[i]='_';
-     i++;
-    }
-    reg = db_buscar_registro(ESNET_NICKDB, nick);
-    if (reg || FindClient(nick)) {
-      parv[1] = nuevo_nick_aleatorio(sptr);
-      nick_aleatorio = 1;
-      strncpy(nick, parv[1], nicklen + 1);
-      nick[nicklen] = 0;
-    }
-    sendto_one(cptr,
-      ":%s NOTICE %s :*** El alias que has elegido contiene caracteres no permitidos, el sistema te ha asignado el alias %s.",
-            me.name, BadPtr(parv[0]) ? "*" : parv[0], nick);
-
-  }
-#endif
-
   /* Calculo el nick en minusculas por si hay que matchearlo en pcre */
   strncpy(nick_low, nick, NICKLEN);
   nick_low[NICKLEN]='\0';
