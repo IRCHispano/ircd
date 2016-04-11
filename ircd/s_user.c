@@ -890,7 +890,7 @@ void send_features(aClient *sptr, char *nick)
 {
   char buf[500];
 
-  sprintf(buf, "CHANMODES=b,k,l,imnpstcRMCNuz");
+  sprintf(buf, "CHANMODES=b,k,l,imnpstcRMCNuWz");
   strcat(buf, "crRMCNuz");
   sprintf(buf, "%s CHANTYPES=#&+ KICKLEN=%d MAXBANS=%d", buf, KICKLEN, MAXBANS);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);

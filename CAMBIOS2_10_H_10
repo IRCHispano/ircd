@@ -1,3 +1,7 @@
+* 2016/04/11  zoltan@irc-dev.net (u2.10.H.10.233)                    FIX
+------------------------------------------------------------------------
+  Faltaba un par de cosas en el parche u2.10.H.10.231.
+
 * 2016/04/04  zoltan@irc-dev.net (u2.10.H.10.232)                CLEANUP
 ------------------------------------------------------------------------
   Deshacemos el parche u2.10.H.10.165, porque los motivos para su
