@@ -488,8 +488,8 @@ static int check_init(aClient *cptr, char *sockn)
     return -1;
   }
 
-  /* Los WebIRC son especiales */
-  if (IsWebIRC(cptr)) {
+  /* Los WebIRC/Proxy son especiales */
+  if (IsWebIRC(cptr) || IsProxy(cptr)) {
     strncpy(sockn, PunteroACadena(cptr->sockhost), HOSTLEN);
     get_sockhost(cptr, sockn);
   } else {

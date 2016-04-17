@@ -1,3 +1,7 @@
+* 2016/04/17  zoltan@irc-dev.net (u2.10.H.10.234)                    FIX
+------------------------------------------------------------------------
+  Los que entran por PROXY no se consideran Webchat para el +W de canal.
+
 * 2016/04/11  zoltan@irc-dev.net (u2.10.H.10.233)                    FIX
 ------------------------------------------------------------------------
   Faltaba un par de cosas en el parche u2.10.H.10.231.

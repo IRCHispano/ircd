@@ -247,6 +247,7 @@ extern struct sockaddr_in vserv;
 #define HMODE_USERNOJOIN              0x00020000  /* Al intentar entrar a un canal entra siempre a uno de debug */
 
 #define HFLAG_WEBIRC                  0x01000000  /* Usuario WebIRC */
+#define HFLAG_PROXY                   0x02000000  /* Usuario Proxy */
 
 /* Modos hispano  a propagar */
 #define SEND_HMODES \
@@ -282,6 +283,7 @@ extern struct sockaddr_in vserv;
 
 #define TieneIpVirtualPersonalizada(x)  ((x)->hmodes & HFLAG_IPVIRTUAL_PERSONALIZADA)
 #define IsWebIRC(x)             ((x)->hmodes & HFLAG_WEBIRC)
+#define IsProxy(x)              ((x)->hmodes & HFLAG_PROXY)
 
 
 /* Macros para poner modos hispano */
@@ -305,6 +307,7 @@ extern struct sockaddr_in vserv;
 
 #define SetIpVirtualPersonalizada(x)    ((x)->hmodes |= HFLAG_IPVIRTUAL_PERSONALIZADA)
 #define SetWebIRC(x)            ((x)->hmodes |= HFLAG_WEBIRC)
+#define SetProxy(x)             ((x)->hmodes |= HFLAG_PROXY)
 
 /* Macros para borrar modos hispano */
 #define ClearNickRegistered(x)  ((x)->hmodes &= ~HMODE_NICKREGISTERED)

@@ -1846,7 +1846,7 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (IsRegistered(sptr))
     return 0;
 
-  if (IsWebIRC(sptr))
+  if (IsWebIRC(sptr) || IsProxy(sptr))
     return 0;
 
   if (IsServer(sptr))
@@ -1931,7 +1931,7 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
   IPcheck_local_connect(sptr);
 
   SlabStringAllocDup(&(sptr->sockhost), parv[2], HOSTLEN);
-  SetWebIRC(sptr);
+  SetProxy(sptr);
 }
 
 
