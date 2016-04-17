@@ -224,7 +224,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
     Reg3 char *p2 = NULL;
 
 #if defined(BDD_VIP)
-    if (IsHidden(acptr) && (!IsHiddenViewer(sptr)) && (acptr != sptr))
+    if (IsHidden(acptr) && (!can_viewhost(sptr, acptr)) && (acptr != sptr))
     {
       static char buf[8];
 
@@ -649,7 +649,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               && ((!(matchsel & WHO_FIELD_REN))
               || matchexec(PunteroACadena(acptr->info), mymask, minlen))
               && ((!(matchsel & WHO_FIELD_NIP)) || (IsHidden(acptr)
-              && !IsHiddenViewer(sptr))
+              && !can_viewhost(sptr, acptr))
               || !ipmask_check(&acptr->ip, &imask, ibits)))
             continue;
 #else
@@ -702,7 +702,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             && ((!(matchsel & WHO_FIELD_REN))
             || matchexec(PunteroACadena(acptr->info), mymask, minlen))
             && ((!(matchsel & WHO_FIELD_NIP))
-            || (IsHidden(acptr) && !IsHiddenViewer(sptr))
+            || (IsHidden(acptr) && !can_viewhost(sptr, acptr))
             || !ipmask_check(&acptr->ip, &imask, ibits)))
           continue;
 #else
@@ -1021,7 +1021,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
           if (IsMsgOnlyReg(acptr))
             sendto_one(sptr, rpl_str(RPL_MSGONLYREG), me.name, parv[0], name);
 
-          if (IsHidden(acptr) && (IsHiddenViewer(sptr) || acptr == sptr))
+          if (IsHidden(acptr) && (can_viewhost(sptr, acptr) || acptr == sptr))
             sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY),  me.name, parv[0],
                 name, user->username, user->host, ircd_ntoa_c(acptr));
 

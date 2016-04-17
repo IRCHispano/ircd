@@ -75,6 +75,7 @@ extern int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int get_status(aClient *sptr);
 extern int get_privs(aClient *sptr);
 #if defined(BDD_VIP)
+extern int can_viewhost(aClient *sptr, aClient *acptr);
 extern char *get_virtualhost(aClient *sptr, int perso);
 extern char *get_visiblehost(aClient *sptr, aClient *acptr);
 void make_vhost(aClient *acptr, int mostrar);

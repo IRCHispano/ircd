@@ -2871,7 +2871,7 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
           (IsAnOper(acptr)
           || IsHelpOp(acptr)) ? "*" : "", (acptr->user->away) ? '-' : '+',
           PunteroACadena(acptr->user->username), (sptr == acptr
-          || IsHiddenViewer(sptr)
+          || can_viewhost(sptr, acptr)
           || !IsHidden(acptr)) ? ircd_ntoa_c(acptr) : "::ffff:0.0.0.0");
     }
     else
@@ -4009,6 +4009,31 @@ int get_privs(aClient *sptr)
 
 #if defined(BDD_VIP)
 /*
+ * int can_viewhost(sptr, acptr)
+ *
+ * Da o no autorizacion para ver hosts segun los privilegios.
+ *
+ */
+int can_viewhost(aClient *sptr, aClient *acptr)
+{
+  if (!acptr)
+    return 0;
+
+  if (!IsHiddenViewer(sptr))
+    return 0;
+
+  /* Los Opers solo hacia usuarios */
+  if (IsHelpOp(sptr) && !IsHelpOp(acptr) && !IsAdmin(acptr) && !IsCoder(acptr))
+    return 1;
+
+  /* Los Admins y Coders a todos */
+  if (IsAdmin(sptr) || IsCoder(sptr))
+    return 1;
+
+  return 0;
+}
+
+/*
  * char *get_virtualhost(sptr)                  ** MIGRAR A hispano.c **
  *
  * Nos da la virtual de una conexion, aunque no tenga flag +x.
@@ -4045,7 +4070,7 @@ char *get_visiblehost(aClient *sptr, aClient *acptr)
   if (!IsUser(sptr) || (acptr && !IsUser(acptr)))
     return "*";                 /* Si el usuario no está registrado se manda un * como host visible */
 
-  if (!IsHidden(sptr) || (acptr && IsHiddenViewer(acptr)) || sptr == acptr)
+  if (!IsHidden(sptr) || (acptr && can_viewhost(acptr, sptr)) || sptr == acptr)
     return PunteroACadena(sptr->user->host);
   else
   {
