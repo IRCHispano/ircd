@@ -2122,6 +2122,10 @@ static void add_gline(aClient *cptr, aClient *sptr, char *host, char *comment,
         sendto_op_mask(SNO_GLINE, "G-line active for %s",
             get_client_name(acptr, FALSE));
 
+        if (mensaje_gline)
+            sendto_one(acptr, ":%s NOTICE %s :*** %s",
+                me.name, PunteroACadena(acptr->name), mensaje_gline);
+
         /* and get rid of him */
         if (sptr != acptr)
           exit_client_msg(sptr->from, acptr, &me, "G-lined (%s)",

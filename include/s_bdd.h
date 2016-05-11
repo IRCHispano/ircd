@@ -63,6 +63,7 @@
 #define BDD_CLAVE_DE_CIFRADO_DE_COOKIES2 "clave.de.cifrado.de.cookies2"
 #define BDD_COMPRESION_ZLIB_CLIENTE "compresion.zlib.cliente"
 #define BDD_MENSAJE_PART_SVSKICK "mensaje.part.svskick"
+#define BDD_MENSAJE_GLINE "mensaje.gline"
 #define BDD_CANAL_DEBUG "debugchan"
 #define BDD_TRANSICION_IRCD	"transicion.ircd"
 #define BDD_NETWORK	"network"
@@ -111,6 +112,7 @@ extern int activar_redireccion_canales;
 extern char *mensaje_quit_personalizado;
 extern int compresion_zlib_cliente;
 extern char *mensaje_part_svskick;
+extern char *mensaje_gline;
 extern int transicion_ircd;
 extern char *network;
 extern char *canal_operadores;

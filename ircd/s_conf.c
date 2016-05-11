@@ -1479,6 +1479,10 @@ int find_kill(aClient *cptr)
   else
     agline = NULL;              /* if a gline was found, it was inactive */
 
+  if ((tmp || agline) && mensaje_gline)
+      sendto_one(cptr, ":%s NOTICE %s :*** %s",
+          me.name, name, mensaje_gline);
+
   return (tmp ? -1 : (agline ? -2 : 0));
 }
 

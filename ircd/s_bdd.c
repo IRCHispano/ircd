@@ -84,6 +84,7 @@ int activar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
 int compresion_zlib_cliente = 1;
 char *mensaje_part_svskick = NULL;
+char *mensaje_gline = NULL;
 int transicion_ircd = 0;
 char *network = NULL;
 char *canal_operadores = NULL;
@@ -597,6 +598,14 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                 mensaje_part_svskick=NULL;
               }
             }
+            else if(!strcmp(c, BDD_MENSAJE_GLINE))
+            {
+              if(mensaje_gline)
+              {
+                RunFree(mensaje_gline);
+                mensaje_gline=NULL;
+              }
+            }
             else if(!strcmp(c, BDD_NETWORK))
             {
               if(network)
@@ -969,6 +978,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if(!strcmp(c, BDD_MENSAJE_PART_SVSKICK))
       {
         SlabStringAllocDup(&mensaje_part_svskick, v, 0);
+      }
+      else if(!strcmp(c, BDD_MENSAJE_GLINE))
+      {
+        SlabStringAllocDup(&mensaje_gline, v, 0);
       }
       else if(!strcmp(c, BDD_NETWORK))
       {

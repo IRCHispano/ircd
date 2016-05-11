@@ -1,3 +1,9 @@
+* 2016/05/11  zoltan@irc-dev.net (u2.10.H.10.237)                FEATURE
+------------------------------------------------------------------------
+  Se agrega la posibilidad de mostrar un notice al recibir una Gline
+  para dar instrucciones de como proceder ante la Gline.
+  Se hace con el registro mensaje.gline en la tabla z de la BDD.
+
 * 2016/05/11  zoltan@irc-dev.net (u2.10.H.10.236)                CLEANUP
 ------------------------------------------------------------------------
   Se elimina totalmente el soporte propietario de Webchat Flash que
