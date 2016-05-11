@@ -1,7 +1,9 @@
 * 2016/05/11  zoltan@irc-dev.net (u2.10.H.10.236)                CLEANUP
 ------------------------------------------------------------------------
-  Se elimina totalmente el soporte para Webchat Flash dado que ya no se
-  usa en ninguna red.
+  Se elimina totalmente el soporte propietario de Webchat Flash que
+  utilizaba un protocolo distinto e incompatible con RFC1459.
+  Al dejar de usarlo en IRC-Hispano, ya no se hace necesario dicho
+  soporte.
 
 * 2016/04/18  zoltan@irc-dev.net (u2.10.H.10.235)                FEATURE
 ------------------------------------------------------------------------
