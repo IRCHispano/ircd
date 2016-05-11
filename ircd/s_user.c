@@ -179,101 +179,6 @@ aClient *next_client(aClient *next, char *ch)
   return next;
 }
 
-#if defined(WEBCHAT)
-void genera_aleatorio(unsigned char *out, int count) {
-    int i;
-    for(i=0;i<count;i++)
-      *out++=(unsigned char) ircrandom();
-}
-
-
-/*
- * Esta funcion nos permite rellenar un array de chars con un numero aleatorio
- */
-void genera_cookie(char *out, int count) {
-    int i;
-    unsigned int tmp=0;
-    int letra=ircrandom()%count;
-    int mod=0;
-    char res;
-    for(i=0;i<count;i++) {
-      mod=i%4;
-      if(mod == 0)
-    	  tmp=ircrandom();
-
-      if(letra==i) // Me aseguro de que haya una letra min
-        res=((tmp<<(mod*8)) %26)+36;
-      else
-        res=(tmp<<(mod*8)) %62;
-
-      *out++ = (res<10) ? (res+48) : (res<36) ? (res+55) : (res+61);
-    }
-    *out++='\0';
-}
-
-void cifra_cookie(char *out, char *cookie, char *clave_cifrado)
-{
-    aes_context ctx;
-    uint8_t k[32], x[24], v[16], s[8];
-    unsigned char key[45], res[45];
-    int key_len, msg_len;
-    unsigned int i;
-
-    memset(v, 0, sizeof(v));
-    memset(s, 0, sizeof(s));
-    memset(x, 0, sizeof(x));
-    memset(res, 0, COOKIECRYPTLEN+1);
-    msg_len = strlen(cookie);
-    msg_len = (msg_len>16) ? 16 : msg_len;
-
-    strncpy((char *) v, cookie, msg_len);
-    key[44]='\0';
-    res[44]='\0';
-
-    genera_aleatorio(s, sizeof(s));
-    memcpy(k,clave_cifrado,24);
-    memcpy(k+24,s,8);
-
-    aes_setkey_enc(&ctx, k, 256);
-    aes_crypt_ecb(&ctx, AES_ENCRYPT, v, v);
-
-    memcpy(x,s,8);
-    memcpy(x+8,v,16);
-
-    buf_to_base64_r(out, x, sizeof(x));
-}
-
-void descifra_cookie(char *out, char *cookie, char *clave_cifrado)
-{
-    aes_context ctx;
-    uint8_t k[32], v[16], x[24];
-    char key[45], msg[33];
-    int key_len, msg_len;
-    unsigned int i;
-
-    memset(k, 0, sizeof(k));
-    memset(v, 0, sizeof(v));
-    memset(x, 0, sizeof(x));
-    memset(msg, 'A', sizeof(msg));
-    msg_len = strlen(cookie);
-    msg_len = (msg_len>32) ? 32 : msg_len;
-
-    strncpy(msg+(32-msg_len), cookie, (msg_len));
-    msg[32]='\0';
-
-    base64_to_buf_r(x, (unsigned char *) msg);
-    memcpy(k,clave_cifrado,24);
-    memcpy(k+24,x,8);
-    memcpy(v,x+8,16);
-
-    aes_setkey_dec(&ctx, k, 256);
-    aes_crypt_ecb(&ctx, AES_DECRYPT, v, v);
-
-    strncpy(out, (char *)v, COOKIELEN);
-    out[COOKIELEN]='\0';
-}
-#endif /* WEBCHAT */
-
 /*
  * hunt_server
  *
@@ -1215,33 +1120,12 @@ static int m_message(aClient *cptr, aClient *sptr,
           if(chptr->mode.mode & MODE_NOCOLOUR) {
             /* Calcula el color solo una vez */
             strip_color(parv[parc-1], sizeof(buffer_nocolor), buffer_nocolor);
-#if defined(WEBCHAT)
-            if (!strCasecmp(cmd, "PRIVMSG")) {
-              sendto_channel_web2_color_butone(cptr, sptr, chptr,
-                  "P%s%s%s", sptr->webnumeric, chptr->webnumeric, parv[parc - 1]);
-              sendto_channel_web2_nocolor_butone(cptr, sptr, chptr,
-                  "P%s%s%s", sptr->webnumeric, chptr->webnumeric, buffer_nocolor);
-            } else {
-              sendto_channel_web2_color_butone(cptr, sptr, chptr,
-                  "O%s%s%s", sptr->webnumeric, chptr->webnumeric, parv[parc - 1]);
-              sendto_channel_web2_nocolor_butone(cptr, sptr, chptr,
-                  "O%s%s%s", sptr->webnumeric, chptr->webnumeric, buffer_nocolor);
-            }
-#endif
+
             sendto_channel_color_butone(cptr, sptr, chptr,
                 ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
             sendto_channel_nocolor_butone(cptr, sptr, chptr,
                 ":%s %s %s :%s", parv[0], cmd, chptr->chname, buffer_nocolor);
           } else {
-#if defined(WEBCHAT)
-            if (!strCasecmp(cmd,"PRIVMSG")) {
-              sendto_channel_web2_butone(cptr, sptr, chptr,
-                  "P%s%s%s", sptr->webnumeric, chptr->webnumeric, parv[parc - 1]);
-            } else {
-              sendto_channel_web2_butone(cptr, sptr, chptr,
-                  "O%s %s%s", sptr->webnumeric, chptr->webnumeric, parv[parc - 1]);
-            }
-#endif
             sendto_channel_butone(cptr, sptr, chptr,
                 ":%s %s %s :%s", parv[0], cmd, chptr->chname, parv[parc - 1]);
 
@@ -1293,17 +1177,8 @@ static int m_message(aClient *cptr, aClient *sptr,
           {
             if (MyUser(acptr))
               add_target(acptr, sptr);
-#if defined(WEBCHAT)
-            if (MyUser(acptr) && (acptr->negociacion & USER_WEB2))
-              sendto_prefix_one(acptr, sptr, ":%s PRIVMSG %s :%s",
-                 parv[0], acptr->name, parv[parc - 1]);
-            else
-              sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
-                 parv[0], cmd, acptr->name, parv[parc - 1]);
-#else
             sendto_prefix_one(acptr, sptr, ":%s %s %s :%s",
                parv[0], cmd, acptr->name, parv[parc - 1]);
-#endif
           }
           else {
             if (IsServer(sptr))
@@ -2338,24 +2213,7 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if ((!IsRegistered(sptr)) && (sptr->cookie != 0) &&
       (!IsCookieVerified(sptr)) && (parc > 1))
   {
-#if defined(WEBCHAT)
-    char tmp[COOKIELEN+COOKIECRYPTLEN+1];
-    char tmp2[COOKIELEN+COOKIECRYPTLEN+1];
-    if (IsCookieEncrypted(sptr)) {
-      if (cifrado_cookies)
-        descifra_cookie(tmp, parv[parc-1], clave_de_cifrado_de_cookies);
-      if (cifrado_cookies2)
-        descifra_cookie(tmp2, parv[parc-1], clave_de_cifrado_de_cookies2);
-    } else {
-      strncpy(tmp, parv[parc-1], COOKIELEN);
-      tmp[COOKIELEN]='\0';
-    }
-
-    if ((!IsCookieEncrypted(sptr) && !strncmp(tmp, sptr->cookie, COOKIELEN)) ||
-        (IsCookieEncrypted(sptr) && (cifrado_cookies && !strncmp(tmp, sptr->cookie, COOKIELEN)) || (cifrado_cookies2 && !strncmp(tmp2, sptr->cookie, COOKIELEN))))
-#else
     if (atol(parv[parc - 1]) == (long)sptr->cookie)
-#endif
     {
 /*
 ** Si el usuario tiene pendiente de verificar la cookie es porque ya ha mandado su nick,
@@ -2373,11 +2231,7 @@ int m_pong(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if(IsCookieEncrypted(sptr))
         return exit_client(cptr, sptr, &me, "Invalid PONG message");
       else
-#if defined(WEBCHAT)
-        sendto_one(sptr, ":%s %d %s :To connect, type /QUOTE PONG %s",
-#else
         sendto_one(sptr, ":%s %d %s :To connect, type /QUOTE PONG %d",
-#endif
             me.name, ERR_BADPING, PunteroACadena(sptr->name), sptr->cookie);
 
     }
@@ -4264,11 +4118,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
         if (x[0] >= 4294000000ul)
           continue;
 
-#if defined(WEBCHAT)
-        sprintf_irc(resultado, "webchat-%.6d", (int)(x[0] % 1000000));
-#else
         sprintf_irc(resultado, "invitado-%.6d", (int)(x[0] % 1000000));
-#endif
 
         nick_nuevo = resultado;
 
@@ -4327,9 +4177,6 @@ void rename_user(aClient *sptr, char *nick_nuevo)
   sptr->lastnick = now;
 
   /* Esto manda una copia al propio usuario */
-#if defined(WEBCHAT)
-  sendto_common_web2_channels(sptr, "N%s%s", sptr->webnumeric, nick_nuevo);
-#endif
   sendto_common_channels(sptr, ":%s NICK :%s", sptr->name, nick_nuevo);
 
 /*
@@ -4765,7 +4612,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-#if defined(WEBCHAT)
+#if 0
   /* CASO ESPECIAL
    * NICK *
    * Sirve para poner un nick aleatorio
@@ -4860,7 +4707,6 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
   }
 
-#if !defined(WEBCHAT)
     /* No ponemos MyUser porque podria que aun no sea usuario */
     if (!match("webchat-*", nick) && !IsServer(cptr)) {
       sendto_one(sptr, err_str(ERR_NICKNAMEINUSE), me.name,
@@ -4868,7 +4714,6 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
           BadPtr(parv[0]) ? "*" : parv[0], nick);
       return 0;
     }
-#endif
 
   /*
    * Check against nick name collisions.
@@ -5554,9 +5399,6 @@ nickkilldone:
         }
       }
 
-#if defined(WEBCHAT)
-      sendto_common_web2_channels(sptr, "N%s%s", sptr->webnumeric, nick);
-#endif
       sendto_common_channels(sptr, ":%s NICK :%s", parv[0], nick);
 
       add_history(sptr, 1);
@@ -5602,42 +5444,6 @@ nickkilldone:
      */
     if (!sptr->cookie)
     {
-#if defined(WEBCHAT)
-      char tmp[COOKIECRYPTLEN+COOKIELEN+1];
-      char tmp2[COOKIECRYPTLEN+COOKIELEN+1];
-      do
-      {
-        sptr->cookie = SlabStringAlloc(COOKIELEN+1);
-        genera_cookie(sptr->cookie, COOKIELEN);
-      }
-      while ((!sptr->cookie) || IsCookieVerified(sptr));
-
-      if (find_port_cookie_encrypted(sptr) && (cifrado_cookies || cifrado_cookies2)) {
-        char *tmpcook=sptr->cookie;
-
-        if (cifrado_cookies)
-          cifra_cookie(tmp, sptr->cookie, clave_de_cifrado_de_cookies);
-        if (cifrado_cookies2)
-          cifra_cookie(tmp2, sptr->cookie, clave_de_cifrado_de_cookies2);
-        SetCookieEncrypted(sptr);
-
-        while(*tmpcook) {
-          *tmpcook = toUpper(*tmpcook);
-          tmpcook++;
-        }
-#if 1 /* Borrar cuando toque */
-        if (cptr->negociacion & USER_PING)
-          sendto_one(cptr, "PING :%s:%s", cifrado_cookies ? tmp : "0", cifrado_cookies2 ? tmp2 : "0");
-        else
-          sendto_one(cptr, "PING :%s", cifrado_cookies2 ? tmp2 : tmp);
-#else
-        sendto_one(cptr, "PING :%s:%s", cifrado_cookies ? tmp : "0", cifrado_cookies2 ? tmp2 : "0");
-#endif
-      } else {
-        strncpy(tmp, sptr->cookie, COOKIELEN+1);
-        sendto_one(cptr, "PING :%s", tmp);
-      }
-#else
       do
       {
         sptr->cookie = ircrandom() & 0x7fffffff;
@@ -5645,7 +5451,6 @@ nickkilldone:
       while ((!sptr->cookie) || IsCookieVerified(sptr));
 
       sendto_one(cptr, "PING :%u", sptr->cookie);
-#endif /* WEBCHAT */
     }
     else if (sptr->user->host && IsCookieVerified(sptr))
     {
@@ -6258,9 +6063,6 @@ nickkilldone:
         }
       }
 
-#if defined(WEBCHAT)
-      sendto_common_web2_channels(sptr, "N%s%s", sptr->webnumeric, nick);
-#endif
       sendto_common_channels(sptr, ":%s NICK :%s", parv[0], nick);
 
       add_history(sptr, 1);
@@ -6382,11 +6184,7 @@ static char *nuevo_nick_aleatorio(aClient *cptr)
     if (x[0] >= 4294000000ul)
       continue;
 
-#if defined(WEBCHAT)
-    sprintf_irc(resultado, "webchat-%.6d", (int)(x[0] % 1000000));
-#else
     sprintf_irc(resultado, "invitado-%.6d", (int)(x[0] % 1000000));
-#endif
 
     nick_nuevo = resultado;
 

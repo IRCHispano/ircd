@@ -124,9 +124,6 @@ aClient *make_client(aClient *from, int status)
     cptr->authfd = -1;
   }
 
-#if defined(WEBCHAT)
-  SetWebXXXClient(cptr);
-#endif
   return (cptr);
 }
 
@@ -145,11 +142,6 @@ void free_client(aClient *cptr)
   {
     if (cptr->sockhost)
       SlabStringFree(cptr->sockhost);
-    
-#if defined(WEBCHAT)
-    if (cptr->cookie)
-      SlabStringFree(cptr->cookie);
-#endif
     
     DelClientEvent(cptr);
     DelRWAuthEvent(cptr);
@@ -180,10 +172,6 @@ void free_client(aClient *cptr)
       RunFree(cptr->tm_checkping);
     }
   }
-
-#if defined(WEBCHAT)
-  RemoveWebXXXClient(cptr->webnumeric);
-#endif
 
   RunFree(cptr);
 }

@@ -1,3 +1,8 @@
+* 2016/05/11  zoltan@irc-dev.net (u2.10.H.10.236)                CLEANUP
+------------------------------------------------------------------------
+  Se elimina totalmente el soporte para Webchat Flash dado que ya no se
+  usa en ninguna red.
+
 * 2016/04/18  zoltan@irc-dev.net (u2.10.H.10.235)                FEATURE
 ------------------------------------------------------------------------
   Cambios en el modo +X, los Opers no pueden ver la IP a otros Opers o

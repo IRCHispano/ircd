@@ -185,9 +185,6 @@ struct Channel {
   struct SLink *members;
   struct SLink *invites;
   struct SLink *banlist;
-#if defined(WEBCHAT)
-  char webnumeric[4];
-#endif
   char chname[1];
 };
 

@@ -621,11 +621,7 @@ static void exit_one_client(aClient *bcptr, char *comment)
      * that the client can show the "**signoff" message).
      * (Note: The notice is to the local clients *only*)
      */
-#if defined(WEBCHAT)
-    sendto_common_web2_channels(bcptr, "Q%s", bcptr->webnumeric);
-#else
     sendto_common_channels(bcptr, ":%s QUIT :%s", bcptr->name, comment);
-#endif
     
     while ((lp = bcptr->user->channel))
       remove_user_from_channel(bcptr, lp->value.chptr);

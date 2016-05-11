@@ -75,12 +75,6 @@
 int numero_maximo_de_clones_por_defecto;
 char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
-#if defined(WEBCHAT)
-unsigned char clave_de_cifrado_de_cookies[32];
-int cifrado_cookies = 0;
-unsigned char clave_de_cifrado_de_cookies2[32];
-int cifrado_cookies2 = 0;
-#endif
 int ocultar_servidores = 0;
 int activar_modos = 0;
 int activar_ident = 0;
@@ -521,9 +515,6 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               if (chptr->users)
               {                 /* Quedan usuarios */
                 strcpy(buf, "-r");
-#if defined(WEBCHAT)
-                /* No se muestran modos en tok/web */
-#endif
                 sendto_channel_butserv(chptr, &me, ":%s MODE %s %s", me.name,
                     chptr->chname, buf);
               }
@@ -549,22 +540,6 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               clave_de_cifrado_binaria[1] = 0;
               elimina_cache_ips_virtuales();
             }
-#if defined(WEBCHAT)
-            else if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_COOKIES))
-            {
-              int i;
-              cifrado_cookies=0;
-              for(i=0;i<24;i++)
-                clave_de_cifrado_de_cookies[i] = 0;
-            }
-            else if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_COOKIES2))
-            {
-              int i;
-              cifrado_cookies2=0;
-              for(i=0;i<24;i++)
-                clave_de_cifrado_de_cookies2[i] = 0;
-            }
-#endif
             else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
             {
               ocultar_servidores = 0;
@@ -739,9 +714,6 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
 */
     if (!(chptr->mode.mode & MODE_REGCHAN))
     {
-#if defined(WEBCHAT)
-      /* No mostramos modos en tok/web */
-#endif
       sendto_channel_butserv(chptr, &me, ":%s MODE %s +r", me.name,
           chptr->chname);
     }
@@ -935,38 +907,6 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
         elimina_cache_ips_virtuales();
       }
-#if defined(WEBCHAT)
-      else if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_COOKIES))
-      {
-        int key_len;
-        char key[45];
-        memset(key, 'A', sizeof(key));
-        
-        key_len = strlen(v);
-        key_len = (key_len>44) ? 44 : key_len;
-        
-        strncpy((char *)key+(44-key_len), v, (key_len));
-        key[44]='\0';
-        
-        base64_to_buf_r(clave_de_cifrado_de_cookies, key);
-        cifrado_cookies = 1;
-      }
-      else if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_COOKIES2))
-      {
-        int key_len;
-        char key[45];
-        memset(key, 'A', sizeof(key));
-
-        key_len = strlen(v);
-        key_len = (key_len>44) ? 44 : key_len;
-
-        strncpy((char *)key+(44-key_len), v, (key_len));
-        key[44]='\0';
-
-        base64_to_buf_r(clave_de_cifrado_de_cookies2, key);
-        cifrado_cookies2 = 1;
-      }
-#endif
       else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
       {
         ocultar_servidores = !0;
@@ -2384,25 +2324,6 @@ void initdb(void)
       clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
 
     }
-#if defined(WEBCHAT)
-    if ((reg = db_buscar_registro(BDD_CONFIGDB, BDD_CLAVE_DE_CIFRADO_DE_COOKIES)))
-    {
-      char key[45];
-      char *v = reg->valor;
-      int key_len;
-      
-      memset(key, 'A', sizeof(key));
-      
-      key_len = strlen(v);
-      key_len = (key_len>44) ? 44 : key_len;
-      
-      strncpy((char *)key+(44-key_len), v, (key_len));
-      key[44]='\0';
-      
-      base64_to_buf_r(clave_de_cifrado_de_cookies, key);
-      cifrado_cookies=1;
-    }
-#endif
 #endif /* CACHE HIT */
   }
 

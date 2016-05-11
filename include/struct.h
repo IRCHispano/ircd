@@ -95,14 +95,6 @@
 #define ZLIB_ESNET_OUT_SPECULATIVE     0x4
 #endif
 
-#if defined(WEBCHAT)
-#define USER_WEB 0x10
-#define USER_WEB2 0x20
-#if 1 /* Borrar cuando toque */
-#define USER_PING 0x40
-#endif
-#endif
-
 struct Client {
   struct Client *next, *prev, *hnext;
   struct User *user;            /* ...defined, if this is a User */
@@ -110,9 +102,6 @@ struct Client {
   struct Whowas *whowas;        /* Pointer to ww struct to be freed on quit */
   char yxx[4];                  /* Numeric Nick: YMM if this is a server,
                                    XX0 if this is a user */
-#if defined(WEBCHAT)
-  char webnumeric[4];
-#endif
   time_t lasttime;              /* ...should be only LOCAL clients? --msa */
   time_t firsttime;             /* time client was created */
   time_t since;                 /* last time we parsed something */
@@ -145,11 +134,7 @@ struct Client {
   time_t nextnick;              /* Next time that a nick change is allowed */
   time_t nexttarget;            /* Next time that a target change is allowed */
   unsigned char targets[MAXTARGETS];  /* Hash values of current targets */
-#if defined(WEBCHAT)
-  char *cookie;                 /* Random number the user must PONG */
-#else
   unsigned int cookie;          /* Random number the user must PONG */
-#endif
   unsigned int cookie_status;   /* Estado de la cookie */
   struct DBuf sendQ;            /* Outgoing message queue--if socket full */
   struct DBuf recvQ;            /* Hold for data incoming yet to be parsed */

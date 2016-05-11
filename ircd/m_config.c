@@ -38,11 +38,7 @@
 
 #include <assert.h>
 
-#if 1 /* Borrar cuando toque */
-typedef enum { FIN, ZLIB, WEB2, WEBP } opcion;
-#else
-typedef enum { FIN, ZLIB, WEB2 } opcion;
-#endif
+typedef enum { FIN, ZLIB } opcion;
 
 static struct {
   char *texto;
@@ -51,12 +47,6 @@ static struct {
 opciones[] = {
 #if defined(ZLIB_ESNET)
   {"zlib", ZLIB},
-#endif
-#if defined(WEBCHAT)
-  {"web2", WEB2},
-#endif
-#if 1 /* Borrar cuando toque */
-  {"webp", WEBP},
 #endif
   {NULL, FIN}
 };
@@ -197,18 +187,6 @@ int config_req(aClient *cptr, aClient *sptr, char *fuente, char *valor,
       case ZLIB:
         cptr->negociacion |= ZLIB_ESNET_OUT_SPECULATIVE;
         break;
-#endif
-#if defined(WEBCHAT)
-      case WEB2:
-          sendto_one(sptr, ":%s " MSG_CONFIG " ACK :web2", me.name);
-          cptr->negociacion |= USER_WEB2;
-          break;
-#if 1 /* Borrar cuando toque */
-      case WEBP:
-          sendto_one(sptr, ":%s " MSG_CONFIG " ACK :webp", me.name);
-          cptr->negociacion |= (USER_WEB2|USER_PING);
-          break;
-#endif
 #endif
       case FIN:
         assert(0);              /* No deberia darse nunca */
