@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #ifdef _WIN32
 # include <winsock.h>
 #else
@@ -63,7 +64,8 @@ int main(int argc, char *argv[])
     /* Normalizar nick */
     while (nick[i] != 0)
     {
-       nick[i] = toLower((int) nick[i]);
+       /* Esto esta mal, deberia ser toLower... */
+       nick[i] = tolower((int) nick[i]);
        i++;
     }
 
