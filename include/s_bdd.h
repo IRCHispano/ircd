@@ -49,29 +49,30 @@
 /*
 ** Registros de configuracion en la tabla 'z'
 */
-#define BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO	"numero.maximo.de.clones.por.defecto"
-#define BDD_MENSAJE_DE_DEMASIADOS_CLONES	"mensaje.de.demasiados.clones"
-#define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA	"mensaje.de.capacidad.superada"
 #define BDD_CLAVE_DE_CIFRADO_DE_IPS		"clave.de.cifrado.de.ips"
-#define BDD_OCULTAR_SERVIDORES			"ocultar.servidores"
-#define BDD_SERVER_NAME				"servidor.oculto"
-#define BDD_SERVER_INFO				"servidor.info.oculto"
-#define BDD_ACTIVAR_IDENT			"activar.ident"
-#define BDD_AUTOINVISIBLE    "auto.invisible"
-#define BDD_NICKLEN           "nicklen"
-#define BDD_CLAVE_DE_CIFRADO_DE_COOKIES "clave.de.cifrado.de.cookies"
-#define BDD_CLAVE_DE_CIFRADO_DE_COOKIES2 "clave.de.cifrado.de.cookies2"
-#define BDD_COMPRESION_ZLIB_CLIENTE "compresion.zlib.cliente"
-#define BDD_MENSAJE_PART_SVSKICK "mensaje.part.svskick"
-#define BDD_MENSAJE_GLINE "mensaje.gline"
-#define BDD_CANAL_DEBUG "debugchan"
-#define BDD_TRANSICION_IRCD	"transicion.ircd"
-#define BDD_NETWORK	"network"
-#define BDD_CANAL_OPERS	"operschan"
-#define BDD_CONVERSION_UTF	"conversion.utf8"
-/* Para las features de los pseudoBOTS */
+/*
+ * Registros compatibles con features del nuevo ircd
+ */
+#define BDD_ACTIVAR_IDENT                       "noident"
+#define BDD_AUTOINVISIBLE                       "autousermodes"
+#define BDD_MENSAJE_GLINE                       "msg_glined"
+#define BDD_NICKLEN                             "nicklen"
+#define BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO "ipcheck_default_iline"
+#define BDD_MENSAJE_DE_DEMASIADOS_CLONES        "ipcheck_msg_toomany"
+#define BDD_OCULTAR_SERVIDORES                  "his_netsplit"
+#define BDD_SERVER_NAME                         "his_servername"
+#define BDD_SERVER_INFO                         "his_serverinfo"
+#define BDD_NETWORK                             "network"
+#define BDD_CANAL_OPERS                         "operschan"
+#define BDD_CANAL_DEBUG                         "debugchan"
+#define BDD_CONVERSION_UTF                      "utf8_conversion"
+#define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA       "msg_fullcapacity"
+#define BDD_MENSAJE_PART_SVSKICK                "msg_svskick"
+
+/* Para las features de los pseudoBOTS tabla 'c' */
 #define BDD_CHANSERV      "ChanServ"
 #define BDD_NICKSERV      "NickServ"
+#define BDD_CLONESSERV    "ClonesServ"
 
 struct db_reg {
   char *clave;
@@ -101,6 +102,9 @@ void db_persistent_commit(void);
 
 int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 
+extern char *bot_nickserv;
+extern char *bot_chanserv;
+extern char *bot_clonesserv;
 extern int numero_maximo_de_clones_por_defecto;
 extern char *clave_de_cifrado_de_ips;
 extern unsigned int clave_de_cifrado_binaria[2];
@@ -110,12 +114,12 @@ extern int auto_invisible;
 extern int excepcion_invisible;
 extern int activar_redireccion_canales;
 extern char *mensaje_quit_personalizado;
-extern int compresion_zlib_cliente;
+extern char *mensaje_part_personalizado;
 extern char *mensaje_part_svskick;
 extern char *mensaje_gline;
-extern int transicion_ircd;
 extern char *network;
 extern char *canal_operadores;
+extern char *canal_debug;
 extern int conversion_utf;
 
 /* -- mman.h no contiene algunas definicieones en plataformas antiguas -- */

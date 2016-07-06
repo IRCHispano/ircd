@@ -1,3 +1,35 @@
+* 2016/07/06  zoltan@irc-dev.net (u2.10.H.10.238)                FEATURE
+------------------------------------------------------------------------
+  Cambios en registros BDD.
+
+  Tabla b de Bots
+   - ChanServ para los cambios de +r/-r de canales.
+   - ClonesServ para el mensaje de limite de clones
+
+  Tabla f de Features, para facilitar la transicion al nuevo ircd por
+  parte de los Services de deep.space, se han movido variables que estaban
+  en la tabla z a la f, las variables son:
+
+   noident: Solo hace caso si se especifica FALSE
+   autousermodes: Pongas lo que pongas en el valor, solo hace +i
+   msg_glined: Mensaje sale al glinear
+   nicklen: Longitud de nicks
+   ipcheck_default_iline: Numero de conexiones en iline por defecto
+   ipcheck_msg_toomany: Mensaje que sale cuando se superan los clones
+   his_netsplit: Oculta los servidores en todos lados
+   his_servername: Nombre de servidor anonimo
+   his_serverinfo: Descripcion del servidor
+   network: Nombre de red
+   operschan: Canal donde estan los operadores disponibles
+   debugchan: Canal donde entraran los +J
+   utf8_conversion: Conversion UTF a Latin en los joins
+   msg_fullcapacity: Mensaje que sale cuando el servidor esta lleno
+   msg_svskick: Mensaje de part que sale al recibir un kick
+
+   Tabla z, se eliminan las variables equivalentes a los antes mencionados.
+   Se añade part:servidor para especificar un part por defecto de la misma
+   forma que el quit por defecto.
+
 * 2016/05/11  zoltan@irc-dev.net (u2.10.H.10.237)                FEATURE
 ------------------------------------------------------------------------
   Se agrega la posibilidad de mostrar un notice al recibir una Gline

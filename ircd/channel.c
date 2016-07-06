@@ -3780,15 +3780,12 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-  if (MyUser(sptr) && IsUserNoJoin(sptr)) {
-    struct db_reg *reg = db_buscar_registro(BDD_CONFIGDB, BDD_CANAL_DEBUG);
-    if (reg) {
+  if (MyUser(sptr) && IsUserNoJoin(sptr) && canal_debug) {
     /* Copio el valor en memoria para evitar que corte el registro en
      * memoria de la BDD cuando hay un , de separacion de campos.
      */
-      DupString(usernojoin, reg->valor);
-      parv[1] = usernojoin;
-    }
+    DupString(usernojoin, canal_debug);
+    parv[1] = usernojoin;
   }
 
   for (p = parv[1]; *p; p++)    /* find the last "JOIN 0" in the line -Kev */
@@ -5549,7 +5546,9 @@ int m_part(aClient *cptr, aClient *sptr, int parc, char *parv[])
         strcat(pbuf, ",");
       strcat(pbuf, name);
     }
-    if ((can_send(sptr, chptr) != 0) || (chptr->mode.mode & MODE_NOQUITPARTS)) /* Returns 0 if we CAN send */
+    if (MyUser(sptr) && mensaje_part_personalizado)
+      comment = mensaje_part_personalizado;
+    else if ((can_send(sptr, chptr) != 0) || (chptr->mode.mode & MODE_NOQUITPARTS)) /* Returns 0 if we CAN send */
       comment = NULL;
     /* Send part to all clients */
     if (!(lp->flags & CHFL_ZOMBIE))

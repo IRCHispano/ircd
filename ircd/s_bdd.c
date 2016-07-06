@@ -71,7 +71,9 @@
 #include "msg.h"
 #include "support.h"
 
-
+char *bot_nickserv = NULL;
+char *bot_chanserv = NULL;
+char *bot_clonesserv = NULL;
 int numero_maximo_de_clones_por_defecto;
 char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
@@ -82,12 +84,12 @@ int auto_invisible = 0;
 int excepcion_invisible = 0;
 int activar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
-int compresion_zlib_cliente = 1;
+char *mensaje_part_personalizado = NULL;
 char *mensaje_part_svskick = NULL;
 char *mensaje_gline = NULL;
-int transicion_ircd = 0;
 char *network = NULL;
 char *canal_operadores = NULL;
+char *canal_debug = NULL;
 int conversion_utf = 0;
 
 /*
@@ -505,6 +507,36 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
         }
        }
 
+        case BDD_BOTSDB:
+          if (!reemplazar)
+          {
+            if (!strcmp(c, BDD_NICKSERV))
+            {
+              if (bot_nickserv)
+              {
+                RunFree(bot_nickserv);
+                bot_nickserv=NULL;
+              }
+            }
+            else if (!strcmp(c, BDD_CHANSERV))
+            {
+              if (bot_chanserv)
+              {
+                RunFree(bot_chanserv);
+                bot_chanserv=NULL;
+              }
+            }
+            else if (!strcmp(c, BDD_CLONESSERV))
+            {
+              if (bot_clonesserv)
+              {
+                RunFree(bot_clonesserv);
+                bot_clonesserv=NULL;
+              }
+            }
+          }                     /* Fin de "!reemplazar" */
+          break;
+
         case BDD_CHANDB:
           if (!reemplazar)
           {
@@ -516,7 +548,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               if (chptr->users)
               {                 /* Quedan usuarios */
                 strcpy(buf, "-r");
-                sendto_channel_butserv(chptr, &me, ":%s MODE %s %s", me.name,
+                sendto_channel_butserv(chptr, &me, ":%s MODE %s %s", bot_chanserv ? bot_chanserv : me.name,
                     chptr->chname, buf);
               }
               else
@@ -527,19 +559,12 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
           }
           break;
 
-        case BDD_CONFIGDB:
+        case BDD_FEATURESDB:
           if (!reemplazar)
           {
             if (!strcmp(c, BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO))
             {
               numero_maximo_de_clones_por_defecto = 0;
-            }
-            else if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_IPS))
-            {
-              clave_de_cifrado_de_ips = NULL;
-              clave_de_cifrado_binaria[0] = 0;
-              clave_de_cifrado_binaria[1] = 0;
-              elimina_cache_ips_virtuales();
             }
             else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
             {
@@ -548,10 +573,6 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             else if (!strcmp(c, BDD_ACTIVAR_IDENT))
             {
               activar_ident = 0;
-            }
-            else if (!strcmp(c, BDD_TRANSICION_IRCD))
-            {
-              transicion_ircd = 0;
             }
             else if (!strcmp(c, BDD_SERVER_NAME))
             {
@@ -568,27 +589,6 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             else if (!strcmp(c, BDD_NICKLEN))
             {
               nicklen = 30;
-            }
-            else if(!strcmp(c, BDD_COMPRESION_ZLIB_CLIENTE))
-            {
-              compresion_zlib_cliente = 1;
-            }
-
-            else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
-            {
-              activar_redireccion_canales=0;
-            }              
-            else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
-            {
-              if(mensaje_quit_personalizado)
-              {
-                RunFree(mensaje_quit_personalizado);
-                mensaje_quit_personalizado=NULL;
-              }
-            }
-            else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
-            {
-              excepcion_invisible=0;
             }
             else if(!strcmp(c, BDD_MENSAJE_PART_SVSKICK))
             {
@@ -622,11 +622,57 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                 canal_operadores=NULL;
               }
             }
+            else if(!strcmp(c, BDD_CANAL_DEBUG))
+            {
+              if(canal_debug)
+              {
+                RunFree(canal_debug);
+                canal_debug=NULL;
+              }
+            }
+
             else if (!strcmp(c, BDD_CONVERSION_UTF))
             {
               conversion_utf = 0;
             }
 
+          }                     /* Fin de "!reemplazar" */
+          break;
+
+        case BDD_CONFIGDB:
+          if (!reemplazar)
+          {
+            if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_IPS))
+            {
+              clave_de_cifrado_de_ips = NULL;
+              clave_de_cifrado_binaria[0] = 0;
+              clave_de_cifrado_binaria[1] = 0;
+              elimina_cache_ips_virtuales();
+            }
+            else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
+            {
+              activar_redireccion_canales=0;
+            }
+            else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
+            {
+              if(mensaje_quit_personalizado)
+              {
+                RunFree(mensaje_quit_personalizado);
+                mensaje_quit_personalizado=NULL;
+              }
+            }
+            else if(!strncmp(c, "part:", 5) && !strcmp(c+5, me.name))
+            {
+              if(mensaje_part_personalizado)
+              {
+                RunFree(mensaje_part_personalizado);
+                mensaje_part_personalizado=NULL;
+              }
+            }
+            else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
+            {
+              excepcion_invisible=0;
+            }
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -683,12 +729,16 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
   }
 }
 
-static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
+static inline void crea_canal_persistente(char *nombre, char *valor, int virgen)
 {
   aChannel *chptr;
   int add, del;
-  char *tmp=strchr(modos,':'); /* Nombre con mays/mins correcto */
+  char *modos = NULL;
+  char *tmp;
   int cambionombre = 0;
+
+  DupString(modos, valor);
+  tmp=strchr(modos,':'); /* Nombre con mays/mins correcto */
 
   /* Si hay nombre especificado ... */
   if(tmp!=NULL)
@@ -698,10 +748,10 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
     if (strCasecmp(nombre, tmp)) /* Si no coincide el nombre vuelvo al original */
       tmp=nombre;
     else
-      cambionombre = 1;    
+      cambionombre = 1;
   } else
     tmp=nombre;   /* Si no hay nombre especificado vuelvo al original */
-  
+
   chptr = get_channel(NULL, tmp, CREATE);
   mascara_canal_flags(modos, &add, &del);
   chptr->modos_obligatorios = add | MODE_REGCHAN;
@@ -723,7 +773,7 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
 */
     if (!(chptr->mode.mode & MODE_REGCHAN))
     {
-      sendto_channel_butserv(chptr, &me, ":%s MODE %s +r", me.name,
+      sendto_channel_butserv(chptr, &me, ":%s MODE %s +r", bot_chanserv ? bot_chanserv : me.name,
           chptr->chname);
     }
   }
@@ -734,6 +784,7 @@ static inline void crea_canal_persistente(char *nombre, char *modos, int virgen)
     chptr->mode.mode &= ~MODE_WPARAS; /* Estos modos son especiales y no se guardan aqui */
   }
   chptr->mode.mode |= MODE_REGCHAN;
+  RunFree(modos);
 }
 
 /*
@@ -798,6 +849,21 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
 
   switch (tabla)
   {
+   case BDD_BOTSDB:
+      if(!strcmp(c, BDD_NICKSERV))
+      {
+        SlabStringAllocDup(&bot_nickserv, v, 0);
+      }
+      else if(!strcmp(c, BDD_CHANSERV))
+      {
+        SlabStringAllocDup(&bot_chanserv, v, 0);
+      }
+      else if(!strcmp(c, BDD_CLONESSERV))
+      {
+        SlabStringAllocDup(&bot_clonesserv, v, 0);
+      }
+      break;
+
      /* 05-Ene-04: mount@irc-dev.net
       *
       * Alta de operadores instantánea.
@@ -897,36 +963,18 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       crea_canal_persistente(c, v, !cptr);
       break;
 
-    case BDD_CONFIGDB:
+    case BDD_FEATURESDB:
       if (!strcmp(c, BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO))
       {
         numero_maximo_de_clones_por_defecto = atoi(v);
-      }
-      else if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_IPS))
-      {
-        char tmp, clave[12 + 1];
-
-        clave_de_cifrado_de_ips = v;  /* ASCII */
-        strncpy(clave, clave_de_cifrado_de_ips, 12);
-        clave[12] = '\0';
-        tmp = clave[6];
-        clave[6] = '\0';
-        clave_de_cifrado_binaria[0] = base64toint(clave); /* BINARIO */
-        clave[6] = tmp;
-        clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
-        elimina_cache_ips_virtuales();
       }
       else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
       {
         ocultar_servidores = !0;
       }
-      else if (!strcmp(c, BDD_ACTIVAR_IDENT))
+      else if (!strcmp(c, BDD_ACTIVAR_IDENT) && !strcasecmp(v, "FALSE"))
       {
         activar_ident = !0;
-      }
-      else if (!strcmp(c, BDD_TRANSICION_IRCD))
-      {
-        transicion_ircd = !0;
       }
       else if (!strcmp(c, BDD_SERVER_NAME))
       {
@@ -939,19 +987,11 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if (!strcmp(c, BDD_AUTOINVISIBLE))
       {
         auto_invisible = !0;
-      } 
-      else if(!strcmp(c, BDD_COMPRESION_ZLIB_CLIENTE))
-      {
-        int x = atoi(v);
-        if(x<0 || x>9)
-            compresion_zlib_cliente=0;
-        else
-            compresion_zlib_cliente=x;
       }
       else if (!strcmp(c, BDD_NICKLEN))
       {
         int x;
-        
+
         x = atoi(v);
         /* Solo admitimos un minimo de 9 por el RFC1459 y un maximo de
          * NICKLEN que tiene que ser igual en toda la red.
@@ -962,18 +1002,6 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
           nicklen = NICKLEN;
         else
           nicklen = x;
-      }
-      else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
-      {
-        activar_redireccion_canales=1;
-      }              
-      else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
-      {
-        SlabStringAllocDup(&mensaje_quit_personalizado, v, 0);
-      }        
-      else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
-      {
-        excepcion_invisible = !0;
       }
       else if(!strcmp(c, BDD_MENSAJE_PART_SVSKICK))
       {
@@ -991,9 +1019,45 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         SlabStringAllocDup(&canal_operadores, v, 0);
       }
+      else if(!strcmp(c, BDD_CANAL_DEBUG))
+      {
+        SlabStringAllocDup(&canal_debug, v, 0);
+      }
       else if (!strcmp(c, BDD_CONVERSION_UTF))
       {
         conversion_utf = !0;
+      }
+      break;
+    case BDD_CONFIGDB:
+      if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_IPS))
+      {
+        char tmp, clave[12 + 1];
+
+        clave_de_cifrado_de_ips = v;  /* ASCII */
+        strncpy(clave, clave_de_cifrado_de_ips, 12);
+        clave[12] = '\0';
+        tmp = clave[6];
+        clave[6] = '\0';
+        clave_de_cifrado_binaria[0] = base64toint(clave); /* BINARIO */
+        clave[6] = tmp;
+        clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
+        elimina_cache_ips_virtuales();
+      }
+      else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
+      {
+        activar_redireccion_canales=1;
+      }
+      else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
+      {
+        SlabStringAllocDup(&mensaje_quit_personalizado, v, 0);
+      }
+      else if(!strncmp(c, "part:", 5) && !strcmp(c+5, me.name))
+      {
+        SlabStringAllocDup(&mensaje_part_personalizado, v, 0);
+      }
+      else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
+      {
+        excepcion_invisible = !0;
       }
       break;
     case BDD_IPVIRTUALDB:

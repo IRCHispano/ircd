@@ -603,7 +603,7 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
 */
     sendto_one(cptr,
         ":%s NOTICE %s :En esta red solo se permiten %d clones para tu IP (%s)%s",
-        me.name, cptr->name, num_clones, ircd_ntoa(&cptr->ip), buf);
+        bot_clonesserv ? bot_clonesserv : me.name, cptr->name, num_clones, ircd_ntoa(&cptr->ip), buf);
 
 /*
 ** Si tiene Iline no debemos permitir

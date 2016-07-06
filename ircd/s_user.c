@@ -1845,7 +1845,7 @@ int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
       if(strlen(comment)>QUITLEN)
         comment[QUITLEN]='\0';
-      
+ 
       return exit_client_msg(cptr, sptr, &me, "Quit: %s", comment);
     }
     else
@@ -4223,7 +4223,6 @@ void rename_user(aClient *sptr, char *nick_nuevo)
     if (reg)
     {
       int of, oh;
-      char *nombre_bot;
       char c;
 
       of = sptr->flags;
@@ -4238,12 +4237,9 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 
 #if 0
       /* Antes de nada, encontramos a 'Nick Virtual' */
-      nombre_bot = (reg =
-          db_buscar_registro(BDD_BOTSDB, BDD_NICKSERV)) ? reg->valor : me.name;
-
       sendto_one(cptr,
           ":%s NOTICE %s :*** Renombrando a tu nick anterior.",
-          botname, nick_nuevo);
+          bot_nickserv ? bot_nickserv : me.name, nick_nuevo);
 #endif
 
 #if defined(BDD_VIP)
@@ -4349,26 +4345,14 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   aClient *acptr;
   struct db_reg *reg;
-  char *botname;
   int clave_ok = 0;
   char *clave;
-
-  /* Buscamos el nick del bot virtual de nicks (NiCK) */
-  reg = db_buscar_registro(BDD_BOTSDB, BDD_NICKSERV);
-  if (reg && reg->valor && (strlen(reg->valor) < HOSTLEN))
-  {
-    botname = reg->valor;
-  }
-  else
-  {
-    botname = me.name;
-  }
 
   if (parc < 2)
   {
     sendto_one(cptr,
         ":%s NOTICE %s :*** Sintaxis incorrecta. Formato: GHOST <nick> [clave]",
-        botname, parv[0]);
+        bot_nickserv ? bot_nickserv : me.name, parv[0]);
     return 0;
   }
 
@@ -4393,7 +4377,7 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     sendto_one(cptr,
         ":%s NOTICE %s :*** Debes indicar alguna clave, o en el comando o al conectar.",
-        botname, parv[0]);
+        bot_nickserv ? bot_nickserv : me.name, parv[0]);
     return 0;
   }
 
@@ -4402,7 +4386,7 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     sendto_one(cptr,
         ":%s NOTICE %s :*** El nick %s no está conectado actualmente.",
-        botname, parv[0], parv[1]);
+        bot_nickserv ? bot_nickserv : me.name, parv[0], parv[1]);
     return 0;
   }
 
@@ -4410,7 +4394,7 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     sendto_one(cptr,
         ":%s NOTICE %s :*** ERROR: No puedes hacer ghost a tí mismo.",
-        botname, parv[0]);
+        bot_nickserv ? bot_nickserv : me.name, parv[0]);
     return 0;
   }
 
@@ -4419,7 +4403,7 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     sendto_one(cptr,
         ":%s NOTICE %s :*** El nick %s no está registrado en la BDD.",
-        botname, parv[0], acptr->name);
+        bot_nickserv ? bot_nickserv : me.name, parv[0], acptr->name);
     return 0;
   }
 
@@ -4427,7 +4411,8 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (!clave_ok)
   {
-    sendto_one(cptr, ":%s NOTICE %s :*** Clave incorrecta.", botname, parv[0]);
+    sendto_one(cptr, ":%s NOTICE %s :*** Clave incorrecta.",
+        bot_nickserv ? bot_nickserv : me.name, parv[0]);
     return 0;
   }
 
@@ -4452,7 +4437,7 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   sendto_one(cptr,
       ":%s NOTICE %s :*** Sesión fantasma del nick %s ha sido liberada.",
-      botname, parv[0], parv[1]);
+      bot_nickserv ? bot_nickserv : me.name, parv[0], parv[1]);
 
   return 1;
 }
@@ -4566,7 +4551,6 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char hflag = '-';
   int clave_ok = 0;             /* Clave correcta */
   int hacer_ghost = 0;          /* Ha especificado nick! */
-  char *botname = NULL;         /* Nombre pseudoBOT NickServ */
   int nick_suspendido = 0;      /* Nick SUSPENDido */
   int nick_equivalentes = 0;
   int nick_autentificado_en_bdd = 0;
@@ -4879,17 +4863,9 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
             ":%s KILL %s :Sesion fantasma liberada por %s", me.name,
             acptr->name, nickwho);
 
-      /* Buscamos el nombre del bot virtual de nicks (NickServ) */
-      reg2 = db_buscar_registro(BDD_BOTSDB, BDD_NICKSERV);
-
-      if (reg2 && reg2->valor && (strlen(reg2->valor) < HOSTLEN))
-        botname = reg2->valor;
-      else
-        botname = me.name;
-
       sendto_one(cptr,
           ":%s NOTICE GHOST :*** Sesión fantasma del nick %s ha sido liberada.",
-          botname, acptr->name);
+          bot_nickserv ? bot_nickserv : me.name, acptr->name);
 
       sprintf_irc(buf2, "Killed (Sesion fantasma liberada por %s)", nickwho);
       exit_client(cptr, acptr, &me, buf2);
@@ -5093,17 +5069,6 @@ nickkilldone:
     else
       nombre = nick;
 
-    if (!botname)               /* Si esta vacio, pedimos el valor */
-    {
-      /* Buscamos el nombre del bot virtual de nicks (NickServ) */
-      reg = db_buscar_registro(BDD_BOTSDB, BDD_NICKSERV);
-
-      if (reg && reg->valor && (strlen(reg->valor) < HOSTLEN))
-        botname = reg->valor;
-      else
-        botname = me.name;
-    }
-
     if (clave_ok)
     {
       if (sptr->name == NULL)
@@ -5117,12 +5082,12 @@ nickkilldone:
         if (!nick_equivalentes)
           sendto_one(cptr,
               ":%s NOTICE %s :*** Contraseña aceptada. Bienvenid@ a casa ;)",
-              botname, nick);
+              bot_nickserv ? bot_nickserv : me.name, nick);
 
         if (nick_suspendido)
           sendto_one(cptr,
               ":%s NOTICE %s :*** Tu nick %s está suspendido.",
-              botname, nick, nick);
+              bot_nickserv ? bot_nickserv : me.name, nick, nick);
       }
       hflag = '+';
 
@@ -5131,7 +5096,7 @@ nickkilldone:
     {
       sendto_one(cptr,
           ":%s NOTICE %s :*** El nick %s está prohibido, no puede ser utilizado.",
-          botname, nombre, nick);
+          bot_nickserv ? bot_nickserv : me.name, nombre, nick);
       sendto_one(cptr, ":%s %d %s %s :Nickname is forbided, can not be used - El nick está prohibido, no puede ser utilizado",
           me.name, ERR_NICKNAMEINUSE, parv[0], nick);
       return 0;
@@ -5142,18 +5107,18 @@ nickkilldone:
       {
         sendto_one(cptr,
             ":%s NOTICE %s :*** El nick %s está Registrado, necesitas contraseña.",
-            botname, nombre, nick);
+            bot_nickserv ? bot_nickserv : me.name, nombre, nick);
       }
       else
       {
         sendto_one(cptr,
             ":%s NOTICE %s :*** Contraseña Incorrecta para el nick %s.",
-            botname, nombre, nick);
+            bot_nickserv ? bot_nickserv : me.name, nombre, nick);
       }
 
       sendto_one(cptr,
           ":%s NOTICE %s :*** Utiliza \002/NICK %s%sclave\002 para identificarte.",
-          botname, nombre, nick, hacer_ghost ? "!" : ":");
+          bot_nickserv ? bot_nickserv : me.name, nombre, nick, hacer_ghost ? "!" : ":");
 
       sendto_one(cptr, ":%s %d %s %s :Nickname is registered (missing or wrong password) - "
           "El nick está registrado (contraseña ausente o incorrecta)",
@@ -5327,12 +5292,12 @@ nickkilldone:
         if (!nick_equivalentes)
           sendto_one(cptr,
               ":%s NOTICE %s :*** Contraseña aceptada. Bienvenid@ a casa ;)",
-              botname, sptr->name);
+              bot_nickserv ? bot_nickserv : me.name, sptr->name);
 
         if (nick_suspendido)
           sendto_one(cptr,
               ":%s NOTICE %s :*** Tu nick %s está suspendido.",
-              botname, sptr->name, nick);
+              bot_nickserv ? bot_nickserv : me.name, sptr->name, nick);
       }
 
     }
