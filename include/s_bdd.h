@@ -70,9 +70,9 @@
 #define BDD_MENSAJE_PART_SVSKICK                "msg_svskick"
 
 /* Para las features de los pseudoBOTS tabla 'c' */
-#define BDD_CHANSERV      "ChanServ"
-#define BDD_NICKSERV      "NickServ"
-#define BDD_CLONESSERV    "ClonesServ"
+#define BDD_CHANSERV      "chanserv"
+#define BDD_NICKSERV      "nickserv"
+#define BDD_CLONESSERV    "clonesserv"
 
 struct db_reg {
   char *clave;
