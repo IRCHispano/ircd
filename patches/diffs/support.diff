@@ -25,23 +25,24 @@ index e4aa27b..5914a5c 100644
  #define RPL_WHOISACTUALLY    338        /* Undernet extension, dalnet */
  /*      RPL_CHANPASSOK       338           IRCnet extension */
 diff --git a/include/s_bsd.h b/include/s_bsd.h
-index 84b43e5..a8e3ac5 100644
+index 22a9119..438cc8c 100644
 --- include/s_bsd.h
 +++ include/s_bsd.h
-@@ -247,6 +247,8 @@ extern struct sockaddr_in vserv;
- #define HMODE_USERNOJOIN              0x00020000  /* Al intentar entrar a un canal entra siempre a uno de debug */
+@@ -248,6 +248,9 @@ extern struct sockaddr_in vserv;
  
  #define HFLAG_WEBIRC                  0x01000000  /* Usuario WebIRC */
-+#define HFLAG_SOPORTE                 0x02000000
-+#define HFLAG_GLINED                  0x04000000
+ #define HFLAG_PROXY                   0x02000000  /* Usuario Proxy */
++#define HFLAG_SOPORTE                 0x04000000
++#define HFLAG_GLINED                  0x08000000
++
  
  /* Modos hispano  a propagar */
  #define SEND_HMODES \
 diff --git a/include/struct.h b/include/struct.h
-index 31bfaca..3255302 100644
+index c84f002..44218ed 100644
 --- include/struct.h
 +++ include/struct.h
-@@ -199,6 +199,8 @@ struct Client {
+@@ -184,6 +184,8 @@ struct Client {
    
    struct event *evcheckping;    /* Evento para controlar cuando se debe revisar el ping */
    struct timeval *tm_checkping; /* Temporizador del chequeo del proximo ping */
@@ -51,10 +52,10 @@ index 31bfaca..3255302 100644
  
  struct Server {
 diff --git a/ircd/channel.c b/ircd/channel.c
-index dab4a62..035bcb9 100644
+index a344166..51f3948 100644
 --- ircd/channel.c
 +++ ircd/channel.c
-@@ -3813,6 +3813,12 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
+@@ -3780,6 +3780,12 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
      return 0;
    }
  
@@ -64,10 +65,10 @@ index dab4a62..035bcb9 100644
 +    return 0;
 +  }
 +
-   if (MyUser(sptr) && IsUserNoJoin(sptr)) {
-     struct db_reg *reg = db_buscar_registro(BDD_CONFIGDB, BDD_CANAL_DEBUG);
-     if (reg) {
-@@ -6803,6 +6809,26 @@ int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+   if (MyUser(sptr) && IsUserNoJoin(sptr) && canal_debug) {
+     /* Copio el valor en memoria para evitar que corte el registro en
+      * memoria de la BDD cuando hay un , de separacion de campos.
+@@ -6716,6 +6722,26 @@ int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
  
    sendto_one(sptr, rpl_str(RPL_LISTSTART), me.name, parv[0]);
  
@@ -124,7 +125,7 @@ index 10b8b57..a6c4894 100644
    if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
    {
 diff --git a/ircd/opercmds.c b/ircd/opercmds.c
-index be7369d..ce5bede 100644
+index c968abc..1025612 100644
 --- ircd/opercmds.c
 +++ ircd/opercmds.c
 @@ -319,6 +319,12 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
@@ -225,7 +226,7 @@ index 71463ad..33c6b0b 100644
      sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],
          max_connection_count, max_client_count);
 diff --git a/ircd/s_conf.c b/ircd/s_conf.c
-index b366974..decfbda 100644
+index 50c7d64..1c83f49 100644
 --- ircd/s_conf.c
 +++ ircd/s_conf.c
 @@ -1475,6 +1475,13 @@ int find_kill(aClient *cptr)
@@ -243,7 +244,7 @@ index b366974..decfbda 100644
    else
      agline = NULL;              /* if a gline was found, it was inactive */
 diff --git a/ircd/s_err.c b/ircd/s_err.c
-index 978e5ba..231f677 100644
+index 1a74e9c..822e481 100644
 --- ircd/s_err.c
 +++ ircd/s_err.c
 @@ -205,13 +205,16 @@ static Numeric numeric_errors[] = {
@@ -280,10 +281,10 @@ index 978e5ba..231f677 100644
      {RPL_WHOISSSL, "%s :conecta de forma segura con SSL"},
  /* 338 */
 diff --git a/ircd/s_misc.c b/ircd/s_misc.c
-index b01e4ac..f76b191 100644
+index c3b5eda..ab3bdab 100644
 --- ircd/s_misc.c
 +++ ircd/s_misc.c
-@@ -653,6 +653,12 @@ static void exit_one_client(aClient *bcptr, char *comment)
+@@ -649,6 +649,12 @@ static void exit_one_client(aClient *bcptr, char *comment)
      if (MyConnect(bcptr) && bcptr->passbdd)
        RunFree(bcptr->passbdd);
  
@@ -297,10 +298,10 @@ index b01e4ac..f76b191 100644
        --nrof.inv_clients;
  
 diff --git a/ircd/s_user.c b/ircd/s_user.c
-index 722790d..7523b07 100644
+index 33a8e4b..c52facb 100644
 --- ircd/s_user.c
 +++ ircd/s_user.c
-@@ -1268,6 +1268,23 @@ static int m_message(aClient *cptr, aClient *sptr,
+@@ -1152,6 +1152,23 @@ static int m_message(aClient *cptr, aClient *sptr,
          if (MyUser(sptr) && check_target_limit(sptr, acptr, acptr->name, 0))
            continue;
  
@@ -324,7 +325,7 @@ index 722790d..7523b07 100644
          /* Los +P solo reciben si viene de un ircop o un clon */
          if (MyUser(sptr) && !IsOper(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip)
              && IsUserBitch(acptr))
-@@ -2804,6 +2821,12 @@ int m_userhost(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+@@ -2658,6 +2675,12 @@ int m_userhost(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
    char *p = NULL, *sbuf;
    aClient *acptr;
  
@@ -337,7 +338,7 @@ index 722790d..7523b07 100644
    if (parc < 2)
    {
      sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "USERHOST");
-@@ -2854,6 +2877,12 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+@@ -2708,6 +2731,12 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
    char *p = NULL, *sbuf;
    aClient *acptr;
  
@@ -350,7 +351,7 @@ index 722790d..7523b07 100644
    if (parc < 2)
    {
      sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "USERIP");
-@@ -2916,6 +2945,7 @@ int m_ison(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+@@ -2770,6 +2799,7 @@ int m_ison(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
    len = strlen(buf);
    buf[sizeof(buf) - 1] = 0;
  
@@ -358,7 +359,7 @@ index 722790d..7523b07 100644
    for (s = strtoken(&p, *++pav, " "); s; s = strtoken(&p, NULL, " "))
      if ((acptr = FindUser(s)))
      {
-@@ -2926,6 +2956,7 @@ int m_ison(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
+@@ -2780,6 +2810,7 @@ int m_ison(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
        strcat(buf, " ");
        len++;
      }
@@ -366,7 +367,7 @@ index 722790d..7523b07 100644
    sendto_one(sptr, "%s", buf);
    return 0;
  }
-@@ -3851,6 +3882,12 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
+@@ -3705,6 +3736,12 @@ int m_silence(aClient *cptr, aClient *sptr, int parc, char *parv[])
    aClient *acptr;
    char c, *cp;
  
@@ -379,7 +380,7 @@ index 722790d..7523b07 100644
    if (MyUser(sptr))
    {
      acptr = sptr;
-@@ -5688,6 +5725,8 @@ nickkilldone:
+@@ -5457,6 +5494,8 @@ nickkilldone:
     if (auto_invisible && !excepcion_invisible)
       SetInvisible(sptr);
  
@@ -388,7 +389,7 @@ index 722790d..7523b07 100644
     if (find_port_ssl(sptr))
       SetSSL(sptr);
  
-@@ -5765,6 +5804,7 @@ nickkilldone:
+@@ -5534,6 +5573,7 @@ nickkilldone:
            SetOper(sptr);
            nrof.opers++;
          }
@@ -397,7 +398,7 @@ index 722790d..7523b07 100644
        } else {
          ClearHelpOp(sptr);
 diff --git a/ircd/whocmds.c b/ircd/whocmds.c
-index 4f25cb0..021d37d 100644
+index 7899735..53bea54 100644
 --- ircd/whocmds.c
 +++ ircd/whocmds.c
 @@ -406,6 +406,12 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
