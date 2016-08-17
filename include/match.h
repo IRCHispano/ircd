@@ -29,6 +29,7 @@ struct in_mask {
 
 extern int mmatch(const char *old_mask, const char *new_mask);
 extern int match(const char *ma, const char *na);
+extern int match_case(const char *ma, const char *na);
 extern char *collapse(char *pattern);
 
 extern int matchcomp(char *cmask, int *minlen, int *charset, const char *mask);

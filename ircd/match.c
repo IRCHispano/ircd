@@ -251,6 +251,87 @@ break_while:
   return 0;
 }
 
+int match_case(const char *mask, const char *string)
+{
+  const char *m = mask, *s = string;
+  char ch;
+  const char *bm, *bs;          /* Will be reg anyway on a decent CPU/compiler */
+
+  /* Process the "head" of the mask, if any */
+  while ((ch = *m++) && (ch != '*'))
+    switch (ch)
+    {
+      case '\\':
+        if (*m == '?' || *m == '*')
+          ch = *m++;
+      default:
+        if (*s != ch)
+          return 1;
+      case '?':
+        if (!*s++)
+          return 1;
+    };
+  if (!ch)
+    return *s;
+
+  /* We got a star: quickly find if/where we match the next char */
+got_star:
+  bm = m;                       /* Next try rollback here */
+  while ((ch = *m++))
+    switch (ch)
+    {
+      case '?':
+        if (!*s++)
+          return 1;
+      case '*':
+        bm = m;
+        continue;               /* while */
+      case '\\':
+        if (*m == '?' || *m == '*')
+          ch = *m++;
+      default:
+        goto break_while;       /* C is structured ? */
+    };
+break_while:
+  if (!ch)
+    return 0;                   /* mask ends with '*', we got it */
+  while (*s++ != ch)
+    if (!*s)
+      return 1;
+  bs = s;                       /* Next try start from here */
+
+  /* Check the rest of the "chunk" */
+  while ((ch = *m++))
+  {
+    switch (ch)
+    {
+      case '*':
+        goto got_star;
+      case '\\':
+        if (*m == '?' || *m == '*')
+          ch = *m++;
+      default:
+        if (*s != ch)
+        {
+          m = bm;
+          s = bs;
+          goto got_star;
+        };
+      case '?':
+        if (!*s++)
+          return 1;
+    };
+  };
+  if (*s)
+  {
+    m = bm;
+    s = bs;
+    goto got_star;
+  };
+  return 0;
+}
+
+
 /*
  * collapse()
  * Collapse a pattern string into minimal components.

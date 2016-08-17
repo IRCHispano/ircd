@@ -1,3 +1,11 @@
+* 2016/08/17  zoltan@irc-dev.net (u2.10.H.10.2349)                    FIX
+------------------------------------------------------------------------
+  Fix en el ban de host virtuales genericas, el match era sin case, 
+  implicaba que se baneaban a muchas ips cuando se ponia ban a un host 
+  virtual cifrado.
+
+  Se cambia el match a nocase.
+
 * 2016/07/06  zoltan@irc-dev.net (u2.10.H.10.238)                FEATURE
 ------------------------------------------------------------------------
   Cambios en registros BDD.
