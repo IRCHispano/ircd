@@ -2974,9 +2974,6 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else
       ClearSSL(sptr);
 
-    if (!(sethmodes & HMODE_WHOIS))
-      ClearWhois(sptr);
-
     if (sethmodes & HMODE_DOCKING)
       SetDocking(sptr);
     else
@@ -3041,6 +3038,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
      */
     ClearMsgOnlyReg(sptr);
     ClearNoChan(sptr);
+    ClearDocking(sptr);
     ClearHelpOp(sptr);
     ClearAdmin(sptr);
     ClearCoder(sptr);
@@ -3117,7 +3115,6 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       && !buscar_uline(cptr->confs, sptr->name))
     ClearServicesBot(sptr);
 
-
 /*
 ** El +n solo se lo pueden poner usuarios con +r
 */
@@ -3129,21 +3126,21 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 ** El +X solo se lo pueden poner usuarios autorizados
 */
   if (MyUser(sptr) && (!(sethmodes & HMODE_HIDDENVIEWER))
-      && IsHiddenViewer(sptr) && !(get_privs(sptr) & 0x1))
+      && IsHiddenViewer(sptr) && !get_privs(sptr, HMODE_HIDDENVIEWER))
     ClearHiddenViewer(sptr);
 
 /*
 ** El +W solo se lo pueden poner usuarios autorizados
 */
   if (MyUser(sptr) && (!(sethmodes & HMODE_WHOIS))
-      && IsWhois(sptr) && !(get_privs(sptr) & 0x2))
+      && IsWhois(sptr) && !get_privs(sptr, HMODE_WHOIS))
     ClearWhois(sptr);
 
 /*
 ** El +I solo se lo pueden poner usuarios autorizados
 */
   if (MyUser(sptr) && (!(sethmodes & HMODE_NOIDLE))
-      && IsNoIdle(sptr) && !get_privs(sptr))
+      && IsNoIdle(sptr) && !get_privs(sptr, HMODE_NOIDLE))
     ClearNoIdle(sptr);
 
 
@@ -3844,13 +3841,13 @@ int get_status(aClient *sptr)
   return 0;
 }
 
-/* int get_privs(sptr)
+/* int have_privs(sptr, hmode)
  *
  * Da los privilegios segun tabla o de operadores
  *
- * Devuelve el valor de la BDD
+ * Devuelve 1 si tiene el privilegio, 0 si no
  */
-int get_privs(aClient *sptr)
+int get_privs(aClient *sptr, int flag)
 {
   int privs = 0;
   struct db_reg *reg;
@@ -3868,7 +3865,16 @@ int get_privs(aClient *sptr)
         return 0;
       privs = atoi(reg->valor + 2);
 
-      return privs;
+      if (flag == HMODE_NOIDLE)
+        return privs;
+
+      if (flag == HMODE_HIDDENVIEWER)
+        return privs & 0x1;
+
+      if (flag == HMODE_WHOIS)
+        return privs & 0x2;
+
+      return 0;
   }
 
   return 0;
@@ -4153,6 +4159,8 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       ClearNickSuspended(sptr);
       ClearMsgOnlyReg(sptr);
       ClearNoChan(sptr);
+      ClearDocking(sptr);
+      ClearWhois(sptr);
 
       /* 23-Oct-2003: mount@irc-dev.net
        *
@@ -5348,6 +5356,7 @@ nickkilldone:
           ClearNickSuspended(sptr);
           ClearMsgOnlyReg(sptr);
           ClearNoChan(sptr);
+          ClearDocking(sptr);
           if (IsHelpOp(sptr))
           {
             ClearHelpOp(sptr);
@@ -5561,6 +5570,7 @@ nickkilldone:
       ClearNickSuspended(sptr);
       ClearMsgOnlyReg(sptr);
       ClearNoChan(sptr);
+      ClearDocking(sptr);
       ClearHelpOp(sptr);
       ClearAdmin(sptr);
       ClearCoder(sptr);
@@ -6021,6 +6031,7 @@ nickkilldone:
           ClearNickSuspended(sptr);
           ClearMsgOnlyReg(sptr);
           ClearNoChan(sptr);
+          ClearDocking(sptr);
           if (IsHelpOp(sptr))
           {
             ClearHelpOp(sptr);

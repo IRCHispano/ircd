@@ -73,7 +73,7 @@ extern int check_target_limit(aClient *sptr, void *target, const char *name,
 extern void add_target(aClient *sptr, void *target);
 extern int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int get_status(aClient *sptr);
-extern int get_privs(aClient *sptr);
+extern int get_privs(aClient *sptr, int flag);
 #if defined(BDD_VIP)
 extern int can_viewhost(aClient *sptr, aClient *acptr);
 extern char *get_virtualhost(aClient *sptr, int perso);
