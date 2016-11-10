@@ -3935,7 +3935,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendcreate = 1;
         }
 
-        if (!IsChannelService(sptr)
+        if (!IsChannelService(sptr) && !IsDocking(sptr)
             && (sptr->user->joined >= MAXCHANNELSPERUSER)
 #if defined(OPER_NO_CHAN_LIMIT)
             && !IsAnOper(sptr)

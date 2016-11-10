@@ -1,4 +1,9 @@
-* 2016/08/17  zoltan@irc-dev.net (u2.10.H.10.2349)                    FIX
+* 2016/11/10  zoltan@irc-dev.net (u2.10.H.10.240)                FEATURE
+------------------------------------------------------------------------
+  Nuevo Modo +K de Docking.
+   Permite saltar limite de canales, flood y target.
+
+* 2016/08/17  zoltan@irc-dev.net (u2.10.H.10.239)                    FIX
 ------------------------------------------------------------------------
   Fix en el ban de host virtuales genericas, el match era sin case, 
   implicaba que se baneaban a muchas ips cuando se ponia ban a un host 

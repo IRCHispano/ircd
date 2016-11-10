@@ -317,6 +317,8 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
       *(p1++) = 'n';
     if (IsChannelService(acptr))
       *(p1++) = 'k';
+    if (IsDocking(acptr))
+      *(p1++) = 'K';
 
     if (IsAnOper(sptr) || IsHelpOp(sptr))
     {
@@ -1020,6 +1022,9 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
           if (IsMsgOnlyReg(acptr))
             sendto_one(sptr, rpl_str(RPL_MSGONLYREG), me.name, parv[0], name);
+
+          if (IsDocking(acptr))
+            sendto_one(sptr, rpl_str(RPL_DOCKING), me.name, parv[0], name);
 
           if (IsHidden(acptr) && (can_viewhost(sptr, acptr) || acptr == sptr))
             sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY),  me.name, parv[0],

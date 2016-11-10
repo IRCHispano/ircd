@@ -848,6 +848,7 @@ static int user_hmodes[] = {
   HMODE_STRIPCOLOR,     'c',
   HMODE_NOCHAN,         'n',
   HMODE_SSL,            'z',
+  HMODE_DOCKING,        'K',
   HMODE_NOIDLE,         'I',
   HMODE_WHOIS,          'W',
 /* Control Spam */
@@ -954,7 +955,7 @@ int check_target_limit(aClient *sptr, void *target, const char *name,
   unsigned int tmp = ((size_t)target & 0xffff00) >> 8;
   unsigned char hash = (tmp * tmp) >> 12;
 
-  if (IsChannelService(sptr))
+  if (IsChannelService(sptr) || IsDocking(sptr))
     return 0;
 
   if (sptr->targets[0] == hash) /* Same target as last time ? */
@@ -2976,6 +2977,11 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!(sethmodes & HMODE_WHOIS))
       ClearWhois(sptr);
 
+    if (sethmodes & HMODE_DOCKING)
+      SetDocking(sptr);
+    else
+      ClearDocking(sptr);
+
     if (!(sethmodes & HMODE_USERDEAF))
       ClearUserDeaf(sptr);
 
@@ -3123,8 +3129,15 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 ** El +X solo se lo pueden poner usuarios autorizados
 */
   if (MyUser(sptr) && (!(sethmodes & HMODE_HIDDENVIEWER))
-      && IsHiddenViewer(sptr) && !get_privs(sptr))
+      && IsHiddenViewer(sptr) && !(get_privs(sptr) & 0x1))
     ClearHiddenViewer(sptr);
+
+/*
+** El +W solo se lo pueden poner usuarios autorizados
+*/
+  if (MyUser(sptr) && (!(sethmodes & HMODE_WHOIS))
+      && IsWhois(sptr) && !(get_privs(sptr) & 0x2))
+    ClearWhois(sptr);
 
 /*
 ** El +I solo se lo pueden poner usuarios autorizados
@@ -3835,7 +3848,7 @@ int get_status(aClient *sptr)
  *
  * Da los privilegios segun tabla o de operadores
  *
- * En esta base solo para el +X. Devuelve 1 si puede +X
+ * Devuelve el valor de la BDD
  */
 int get_privs(aClient *sptr)
 {

@@ -411,7 +411,7 @@ static Numeric numeric_replies[] = {
 /* 335 */
     {0, (char *)NULL},
 /* 336 */
-    {0, (char *)NULL},
+    {RPL_DOCKING, "%s :Tiene el servicio de Docking"},
 /* 337 */
     {RPL_WHOISSSL, "%s :conecta de forma segura con SSL"},
 /* 338 */
