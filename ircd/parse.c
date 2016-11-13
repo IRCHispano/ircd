@@ -138,7 +138,7 @@ aMessage msgtab[] = {
     {CLASS_PROXY,     MSG_PPROXY,     TOK_PROXY,     m_proxy,       0, MAXPARA,   MFLG_SLOW|MFLG_UNREG,      0L},
 
     {0, (char *)0, (char *)0, (int (*)(aClient *, aClient *, int, char **))0,	0, 0, 0, 0L}
-}                                                                                                                                   ;
+};
 /* *INDENT-ON* */
 
 #if defined(GODMODE)
