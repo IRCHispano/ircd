@@ -261,7 +261,6 @@
 #define RPL_TOPICWHOTIME     333  /* Undernet extension */
 #define RPL_LISTUSAGE	     334  /* Undernet extension */
 
-#define RPL_DOCKING          336  /* Hispano extension */
 #define RPL_WHOISSSL         337
 #define RPL_WHOISACTUALLY    338        /* Undernet extension, dalnet */
 /*      RPL_CHANPASSOK       338           IRCnet extension */
@@ -269,6 +268,7 @@
 #define RPL_USERIP           340  /* Undernet extension */
 #define RPL_INVITING	     341
 #define RPL_MSGONLYREG       342  /* Hispano extension */
+#define RPL_DOCKING          343  /* Hispano extension */
 
 #define RPL_INVITELIST       346  /* IRCnet & Undernet extension */
 #define RPL_ENDOFINVITELIST  347  /* IRCnet & Undernet extension */

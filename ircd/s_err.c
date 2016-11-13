@@ -411,7 +411,7 @@ static Numeric numeric_replies[] = {
 /* 335 */
     {0, (char *)NULL},
 /* 336 */
-    {RPL_DOCKING, "%s :Tiene el servicio de Docking"},
+    {0, (char *)NULL},
 /* 337 */
     {RPL_WHOISSSL, "%s :conecta de forma segura con SSL"},
 /* 338 */
@@ -425,7 +425,7 @@ static Numeric numeric_replies[] = {
 /* 342 */
     {RPL_MSGONLYREG, "%s :Solo admite privados de usuarios registrados"},
 /* 343 */
-    {0, (char *)NULL},
+    {RPL_DOCKING, "%s :Tiene el servicio de Docking"},
 /* 344 */
     {0, (char *)NULL},
 /* 345 */
