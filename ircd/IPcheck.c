@@ -89,32 +89,6 @@ static struct IPregistry_vector IPregistry_hashtable[HASHTABSIZE];
   struct IPregistry_vector *hash; \
   do { unsigned int ip = (irc_in_addr).in6_16[0] ^ (irc_in_addr).in6_16[1] ^ (irc_in_addr).in6_16[2] ^ (irc_in_addr).in6_16[3]; \
        hash = &IPregistry_hashtable[ip & (HASHTABSIZE - 1)]; } while(0)
-#if 0
-struct IPregistry_vector *hash;
-
-void CALCULATE_HASH(struct irc_in_addr addr)
-{
-  struct irc_in_addr iptemp;
-  unsigned int iphash;
-
-  if (irc_in_addr_is_ipv4(&addr)) {
-    iptemp.in6_16[0] = htons(0x2002);
-    iptemp.in6_16[1] = addr.in6_16[6];
-    iptemp.in6_16[2] = addr.in6_16[7];
-    iptemp.in6_16[3] = 0;
-
-    do {
-      iphash = iptemp.in6_16[0] ^ iptemp.in6_16[1] ^ iptemp.in6_16[2] ^ iptemp.in6_16[3];
-      hash = &IPregistry_hashtable[iphash & (HASHTABSIZE - 1)];
-    } while(0);
- } else {
-    do {
-      iphash = addr.in6_16[0] ^ addr.in6_16[1] ^ addr.in6_16[2] ^ addr.in6_16[3];
-      hash = &IPregistry_hashtable[iphash & (HASHTABSIZE - 1)]; 
-    } while(0);
-  }
-}
-#endif
 
 /*
  * Fit `now' in an unsigned short, the advantage is that we use less memory `struct IPregistry::last_connect' can be smaller
@@ -159,6 +133,8 @@ static void IPregistry_canonicalize(struct irc_in_addr *out, const struct irc_in
         out->in6_16[6] = out->in6_16[7] = 0;
     } else
         memcpy(out, in, sizeof(*out));
+        //Renunciamos a los 64 bits restantes, no es necesario
+        out->in6_16[4] = out->in6_16[5] = out->in6_16[6] = out->in6_16[7] = 0;
 }
 
 static struct IPregistry *IPregistry_add(struct IPregistry_vector *iprv)
@@ -594,7 +570,10 @@ int IPbusca_clones(aClient *cptr)
 
   if (!IsUnixSocket(cptr))
   {
-    reg = db_buscar_registro(ESNET_CLONESDB, (char *)ircd_ntoa(&cptr->ip));
+    struct irc_in_addr range;
+    IPregistry_canonicalize(&range, &cptr->ip);
+
+    reg = db_buscar_registro(ESNET_CLONESDB, (char *)ircd_ntoa(&range));
     if (reg == NULL) {
         return -1;
     }

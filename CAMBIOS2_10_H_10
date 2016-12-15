@@ -1,3 +1,13 @@
+* 2016/12/15  zoltan@irc-dev.net (u2.10.H.10.241)                FEATURE
+------------------------------------------------------------------------
+  Completamos el parche u2.10.H.10.230 para tener soporte IPv6 completo.
+
+  La IP que hay que introducir en la tabla i tiene que estar en IPv6
+  descartando los ultimos 64 bits.
+  Para introducir una IP de IPv4, hay que que usar el formato 6to4 que
+  usa el rango 2002::/16 para embebir la IPv4 dentro de una IPv6. En este
+  caso se usan solo los primeros 48 bits, estando a 0 el resto.
+
 * 2016/11/10  zoltan@irc-dev.net (u2.10.H.10.240)                FEATURE
 ------------------------------------------------------------------------
   Nuevo Modo +K de Docking.

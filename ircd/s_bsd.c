@@ -601,9 +601,16 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
 /*
 ** Ojo con pasarle un buffer que, a su vez, contenga "%"
 */
-    sendto_one(cptr,
-        ":%s NOTICE %s :En esta red solo se permiten %d clones para tu IP (%s)%s",
-        bot_clonesserv ? bot_clonesserv : me.name, cptr->name, num_clones, ircd_ntoa(&cptr->ip), buf);
+    if (irc_in_addr_is_ipv4(&cptr->ip)) {
+      sendto_one(cptr,
+          ":%s NOTICE %s :En esta red solo se permiten %d clones para tu IP (%s)%s",
+          bot_clonesserv ? bot_clonesserv : me.name, cptr->name, num_clones, ircd_ntoa(&cptr->ip), buf);
+    } else {
+      sendto_one(cptr,
+          ":%s NOTICE %s :En esta red solo se permiten %d clones para tu Rango (%s)/%d%s",
+          bot_clonesserv ? bot_clonesserv : me.name, cptr->name, num_clones,
+          ircd_ntoa(&cptr->ip), (cptr->ip.in6_16[0] == htons(0x2002)) ? 48 : 64, buf);
+    }
 
 /*
 ** Si tiene Iline no debemos permitir
