@@ -1,0 +1,6 @@
+Makefile
+config.log
+config.h
+config.status
+config.cache
+autom4te.cache
