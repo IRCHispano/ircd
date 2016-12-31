@@ -144,10 +144,10 @@ extern int m_version(struct Client*, struct Client*, int, char*[]);
 extern int m_wallchops(struct Client*, struct Client*, int, char*[]);
 extern int m_wallvoices(struct Client*, struct Client*, int, char*[]);
 extern int m_watch(struct Client*, struct Client*, int, char*[]);
+extern int m_webirc(struct Client*, struct Client*, int, char*[]);
 extern int m_who(struct Client*, struct Client*, int, char*[]);
 extern int m_whois(struct Client*, struct Client*, int, char*[]);
 extern int m_whowas(struct Client*, struct Client*, int, char*[]);
-extern int mo_xquery(struct Client*, struct Client*, int, char*[]);
 
 /*
  * Privileged commands (Admins & Opers & Helpers)
@@ -183,6 +183,7 @@ extern int mo_uping(struct Client*, struct Client*, int, char*[]);
 extern int mo_version(struct Client*, struct Client*, int, char*[]);
 extern int mo_wallops(struct Client*, struct Client*, int, char*[]);
 extern int mo_wallusers(struct Client*, struct Client*, int, char*[]);
+extern int mo_xquery(struct Client*, struct Client*, int, char*[]);
 
 /*
  * Non-registered commands

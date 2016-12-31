@@ -390,6 +390,9 @@ int exit_client(struct Client *cptr,
 
     on_for = CurrentTime - cli_firsttime(victim);
 
+    /* This intentionally excludes WebIRC ports to make port scanning
+     * for it a little harder.
+     */
     if (IsUser(victim) || IsUserPort(victim))
       auth_send_exit(victim);
 

@@ -75,7 +75,7 @@ struct Client;
                      * joined and opped
                      */
 #define CHFL_BURST_ALREADY_VOICED   0x08000
-                    /**, In oob BURST, but was already
+                    /**< In oob BURST, but was already
                      * joined and voiced
                      */
 #if defined(UNDERNET)
@@ -120,8 +120,8 @@ struct Client;
 #define MODE_REGONLY    0x0800      /**< +R Only +r users may join */
 #define MODE_DELJOINS   0x1000      /**< New join messages are delayed */
 #define MODE_REGISTERED 0x2000      /**< Channel marked as registered */
-#define MODE_NOCOLOUR   0x4000      /**< +c No mIRC/ANSI colors/bold */
-#define MODE_NOCTCP     0x8000      /**< +C No channel CTCPs */
+#define MODE_NOCOLOR    0x4000      /**< +c No colors */
+#define MODE_NOCTCP     0x8000      /**< +C No CTCPs except ACTION */
 #define MODE_NONOTICE   0x10000     /**< +N No channel notices */
 #define MODE_SAVE   0x20000     /**< save this mode-with-arg 'til
                      * later */
@@ -144,7 +144,7 @@ struct Client;
  */
 #define MODE_WPARAS     (MODE_CHANOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT|MODE_APASS|MODE_UPASS)
 /** Available Channel modes */
-#define infochanmodes feature_bool(FEAT_OPLEVELS) ? "AbiklmnopstUvrDRcCNuMz" : "biklmnopstvrDRcCNuMz"
+#define infochanmodes feature_bool(FEAT_OPLEVELS) ? "AbiklmnopstUvrDdRcCNuMz" : "biklmnopstvrDdRcCNuMz"
 /** Available Channel modes that take parameters */
 #define infochanmodeswithparams feature_bool(FEAT_OPLEVELS) ? "AbkloUv" : "bklov"
 #elif defined(DDB) || defined(SERVICES)

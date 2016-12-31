@@ -47,7 +47,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#if FD_SETSIZE < (MAXCONNECTIONS + 4)
+#if (FD_SETSIZE < (MAXCONNECTIONS + 4)) && !MAKE_DEPEND
 /*
  * Sanity check
  *
@@ -405,8 +405,6 @@ engine_loop(struct Generators* gen)
 	  nfds--;
 	break;
       }
-
-      assert(s_fd(sock) == i);
 
       gen_ref_dec(sock); /* we're done with it */
     }

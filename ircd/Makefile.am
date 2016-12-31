@@ -155,6 +155,7 @@ ircd_SOURCES = \
     m_wallusers.c \
     m_wallvoices.c \
     m_watch.c \
+    m_webirc.c \
     m_who.c \
     m_whois.c \
     m_whowas.c \

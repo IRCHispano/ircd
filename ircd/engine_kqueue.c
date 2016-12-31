@@ -57,6 +57,10 @@ static int kqueue_id;
 static int errors = 0;
 /** Periodic timer to forget errors. */
 static struct Timer clear_error;
+/** Current array of event descriptors. */
+static struct kevent *events;
+/** Number of ::events elements that have been populated. */
+static int events_used;
 
 /** Decrement the error count (once per hour).
  * @param[in] ev Expired timer event (ignored).
@@ -104,7 +108,7 @@ engine_signal(struct Signal* sig)
   struct kevent sigevent;
   struct sigaction act;
 
-  assert(0 != signal);
+  assert(0 != sig);
 
   Debug((DEBUG_ENGINE, "kqueue: Adding filter for signal %d [%p]",
 	 sig_signal(sig), sig));
@@ -285,18 +289,22 @@ engine_events(struct Socket* sock, unsigned int new_events)
 static void
 engine_delete(struct Socket* sock)
 {
+  int ii;
+
   assert(0 != sock);
   assert(sock == sockList[s_fd(sock)]);
 
   Debug((DEBUG_ENGINE, "kqueue: Deleting socket %d [%p], state %s",
-	 s_fd(sock), sock, state_to_name(s_state(sock))));
-
-  /* No need to remove it from the kernel - the fds may be closed
-   * already, and the kernel automatically removes fds from the kqueue
-   * when they are closed.  So we just remove it from sockList[].
-   */
+     s_fd(sock), sock, state_to_name(s_state(sock))));
 
   sockList[s_fd(sock)] = 0;
+
+  /* Drop any unprocessed events citing this socket. */
+  for (ii = 0; ii < events_used; ii++) {
+    if (events[ii].ident == s_fd(sock)) {
+      events[ii] = events[--events_used];
+    }
+  }
 }
 
 /** Run engine event loop.
@@ -305,14 +313,13 @@ engine_delete(struct Socket* sock)
 static void
 engine_loop(struct Generators* gen)
 {
-  struct kevent *events;
   int events_count;
+  struct kevent *evt;
   struct Socket* sock;
   struct timespec wait;
-  int nevs;
   int i;
   int errcode;
-  size_t codesize;
+  socklen_t codesize;
 
   if ((events_count = feature_int(FEAT_POLLS_PER_LOOP)) < 20)
     events_count = 20;
@@ -328,24 +335,24 @@ engine_loop(struct Generators* gen)
     wait.tv_sec = timer_next(gen) ? (timer_next(gen) - CurrentTime) : -1;
     wait.tv_nsec = 0;
 
-    Debug((DEBUG_INFO, "kqueue: delay: %Tu (%Tu) %Tu", timer_next(gen),
-	   CurrentTime, wait.tv_sec));
+    Debug((DEBUG_ENGINE, "kqueue: delay: %Tu (%Tu) %Tu", timer_next(gen),
+       CurrentTime, wait.tv_sec));
 
     /* check for active events */
-    nevs = kevent(kqueue_id, 0, 0, events, events_count,
-		  wait.tv_sec < 0 ? 0 : &wait);
+    events_used = kevent(kqueue_id, 0, 0, events, events_count,
+                         wait.tv_sec < 0 ? 0 : &wait);
 
     CurrentTime = time(0); /* set current time... */
 
-    if (nevs < 0) {
+    if (events_used < 0) {
       if (errno != EINTR) { /* ignore kevent interrupts */
-	/* Log the kqueue error */
-	log_write(LS_SOCKET, L_ERROR, 0, "kevent() error: %m");
-	if (!errors++)
-	  timer_add(timer_init(&clear_error), error_clear, 0, TT_PERIODIC,
-		    ERROR_EXPIRE_TIME);
-	else if (errors > KQUEUE_ERROR_THRESHOLD) /* too many errors... */
-	  exit_schedule(1, 0, 0, "too many kevent errors");
+    /* Log the kqueue error */
+    log_write(LS_SOCKET, L_ERROR, 0, "kevent() error: %m");
+    if (!errors++)
+      timer_add(timer_init(&clear_error), error_clear, 0, TT_PERIODIC,
+            ERROR_EXPIRE_TIME);
+    else if (errors > KQUEUE_ERROR_THRESHOLD) /* too many errors... */
+      server_restart("too many kevent errors");
       }
       /* old code did a sleep(1) here; with usage these days,
        * that may be too expensive
@@ -353,81 +360,82 @@ engine_loop(struct Generators* gen)
       continue;
     }
 
-    for (i = 0; i < nevs; i++) {
-      if (events[i].filter == EVFILT_SIGNAL) {
-	/* it's a signal; deal appropriately */
-	event_generate(ET_SIGNAL, events[i].udata, events[i].ident);
-	continue; /* skip socket processing loop */
+    while (events_used > 0) {
+      evt = &events[--events_used];
+
+      if (evt->filter == EVFILT_SIGNAL) {
+    /* it's a signal; deal appropriately */
+    event_generate(ET_SIGNAL, evt->udata, evt->ident);
+    continue; /* skip socket processing loop */
       }
 
-      assert(events[i].filter == EVFILT_READ ||
-	     events[i].filter == EVFILT_WRITE);
+      assert(evt->filter == EVFILT_READ || evt->filter == EVFILT_WRITE);
 
-      sock = sockList[events[i].ident];
+      sock = sockList[evt->ident];
       if (!sock) /* slots may become empty while processing events */
-	continue;
+    continue;
 
-      assert(s_fd(sock) == events[i].ident);
+      assert(s_fd(sock) == evt->ident);
 
       gen_ref_inc(sock); /* can't have it going away on us */
 
       Debug((DEBUG_ENGINE, "kqueue: Checking socket %p (fd %d) state %s, "
-	     "events %s", sock, s_fd(sock), state_to_name(s_state(sock)),
-	     sock_flags(s_events(sock))));
+         "events %s", sock, s_fd(sock), state_to_name(s_state(sock)),
+         sock_flags(s_events(sock))));
 
       if (s_state(sock) != SS_NOTSOCK) {
-	errcode = 0; /* check for errors on socket */
-	codesize = sizeof(errcode);
-	if (getsockopt(s_fd(sock), SOL_SOCKET, SO_ERROR, &errcode,
-		       &codesize) < 0)
-	  errcode = errno; /* work around Solaris implementation */
+    errcode = 0; /* check for errors on socket */
+    codesize = sizeof(errcode);
+    if (getsockopt(s_fd(sock), SOL_SOCKET, SO_ERROR, &errcode,
+               &codesize) < 0)
+      errcode = errno; /* work around Solaris implementation */
 
-	if (errcode) { /* an error occurred; generate an event */
-	  Debug((DEBUG_ENGINE, "kqueue: Error %d on fd %d, socket %p", errcode,
-		 s_fd(sock), sock));
-	  event_generate(ET_ERROR, sock, errcode);
-	  gen_ref_dec(sock); /* careful not to leak reference counts */
-	  continue;
-	}
+    if (errcode) { /* an error occurred; generate an event */
+      Debug((DEBUG_ENGINE, "kqueue: Error %d on fd %d, socket %p", errcode,
+         s_fd(sock), sock));
+      event_generate(ET_ERROR, sock, errcode);
+      gen_ref_dec(sock); /* careful not to leak reference counts */
+      continue;
+    }
       }
 
       switch (s_state(sock)) {
       case SS_CONNECTING:
-	if (events[i].filter == EVFILT_WRITE) { /* connection completed */
-	  Debug((DEBUG_ENGINE, "kqueue: Connection completed"));
-	  event_generate(ET_CONNECT, sock, 0);
-	}
-	break;
+    if (evt->filter == EVFILT_WRITE) { /* connection completed */
+      Debug((DEBUG_ENGINE, "kqueue: Connection completed"));
+      event_generate(ET_CONNECT, sock, 0);
+    }
+    break;
 
       case SS_LISTENING:
-	if (events[i].filter == EVFILT_READ) { /* connect. to be accept. */
-	  Debug((DEBUG_ENGINE, "kqueue: Ready for accept"));
-	  event_generate(ET_ACCEPT, sock, 0);
-	}
-	break;
+    if (evt->filter == EVFILT_READ) { /* connect. to be accept. */
+      Debug((DEBUG_ENGINE, "kqueue: Ready for accept"));
+      event_generate(ET_ACCEPT, sock, 0);
+    }
+    break;
 
       case SS_NOTSOCK: /* doing nothing socket-specific */
       case SS_CONNECTED:
-	if (events[i].filter == EVFILT_READ) { /* data on socket */
-	  Debug((DEBUG_ENGINE, "kqueue: EOF or data to be read"));
-	  event_generate(events[i].flags & EV_EOF ? ET_EOF : ET_READ, sock, 0);
-	}
-	if (events[i].filter == EVFILT_WRITE) { /* socket writable */
-	  Debug((DEBUG_ENGINE, "kqueue: Data can be written"));
-	  event_generate(ET_WRITE, sock, 0);
-	}
-	break;
+    if (evt->filter == EVFILT_READ) { /* data on socket */
+      Debug((DEBUG_ENGINE, "kqueue: EOF or data to be read"));
+      event_generate(evt->flags & EV_EOF ? ET_EOF : ET_READ, sock, 0);
+    }
+    if (evt->filter == EVFILT_WRITE) { /* socket writable */
+      Debug((DEBUG_ENGINE, "kqueue: Data can be written"));
+      event_generate(ET_WRITE, sock, 0);
+    }
+    break;
 
       case SS_DATAGRAM: case SS_CONNECTDG:
-	if (events[i].filter == EVFILT_READ) { /* socket readable */
-	  Debug((DEBUG_ENGINE, "kqueue: Datagram to be read"));
-	  event_generate(ET_READ, sock, 0);
-	}
-	if (events[i].filter == EVFILT_WRITE) { /* socket writable */
-	  Debug((DEBUG_ENGINE, "kqueue: Datagram can be written"));
-	  event_generate(ET_WRITE, sock, 0);
-	}
-	break;
+    if (evt->filter == EVFILT_READ) { /* socket readable */
+      Debug((DEBUG_ENGINE, "kqueue: Datagram to be read"));
+      event_generate(ET_READ, sock, 0);
+    }
+    if (evt->filter == EVFILT_WRITE) { /* socket writable */
+      Debug((DEBUG_ENGINE, "kqueue: Datagram can be written"));
+      event_generate(ET_WRITE, sock, 0);
+    }
+    break;
       }
 
       gen_ref_dec(sock); /* we're done with it */
@@ -439,12 +447,12 @@ engine_loop(struct Generators* gen)
 
 /** Descriptor for kqueue() event engine. */
 struct Engine engine_kqueue = {
-  "kqueue()",		/* Engine name */
-  engine_init,		/* Engine initialization function */
-  engine_signal,	/* Engine signal registration function */
-  engine_add,		/* Engine socket registration function */
-  engine_state,		/* Engine socket state change function */
-  engine_events,	/* Engine socket events mask function */
-  engine_delete,	/* Engine socket deletion function */
-  engine_loop		/* Core engine event loop */
+  "kqueue()",       /* Engine name */
+  engine_init,      /* Engine initialization function */
+  engine_signal,    /* Engine signal registration function */
+  engine_add,       /* Engine socket registration function */
+  engine_state,     /* Engine socket state change function */
+  engine_events,    /* Engine socket events mask function */
+  engine_delete,    /* Engine socket deletion function */
+  engine_loop       /* Core engine event loop */
 };

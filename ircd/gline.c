@@ -66,6 +66,7 @@
 #define MASK_WILDS	0x10	/**< Mask contains wildcards */
 #define MASK_IP		0x20	/**< Mask is an IP address */
 #define MASK_HALT	0x40	/**< Finished processing mask */
+#define ONE_MONTH   (30 * 24 * 3600) /**< Number of seconds in 30 days */
 
 /** List of user G-lines. */
 static struct Gline* GlobalGlineList  = 0;
@@ -90,7 +91,9 @@ static struct Gline* BadChanGlineList = 0;
     /* Figure out the next pointer in list... */	\
     if ((((next) = (gl)->gl_next) || 1) &&		\
 	/* Then see if it's expired */			\
-	(gl)->gl_lifetime <= TStime())			\
+    (((gl)->gl_lifetime <= TStime()) ||             \
+     (((gl)->gl_expire < TStime() - ONE_MONTH) &&   \
+      ((gl)->gl_lastmod < TStime() - ONE_MONTH))))  \
       /* Record has expired, so free the G-line */	\
       gline_free((gl));					\
     /* See if we need to expire the G-line */		\
@@ -1199,7 +1202,7 @@ gline_list(struct Client *sptr, char *userhost)
 /** Statistics callback to list G-lines.
  * @param[in] sptr Client requesting statistics.
  * @param[in] sd Stats descriptor for request (ignored).
- * @param[in] param Extra parameter from user (ignored).
+ * @param[in] param Mask to filter reported G-lines.
  */
 void
 gline_stats(struct Client *sptr, const struct StatDesc *sd,
@@ -1209,6 +1212,17 @@ gline_stats(struct Client *sptr, const struct StatDesc *sd,
   struct Gline *sgline;
 
   gliter(GlobalGlineList, gline, sgline) {
+    if (param) {
+      char gl_mask[USERLEN+HOSTLEN+2];
+      strcpy(gl_mask, gline->gl_user);
+      if (gline->gl_host) {
+        size_t len = strlen(gl_mask);
+        gl_mask[len++] = '@';
+        strcpy(gl_mask + len, gline->gl_host);
+      }
+      if (mmatch(param, gl_mask))
+        continue;
+    }
     send_reply(sptr, RPL_STATSGLINE, 'G', gline->gl_user,
 	       gline->gl_host ? "@" : "",
 	       gline->gl_host ? gline->gl_host : "",

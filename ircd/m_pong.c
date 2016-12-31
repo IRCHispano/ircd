@@ -99,8 +99,12 @@ int ms_pong(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   else if (0 != ircd_strcmp(destination, cli_name(&me)))
   {
     struct Client* acptr;
-    if ((acptr = FindClient(destination)))
-      sendcmdto_prio_one(sptr, CMD_PONG, acptr, "%s %s", origin, destination);
+    if ((acptr = findNUser(destination))) {
+      if (MyUser(acptr))
+        sendcmdto_prio_one(sptr, CMD_PONG, acptr, "%C %s", sptr, parv[1]);
+      else
+        sendcmdto_prio_one(sptr, CMD_PONG, acptr, "%s %C", parv[1], acptr);
+    }
   }
   return 0;
 }

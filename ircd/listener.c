@@ -151,7 +151,9 @@ void show_ports(struct Client* sptr, const struct StatDesc* sd,
       continue;
     len = 0;
 
-    flags[len++] = listener_server(listener) ? 'S' : 'C';
+    flags[len++] = listener_server(listener) ? 'S'
+        : listener_webirc(listener) ? 'W'
+        : 'C';;
 
 #if defined(USE_SSL)
     if (listener_ssl(listener))

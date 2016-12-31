@@ -71,6 +71,7 @@
   extern struct ServerConf* serverConfList;
   extern struct s_map*      GlobalServiceMapList;
   extern struct qline*      GlobalQuarantineList;
+  extern struct wline*      GlobalWebircList;
 
   int yylex(void);
   void lexer_include(const char *filename);
@@ -232,6 +233,7 @@ static void free_slist(struct SLink **link) {
 %token PROGRAM
 %token TOK_IPV4 TOK_IPV6
 %token DNS
+%token WEBIRC
 %token INCLUDE
 %token LINESYNC
 %token FROM
@@ -274,7 +276,7 @@ blocks: blocks block | block;
 block: adminblock | generalblock | classblock | connectblock |
        uworldblock | operblock | portblock | jupeblock | clientblock |
        killblock | exceptblock | cruleblock | motdblock | featuresblock | quarantineblock |
-       pseudoblock | iauthblock | includeblock | error ';';
+       pseudoblock | iauthblock | webircblock | includeblock | error ';';
 
 /* The timespec, sizespec and expr was ripped straight from
  * ircd-hybrid-7. */
@@ -697,12 +699,19 @@ uworldblock: UWORLD '{' {
   (void)permitted(BLOCK_UWORLD, 1);
 }  uworlditems '}' ';';
 uworlditems: uworlditem uworlditems | uworlditem;
-uworlditem: uworldname;
+uworlditem: uworldname uworldoper;
 uworldname: NAME '=' QSTRING ';'
 {
   if (permitted(BLOCK_UWORLD, 0))
     conf_make_uworld($3);
 };
+
+uworldoper: OPER '=' QSTRING ';'
+{
+  struct ConfItem *conf = make_conf(CONF_UWORLD);
+  conf->host = $3;
+  conf->flags = CONF_UWORLD_OPER;
+}
 
 uworldblock: UWORLD QSTRING ';'
 {
@@ -762,15 +771,7 @@ operhost: HOST '=' QSTRING ';'
 {
  struct SLink *link;
  link = make_link();
- if (!strchr($3, '@'))
- {
-   int uh_len;
-   link->value.cp = (char*) MyMalloc((uh_len = strlen($3)+3));
-   ircd_snprintf(0, link->value.cp, uh_len, "*@%s", $3);
- }
- else
-   DupString(link->value.cp, $3);
- MyFree($3);
+ link->value.cp = $3;
  link->next = hosts;
  hosts = link;
 };
@@ -855,7 +856,7 @@ portblock: PORT '{' portitems '}' ';'
   if (!permitted(BLOCK_PORT, 1))
     ;
   else for (link = hosts; link != NULL; link = link->next) {
-    memcpy(&flags_here, &listen_flags, sizeof(&flags_here));
+    memcpy(&flags_here, &listen_flags, sizeof(flags_here));
     switch (link->flags & (USE_IPV4 | USE_IPV6)) {
     case USE_IPV4:
       FlagSet(&flags_here, LISTEN_IPV4);
@@ -879,11 +880,14 @@ portblock: PORT '{' portitems '}' ';'
   port = 0;
 };
 portitems: portitem portitems | portitem;
-portitem: portnumber | portvhost | portvhostnumber | portmask | portserver | porthidden | portexempt | portssl;
+portitem: portnumber | portvhost | portvhostnumber | portmask | portserver | portwebirc | porthidden | portexempt | portssl;
 portnumber: PORT '=' address_family NUMBER ';'
 {
   if ($4 < 1 || $4 > 65535) {
     parse_error("Port %d is out of range", port);
+  } else if (FlagHas(&listen_flags, LISTEN_WEBIRC)
+             && FlagHas(&listen_flags, LISTEN_SERVER)) {
+    parse_error("Port %d cannot be both WEBIRC and SERVER", port);
   } else {
     port = $3 | $4;
     if (hosts && (0 == (hosts->flags & 65535)))
@@ -935,6 +939,14 @@ porthidden: HIDDEN '=' YES ';'
 } | HIDDEN '=' NO ';'
 {
   FlagClr(&listen_flags, LISTEN_HIDDEN);
+};
+
+portwebirc: WEBIRC '=' YES ';'
+{
+  FlagSet(&listen_flags, LISTEN_WEBIRC);
+} | WEBIRC '=' NO ';'
+{
+  FlagClr(&listen_flags, LISTEN_WEBIRC);
 };
 
 portexempt: EXEMPT '=' YES ';'
@@ -1386,6 +1398,55 @@ iauthprogram: PROGRAM '='
     MyFree(stringlist[stringno]);
   }
 } stringlist ';';
+
+webircblock: WEBIRC '{' webircitems '}' ';'
+{
+  struct wline *wline;
+  struct irc_in_addr peer;
+  unsigned char bits;
+
+  if (!ip)
+    parse_error("Missing IP address in WebIRC block");
+  else if (!pass)
+    parse_error("Missing password in WebIRC block");
+  else if (!ipmask_parse(ip, &peer, &bits))
+    parse_error("Invalid IP address in WebIRC block");
+  else {
+    /* Search for a wline with the same IP (mask) and password. */
+    for (wline = GlobalWebircList; wline; wline = wline->next) {
+      if ((bits == wline->bits)
+          && ipmask_check(&peer, &wline->ip, bits)
+          && (0 == strcmp(pass, wline->passwd)))
+        break;
+    }
+
+    /* Update it, or create a new structure. */
+    if (wline) {
+      MyFree(wline->description);
+    } else {
+      wline = (struct wline *) MyMalloc(sizeof(*wline));
+      memcpy(&wline->ip, &peer, sizeof(wline->ip));
+      wline->bits = bits;
+      wline->stale = 0;
+      wline->passwd = pass;
+      wline->next = GlobalWebircList;
+      GlobalWebircList = wline;
+    }
+    wline->stale = 0;
+    wline->description = name;
+
+    MyFree(ip);
+    ip = NULL;
+    pass = NULL;
+    name = NULL;
+  }
+};
+
+webircitems: webircitem | webircitems webircitem;
+webircitem: webircip | webircpass | webircdesc;
+webircip: IP '=' QSTRING ';' { MyFree(ip); ip = $3; };
+webircpass: PASS '=' QSTRING ';' { MyFree(pass); pass = $3; };
+webircdesc: DESCRIPTION '=' QSTRING ';' { MyFree(name); name = $3; };
 
 includeblock: INCLUDE blocklimit QSTRING ';' {
   struct ConfigBlocks *child;

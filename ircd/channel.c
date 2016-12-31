@@ -261,7 +261,7 @@ struct Client* find_chasing(struct Client* sptr, const char* user, int* chasing)
   if (who)
     return who;
 
-  if (!(who = get_history(user, feature_int(FEAT_KILLCHASETIMELIMIT)))) {
+  if (!(who = get_history(user))) {
     send_reply(sptr, ERR_NOSUCHNICK, user);
     return 0;
   }
@@ -897,7 +897,7 @@ void channel_modes(struct Client *cptr, char *mbuf, char *pbuf, int buflen,
 #elif defined(DDB) || defined(SERVICES)
     *mbuf++ = 'r';
 #endif
-  if (chptr->mode.mode & MODE_NOCOLOUR)
+  if (chptr->mode.mode & MODE_NOCOLOR)
     *mbuf++ = 'c';
   if (chptr->mode.mode & MODE_NOCTCP)
     *mbuf++ = 'C';
@@ -1736,7 +1736,9 @@ modebuf_flush_int(struct ModeBuf *mbuf, int all)
     MODE_REGONLY,       'R',
 /*  MODE_OWNER,		'q', */
 #endif
-    MODE_DELJOINS,	'D',
+    MODE_DELJOINS,	    'D',
+    MODE_NOCOLOR,       'c',
+    MODE_NOCTCP,        'C',
 /*  MODE_KEY,		'k', */
 /*  MODE_BAN,		'b', */
     MODE_LIMIT,		'l',
@@ -1745,8 +1747,6 @@ modebuf_flush_int(struct ModeBuf *mbuf, int all)
 /*  MODE_UPASS,		'U', */
 #endif
     MODE_NOQUITPARTS,   'u',
-    MODE_NOCOLOUR,      'c',
-    MODE_NOCTCP,        'C',
     MODE_NONOTICE,      'N',
     MODE_MODERATENOREG, 'M',
     MODE_SSLONLY,       'z',
@@ -2247,8 +2247,8 @@ modebuf_mode(struct ModeBuf *mbuf, unsigned int mode)
 
   mode &= (MODE_ADD | MODE_DEL | MODE_PRIVATE | MODE_SECRET | MODE_MODERATED |
 	   MODE_TOPICLIMIT | MODE_INVITEONLY | MODE_NOPRIVMSGS | MODE_REGONLY |
-           MODE_NOCTCP | MODE_NONOTICE | MODE_NOQUITPARTS |
-           MODE_NOCOLOUR | MODE_MODERATENOREG | MODE_SSLONLY |
+           MODE_NOCOLOR | MODE_NOCTCP | MODE_NONOTICE | MODE_NOQUITPARTS |
+           MODE_MODERATENOREG | MODE_SSLONLY |
            MODE_DELJOINS | MODE_WASDELJOINS | MODE_REGISTERED);
 
   if (!(mode & ~(MODE_ADD | MODE_DEL))) /* don't add empty modes... */
@@ -2392,9 +2392,9 @@ modebuf_extract(struct ModeBuf *mbuf, char *buf)
 /*  MODE_OWNER,		'q', */
 #endif
     MODE_DELJOINS,      'D',
-    MODE_NOQUITPARTS,   'u',
-    MODE_NOCOLOUR,      'c',
+    MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
+    MODE_NOQUITPARTS,   'u',
     MODE_NONOTICE,      'N',
     MODE_MODERATENOREG, 'M',
     MODE_SSLONLY,       'z',
@@ -3326,6 +3326,7 @@ mode_parse_client(struct ParseState *state, int *flag_p)
                    t_str, state->chptr->chname,
                    OpLevel(state->member), req_oplevel, "op",
                    OpLevel(state->member) == req_oplevel ? "the same" : "a higher");
+        return;
       } else if (req_oplevel <= MAXOPLEVEL)
         oplevel = req_oplevel;
     }
@@ -3589,9 +3590,9 @@ mode_parse(struct ModeBuf *mbuf, struct Client *cptr, struct Client *sptr,
     MODE_REGONLY,       'R',
 #endif
     MODE_DELJOINS,      'D',
-    MODE_NOQUITPARTS,   'u',
-    MODE_NOCOLOUR,      'c',
+    MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
+    MODE_NOQUITPARTS,   'u',
     MODE_NONOTICE,      'N',
     MODE_MODERATENOREG, 'M',
     MODE_SSLONLY,       'z',

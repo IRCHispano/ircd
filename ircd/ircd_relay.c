@@ -134,6 +134,7 @@ void relay_channel_message(struct Client* sptr, const char* name, const char* te
 {
   struct Channel* chptr;
   const char *ch;
+
   assert(0 != sptr);
   assert(0 != name);
   assert(0 != text);
@@ -153,20 +154,23 @@ void relay_channel_message(struct Client* sptr, const char* name, const char* te
       check_target_limit(sptr, chptr, chptr->chname, 0))
     return;
 
-#if 0
-  if (chptr->mode.mode & MODE_NOCOLOUR)
-    for (ch = text; *ch; ch++)
-      if (*ch == 2 || *ch == 3 || *ch == 22 || *ch == 27 || *ch == 31) {
+  if (chptr->mode.mode & MODE_NOCOLOR) {
+    for (ch = text; *ch != '\0'; ++ch) {
+      if (*ch == 3 || *ch == 27) {
+      //if (*ch == 2 || *ch == 3 || *ch == 22 || *ch == 27 || *ch == 31) {
         send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
         return;
       }
-#endif
+    }
+  }
 
-  if ((chptr->mode.mode & MODE_NOCTCP)
-       && (*text == 1) && ircd_strncmp(text, "\001ACTION ", 8)
-       && !IsChannelService(sptr)) {
-    send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
-    return;
+  if ((chptr->mode.mode & MODE_NOCTCP) && ircd_strncmp(text, "\001ACTION ", 8)) {
+    for (ch = text; *ch != '\0'; ++ch) {
+      if (*ch == 1) {
+        send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
+        return;
+      }
+    }
   }
 
 #if defined(DDB) || defined(SERVICES)
@@ -175,7 +179,7 @@ void relay_channel_message(struct Client* sptr, const char* name, const char* te
 #endif
 
   RevealDelayedJoinIfNeeded(sptr, chptr);
-  if (chptr->mode.mode & MODE_NOCOLOUR) {
+  if (chptr->mode.mode & MODE_NOCOLOR) {
     char buffer_nocolor[1024];
 
     /* Calcula el color solo una vez */
@@ -201,6 +205,7 @@ void relay_channel_notice(struct Client* sptr, const char* name, const char* tex
 {
   struct Channel* chptr;
   const char *ch;
+
   assert(0 != sptr);
   assert(0 != name);
   assert(0 != text);
@@ -226,20 +231,23 @@ void relay_channel_notice(struct Client* sptr, const char* name, const char* tex
     return;
   }
 
-#if 0
-  if (chptr->mode.mode & MODE_NOCOLOUR)
-    for (ch = text; *ch; ch++)
-      if (*ch == 2 || *ch == 3 || *ch == 22 || *ch == 27 || *ch == 31) {
+  if (chptr->mode.mode & MODE_NOCOLOR) {
+    for (ch = text; *ch != '\0'; ++ch) {
+      if (*ch == 3 || *ch == 27) {
+      //if (*ch == 2 || *ch == 3 || *ch == 22 || *ch == 27 || *ch == 31) {
         send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
         return;
       }
-#endif
+    }
+  }
 
-  if ((chptr->mode.mode & MODE_NOCTCP)
-       && (*text == 1) && ircd_strncmp(text, "\001ACTION ", 8)
-       && !IsChannelService(sptr)) {
-    send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
-    return;
+  if ((chptr->mode.mode & MODE_NOCTCP) && ircd_strncmp(text, "\001ACTION ", 8)) {
+    for (ch = text; *ch != '\0'; ++ch) {
+      if (*ch == 1) {
+        send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
+        return;
+      }
+    }
   }
 
 #if defined(DDB) || defined(SERVICES)
@@ -248,7 +256,7 @@ void relay_channel_notice(struct Client* sptr, const char* name, const char* tex
 #endif
 
   RevealDelayedJoinIfNeeded(sptr, chptr);
-  if (chptr->mode.mode & MODE_NOCOLOUR) {
+  if (chptr->mode.mode & MODE_NOCOLOR) {
     char buffer_nocolor[1024];
 
     /* Calcula el color solo una vez */

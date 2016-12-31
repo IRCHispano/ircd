@@ -147,15 +147,15 @@ am__ircd_SOURCES_DIST = IPcheck.c channel.c class.c client.c crule.c \
 	m_squit.c m_stats.c m_time.c m_topic.c m_trace.c m_uping.c \
 	m_user.c m_users.c m_userhost.c m_userip.c m_version.c \
 	m_wallchops.c m_wallops.c m_wallusers.c m_wallvoices.c \
-	m_watch.c m_who.c m_whois.c m_whowas.c m_xquery.c m_xreply.c \
-	match.c memdebug.c motd.c msgq.c numnicks.c opercmds.c \
-	os_generic.c packet.c parse.c querycmds.c random.c s_auth.c \
-	s_bsd.c s_conf.c s_debug.c s_err.c s_misc.c s_numeric.c \
-	s_serv.c s_stats.c s_user.c send.c uping.c userload.c watch.c \
-	whowas.c m_account.c ddb.c ddb_events.c m_bmode.c m_db.c \
-	m_dbq.c m_ghost.c m_svsnick.c m_svsmode.c m_svsjoin.c \
-	m_svskick.c m_svspart.c persistent_malloc.c engine_poll.c \
-	engine_select.c engine_devpoll.c engine_epoll.c \
+	m_watch.c m_webirc.c m_who.c m_whois.c m_whowas.c m_xquery.c \
+	m_xreply.c match.c memdebug.c motd.c msgq.c numnicks.c \
+	opercmds.c os_generic.c packet.c parse.c querycmds.c random.c \
+	s_auth.c s_bsd.c s_conf.c s_debug.c s_err.c s_misc.c \
+	s_numeric.c s_serv.c s_stats.c s_user.c send.c uping.c \
+	userload.c watch.c whowas.c m_account.c ddb.c ddb_events.c \
+	m_bmode.c m_db.c m_dbq.c m_ghost.c m_svsnick.c m_svsmode.c \
+	m_svsjoin.c m_svskick.c m_svspart.c persistent_malloc.c \
+	engine_poll.c engine_select.c engine_devpoll.c engine_epoll.c \
 	engine_kqueue.c
 @ENVIRONMENT_UNDERNET_TRUE@am__objects_1 = m_account.$(OBJEXT)
 @ENVIRONMENT_DDB_TRUE@am__objects_2 = ddb.$(OBJEXT) \
@@ -212,19 +212,20 @@ am_ircd_OBJECTS = IPcheck.$(OBJEXT) channel.$(OBJEXT) class.$(OBJEXT) \
 	m_users.$(OBJEXT) m_userhost.$(OBJEXT) m_userip.$(OBJEXT) \
 	m_version.$(OBJEXT) m_wallchops.$(OBJEXT) m_wallops.$(OBJEXT) \
 	m_wallusers.$(OBJEXT) m_wallvoices.$(OBJEXT) m_watch.$(OBJEXT) \
-	m_who.$(OBJEXT) m_whois.$(OBJEXT) m_whowas.$(OBJEXT) \
-	m_xquery.$(OBJEXT) m_xreply.$(OBJEXT) match.$(OBJEXT) \
-	memdebug.$(OBJEXT) motd.$(OBJEXT) msgq.$(OBJEXT) \
-	numnicks.$(OBJEXT) opercmds.$(OBJEXT) os_generic.$(OBJEXT) \
-	packet.$(OBJEXT) parse.$(OBJEXT) querycmds.$(OBJEXT) \
-	random.$(OBJEXT) s_auth.$(OBJEXT) s_bsd.$(OBJEXT) \
-	s_conf.$(OBJEXT) s_debug.$(OBJEXT) s_err.$(OBJEXT) \
-	s_misc.$(OBJEXT) s_numeric.$(OBJEXT) s_serv.$(OBJEXT) \
-	s_stats.$(OBJEXT) s_user.$(OBJEXT) send.$(OBJEXT) \
-	uping.$(OBJEXT) userload.$(OBJEXT) watch.$(OBJEXT) \
-	whowas.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
-	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
-	$(am__objects_6) $(am__objects_7) $(am__objects_8)
+	m_webirc.$(OBJEXT) m_who.$(OBJEXT) m_whois.$(OBJEXT) \
+	m_whowas.$(OBJEXT) m_xquery.$(OBJEXT) m_xreply.$(OBJEXT) \
+	match.$(OBJEXT) memdebug.$(OBJEXT) motd.$(OBJEXT) \
+	msgq.$(OBJEXT) numnicks.$(OBJEXT) opercmds.$(OBJEXT) \
+	os_generic.$(OBJEXT) packet.$(OBJEXT) parse.$(OBJEXT) \
+	querycmds.$(OBJEXT) random.$(OBJEXT) s_auth.$(OBJEXT) \
+	s_bsd.$(OBJEXT) s_conf.$(OBJEXT) s_debug.$(OBJEXT) \
+	s_err.$(OBJEXT) s_misc.$(OBJEXT) s_numeric.$(OBJEXT) \
+	s_serv.$(OBJEXT) s_stats.$(OBJEXT) s_user.$(OBJEXT) \
+	send.$(OBJEXT) uping.$(OBJEXT) userload.$(OBJEXT) \
+	watch.$(OBJEXT) whowas.$(OBJEXT) $(am__objects_1) \
+	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
+	$(am__objects_5) $(am__objects_6) $(am__objects_7) \
+	$(am__objects_8)
 nodist_ircd_OBJECTS = version.$(OBJEXT)
 ircd_OBJECTS = $(am_ircd_OBJECTS) $(nodist_ircd_OBJECTS)
 am__DEPENDENCIES_1 =
@@ -449,14 +450,14 @@ ircd_SOURCES = IPcheck.c channel.c class.c client.c crule.c dbuf.c \
 	m_squit.c m_stats.c m_time.c m_topic.c m_trace.c m_uping.c \
 	m_user.c m_users.c m_userhost.c m_userip.c m_version.c \
 	m_wallchops.c m_wallops.c m_wallusers.c m_wallvoices.c \
-	m_watch.c m_who.c m_whois.c m_whowas.c m_xquery.c m_xreply.c \
-	match.c memdebug.c motd.c msgq.c numnicks.c opercmds.c \
-	os_generic.c packet.c parse.c querycmds.c random.c s_auth.c \
-	s_bsd.c s_conf.c s_debug.c s_err.c s_misc.c s_numeric.c \
-	s_serv.c s_stats.c s_user.c send.c uping.c userload.c watch.c \
-	whowas.c $(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8)
+	m_watch.c m_webirc.c m_who.c m_whois.c m_whowas.c m_xquery.c \
+	m_xreply.c match.c memdebug.c motd.c msgq.c numnicks.c \
+	opercmds.c os_generic.c packet.c parse.c querycmds.c random.c \
+	s_auth.c s_bsd.c s_conf.c s_debug.c s_err.c s_misc.c \
+	s_numeric.c s_serv.c s_stats.c s_user.c send.c uping.c \
+	userload.c watch.c whowas.c $(am__append_1) $(am__append_2) \
+	$(am__append_3) $(am__append_4) $(am__append_5) \
+	$(am__append_6) $(am__append_7) $(am__append_8)
 ircd_LDADD = $(LEXLIB)
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -689,6 +690,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_wallusers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_wallvoices.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_watch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_webirc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_who.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_whois.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_whowas.Po@am__quote@

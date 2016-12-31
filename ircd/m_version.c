@@ -77,6 +77,7 @@ int m_version(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
  * @param[in] parc Number of arguments.
  * @param[in] parv Argument vector.
  */
+/* TODO-ZOLTAN: Reducir a uno solo (Undernet) */
 int mo_version(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
   struct Client *acptr;
@@ -98,7 +99,8 @@ int mo_version(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   {
     send_reply(sptr, RPL_VERSION, version, debugmode, cli_name(&me),
 	       debug_serveropts());
-    send_supported(sptr);
+    if (MyUser(sptr))
+      send_supported(sptr);
   }
 
   return 0;

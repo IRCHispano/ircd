@@ -59,6 +59,8 @@ enum ListenerFlag {
   LISTEN_IPV4,
   /** Port listens for IPv6 connections. */
   LISTEN_IPV6,
+  /** Port accepts only webirc connections. */
+  LISTEN_WEBIRC,
 #if defined(USE_SSL)
   /** Port listens for SSL connections. */
   LISTEN_SSL,
@@ -88,9 +90,11 @@ struct Listener {
 #define listener_server(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_SERVER)
 #define listener_active(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_ACTIVE)
 #define listener_exempt(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_EXEMPT)
+#define listener_webirc(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_WEBIRC)
 #if defined(USE_SSL)
 #define listener_ssl(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_SSL)
 #endif
+
 
 extern void        add_listener(int port, const char* vaddr_ip,
                                 const char* mask,

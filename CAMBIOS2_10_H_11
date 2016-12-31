@@ -1,3 +1,9 @@
+* 2016/12/31 zoltan@irc-dev.net      (u2.10.H.11.alpha10=            SYNC
+  -----------------------------------------------------------------------
+  Sincronizacion Undernet en la rama u2_10_12_branch.
+
+  Entre otras cosas se incluye WEBIRC y IPCheck por /48.
+
 * 2015/02/01 zoltan@irc-dev.net      (u2.10.H.11.alpha09)          UPDATE
   -----------------------------------------------------------------------
   Se ha decidido usar librerias del sistema para ZLIB y PCRE.

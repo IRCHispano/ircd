@@ -374,7 +374,9 @@ static int completed_connection(struct Client* cptr)
    * get the socket status from the fd first to check if
    * connection actually succeeded
    */
-  if ((cli_error(cptr) = os_get_sockerr(cli_fd(cptr)))) {
+  if (cli_fd(cptr) >= 0)
+      cli_error(cptr) = os_get_sockerr(cli_fd(cptr));
+  if (cli_error(cptr) != 0) {
     const char* msg = strerror(cli_error(cptr));
     if (!msg)
       msg = "Unknown error";
@@ -606,6 +608,10 @@ void add_connection(struct Listener* listener, int fd) {
   if (listener_server(listener))
   {
     new_client = make_client(0, STAT_UNKNOWN_SERVER);
+  }
+  else if (listener_webirc(listener))
+  {
+      new_client = make_client(0, STAT_WEBIRC);
   }
   else
   {
