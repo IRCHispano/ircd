@@ -1738,37 +1738,35 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 
   /*
-   * Recorre la tabla 'w' buscando la clave "proxy". En esta clave
+   * Buscamos el registro con clave "proxy". Dicha clave
    * busca una lista de direcciones IP separadas por coma que seran
    * las autorizadas a conectar utilizando el protocolo PROXY
    */
-  for (reg = db_iterador_init(BDD_WEBIRCDB); reg; reg = db_iterador_next())
+  reg = db_buscar_registro(BDD_WEBIRCDB, "proxy");
+  if (reg)
   {
-    if (strcmp(reg->clave, "proxy") == 0)
+    char *current, *ipaddress = NULL;
+    char *reg_valor = NULL;
+
+    /*
+     * Copio reg->valor en reg_valor para evitar la corrupcion
+     * de memoria que ocurre al iterar en reg->valor si este posee
+     * el caracter ','. Copiado de channel.c
+     */
+    DupString(reg_valor, reg->valor);
+
+    for (current = strtoken(&ipaddress, reg_valor, ",");
+         current;
+         current = strtoken(&ipaddress, NULL, ","))
     {
-      char *current, *ipaddress = NULL;
-      char *reg_valor = NULL;
-
-      /*
-       * Copio reg->valor en reg_valor para evitar la corrupcion
-       * de memoria que ocurre al iterar en reg->valor si este posee
-       * el caracter ','. Copiado de channel.c
-       */
-      DupString(reg_valor, reg->valor);
-
-      for (current = strtoken(&ipaddress, reg_valor, ",");
-           current;
-           current = strtoken(&ipaddress, NULL, ","))
-      {
-          if (strcmp(sptr->sockhost, current) == 0)
-          {
-            access_allowed = 1;
-            break;
-          }
-      }
-
-      RunFree(reg_valor);
+        if (strcmp(sptr->sockhost, current) == 0)
+        {
+          access_allowed = 1;
+          break;
+        }
     }
+
+    RunFree(reg_valor);
   }
 
   if (access_allowed == 0)
@@ -1787,15 +1785,12 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sptr->ip.in6_16[5] = htons(65535);
     sptr->ip.in6_16[6] = htons(ntohl(inaddr.s_addr) >> 16);
     sptr->ip.in6_16[7] = htons(ntohl(inaddr.s_addr) & 65535);
-
-    sptr->hostp = gethostbyaddr(&inaddr, sizeof inaddr, AF_INET);
   }
   else if (strcmp(parv[1], "TCP6") == 0) {
 #if defined(IPV6)
     struct sockaddr_in6 inaddr6;
     inet_pton(AF_INET6, parv[2], &(inaddr6.sin6_addr));
     memcpy(&(sptr->ip), &(inaddr6.sin6_addr), sizeof(struct irc_in_addr));
-    sptr->hostp = gethostbyaddr(&inaddr6, sizeof inaddr6, AF_INET6);
 #else
     return exit_client(sptr, sptr, &me, "PROXY TCP6 protocol is not supported");
 #endif
@@ -1808,6 +1803,8 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   SlabStringAllocDup(&(sptr->sockhost), parv[2], HOSTLEN);
   SetProxy(sptr);
+
+  return 0;
 }
 
 
