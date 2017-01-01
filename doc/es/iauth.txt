@@ -169,23 +169,25 @@ Comentarios: Indica la información de contraseña del cliente. Esto puede ser
   habilitado mediante la solicitud de la política A.
 
 U - Username del Cliente
-Sintaxis: <id> U <username> <hostname> <servername> :<userinfo ...>
-Ejemplo: 5 U buddha bodhisattva.example.com irc.undernet.org :Gautama Siddhartha
+Sintaxis: <id> U <username> :<userinfo ...>
+Ejemplo: 5 U buddha :Gautama Siddhartha
 Estados: REGISTER(1+)
 Siguiente Estado: -
 Comentarios: Indica el nombre de usuario reclamado por el cliente y la
-  información de "GECOS", junto con el hostname del cliente y el servidor.
-  Esta información no es confiable. Este mensaje se activa mediante la 
-  solicitud de la política A.
+  información de "GECOS". Esta informaciñon no ha sido verificada en Ident o
+  DNS. Este mensaje se activa mediante la solicitud de la política A.
 Compatibilidad: El ircd solo envía el parametro <username>.
 
 u - Username del Cliente
 Sintaxis: <id> u <username>
+Sintaxis: <id> u
 Ejemplo: 5 u notbuddha
 Estados: REGISTER(1)
 Siguiente Estado: -
 Comentarios: Indica un nombre de usuario más fiable para el cliente.
 Compatibilidad: Este es una extensión de Undernet y el ircd no envía esto.
+  La instancia iauth habilita esto para solicitar la política A.
+  Si la búsqueda ident falla para el usuario, no se pasa el username.
 
 n - Nick del Cliente
 Sintaxis: <id> n <nick>

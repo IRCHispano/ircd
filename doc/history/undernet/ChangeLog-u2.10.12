@@ -1,3 +1,2619 @@
+2012-10-15  Michael Poole <mdpoole@troilus.org>
+
+    * include/IPcheck.h (IPcheck_connect_fail): Add new 'disconnect'
+    parameter.  This treats the failure as a disconnection from the
+    client's current IP address.
+
+    * ircd/IPcheck.c (ip_registry_connect_fail): Likewise.
+    (IPcheck_connect_fail): Pass it through.
+
+    * ircd/m_nick.c (m_nick): Pass zero for the new parameter.
+    (ms_nick): Likewise.
+
+    * ircd/s_auth.c (preregister_user): Likewise.
+    (iauth_cmd_ip_address): Pass one for the new parameter.
+
+2012-06-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_string.c (ipmask_parse): Return zero if there is junk
+    after eight valid IPv6 address elements.
+
+2012-06-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_stats.c (stats_configured_links): Correctly distinguish
+    local Operator blocks from global Operator blocks.
+
+2012-05-31  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_gline.c (ms_gline): If the mask was empty after removing
+    the command character(s), reject the command.
+    (mo_gline): Likewise.
+
+2012-05-31  Michael Poole <mdpoole@troilus.org>
+
+    * include/channel.h (infochanmodes): Add +d channel mode.
+
+    * include/client.h (infousermodes): Add +O user mode.
+
+2012-05-31  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/gline.c (gline_add): Add length checks for badchan and
+    realname G-lines, comparable to the existing check for traditional
+    G-lines.
+
+    * ircd/s_err.c (ERR_LONGMASK): Remove extra space in format string.
+
+2012-05-31  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_server.c (check_loop_and_lh): Mention the mechanism used
+    to control HUB.
+
+2012-05-09  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_user.c (set_user_mode): When a user deopers, revoke their
+    oper privileges in addition to their oper user mode.
+
+2012-05-09  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_who.c (m_who): Only set WHOSELECT_EXTRA for current
+    opers.  Because privileges are kept after -o, this would let
+    de-opered clients use WHOX.
+
+2012-05-07  Michael Poole <mdpoole@troilus.org>
+
+    * include/client.h (cli_account): New helper macro to return the
+    client's account name, or "0" for unstamped clients.
+
+    * ircd/s_misc.c (exit_client): Use that when logging the client's
+    exit.
+
+2012-05-07  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/gline.c (count_users): Use the client's real host, rather
+    than their masked host, for +x users.
+
+2012-04-29  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/crule.c (crule_connected): Fix logic for ignoring
+    non-server Client structures.
+    (crule_via): Likewise.
+
+2012-04-29  Michael Poole <mdpoole@troilus.org>
+
+    * */.cvsignore: Rename to .gitignore.
+
+    * ircd/.cvsignore: Likewise, and add *.o because git does not
+    ignore any patterns by default.
+
+2012-01-23  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_res.c (proc_answer): Delete unread variable
+    query_class.
+
+    * ircd/m_nick.c (m_nick): Delete unread variable client_name.
+
+    * ircd/m_ping.c (m_ping): Delete unread variable origin.
+
+    * ircd/m_whois.c (do_whois): Delete unread variable name.
+
+    * ircd/parse.c (parse_client): Delete unread variable noprefix.
+
+    * ircd/s_conf.c (killcomment): Delete unread variable tm.
+
+    * ircd/s_stats.c (stats_configured_links): Delete unread variable
+    pass.
+
+2012-01-23  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/gline.c (gline_modify): Notify opers using SNO_AUTO rather
+    than SNO_GLINE if a G-line had, and still has, an AUTO prefix.
+
+2012-01-19  Michael Poole <mdpoole@troilus.org>
+
+    * doc/readme.iauth: Document the new 'd' IAuth command.
+
+    * ircd/s_auth.c (AuthRequestFlag): Add "soft done" flag.
+    (auth_ping_timeout): Do not impose Authorization Timeout on
+    clients with the "soft done" flag set.
+    (iauth_cmd_soft_done): New IAuth command handler.
+    (iauth_parse): Call it.
+
+2012-01-19  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (start_auth): Call start_dns_query() and
+    start_auth_query() after start_iauth_query() rather than
+    before.
+
+2011-08-17  Kevin L. Mitchell <klmitch@mit.edu>
+
+    * include/client.h: Fix minor issue in IsLocOp() test
+
+    * include/patchlevel.h (PATCHLEVEL): bump patchlevel to 14
+
+2011-05-15  Michael Poole  <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (iauth_cmd_done_account): Do not copy the
+    account's creation timestamp into the account name.
+
+2010-07-05  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * include/patchlevel.h (PATCHLEVEL): bump patchlevel from -rc2 to
+    actual 13
+
+    * ircd/ircd_features.c: bump MAXBANS from 45 to 50, and MAXSILES
+    from 15 to 25
+
+2010-03-28  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/gline.c: Replace CurrentTime with TStime(), and remove the
+    uses of TSoffset, so that all G-line-related times are assumed to
+    be in network time.
+
+    * ircd/m_gline.c: Likewise.
+
+2010-03-08  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_server.c (enum lh_type): New type.
+    (check_loop_and_lh): Use the enum instead of magic integers.
+    Make the error message a little clearer when neither "hub" nor
+    "maxhops" is specified for a server.  Clean up the control flow
+    when we decide to reject the link.
+
+2010-03-08  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/test/ircd_match_t.c (_SC_PAGE_SIZE): Default to
+    _SC_PAGESIZE if that is defined (as it is on some Unixes).
+
+2010-03-04  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/s_bsd.c: use feature_int() to get the integer value of the
+    feature...and don't try to set the TOS to its index!
+
+2010-02-02  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump to (u2.10.12.)13-rc2.
+
+2010-01-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_burst.c (ms_burst): Do not clear keys or limit here --
+    MODE_PARSE_WIPEOUT gets modebuf_flush() to do that for us.
+
+2010-01-06  Michael Poole <mdpoole@troilus.org>
+
+    * Makefile.in: Remove doc/Makefile from the build.
+
+    * configure.in: Do not generate doc/Makefile.
+
+    * configure: Regenerate.
+
+    * doc/Makefile.in: Delete.
+
+    * doc/irc.1: Delete.
+
+    * doc/ircd.8: Delete.
+
+    * libs: Delete.
+
+2010-01-06  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_topic.c (ms_topic): When no topic timestamp is passed,
+    use the current time instead of the channel creation time.
+
+2010-01-06  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_silence.c (m_silence): Only show the silence list for the
+    requesting client and for channel services, to help keep other
+    clients' servers hidden.
+
+2010-01-06  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/gline.c (gline_add): If a forced G-line has already
+    expired, create it in a deactivated state.
+
+2010-01-06  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_burst.c (ms_burst): Gracefully handle the case where a
+    server sends us a too-large oplevel.  Forward oplevels whenever
+    they are in use, not just when the channel is +A.
+
+2010-01-04  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/m_xquery.c (ms_xquery): Resolving my patches with
+    Entrope's--log extension queries sent to us
+
+    * ircd/m_xreply.c (ms_xreply): Resolving my patches with
+    Entrope's--swap order of findNUser() and FindNServer()
+
+    * ircd/Makefile.in (IRCD_SRC): Resolving my patches with
+    Entrope's--swap order of m_xquery.c and m_xreply.c to maintain
+    alphabetic ordering
+
+2010-01-03  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/m_xreply.c (ms_xreply): swap order of numeric resolution so
+    we can deal with XR directed to users
+
+    * configure: auto-rebuilt with Autoconf 2.63 (was 2.59)
+
+    * ircd/m_xquery.c: need ircd_reply.h; fix a couple of
+    capitalization errors; log XQUERY directed to "me"
+
+    * ircd/m_xreply.c: need ircd_reply.h and numnicks.h (how'd I miss
+    the latter??); fix a couple of capitalization errors
+
+    * ircd/Makefile.in (IRCD_SRC): it'd be nice if we actually tried
+    to compile the two new commands...
+
+    * ircd/s_auth.c: "serv" is passed to find_match_server(), which
+    does a collapse on the pattern, so it can't be const
+
+2010-01-03  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/engine_devpoll.c: Make some variables that were local to
+    engine_loop() file-scoped so engine_delete() can see them.
+    (engine_delete): Discard unprocessed events for the deleted
+    socket.
+    (engine_loop): Update to use the new variable names.  Change a
+    frequent debug statement to DEBUG_ENGINE.  Fix the type of the
+    codesize variable.
+
+    * ircd/engine_epoll.c: Same as ircd/engine_devpoll.c, but the
+    debug statement and codesize variable were already fixed.
+
+    * ircd/engine_kqueue.c: Same as ircd/engine_devpoll.c, but also
+    fix a typo in an engine_signal() assertion, and get rid of dead
+    variables in engine_delete().
+
+2010-01-03  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_bsd.c (client_sock_callback): Invalidate cli_fd() when we
+    receive an EBADF error.
+
+2010-01-03  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/engine_select.c (engine_loop): Remove a bogus assert() that
+    the structure's FD is correct after the event-handling callback
+    returns.  Also fix a warning about the type of the last parameter
+    passed to getsockopt().
+
+2010-01-03  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_names.c (m_names): Terminate the buffer used for listing
+    clients who are not in any channel.
+
+2010-01-03  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (find_delayed_joins): Move earlier in the file.
+    (modebuf_flush_int): Move the checks for changing between +D and
+    +d to here...
+    (modebuf_flush): ... from here.
+
+2010-01-03  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_server.c (check_loop_and_lh): Never return 1 when we kill
+    another server.  Update the squit message text for maxhops and hub
+    violations.
+
+2010-01-03  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/Makefile.in (IRCD_SRC): Add m_xquery.c and m_xreply.c to
+    the build.
+
+    * ircd/m_xquery.c: Add missing include.
+    (mo_xquery): Fix spelling of struct Client.
+    (ms_xquery): Likewise.
+
+    * ircd/m_xreply.c: Add missing includes.
+    (ms_xreply): Fix spelling of struct Client and findNUser().
+
+2010-01-01  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * doc/readme.xquery: documentation for design and use of the
+    extension query mechanism
+
+    * doc/readme.iauth: document X iauth message and X and x server
+    messages
+
+    * include/msg.h: declare XQUERY/XQ and XREPLY/XR commands/tokens
+
+    * include/handlers.h: declare mo_xquery(), ms_xquery(), and
+    ms_xreply() message handlers
+
+    * include/s_auth.h: declare auth_send_xreply() to forward replies
+    to extension queries to the iauth instance
+
+    * ircd/m_xquery.c: process extension queries
+
+    * ircd/m_xreply.c: process replies to extension queries
+
+    * ircd/parse.c: add XQUERY and XREPLY commands to the list
+
+    * ircd/s_auth.c: add support for extension queries to iauth
+    protocol
+
+2010-01-01  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (iauth_do_spawn): Add debug output to diagnose
+    which system call might be failing.
+    (auth_spawn): Avoid reading past the end of iauth->i_argv[].  When
+    discarding an existing IAuth instance, use auth_close_unused() to
+    close the sockets and avoid leaking memory.
+
+2010-01-01  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (mode_process_bans): Bypass total ban count and
+    length checks for OPMODEs.
+
+2010-01-01  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_features.c (feature_report): If sd->sd_funcdata is
+    non-zero, report even unchanged features (using prefix 'f').
+
+    * ircd/s_stats.c (statsinfo): Make "/stats f" case-sensitive, and
+    use the upper case variant to report all features.
+
+2009-07-30  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_user.c (register_user): Move the default-usermodes call
+    to set_user_mode() to before SetUser(), so that the former does
+    not increment the UserStats fields.  Add back the explicit
+    adjustments to UserStats for invisible and opered clients.
+
+2009-07-05  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_user.c (register_user): Use correct parc for
+    set_user_mode().  Do not increment UserStats fields here, because
+    set_user_mode() handles that.
+
+2009-07-05  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_gline.c (ms_gline): Fix the sense of the test for
+    strtoul() when parsing G-line lifetimes -- zero indicates failure.
+
+2009-07-05  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (mode_parse_client): Ignore anything after a
+    colon when the mode is CHFL_VOICE or the mode is being removed.
+
+2009-07-04  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (find_conf_client): New function.
+    (preregister_user): Use it to avoid assigning a second conf class
+    on client connection.
+    (auth_ping_timeout): Send the "T" message only if we do not kill
+    the client (and thus send a "D" message).
+    (auth_find_classs_conf): Do not allow IAuth to select a disabled
+    class.  Unlink new conf items from GlobalConfList.
+    (iauth_cmd_done_client): Handle failures from attach_conf().
+    (iauth_parse): Behave decently when a client is killed by the
+    message handler.
+
+    * tools/iauth-test (%handlers): Add entries to help test this.
+
+2009-07-04  Michael Poole <mdpoole@troilus.org>
+
+    * include/channel.h (RevealDelayedJoinIfNeeded): Declare.
+
+    * ircd/channel.c (RevealDelayedJoinIfNeeded): Implement.
+
+    * ircd/ircd_relay.c (relay_channel_message): Only reveal the user
+    if he passes the check_target_limit() test.
+    (relay_channel_notice): Likewise.
+
+    * ircd/m_wallchops.c (m_wallchops): Likewise.
+
+    * ircd/m_wallvoices.c (m_wallvoices): Likewise.
+
+    * ircd/s_user.c (check_target_limit): Micro-optimize to only check
+    the user's channel list for invites if we are about to deny it.
+
+2009-03-25  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd.c (main): Unconditionally set +6 flag on self.
+
+2009-03-25  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (iauth_cmd_hostname): Properly assign the spoofed
+    hostname (yea, even as the "real" host) in the hurry state.
+
+    * tools/iauth-test: Add reminder about perl's RTMIN signal and a
+    new handler to exercise the N command in the hurry state.
+
+2009-03-25  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (mode_parse): Add Doxygen comment.  When bouncing
+    a mode from a desynced U-lined server, do not set the modes or
+    send the change as a HACK(4) message.
+
+2009-03-17  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/send.c (sendcmdto_match_butone): Move match_it() to the end
+    of the if() to minimize the number of expensive function calls.
+
+2009-03-17  Michael Poole <mdpoole@troilus.org>
+
+    * patches/diffs/antispambot.diff: Forward port a patch by Dianora
+    to add rudimentary spam bot detection to ircu.
+
+2009-02-08  Michael Poole <mdpoole@troilus.org>
+
+    * include/client.h (ClearHub): New macro.
+
+    * ircd/ircd.c (main): Set IPv6 flag on &me if appropriate.
+
+    * ircd/ircd_features.c (feature_notify_hub): New function.
+    (features[]): Register it for FEAT_HUB.
+
+    * ircd/ircd_parser.y (connectblock): Do not default maxlinks to
+    65535 unless "hub" is specified.
+    (clientblock): Reset maxlinks on cleanup.
+
+2009-02-08  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (clean_channelname): Delete this function; it is
+    no longer used, and had the same length-off-by-one bug.
+
+    * ircd/m_join.c (m_join): Use > instead of >= with CHANNELLEN.
+
+    * tests/ircd.conf: Set CHANNELLEN to make it easier to test this.
+
+    * tests/bug-2328334.cmd: New file for regression testing.
+
+2009-02-08  Michael Poole <mdpoole@troilus.org>
+
+    * include/numeric.h (ERR_INVALIDKEY): Define new numeric.
+
+    * ircd/s_err.c (ERR_INVALIDKEY): Give it a text string.
+
+    * ircd/channel.c (is_clean_key): Rename from clean_key(), and make
+    this function responsible for sending error messages to the client
+    when necessary.
+    (mode_parse_key): Update to match the new is_clean_key() behavior.
+    (mode_parse_upass): Likewise.
+    (mode_parse_apass): Likewise.
+
+    * tests/channel-keys.cmd: New file for regression testing.
+
+2009-02-08  Michael Poole <mdpoole@troilus.org>
+
+    * include/gline.h (gline_forward_deactivation): Undeclare.
+
+    * ircd/m_gline.c (mo_gline): Remove the special case to call
+    gline_forward_deactivation().
+
+    * ircd/gline.c (gline_add): Mention if the new G-line is already
+    deactivated.
+    (gline_forward_deactivation): Delete implementation.
+
+    * tests/glines.cmd: Update the expected output to match.
+
+2009-01-12  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_topic.c (do_settopic): Just before sending the topic out,
+    check to see if the user is join-delayed and should be shown.
+
+    * ircd/m_wallchops.c (m_wallchops): Allow this command to expose
+    join-delayed users.
+    (ms_wallchops): Likewise.
+
+    * ircd/m_wallvoices.c (m_wallvoices): Allow this command to expose
+    join-delayed users.
+    (ms_wallvoices): Likewise.
+
+2009-01-12  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (modebuf_mode_uint): Fix bouncing of limit changes.
+
+2009-01-12  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/gline.c (count_users): Accept "flags" mask to limit count
+    to local users.
+    (gline_add): Pass the flags to count_users().
+
+2009-01-12  Michael Poole <mdpoole@troilus.org>
+
+    * include/gline.h (gline_forward_deactivation): Declare.
+
+    * ircd/gline.c (count_users): Use ipmask-based checks too.
+    (gline_add): Require flags to have exactly one of the GLINE_GLOBAL
+    and GLINE_LOCAL bits set.
+    (gline_forward_deactivation): Implement new function.
+    (gline_find): Only require the GLINE_LOCAL flag to be set in the
+    gline structure; infer GLINE_GLOBAL when it is cleared.  (This
+    matches the value and usage of GLINE_MASK.)
+
+    * ircd/m_gline.c (ms_gline): Default lastmod to the known lastmod
+    time for GLINE_LOCAL_{DE,}ACTIVATE.
+    (mo_gline): Check that expiration times parse as expected.  Reject
+    "*" as a target for GLINE_LOCAL_{DE,}ACTIVATE.  Require reason and
+    expiration time for new G-lines.  Allow deactivation of an unknown
+    G-line without creating it ("so-and-so ... creating new G-line" is
+    a confusing message for a deactivation).
+
+    * tests/glines.cmd: New test script for G-line parsing tests.
+
+    * tests/ircd.conf: Enable CONFIG_OPERCMDS for glines.cmd.
+
+    * tests/ircd-2.conf: Likewise.
+
+    * tests/readme.txt: Add section on command syntax.
+
+    * tests/test-driver.pl: Report line numbers more clearly.
+    Fix (somewhat kludgily) the brokenness of consecutive "expect"
+    lines, as demonstrated by the numeric 219 and 281 expects in
+    glines.cmd.
+
+2008-11-17  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_kick.c (ms_kick): Properly handle crossing net rider and
+    normal KICKs (in the case where we get the normal kick first).
+
+2008-11-17  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/match.c (match): Fix an error in backtracking (apparently
+    exacerbated by escapes).
+
+    * ircd/test/ircd_match_t.c: Update headers and make sure we have a
+    mmap() anonymous request flag.
+    (test_match): New function.
+    (do_match_test): Use it instead of calling match() directly.
+
+2008-09-07  Perry Lorier <isomer@undernet.org>
+    
+    * ircd/m_kill.c: Remove the . from the end of the nickname in kill
+    messages to make cut and pasting easier.
+
+2008-03-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_string.c (ircd_aton_ip4): Reject strings with more
+    than 3 dots in them.
+
+    * ircd/test/ircd_in_addr_t.c (test_addrs): Update the expected
+    parsing for a bare IPv4 address to a IPv4-mapped address.
+    (test_masks): Add a test for the ircd_string.c change.
+
+2008-03-20  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * include/client.h: IsLocOp() now checks to see if its MyUser() as
+    well; IsAnOper() uses IsOper() and IsLocOp() instead of directly
+    testing the flags
+
+2008-03-15  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_bsd.c (init_connection_limits): Remove errant apostrophe.
+    Print text error message when unable to set max FDs.
+
+2008-03-15  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_user.c (set_user_mode): Check for end of argument list
+    when processing 'r' modes.
+
+2008-01-09  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * include/patchlevel.h (PATCHLEVEL): bump patchlevel
+
+2008-01-02  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/m_burst.c (ms_burst): surround protocol_violation() and
+    break in braces to do what Jan Krueger was trying to do...
+
+2008-01-03  Jan Krueger  <jast@heapsort.de>
+
+       * ircd/m_burst.c: prevent leaking the next nick into the current one's
+       oplevel. Add protocol_violation when an invalid nick flag appears.
+
+2007-12-28  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/channel.c: add MODE_REGISTERED, mapped to +R; arrange to
+    only have it settable or clearable by remote users or /opmode
+
+    * include/supported.h (FEATURESVALUES2): update to include 'R'
+    channel mode
+
+    * include/channel.h: add MODE_REGISTERED, update infochanmodes to
+    include 'R' channel mode
+
+2007-12-13  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/m_gline.c (ms_gline): if we got an activate or deactivate
+    for a global G-line we never heard of, and we cannot create it
+    because no expire time was sent, manually propagate the G-line
+    instead of trying to call gline_add()
+
+    * ircd/gline.c (make_gline): never allow a G-line to be created
+    with a 0 expire time
+
+2007-12-03  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for u2.10.12.12 release.
+
+2007-12-03  Michael Poole <mdpoole@troilus.org>
+
+    * doc/Makefile.in (DATAROOTDIR): Define.
+    (DATADIR): Likewise.
+    
+2007-11-30  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/version.c.SH: correct invalid syntax in shell case/esac
+
+    * ircd/ircd_lexer.l: provide an implementation of yywrap() so we
+    no longer have to link against -lfl
+
+    * configure.in: drop tests on LEXLIB and don't add it to the list
+    of libs
+
+    * ircd/gline.c (gline_add): apply too-many-users test to realname
+    G-lines *only* when the origin is my user (or a user, for
+    remote-local G-lines)
+
+2007-11-28  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for pre12 development.
+
+2007-11-28  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for u2.10.12.11 release.
+
+2007-11-28  Michael Poole <mdpoole@troilus.org>
+
+    * tests/test-driver.pl (drv_default): Fix expect for numeric
+    responses that have non-trivial parameters.
+    (check_expect): Simplify (and fix) sender name check.
+
+    * tests/bug-1640796.cmd: Update expect NNN for new POE behavior
+    and part to not try to part the channel named "leaving".
+
+    * tests/bug-1674539.cmd: Update expect NNN for new POE behavior.
+
+    * tests/bug-1840011.cmd: New test script.
+    
+2007-11-28  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (mode_ban_invalidate): Clarify Doxygen comments.
+    (apply_ban): Only block narrower bans if the wider ban is active.
+
+2007-11-24  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_names.c (do_names): Don't try to re-initialize the start
+    of buf[] for each line.  It's done the first time around and that
+    can be reused safely.
+
+2007-11-17  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_stats.c (m_stats): Properly assign param before it is
+    used in the hunt_server_cmd() call.
+    
+2007-11-17  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (iauth_disconnect): Avoid destroying invalid
+    sockets.
+    (iauth_stderr_callback): Disconnect iauth child if stderr has
+    EOF (in case stdin notification is delayed somehow).
+    
+2007-11-04  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/umkpasswd.c (sum): Typecast buffer to avoid a warning about
+    the parameter type being passed to strlen().
+    
+2007-11-04  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf: Document /LIST M as controlled by list_chan.
+
+    * include/channel.h (LISTARG_SHOWMODES): Define.
+
+    * ircd/hash.c (list_next_channels): Handle it.
+
+    * ircd/m_list.c (show_usage): Document 'M' flag.
+    (param_parse): Recognize 'M' as LISTARGS_SHOWMODES.
+
+2007-11-04  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_list.c (param_parse): Reverse comparison direction when
+    converting from minutes to time_t, and which bound is set (so that
+    T<time_t works correctly).  Also switch is_time cases so that 'T'
+    and 'C' work as documented.  Remove a "break" after a "return".
+
+    (m_list): Remove a "break" after a "return".
+
+2007-10-29  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_lexer.l (YY_INPUT): Redefine to use fbgets().
+    (init_lexer): Return a value to indicate failure.  Use fbopen().
+    (deinit_lexer): New function.
+
+    * ircd/s_conf.c (read_configuration_file): Update extern
+    declarations.  Bail if init_lexer() fails.  Call deinit_lexer()
+    rather than directly munging yyin.
+
+2007-10-29  Michael Poole <mdpoole@troilus.org>
+
+    * include/gline.h: Delete declaration of gline_propagate().
+
+    * include/whocmds.h: Delete declaration of count_users().
+
+    * ircd/whocmds.c (count_users): Move to gline.c as a static.
+
+    * ircd/gline.c (whocmds.h): Remove #include.
+    (gliter): Document boolean trickiness.  Add missing trickiness
+    when gl_flags has bits set besides GLINE_ACTIVE.
+    (make_gline): Get rid of now-unused "after" variable and the
+    comments related to overlapping G-lines.
+    (gline_propagate): Make static.
+    (count_users): Move from whocmds.c as a static function.
+    (count_realnames): New function.
+    (gline_add): Require a force to hit lots of users with a realname
+    G-line.
+
+2007-09-05  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_gline.c (ms_gline): Remove dead branch when 4 < parc < 5.
+    (mo_gline): Consistently use the last argument as the reason.
+
+2007-09-05  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/Makefile.in: Fix dependencies for version.h generation.
+
+2007-08-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/send.c (sendwallto_group_butone): Move a feature_bool()
+    call out of a loop.  Convert HasFlag() uses to appropriate macros
+    from client.h.
+
+2007-08-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_string.c (ircd_aton_ip4): Allow a sequence of *.* at
+    the end of an IPv4 mask.
+    (ipmask_parse): Likewise for *:* at the end of IPv6 masks.
+
+    * ircd/test/ircd_in_addr_t.c (test_masks): Add tests for this.
+
+2007-08-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_user.c (register_user): Update inv_clients and opers
+    counts.  Call client_set_privs() for local users.
+    (set_nick_name): Do not call client_set_privs() for remote users.
+    (set_user_mode): Move oper and invisible client checks inside the
+    IsRegistered() section.
+
+2007-08-14  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (DONE_*): Split key changes into _ADD and _DEL.
+    (mode_parse_key): Check both, to properly handle -k+k changes.
+    (mode_parse_upass): Likewise, for -U+U.
+    (mode_parse_apass): Liekwise, for -A+A (in case that ever happens).
+    (mode_parse): Update which "done" flag is checked during a wipeout.
+
+2007-08-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_user.c (whipser): CNOTICEs should not trigger away
+    messages, only CPRIVMSGs.
+
+2007-08-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_who.c (m_who): Reorder responses and change the
+    ERR_QUERYTOOLONG parameter to be consistent with m_whois().
+    
+2007-08-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_user.c (register_user): Initialize umodev[] in a
+    C89-compatible way.  (gcc 4.1.2 warned about it.)
+
+2007-08-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_names.c (do_names): Add NAMES_DEL to comment.  Avoid use
+    of strcat().  Get rid of ms_names(), which was basically a copy of
+    m_names(), and merge the "showingdelayed" changes into m_names().
+    Replace the recursion with iteration.
+
+    * ircd/parse.c (msgtab): Use m_names(), not ms_names().
+
+2007-08-08  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (report_iauth_conf): Remove end-of-stats message;
+    m_stats() already does that.
+
+    (report_iauth_stats): Likewise.
+
+2007-08-08  Michael Poole <mdpoole@troilus.org>
+
+    * include/res.h (irc_in_addr_is_ipv4): Fix classification of
+    addresses like 0.0.0.0.
+
+2007-07-21  Perry Lorier <isomer@undernet.org>
+
+    * ircd/s_user.c: Move set_nick_name() to use set_user_mode(),
+    set_user_mode() now interprets +r usermodes properly (and ignores
+    them from non servers).  This fixes a problem where remote users
+    weren't being counted properly anymore.
+
+2007-07-20  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/m_gline.c: create abs_expire() macro to convert an expire
+    timestamp from the network into an absolute time, if needed;
+    rename expire_off to expire globally, since it now represents an
+    absolute expiration time; use expire - CurrentTime in gline
+    forwarding statements; in ms_gline(), use abs_expire() to convert
+    network expiration timestamp into absolute timestamp; in
+    mo_gline(), add CurrentTime to oper-provided expiration offset to
+    convert to absolute timestamp
+
+    * ircd/gline.c: assume expire and lifetime arguments to
+    gline_add() and gline_modify() are already absolute timestamps;
+    send lifetime parameter as an absolute timestamp, but leave expire
+    timestamp as relative as first part of a 2-phase update
+
+2007-07-12  Perry Lorier <isomer@undernet.org>
+    Reconsider how we manage modes before registration, to avoid stats
+    getting out of sync.
+
+    * ircd/s_user.c (set_user_mode): Add new parameter to set_user_mode to
+    ignore some modes.
+    (register_user): Use set_user_mode to parse default usermode for
+    users.
+
+    * ircd/m_user.c: Add extra parameter to set_user_mode call
+
+    * ircd/s_auth.c: Add extra parameter to set_user_mode call
+
+    * ircd/m_mode.c: Add extra parameter to set_user_mode call
+
+    * ircd/s_misc.c: Verify stats are consistant.
+
+    * include/s_user.h: Change prototype, add flag definitions.
+
+    * ircd/m_lusers.c (m_users): Assert that we're generating sane stats,
+    include "unknowns" in the total user connections to avoid negative
+    wrap arounds.
+
+2007-07-12  Perry Lorier <isomer@undernet.org>
+    
+    * ircd/m_user.c (m_luser): Fix broken RFC 2812 on connect user mode 
+    setting
+
+2007-05-28  Michael Poole <mdpoole@troilus.org>
+
+    * include/numeric.h (ERR_INPUTTOOLONG): New numeric.
+
+    * ircd/s_bsd.c (read_packet): Use it.
+
+    * ircd/s_err.c (replyTable): Give it a format string.
+
+2007-05-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_burst.c (ms_burst): Do not let bursting servers join a
+    user to a channel more than once.
+
+2007-05-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_features.c (feature_set): Report new value of feature
+    for /set.
+    (feature_reset): Likewise, for /reset.
+
+2007-05-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_burst.c (netride_modes): Return -1 if someone tries to
+    remove modes in the burst.
+    (ms_burst): Check for, and handle, that protocol violation.
+
+2007-05-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_privs.c (mo_privs): Report "no such nickname" for unknown
+    nicks in the list.  (Unfortunately, the nick is lost before ms_privs.)
+
+2007-05-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/listener.c (show_ports): Actually hide hidden ports from
+    clients that should not see them.
+
+2007-05-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_err.c (ERR_DONTCHEAT): Add apparently missing %s.
+    
+2007-05-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_connect.c (mo_connect): Return an error to a locop who
+    tries to do a remote connect.
+
+2007-05-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/parse.c (msgtab): Make SETTIME consistent with other
+    oper commands, in using m_not_oper for non-opered clients.
+
+2007-05-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_parser.y (pseudoblock): Forbid pseudo commands that
+    are not all alphabetic characters.
+
+2007-05-20  Michael Poole <mdpoole@troilus.org>
+
+    * configure.in (maxcon): Check that maximum connections is
+    sufficiently large to avoid underflow in MAXCLIENTS.
+    
+2007-05-20  Michael Poole <mdpoole@troilus.org>
+
+    * include/supported.h (FEATURES2): Remove extra space.
+
+    * ircd/m_admin.c (m_admin): Only check server mask against our
+    name, so that it cannot leak information about other linked
+    servers.
+
+    * ircd/m_version.c (m_version): Likewise.
+    
+2007-04-15  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/m_gline.c: fix minor typo in code that forwards remote
+    local activations/deactivations: %c takes characters, not
+    pointers!
+    (mo_gline): fix similar typo in code forwarding remote local
+    G-lines by opers
+
+2007-04-10  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_parser.y (iauth): Avoid problems related to MyFree's
+    multiple evaluation of its argument.
+
+2007-04-10  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/m_gline.c (ms_gline): lastmod must be non-zero
+
+2007-04-04  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_conf.c (rehash): Restart resolver after reading the
+    config file; this un-breaks the resolver after /rehash if the
+    ircd.conf contains no "dns server = <ipstring>;" lines.
+
+2007-04-01  J. R. Lenz <ralf@starshadow.com>
+
+    * ircd/s_user.c (register_user): Check for host-hiding when fully
+    registering a user.  [Comment added by Entrope.]
+
+2007-03-31  Michael Poole <mdpoole@troilus.org>
+
+    * doc/readme.iauth (IAuth M): Document new command.
+
+    * ircd/m_user.c (m_user): Recognize RFC 2812 mode request and a
+    saner usermode request.
+
+    * ircd/s_auth.c (iauth_cmd_usermode): New command.
+    (iauth_parse): Dispatch to it.
+
+    * ircd/s_user.c (set_user_mode): Only broadcast usermode changes
+    for registered clients.
+
+    * tools/iauth-test (127.0.1.3): Test the new M command.
+
+2007-03-31  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_mode.c (m_mode): Check and report target/source
+    violations before calling set_user_mode().
+    (ms_mode): Likewise.
+
+    * ircd/s_user.c (set_user_mode): Remove those checks from here.
+
+2007-03-31  Michael Poole <mdpoole@troilus.org>
+
+    * include/ircd_events.h (struct Generators): Convert elements to
+    be struct GenHeader*.
+    (timer_next): Update to match.
+
+    * ircd/ircd_events.c (timer_enqueue): Update to match.
+    (signal_callback): Likewise.
+    (timer_init): Remove a typecast with something slightly safer.
+    (timer_run): Update to deal with new type of Generator.g_timer.
+    (signal_add): Likewise.
+    (socket_add): Likewise.
+    
+2007-03-28  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_asll.c (ms_asll): Count hits and report at the end, so
+    that a client is told whether any match (and has a hint that only
+    directly linked servers are checked).
+    (mo_asll): Likewise.
+
+2007-03-26  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_stats.c (m_stats): Move check for STAT_FLAG_LOCONLY (and
+    the assignment to "param") to the hunted server.
+
+2007-03-26  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (iauth_parse): Check for missing arguments when
+    parsing the iauth message.
+
+    * tests/bug-1685648.cmd: New file to test this.
+
+    * tests/iauth-test: New file to exercise the code path.
+
+    * tests/ircd.conf: Use the iauth-test helper program.
+
+2007-03-26  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_silence.c (forward_silences): Do not try twice to process
+    silences that were both added and deleted.
+
+2007-03-26  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_parser.y (portblock): Restore old behavior for Port
+    blocks with no host listed.
+
+2007-03-26  Michael Poole <mdpoole@troilus.org>
+
+    * doc/readme.iauth (iauth I): Fix example and syntax.
+
+2007-03-18  Michael Poole <mdpoole@troilus.org>
+
+    * acinclude.m4 (unet_NONBLOCKING): Properly quote function name.
+    (unet_SIGNALS): Likewise.
+    (unet_CHECK_TYPE_SIZES): Likewise.
+    (AC_LIBRARY_NET): Likewise.
+
+2007-03-18  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/m_gline.c (mo_gline): add permissions checks I kept
+    forgetting to add--remote local modifications require
+    FEAT_CONFIG_OPERCMDS and PRIV_GLINE, local G-lines require
+    PRIV_LOCAL_GLINE, and global G-line changes (excluding local
+    activation/deactivation) require FEAT_CONFIG_OPERCMDS and
+    PRIV_GLINE
+
+2007-03-17  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf (CRule): Document the support for multiple
+    server masks in a single CRule block.
+    (Port): Document the optional additional field for vhost entries.
+    Document the support for multiple vhost entries in a single Port
+    block.
+
+    * ircd/ircd_parser.y (USE_IPV4): Shift up by 16 bytes.
+    (USE_IPV6): Likewise.
+    (portblock): Iterate over hosts rather than using the single host.
+    (portitem): Add portvhostnumber alternative production.
+    (portnumber): Check port number here.  If valid, combine address
+    family and port number in "port" variable.  If a port-less item
+    exists in "hosts", set its port number.
+    (portvhost): Prepend mask to "hosts" list.
+    (portvhostnumber): New production.
+    (cruleblock): Iterate over hosts rather than using the single
+    host.
+    (cruleserver): Prepend server mask to "hosts" list.
+
+2007-03-17  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/listener.c (add_listener): Only try to create IPv6 sockets
+    for IPv6-compatible addresses; likewise for IPv4.
+
+2007-03-17  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf (Operator): Update documentation to mention
+    more than one host entry is allowed.
+    (Motd): Likewise.
+
+    * ircd/ircd_parser.y (hosts): New file-scope variable.
+    (free_slist): New helper function.
+    (operblock): Iterate over hosts instead of using the single host.
+    (operhost): Prepend the mask to hosts.
+    (motdblock): Iterate over hosts instead of using the single host.
+    (motdhost): Prepend the mask to hosts.
+    (motdfile): Fix possible leak of "pass" string (the filename).
+
+    * ircd/s_conf.c (conf_parse_userhost): Stop freeing the host
+    string; operblock (the only caller) frees it now.
+
+2007-03-17  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/list.c (free_link): Only decrement the in-use count of
+    links if we free a link.
+
+2007-03-17  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/s_err.c: update replies to handle new fields in
+    RPL_STATSGLINE and RPL_GLIST--new fields indicate G-line lastmod,
+    G-line lifetime, and local activation status
+
+    * ircd/m_gline.c: update function documentation for ms_gline();
+    move test for server to before mask processing; don't look up
+    remote server too early; add code to process local activations and
+    deactivations early in ms_gline(); implement adding and destroying
+    local G-lines; don't try to locally activate or deactivate G-lines
+    that don't exist; add code to keep track of which fields were
+    available to ms_gline(); implement G-line modification and
+    creation; remove old ms_gline() code; convert
+    sendwallto_group_butone() calls to Debug() calls; reimplement
+    mo_gline() to take into account new syntax
+
+    * ircd/gline.c: change gl_rexpire to gl_lifetime to better reflect
+    its meaning; make sure to set gl_state to GLOCAL_GLOBAL when
+    G-line expires; add lifetime parameter to make_gline(); disable
+    overlapping G-line check; initialize gl_lifetime from lifetime
+    parameter; initialize gl_state to GLOCAL_GLOBAL; update
+    gline_propagate() to send lifetime parameter; add lifetime
+    parameter to gline_add(); remove some old code in gline_add();
+    figure out lifetime to set on new G-line; remove test for
+    make_gline() returning NULL, since it should never do so now; add
+    modify_gline() for modifying global G-lines; add gline_destroy()
+    for destroying local G-lines; update gline_burst() to send
+    lifetime parameter; update gline_resend() to send lifetime
+    parameter; update gline_list() to add lastmod, lifetime, and local
+    status indicators; update gline_stats() to send lastmod, lifetime,
+    and local status indicators; count BADCHANs in
+    gline_memory_count()
+
+    * include/gline.h: add enum GlineLocalState for keeping track of
+    local state changes to global G-lines; store state in struct
+    Gline; document enum GlineAction; add GLINE_EXPIRE,
+    GLINE_LIFETIME, and GLINE_REASON flags to indicate the presence of
+    those fields to gline_modify(); add GLINE_UPDATE mask for checking
+    for the above flags; update GlineIsActive() to take into account
+    new gl_state field in struct Gline; add lifetime to gline_add();
+    add gline_modify() for modifying existing global G-lines, and
+    gline_destroy() for destroying local G-lines
+
+    * doc/readme.gline: update documentation to reflect changes made
+    to G-line command syntax
+
+2007-03-17  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/umkpasswd.c (parse_arguments): Exit cleanly rather than
+    aborting on unrecognized arguments.  It isn't nice to core on
+    "umkpasswd --help"..
+
+2007-03-16  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf (Class): Move the "Recommended client classes"
+    comment to a better place (and stop recommending them).  Clarify
+    what maxlinks does.  Make it clear that Operator password entries
+    only support umkpasswd formats.
+    
+2007-03-16  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd.c (parse_command_line): Emit a warning if using -x
+    when DEBUGMODE is disabled.
+
+2007-03-16  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_conf.c (find_conf_exact): Treat maxlinks == 0 as being
+    unlimited here, to match attach_conf()'s behavior.
+
+2007-03-16  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/s_conf.c (find_kill): check FEAT_DISABLE_GLINES prior to
+    checking for a G-line matching a new user
+
+    * ircd/m_gline.c (ms_gline): rework ms_gline() to handle new
+    command syntax--although it can parse the new syntax, it doesn't
+    yet perform the actions demanded by that syntax
+
+    * ircd/ircd_features.c: trap-door feature FEAT_DISABLE_GLINES to
+    disable G-lines
+
+    * ircd/gline.c: create gliter() macro which performs an iteration
+    over all G-lines in a specified G-line list; initialize record
+    expire in make_gline() (to be redone); check FEAT_DISABLE_GLINES
+    in do_gline(); add and document what happens if GLINE_LOCAL is
+    passed to gline_find()
+
+    * include/ircd_features.h: trap-door feature FEAT_DISABLE_GLINES
+    to disable G-lines; intended use: accidental G-line of *@*
+
+    * include/gline.h: add rexpire (record expiration time) field to
+    gline description structure; add GlineAction enumeration (still
+    undocumented) to describe actions that may be performed on G-lines
+
+2007-03-09  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for .pre11 development.
+
+2007-03-09  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for u2.10.12.10 release.
+
+2007-03-05  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_privs.c (ms_privs): Use the correct source when
+    forwarding the PRIVS request.
+
+    * tests/bug-1674539.cmd: New file to test for this.
+
+    * tests/test-driver.pl: Recognize "oper" command from scripts.
+
+2007-03-05  Michael Poole <mdpoole@troilus.org>
+
+    * tests/ircd.conf: Make into a hub.
+
+    * tests/ircd-2.conf: New file, for a second server.
+
+    * tests/ircd-3.conf: Configuration for a third server.
+
+2007-03-04  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/whocmds.c (count_users): Fix length of ipbuf.  (Spotted by
+    paulr.)
+
+2007-02-28  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/os_generic.c (sockaddr_from_irc): Zero out socket address
+    before setting family, and regardless of whether we have an
+    irc_sockaddr template.
+
+2007-02-25  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf: Document new options for General block.
+    
+    * include/res.h (clear_nameservers): Declare new function.
+    (add_nameserver): Declare previously static function.
+
+    * include/s_bsd.h (VirtualHost_dns_v4): Declare.
+    (VirtualHost_dns_v6): Likewise.
+
+    * ircd/ircd_lexer.l (DNS): Recognize new token.
+
+    * ircd/ircd_parser.y (DNS): Declare new token.
+    (generalitem): Allow new items for dns vhost(s) and dns servers.
+    (generaldnsvhost): New production.
+    (generaldnsserver): New production.
+
+    * ircd/ircd_res.c (VirtualHost_dns_v4): New variable.
+    (VirtualHost_dns_v6): Likewise.
+    (clear_nameservers): New function.
+    (restart_resolver): Scan specified servers so we only try to open
+    DNS client sockets that we need.
+
+    * ircd/ircd_reslib.c (irc_nscount): Remove redundant initializer.
+    (irc_res_init): Only read the resolver config file if there are no
+    nameservers provided.
+    (add_nameserver): Make non-static.  Remove off-by-one check
+    against IRCD_MAXNS.
+
+    * ircd/s_conf.c (read_configuration_file): Clear nameserver list
+    before reading the config file.
+
+2007-01-27  Jeannot Langlois <jeannot12@linuxmail.org>
+
+    * doc/example.conf (Features): Illustrate URLREG feature.
+
+    * doc/readme.features (URLREG): Define new feature.
+
+    * include/ircd_features.h (Feature): Add FEAT_URLREG.
+
+    * ircd/ircd_features.c (features): Set the default value.
+
+    * ircd/m_join.c (m_join): For ERR_NEEDREGGEDNICK, include the
+    URLREG value as a format argument.
+
+    * ircd/s_err.c (replyTable): Update ERR_NEEDREGGEDNICK
+    appropriately.
+
+2007-02-03  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_reply.c (protocol_violation): Avoid reusing the
+    va_list in vd.
+
+    * ircd/send.c (sendcmdto_channel_butone): Warn against using %v in
+    the pattern -- that will cause incorrect behavior.
+    (sendwallto_group_butone): Likewise.
+    (sendcmdto_match_butone): Likewise.
+
+2007-01-22  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (find_delayed_joins): New function.
+    (modebuf_flush): Handle +D-D and related cases.
+    (mode_parse_mode): It is too early to handle +D here, so don't.
+    (CheckDelayedJoins): Use find_delayed_joins().
+
+2007-01-22  Michael Poole <mdpoole@troilus.org>
+
+    * tests: New subdirectory for test framework.
+
+    * tests/ircd.conf: Helper file for testing.
+
+    * tests/readme.txt: Simple documentation of test framework.
+
+    * tests/test-driver.pl: Testing script interpreter.
+
+2007-01-22  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf: Fix potentially confusing comment about ip
+    mask syntax.
+
+2007-01-22  Michael Poole <mdpoole@troilus.org>
+
+    * INSTALL: Mention source directory naming; update the reference
+    to the config file converter (hah); update CVS directions.
+
+2007-01-22  Michael Poole <mdpoole@troilus.org>
+
+    * include/supported.h: Move parameters from FEATURES1 to FEATURES2
+    so that neither ISUPPORT line has more than 15 parameters.  (Some
+    clients are picky about this.)
+
+2007-01-21  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for pre10 development.
+
+2007-01-20  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for 2.10.12.09 release.
+
+2007-01-15  Michael Poole <mdpoole@troilus.org>
+
+    * doc/readme.iauth (U): Document extended fields.
+
+    * include/s_auth.h (auth_set_user): Declare new parameters.
+
+    * ircd/m_user.c (m_user): Pass new parameters.
+
+    * ircd/s_auth.c (auth_set_user): Accept new parameters.  When
+    using Undernet extensions, forward them to the iauth process.
+
+2007-01-14  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/os_generic.c (os_recv_nonb): Set errno to zero when
+    returning IO_FAILURE due to a closed connection.
+
+2006-12-31  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_mode.c (ms_mode): Bounce modes from deopped members.
+
+2006-12-30  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_string.c (ircd_strncpy): Make sure the output buffer
+    is terminated.  We don't rely on the arguable strncpy semantics.
+
+2006-12-30  Michael Poole <mdpoole@troilus.org>
+
+    * include/struct.h (struct Server): Add asll_last field.
+
+    * ircd/ircd.c (check_pings): Add check for asll_last.  When a
+    server doesn't ping, use an old-style ping rather than AsLL ping.
+
+    * ircd/m_pong.c (ms_pong): Use ClearPingSent() rather than
+    ClrFlag().  Set asll_last to current time.
+    (mr_pong): Use ClearPingSent() rather than ClrFlag().
+    (m_pong): Likewise.
+
+    * ircd/s_bsd.c (completed_connection): Likewise.
+    (read_packet): Likewise.  Update cli_lasttime for servers in
+    addition to clients.
+
+2006-01-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_burst.c (ms_burst): Properly handle member mode :ov.
+
+2006-01-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_create.c (ms_create): Add channel name to the protocol
+    violation notice for a redundant CREATE.
+
+2006-01-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_user.c (set_nick_name): Use user's account name rather
+    than the account parameter, in case the parameter contains a colon
+    (i.e. "account:1234" format).
+
+2006-01-13  Michael Poole <mdpoole@troilus.org>
+
+    * doc/readme.who: Document 'd' user-matching flag.
+
+2006-12-18  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_jupe.c (mo_jupe): Fix which privilege is tested.
+
+2006-12-07  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/listener.c (show_ports): Update to show '4' and/or '6' as
+    flags in response, with a '-' suffix if either one fails to open.
+
+2006-12-07  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf (Port): Document the method to select IPv4 or
+    IPv6 restriction for a port.
+
+    * include/listener.h (LISTEN_IPV4): New listener flag.
+    (LISTEN_IPV6): New listener flag.
+    (struct Listener): Split 'fd' and 'socket' fields into two each.
+
+    * ircd/ircd_lexer.l (gb): Move to be alphabetical.
+    (gigabytes): Likewise.
+    (ipv4): New token.
+    (ipv6): Likewise.
+    Adapted word matcher to handle digits in the non-leading character.
+
+    * ircd/ircd_parser.y (USE_IPV4): New macro.
+    (USE_IPV6): Likewise.
+    (TOK_IPV4): New token.
+    (TOK_IPV6): Likewise.
+    (address_family): New non-terminal rule.
+    (portblock): Default to listening on both IPv4 and IPv6.
+    (portnumber): Add address_family element and use it.
+    (portvhost): Likewise.
+
+    * ircd/listener.c (make_listener): Adjust for newly split fields
+    in struct Listener.
+    (inetport): Likewise.  Adjust return value as well.
+    (add_listener): Update to handle both IPv4 and IPV6 support.
+    (close_listener): Likewise.
+    (accept_connection): Because each listener has two sockets, it is
+    no longer safe to free the listener when one is destroyed -- so
+    don't.  Also accept() on the file descriptor from the incoming
+    event rather than on a fixed fd.
+
+    * ircd/os_generic.c (os_socket): For platforms with IPV6_V6ONLY,
+    enable it for AF_INET6 sockets rather than disabling it for
+    unspecified sockets.
+
+2006-12-06  Michael Poole <mdpoole@troilus.org>
+
+    * include/listener.h (enum ListenerFlag): New enum.
+    (struct Listener): Convert "active", "hidden" and "server" to a
+    flagset.
+    (add_listener): Convert "is_server" and "is_hidden" arguments to
+    use the same flagset structure.
+
+    * ircd/ircd_parser.y (listen_flags): New variable.
+    (general_vhost): Consolidate references to $3 to use a variable.
+    (portblock): Use listen_flags instead of tconn and tping.
+    (portserver): Likewise.
+    (porthidden): Likewise.
+
+    * ircd/listener.c (show_ports): Use new field in Listener.
+    (set_listener_options): New function.
+    (inetport): Use it.
+    (add_listener): Use new field in Listener.  When reusing an extant
+    listener, call set_listener_options() so the options are updated.
+    (mark_listeners_closing): Use new field in Listener.
+    (close_listeners): Use new helper macro to check activeness.
+    (release_listener): Likewise.
+    (accept_connection): Likewise.
+
+    * ircd/s_bsd.c (report_error): Use the standard snotice rate
+    limiting here.
+    (add_connection): Use new helper macro to check serverness.
+
+2006-11-04  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_nick.c (m_nick): If we get NICK on a server port, tell
+    the client to go away.
+
+2006-11-04  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/version.c.SH: Skip version.c.
+
+2006-11-04  Michael Poole <mdpoole@troilus.org>
+
+    * doc/readme.who: Document new 'o' field flag.
+
+    * include/whocmds.h (WHO_FIELD_OPL): New flag.
+
+    * ircd/channel.c (send_channel_modes): Rename feat_oplevels to
+    send_oplevels and determine it automatically.
+    (modebuf_flush_int): Pass along oplevel if it's less than
+    MAXOPLEVEL.
+    (mode_process_clients): Allow oplevels to be inherited for -A
+    channels.  Inherit the opper's oplevel if >= MAXOPLEVEL.
+
+    * ircd/m_who.c (m_who): Recognize 'o' flag as WHO_FIELD_OPL.
+
+    * ircd/whocmds.c (do_who): Send oplevel for WHO_FIELD_OPL, but
+    only show up to the requester's own oplevel.
+
+2006-10-21  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/convert-conf.c (finish_connects): Fix error display for
+    missing C: lines when an H: line is present.
+
+2006-08-02  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_parser.y (connectblock): Check for too-long password.
+    (operblock): Comment why we don't check password length.  Move
+    PRIV_PROPAGATE test earlier (so a buggy edit, rehash, /oper will
+    not crash).
+    (clientblock): Check for too-long password.
+
+2006-08-02  Michael Poole <mdpoole@troilus.org>
+
+    * include/channel.h (struct Ban): Fix typo in doxygen comment.
+
+2006-07-09  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for pre09.
+
+2006-07-09  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for 2.10.12.08 release.
+
+2006-07-05  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (auth_freelist): New static variable.
+    (check_auth_finished): Move call to destroy_auth_request().
+    (destroy_auth_request): Prepend auth request to freelist.
+    (start_auth): Use struct from auth freelist if possible.
+
+2006-06-30  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_parser.y (iauth*): Avoid leaking program name string.
+
+2006-06-30  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (check_auth_finished): Free auth structure when
+    done with it.
+    (sendto_iauth): Free message buffer when done with it.
+
+2006-06-26  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for pre08.
+
+2006-06-26  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHEVEL): Bump for release.
+
+2006-06-17  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_pass.c (mr_pass): Only back 'len' up when it's safe.
+
+2006-06-08  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_whois.c (do_whois): Prefix '*' to names of secret (local)
+    channels for locops as well as global opers.
+
+2006-06-08  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_gline.c (ms_gline): Use final argument as G-line reason.
+
+2006-06-08  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/gline.c (gline_stats): Show activation state in /stats g.
+
+    * ircd/s_err.c (RPL_STATSGLINE): Update format string to match.
+
+2006-06-07  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf: Document the list_chan privilege.
+
+    * ircd/ircd_lexer.l: Recognize the token.
+
+    * ircd/ircd_parser.y: Treat it appropriately.
+
+2006-06-07  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (auth_ping_timeout): If the client never had an
+    auth request, kill them on ping timeout.
+
+2006-06-05  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (auth_timeout_callback): Clear AR_DNS_PENDING when
+    destroying the lookup and reporting DNS failure.
+
+2006-05-28  Michael Poole <mdpoole@troilus.org>
+
+    * doc/readme.features (MAXBANS): Update default value.
+    (NICKLEN): Likewise.
+    (HIS_STATS_*): Sort alphabetically.
+
+    * ircd/m_stats.c (m_stats): Describe the intention so that there
+    are not further questions about local opers and remote /stats.
+    Fix places that use cptr instead of sptr.
+
+2006-05-24  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (auth_dns_callback): Be more careful about
+    handling failed DNS lookups.  Use a more standard function to
+    disconnect clients for IP mismatches.
+    (start_auth): Use a more standard function to disconnect clients
+    for peer or local socket address lookup failures.
+
+2006-05-17  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (auth_ping_timeout): Fix off-by-one error.
+
+2006-05-17  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/Makefile.in (install-*): Install convert-conf.  Install
+    umkpasswd when ${BINDIR}/ircd is not a symlink.
+
+2006-05-15  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (check_auth_finished): Only check passwords on
+    user ports.
+
+2006-05-14  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf (Connect): Mention the vhost option.
+
+2006-05-08  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_pong.c (mr_pong): Move cli_lasttime update from here...
+
+    * ircd/s_auth.c (auth_set_pong): ... to here.
+
+2006-05-07  Michael Poole <mdpoole@troilus.org>
+
+    * include/s_auth.h (auth_ping_timeout): Declare new function.
+
+    * ircd/ircd.c (check_pings): Move auth timeout logic into that new
+    function.
+
+    * ircd/s_auth.c (HeaderMessages): Insert new message.
+    (auth_ping_timeout): Define new function.
+    (auth_timeout_callback): Remove "hurry" notification from here.
+
+2006-05-07  Michael Poole <mdpoole@troilus.org>
+
+    * include/s_auth.h (destroy_auth_request): Remove second argument.
+
+    * ircd/list.c (free_client): Update to match.
+
+    * ircd/s_auth.c (check_auth_finished): Remove second argument and
+    update call to destroy_auth_request().
+    (send_auth_query): Update call to destroy_auth_request().
+    (destroy_auth_request): Remove second argument.
+    (auth_timeout_callback): Send timeout failure messages here
+    instead.  Update call to check_auth_finished().
+    (auth_dns_callback): Update call to check_auth_finished().
+    (start_auth): Likewise.
+    (auth_set_pong): Likewise.
+    (auth_set_user): Likewise.
+    (auth_set_nick): Likewise.
+    (auth_cap_done): Likewise.
+    (iauth_parse): Likewise.
+
+2006-05-06  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (AuthRequestFlag): Add AR_PASSWORD_CHECKED.
+    (check_auth_finished): Move password check out of iauth-only part
+    and use AR_PASSWORD_CHECKED to make sure we only check it once.
+
+2006-04-28  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (AuthRequest): Clarify comment on 'timeout' field.
+    (check_auth_finished): Fix timeout update.
+    (destroy_auth_request): Only delete timer if it is active.
+    (auth_timeout_callback): Do not disconnect client on timeout, so
+    that the user can finish sending NICK/USER or doing iauth.
+
+2006-04-28  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf (Admin): Fix documentation of which line can be
+    listed twice.
+
+    * ircd/ircd_parser.y (adminblock): Allow admin information to be
+    changed via /rehash.
+
+2006-04-06  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (start_auth): Add client to list after getting
+    endpoint names (which can apparently fail for some reason).
+
+2006-04-06  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_snprintf.c: Use SIZEOF_LONG_LONG (which is 0 for
+    unknown types) instead of the never-defined HAVE_LONG_LONG.
+
+2006-04-06  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf (IAuth): Update to reflect new syntax.
+
+    * doc/readme.who: Fix typo in metasyntactic variable name.
+
+2006-04-04  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h: Update for pre07.
+
+2006-04-04  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h: Update for u2.10.12.06 release.
+
+2006-04-03  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (bmatch): If ipmask_check() indicates old_ban is
+    a CIDR-wise superset of new_ban, check whether new_ban is a
+    text-wise superset of old_ban.
+
+2006-03-31  Michael Poole <mdpoole@troilus.org>
+
+    * tools/iauth-test (send_server_notice): Use a colon prefix before
+    the message.
+    (%handlers): Likewise.
+
+2006-03-24  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_signal.c (alloc_crec): Zero-fill returned
+    ChildRecord structs.
+
+    * ircd/jupe.c (make_jupe): Zero-fill newly allocated jupes.
+
+    * ircd/list.c (make_link): Zero-fill returned SLink structs.
+
+    * ircd/whowas.c (whowas_init): Delete function.
+    (whowas_alloc): Rewrite to follow the more common pattern and to
+    zero-fill returned Whowas structs.
+
+2006-03-23  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/s_auth.c: rewrite iauth_read(), spliting out the parsing
+    into iauth_parse(); change parsing to separate parameters and deal
+    with the ':' sentinel; send sentinel in multi-word parameters; fix
+    iauth_cmd_config() and iauth_cmd_stats() to clear the 'next'
+    pointer in the SLink structure; fix buffering in
+    iauth_read_stderr(); remove carriage returns from STDERR contents
+    as well
+
+    * doc/readme.iauth: fix a minor typo in comments for 'd' and 'N'
+    server messages
+
+2006-03-18  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/convert-conf.c (finish_features): Do not emit a feature
+    setting that has no values.
+
+2006-03-18  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (mode_parse_key): Outside of burst, allow
+    overwriting of keys by a service when a key is already set.
+    (mode_parse_upass): Likewise.  Instead, ignore new Upass during
+    burst if it is lexicographically greater than the current one.
+    (mode_parse_apas): Likewise for Apass, but only allow overwiting
+    an existing Apass in a BURST.
+
+2006-03-18  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (modebuf_flush_int): Fix typo about changing
+    oplevels.  Send correct channel TS for modes to other servers.
+    (mode_parse): Accept timestamps on modes from users on other
+    servers.  If the received timestamp is too large, handle that.
+
+    * ircd/m_create.c (ms_create): Mention the CREATE-during-burst
+    case and handle it.
+
+    * ircd/m_mode.c (ms_mode): Put back HACK(3) when oplevels are off.
+
+2006-03-14  Wouter Coekarts <wouter@coekaerts.be>
+
+    * ircd/s_err.c (RPL_STATSILINE): Add two %s to the first field.
+
+    * ircd/s_stats.c (stats_configured_links): Use the new %s's to
+    show username masks for I: lines that have them.
+    (stats_access): Likewise.
+
+2006-03-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/msgq.c (msgq_vmake): Try to clear msgbuf freelist after
+    killing clients, so that that case does not lead immediately to a
+    server panic.
+    (msgq_count_memory): Report total buffer text used as a way to
+    determine whether the BUFFERPOOL value is marginal.
+
+2006-03-02  Michael Poole <mdpoole@troilus.org>
+
+    * include/ircd_osdep.h (os_socket): New parameter.
+
+    * include/res.h (irc_in_addr_unspec): New macro.
+
+    * ircd/ircd_res.c (restart_resolver): Set family appropriately.
+
+    * ircd/listener.c (inetport): Let os_ library pick socket family.
+
+    * ircd/os_generic.c: Do not #define _XOPEN_SOURCE on FreeBSD 5+.
+    (sockaddr_from_irc): New parameter.
+    (os_sendto_nonb): Use new parameter to sockaddr_from_irc().
+    (os_socket): New parameter.  Try to turn off IPV6_V6ONLY on
+    sockets that listen on unspecified addresses.
+    (os_connect_nonb): Use new parameter to sockaddr_from_irc().
+
+    * ircd/s_auth.c (start_auth_query): Let os_ library pick socket
+    family.
+
+    * ircd/s_bsd.c (connect_inet): If we pick the IPv4 vhost, specify
+    family for os_socket() as AF_INET.
+
+    * ircd/uping.c (uping_init): Set socket family appropriately.
+    (uping_server): Likewise.
+    (uping_end): Fix format strings (the ms_* fields are int, not
+    long, and this causes bad results on LP64 machines).
+
+2006-02-22  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_silence.c (apply_silence): Refuse to apply silences for
+    local users that are broader than an IPv4 /16 or an IPv6 /32,
+    unless they match every host indiscriminately.
+
+2006-02-22  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_auth.c (check_auth_finished): Give non-iauth clients
+    connection classes, too.
+    (auth_close_unused): Remove redundant check for iauth != NULL.
+    (report_iauth_conf): Check iauth != NULL before deref'ing it.
+    (report_iauth_stats): Likewise.
+
+2006-02-22  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/s_auth.c: fix macros to not dereference a NULL pointer when
+    iauth is not connected
+
+2006-02-17  Alex Badea <vamposdecampos@gmail.com>
+
+    * ircd/s_auth.c (auth_set_username): Check if the last
+    character of the username is alphanumeric, instead of the
+    '\0' terminator.
+    
+    * ircd/m_pong.c (mr_pong): Parse cookie with strtoul(),
+    since atol() causes signedness problems.
+
+2006-02-15  Michael Poole <mdpoole@troilus.org>
+
+    * include/res.h (NXDOMAIN): Define.
+
+    * ircd/ircd_res.c (res_readreply): Treat NXDOMAIN just like
+    SERVFAIL.  Patch courtesy of Dianora.
+
+    * tools/iauth-test (Carp): This doesn't actually use Carp.
+
+2006-02-15  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf: Include new HIS_STATS_IAUTH feature.
+
+    * doc/readme.features: Document the feature.
+
+    * doc/readme.iauth: Rewrite to reflect the new progressive iauth
+    protocol, based on IRCnet's iauth.
+
+    * doc/snomask.html: Document SNO_AUTH server notice flag.
+
+    * include/client.h (FLAG_IAUTHED): Delete.
+    (con_cookie): Delete.
+    (con_unreg): Delete.
+    (con_auth): Make comment capitalization consistent.
+    (con_iauth): Delete.
+    (CLIREG_*): Delete.
+    (cli_unreg): Delete.
+    (cli_cookie): Delete.
+    (cli_iauth): Delete.
+    (con_unreg): Delete.
+    (con_iauth): Delete.
+    (IsIAuthed): Delete.
+    (SetIAuthed): Delete.
+    (SNO_AUTH): New server notice flag.
+    (SNO_ALL): Update to include SNO_AUTH.
+    (SNO_OPER): Update to include SNO_AUTH.
+
+    * include/ircd_auth.h: Delete file.
+
+    * include/ircd_features.h (HIS_STATS_IAUTH): New feature.
+
+    * include/s_auth.h: Rewrite almost everything for new auth system.
+
+    * include/s_user.h (COOKIE_VERIFIED): Delete.
+    (register_user): Remove redundant nick and username arguments.
+
+    * ircd/ircd_auth.c: Delete file.
+
+    * ircd/ircd_features.c (HIS_STATS_IAUTH): New feature.
+
+    * ircd/ircd_lexer.l (PROGRAM): New token in grammar.
+
+    * ircd/ircd_log.c (masks): Add SNO_AUTH flag.
+
+    * ircd/ircd_parser.y (stringlist): Simplify production.
+    (iauthblock): Revise to only include a PROGRAM production.
+
+    * ircd/list.c (make_client): Do not assign to deleted field.
+
+    * ircd/m_cap.c (cap_ls): Use auth_cap_start() instead of
+    cli_unreg().
+    (cap_req): Likewise.
+    (cap_end): Use auth_cap_done() instead of cli_unreg().
+
+    * ircd/m_pass.c (mr_pass): Merge arguments to PASS.  Use
+    auth_set_password() to notify iauth of password.
+
+    * ircd/m_pong.c (mr_pong): Use auth_set_pong() instead of
+    cli_cookie() and cli_unreg().
+
+    * ircd/m_user.c (m_user): Use auth_set_user() instead of
+    cli_unreg(), etc.
+
+    * ircd/s_auth.c: Rewrite most of the infrastructure for the new
+    auth system.
+
+    * ircd/s_conf.c (rehash): Call auth_*() instead of iauth_*().
+
+    * ircd/s_misc.c (exit_one_client): Do not use iauth_exit_client().
+    (exit_client): Use auth_send_exit() instead.
+
+    * ircd/s_stats.c (statsinfo): Include iauth and iauthconf.
+
+    * ircd/s_user.c (clean_user_id): Delete (moved into s_auth.c).
+    (register_user): Remove nick and username parameters; move conf
+    interactions and username validation to s_auth.c.
+    (set_nick_name): Use auth_set_nick() instead of cli_cookie(),
+    cli_unreg(), etc.
+
+    * tools/iauth-test: Implementation of iauth for testing purposes.
+
+2006-02-15  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_snprintf.c (doprintf): Fix typecast for %hu.
+
+2006-02-15  Michael Poole <mdpoole@troilus.org>
+
+    * include/ircd_signal.h (SigChldCallBack): New typedef.
+    (register_child): Declare.
+    (unregister_child): Declare.
+    (reap_children): Declare.
+
+    * ircd/ircd_signal.c (alloc_crec): New function.
+    (release_crec): New function.
+    (register_child): New function.
+    (do_unregister_child): New function.
+    (unregister_child): New function.
+    (sigchld_callback): New function.
+    (setup_signals): Hook SIGCHLD.
+    (reap_children): New function.
+
+    * ircd/ircd.c (server_restart): Call reap_children() on exit.
+
+2006-02-15  Michael Poole <mdpoole@troilus.org>
+
+    * include/ircd_osdep.h (os_socketpair): Declare.
+
+    * ircd/os_generic.c (is_blocked): New local function.
+    (os_*): Use is_blocked() instead of cut-and-pasted code.
+    (os_socketpair): New function.
+
+2006-02-15  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/match.c (match): Fix backtracking bug after an escape
+    (reported by Michael, I think).
+
+2006-02-04  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd.c (try_connections): Scan all Connect blocks for the
+    earliest hold time (suggested by Michael).
+
+2006-02-04  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_join.c (m_join): Remove #if 0 code and update comment.
+
+    * ircd/m_mode.c (ms_mode): Remove self-op support.
+
+2006-01-12  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Update for 2.10.12.pre06.
+
+2006-01-12  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Update for release.
+
+2006-01-11  Michael Poole <mdpoole@troilus.org>
+
+    * doc/Makefile.in: Make install target VPATH-safe.
+
+    * doc/example.conf: Comment out example IAuth block.
+
+    * ircd/m_burst.c (ms_burst): Change isdigit() to IsDigit(),
+    silencing a warning on Solaris.
+
+2006-01-09  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_user.c (register_user): Do not send +r flag to user when
+    they first connect.
+
+2006-01-09  Michael Poole <mdpoole@troilus.org>
+
+    * include/ircd_features.h (FEAT_ZANNELS): Actually, put it back.
+
+    * ircd/ircd_features.c (FEAT_ZANNELS): Likewise.
+
+2006-01-06  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (mode_process_clients): Do not reveal zombies who
+    are being opped (MODE and KICK crossed).  Reported by coekie.
+
+2006-01-06  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_join.c (ms_join): Wipe out all modes (not just chanops)
+    when replacing a resurrected channel.
+
+    * ircd/convert-conf.c (dupstring): Fix probable off-by-one size
+    passed to memcpy().
+
+2006-01-03  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (modebuf_flush_int): Also send timestamp when &me
+    originates the MODE going to other servers (currently just when a
+    client joins a zannel or uses an A/U password).
+
+2006-01-02  Michael Poole <mdpoole@troilus.org>
+
+    * include/ircd_features.h (FEAT_ZANNELS): Remove.
+
+    * ircd/channel.c (sub1_from_channel): Remove reference to
+    FEAT_ZANNELS.
+
+    * ircd/ircd_features.c (FEAT_ZANNELS): Remove.
+
+    * ircd/m_destruct.c (ms_destruct): Do not try to remove a destruct
+    event for channels that do not have them (created by BURSTing a
+    zannel but not yet destroyed by EOB).
+
+2005-12-31  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_whowas.c (m_whowas): Mention that IP is untracked in WHOWAS.
+    Spotted by Progs.
+
+2005-12-30  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_topic.c: Remove block comment about sptr, cptr, etc.
+    (do_settopic): Add doxygen comment. Move permissions checks..
+    (m_topic): .. to here.  Update doxygen comment.
+    (ms_topic): Update doxygen comment here too.
+
+2005-12-30  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_conf.c (conf_debug_iline): Fix display of null passwords.
+
+2005-12-30  Michael Poole <mdpoole@troilus.org>
+
+    * RELEASE.NOTES: Mention removal of HIS_STATS_h.
+
+    * ircd/convert-conf.c (removed_features): Add AUTOHIDE,
+    HIS_DESYNCS and TIMESEC.
+    (get_connect): Do not downcase connection name on insert.
+    (do_feature): Do not upcase feature name (cf HIS_STATS_k).
+
+2005-12-30  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/engine_devpoll.c (engine_loop): Remove bogus assert.
+
+2005-12-31  Perry Lorier <isomer@undernet.org>
+
+    * convert-conf.c: Skip with a warning, H:'s that are missing a
+    corresponding C:
+
+2005-12-28  Michael Poole <mdpoole@troilus.org>
+
+    * ircd-patch: Do not use [ for test, and do not use $[] for expr.
+    (Solaris /bin/sh, among others, have problems with those.)
+
+2005-12-23  Michael Poole <mdpoole@troilus.org>
+
+    * config.guess: Update to current version.
+
+    * config.sub: Likewise.
+
+2005-12-23  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/m_join.c: get rid of MAGIC_REMOTE_JOIN_TS; perform the
+    deop-other-users loop only when creation < channel timestamp or
+    when the channel in question happens to be a zannel; actually deop
+    users, don't just say we are and not do it
+
+    * ircd/m_create.c (ms_create): get rid of MAGIC_REMOTE_JOIN_TS
+
+    * include/channel.h: get rid of MAGIC_REMOTE_JOIN_TS
+
+2005-12-13  Michael Poole <mdpoole@troilus.org>
+
+    * configure.in: Define a macro when compiling on Solaris.
+
+    * ircd/ircd_crypt_native.c (_XOPEN_SOURCE): Turn down to 500 so
+    that Solaris doesn't complain that SUSv3 requires C99.
+
+    * ircd/os_generic.c (_XOPEN_SOURCE): Likewise, but leave it at 600
+    on non-Solaris platforms so that IPv6 stays supported.
+
+2005-12-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_join.c (ms_join): Prevent net rides allowed by moving the
+    channel timestamp backwards in time without deopping current ops.
+    (Reported by Wouter Coekaerts.)
+
+2005-12-13  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf: Remove extraneous "Other" Client block.
+
+    * ircd/convert-conf.c (finish_operators): Fix operator precedence
+    bug.
+
+    * ircd/ircd_parser.y (clientclass): Fix typo in error message.
+
+2005-11-27  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/Makefile.in (version.c): version.c also depends on
+    version.h, patchlevel.h and source files.
+
+2005-11-27  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_join.c (m_join): Count a join to a new channel as a
+    target change.
+
+2005-11-19  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/s_stats.c (stats_servers_verbose): Display IPv6 support
+    flag with the other per-server flags.
+
+2005-11-19  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/convert-conf.c (finish_features): Only emit "Features {"
+    once in the converted configuration file.  Display the original
+    input line for each feature line in the output.
+
+2005-11-18  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Update for pre05.
+
+2005-11-18  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Update for release.
+
+2005-11-15  Brian Cline <brian.cline@gmail.com>
+
+    * doc/example.conf: Add new line for HIS_MODEWHO feature.
+
+    * doc/readme.features: Document new HIS_MODEWHO feature.
+
+    * include/ircd_features.h: Declare new HIS_MODEWHO feature.
+
+    * ircd/channel.c (modebuf_flush_int): Use new HIS_MODEWHO feature
+    to show or hide the server name that performed a channel mode change.
+
+    * ircd/ircd_features.c: Place new HIS_MODEWHO setting in the feature
+    table and give it a default value of true, which will hide the
+    originating server name.
+
+2005-11-16  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf (Features): Mention ZANNELS default.
+
+    * doc/readme.features: Document OPLEVELS and ZANNELS.
+
+2005-11-17  Carlo Wood <run@alinoe.com>
+
+    * include/ircd_features.h (Feature): Add ZANNELS.
+    * ircd/ircd_features.c (FeatureDesc): idem.
+    * ircd/channel.c (sub1_from_channel): Don't keep zannels
+    around when ZANNELS and OPLEVELS are FALSE.
+    * ircd/m_destruct.c (ms_destruct): Use JOIN instead of
+    CREATE to recreate a non-empty channel after DESTRUCT.
+
+2005-11-16  Michael Poole <mdpoole@troilus.org>
+
+    * tools/convert-conf.py: Delete obsolete code.
+
+2005-11-16  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_names.c (m_names): Fix handling of NAMES #a,#b.
+    (ms_names): Likewise.
+
+2005-11-15  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_nick.c (ms_nick): Clarify message when an older nick
+    overrules a newer nick.  When killing a client for a nick
+    collision, make sure to use the numnick as the first argument.
+
+2005-11-14  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (member_can_send_to_channel): After prodding from
+    reed, always allow remote users to send to a channel.  He also
+    pointed out a bug in the first version of this change.
+
+2005-11-14  Carlo Wood <run@alinoe.com>
+
+    * ircd/channel.c (modebuf_flush_int): Fix test for limitdel.
+    (modebuf_mode_uint): Make sure the limit is included as an
+    argument when necessary (and only when necessary) in a bounce.
+
+    * ircd/m_destruct.c (ms_destruct): Generate a mode bounce instead
+    of burst to resynchronize a non-empty destructed channel.
+
+2005-11-14  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (find_no_nickchange_channel): Disallow nick
+    changes by voiceless no-account users on a +r channel.
+
+2005-11-14  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_kick.c (ms_kick): Fix test for whether a client's own
+    server is kicking him.
+
+2005-11-13  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for pre04.
+
+2005-11-13  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Update for release.
+
+2005-11-13  Carlo Wood <run@alinoe.com>
+
+    * ircd/m_create (ms_create): Accept CREATE for zannels.
+
+    * ircd/m_join.c (m_join): MODE +o for a zannel must come from the
+    server for compatibility with older versions.
+
+2005-11-12  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Bump for pre03.
+
+2005-11-12  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Update for release.
+
+2005-11-11  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/ircd_res.c (proc_answer): Follow CNAME when doing A
+    and AAAA lookups as well as PTR.
+
+2005-11-07  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (mode_parse_client): Allow clients to specify
+    oplevel in MODE #channel +o.
+    (mode_process_clients): Allow oplevel 999 to deop another 999.
+
+    * ircd/kick.c (m_kick): Allow oplevel 999 to kick another 999.
+
+2005-10-31  Michael Poole <mdpoole@troilus.org>
+    (Based on a patch by Romain Bignon <progs@ir3.org>)
+
+    * ircd/channel.c: Some modes (currently only WASDELJOINS) should
+    not be propagated to remote servers.
+
+2005-10-30  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (mode_parse_apass): Move all send_reply() errors
+    inside an if (MyUser(state->sptr)) test.
+
+    * ircd/m_join.c (m_join): Reorganize zannel join check to match
+    surrounding code.
+
+2005-10-30  Carlo Wood <run@alinoe.com>
+
+    * ircd/channel.c (sub1_from_channel): Delay destruction for -A
+    channels.  They become zombie channels (zannels).
+    (mode_parse_upass): Add duration to ERR_NOMANAGER message.
+    (mode_parse_apass): Likewise.  Unconditionally set the member who
+    sets Apass as oplevel 0.  Clear Upass when clearing Apass.
+    (joinbuf_join): Remove code to pass oplevel in JOIN.
+
+    * ircd/m_burst.c (ms_burst): Handle zannels.
+
+    * ircd/m_join.c (m_join): Handle a join to a zannel.  If the user
+    is joining with ops and/or an oplevel, send those.
+    (ms_join): Stop trying to parse oplevels in JOIN.  Copy join
+    timestamp when a user joins a zannel.
+
+    * ircd/m_mode.c (ms_mode): Never generate HACK3.  Silently allow a
+    user to op himself if he is the only one in a channel.
+
+    * ircd/s_err.c (ERR_UPASSSET): Remove extra space.
+    (ERR_UPASSNOTSET): Likewise.
+    (ERR_NOMANAGER): Add field for channel lifetime.
+
+2005-10-30  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_join.c (m_join): Fix check for OVERRIDE when the real
+    channel key is OVERRIDE.  (Reworked patch from a1kmm.)
+
+2005-10-30  Michael Poole <mdpoole@troilus.org>
+
+    * .cvsignore: Add autom4te.cache.
+
+    * ircd/.cvsignore: Add convert-conf.
+
+    * ircd/test/.cvsignore: Add ircd_match_t.
+
+    * patches/.cvsignore: Add marks.
+
+2005-10-28  Alex Badea  <vamposdecampos@gmail.com>
+
+    * ircd/m_kick.c (ms_kick): Fix format string typo (bug #1339538)
+
+2005-10-17  Diane Bruce  <db@db.net>
+
+    * ircd/ircd_res.c: Don't send retries if the client did
+    not resolve (SERVFAIL); this fixes a bug causing a flurry
+    of retries in this case
+
+2005-10-14  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Update to pre02.
+
+2005-10-14  Michael Poole <mdpoole@troilus.org>
+
+    * doc/readme.cvs: Document tag name consistently with the release
+    name.
+
+    * include/patchlevel.h (PATCHLEVEL): Bump patchlevel for release
+    of 2.10.12.01.
+
+2005-10-12  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf: Update documentation to match this change.
+
+    * ircd/client.c (client_set_privs): Make default global oper
+    privileges match what was in 2.10.11.
+
+2005-10-11  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/os_generic.c (os_get_rusage): Make conditional on DEBUGMODE
+    to mitigate bug #1313429.
+
+2005-10-12  Perry Lorier <isomer@undernet.org>
+
+    * include/s_stats.h: Add new "Local" only flag to /stats.
+
+    * ircd/m_stats.c: Consult it.
+
+    * ircd/s_stats.c: Use the flag.
+
+2004-01-04  Kevin L Mitchell  <klmitch@mit.edu>
+
+    * ircd/s_numeric.c (do_numeric): fix a crash when a numeric is
+    sent to a channel...
+
+2005-10-06  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_join.c (m_join): Report too-long channel names as
+    non-existent.
+
+2005-10-05  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_names.c (m_names): Fix format string when forwarding
+    /names -D to other servers.
+    (ms_names): Likewise.  Add support for remote /names -D.
+
+2005-10-05  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/class.c (do_find_class): Fix bug from previous commit.
+
+    * ircd/ircd_parser.y (clientblock): Allow setting Client port.
+
+    * ircd/s_conf.c (check_limit_and_attach): Merge into attach_iline.
+    (attach_iline): Only set FLAG_DOID when we are sure we will attach
+    this Client block to the client. [Credit: Jukka Ollila and others]
+
+2005-10-04  Michael Poole <mdpoole@troilus.org>
+    [Based on a patch by Jukka Ollila]
+
+    * include/class.h (find_class): Rename to do_find_class().
+
+    * ircd/class.c (class_delete_marked): Keep invalid classes in list
+    until next rehash.
+    (add_class): Use new parameter to do_find_class() to allow a class
+    to be "resurrected".
+    (find_class): Rename.
+    (report_classes): Use 'y' instead of 'Y' when reporting invalid
+    classes.
+
+2005-10-01  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_kick.c (ms_kick): If the kick target is join-delayed,
+    only send the KICK to the kicker.  Spotted by Cesar_.
+
+2005-10-01  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Update to pre1.
+
+    * ircd/class.c (init_class): Only set default class's ->next
+    pointer when first allocating it.
+
+2005-09-30  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_who.c (m_who): Handle matchsel & WHO_FIELD_ACC when
+    matching users.
+
+2005-09-30  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h: Update for release.
+
+2005-09-28  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_kick.c (ms_kick): Use correct oplevel when bouncing a
+    chanop being kicked.
+
+2005-09-26  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/whocmds.c (do_who): Fix uninitialized variable warning
+    about 'chan'.
+
+2005-09-26  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/parse.c (del_msg_element): Only delete empty subtrees, and
+    leave subtrees that may still contain data.
+
+2005-09-26  Michael Poole <mdpoole@troilus.org>
+
+    * include/channel.h (struct ModeBuf): Add mbm_oplevel to args
+    array.
+    (MB_OPLEVEL): New corresponding macro.
+    (modebuf_mode_client): Add corresponding argument.
+
+    * ircd/channel.c (modebuf_flush_int): Adjust worst-case buffer
+    usage to include :999 suffix.  Change format for oplevel passing.
+    (modebuf_mode_client): Set oplevel field in mbuf args array.
+    (struct ParseState): Add oplevel field to cli_change array.
+    (mode_parse_client): Accept and record oplevel suffix from
+    servers; fix it up if we're bouncing a deop.
+    (mode_process_clients): If a valid oplevel was parsed, use it.
+
+    * ircd/m_burst.c (ms_burst): Pass oplevel to modebuf_mode_client().
+
+    * ircd/m_clearmode.c (do_clearmode): Likewise.
+
+    * ircd/m_create.c (ms_create): Likewise.
+
+    * ircd/m_kick.c (ms_kick): Likewise.
+
+2005-09-23  Michael Poole <mdpoole@troilus.org>
+
+    * include/whocmds.h (WHOSELECT_DELAY): Define new constant.
+
+    * ircd/m_who.c (m_who): Accept 'd'/'D' as a way to set
+    WHOSELECT_DELAY, just like 'o' for WHOSELECT_OPER.  Do not skip
+    join-delayed users if WHOSELECT_DELAY is set.
+
+    * ircd/whocmds.c (do_who): Remember membership for shared channel
+    if one exists.  Use it when displaying flags, adding '<' for
+    join-delayed users.
+
+2005-09-22  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (mode_parse_key): Only accept the new key when
+    the current one is empty or "greater" than the new one.
+    (mode_parse_upass): Likewise, for upass.
+    (mode_parse_apass): Likewise, for apass.
+
+2005-09-22  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/gline.c (gline_checkmask): Add missing digit in mask length
+    check.
+
+2005-09-21  Michael Poole <mdpoole@troilus.org>
+
+    * doc/example.conf: Remove confused and outdated references to
+    Martians.
+
+2005-09-20  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/Makefile.in: Regenerate "make depend" dependencies.
+
+    * ircd/test/Makefile.in: Likewise.
+
+2005-09-16  Kevin L. Mitchell  <klmitch@mit.edu>
+
+    * ircd/m_join.c (last0): fix problem leading to protocol
+    violations on certain combinations of /join 0 from remote servers
+    (probably from local users, too) [bug #1291029]; remove redundant
+    !IsChannelChar() check
+
+2005-09-14  Michael Poole <mdpoole@troilus.org>
+
+    * doc/readme.cvs: Document the branching scheme for 2.10.12.
+
+2005-09-14  Michael Poole <mdpoole@troilus.org>
+
+    * include/patchlevel.h (PATCHLEVEL): Increment to reflect the
+    pre-release code freeze.
+
+2005-09-14  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (find_ban): Fix the sense of another check.
+
+2005-09-13  Michael Poole <mdpoole@troilus.org>
+
+    * include/channel.h (clean_channelname): Remove prototype.
+
+    * ircd/m_invite.c (m_invite): Do not clean channel name; just
+    reject invalid channel names.
+
+    * ircd/m_join.c (m_join): Likewise.
+
+    * ircd/m_mode.c (m_mode): Do not clean channel name.
+
+    * ircd/m_names.c (m_names): Likewise.
+
+    * ircd/m_opmode.c (mo_opmode): Likewise.
+
+2005-09-13  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (find_ban): Revert to older style of comparison,
+    fixing the sense of one check.  Spotted by Alex Badea.
+
+2005-09-13  Alex Badea <vamposdecampos@gmail.com>
+
+    * ircd/ircd.c (try_connections): modify autoreconnect logic to
+    allow FEAT_CONNECTFREQUENCY to be smaller than Class connectfreq
+
+2005-09-13  Alex Badea <vamposdecampos@gmail.com>
+
+    * ircd/s_conf.c (close_mappings): NULL out GlobalServiceMapList,
+    otherwise the linked list has an invalid ending sentinel on rehash
+
+2005-09-12  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (find_ban): Compare ban mask against hostname
+    even when it looks like an IP, to match things like *!*@1.* when
+    users have a hostname like 1.2.3.example.com.
+
+2005-09-12  Michael Poole <mdpoole@troilus.org>
+
+    * RELEASE.NOTES: Note the resolution of ambiguous ipmasks.
+
+    * ircd/ircd_string.c (ipmask_parse): Implement it.
+
+2005-09-12  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/m_join.c (m_join): If we find an empty key, null out the
+    key pointer.
+
+2005-09-11  Michael Poole <mdpoole@troilus.org>
+
+    * RELEASE.NOTES: Mention the side benefits of this change.
+
+    * include/ircd_string.h (ipmask_parse): Declare function here.
+    (ircd_aton): Becomes a special case of ipmask_parse().
+
+    * include/match.h (check_if_ipmask): Undeclare function.
+    (ipmask_parse): Remove function prototype from this file.
+
+    * ircd/ircd_string.c (ircd_aton_ip4): Add nullable pbits parameter
+    to accept ipmask length.  Rework to fill that in.
+    (ircd_aton): Rework into...
+    (ipmask_parse): this function, which knows how to fill in its own
+    pbits parameter.
+
+    * ircd/m_burst.c (ms_burst): Rely on make_ban() to set the ban
+    flags correctly, to avoid call to check_if_ipmask().
+
+    * ircd/match.c (ipmask_parse_ipv4): Delete function.
+    (check_if_ipmask): Likewise.
+    (ipmask_parse): Delete this version in favor of ircd_string.c's.
+
+    * ircd/test/ircd_in_addr_t.c (ipmask_test): New struct type.
+    (test_masks): New array of ipmask_test.
+    (test_ipmask): Function to run one of those tests.
+    (main): Call test_ipmask().
+
+2005-09-11  Alex Badea <vamposdecampos@gmail.com>
+
+    * ircd/m_ping.c (ms_ping, mo_ping): misplaced chunk of code
+    (probably during the forward port) which broke AsLL; fixed.
+
+2005-09-01  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/gline.c (make_gline): Remove debug output from when IPv6
+    support was being debugged.
+    (do_gline): Likewise.
+    (gline_lookup): Likewise, plus remove redundant code.
+
+2005-09-01  Michael Poole <mdpoole@troilus.org>
+
+    * ircd/channel.c (joinbuf_join): Ignore joinbuf type when joining
+    0, since no other call passes a null channel.
+
+    * ircd/m_join.c: Remove comment discussing argument meanings.
+    (last0): Make this also handle the JOIN 0 logic, doxyfy.
+    (join0): Merge into last0.
+    (m_join): Doxygenate.  Remove check for join0.  Further
+    reorganize, so new versus old channel handling are moved to just
+    one place each within this function.
+    (ms_join): Doxygenate.  Remove check for join0.
+
+2005-09-01  Michael Poole <mdpoole@troilus.org>
+
+    * RELEASE.NOTES: Bump revision date and highlight this change.
+
+    * include/channel.h (MAGIC_OPER_OVERRIDE): Remove.
+    (can_join): Remove declaration.
+
+    * ircd/channel.c (compall): Remove.
+    (can_join): Remove.
+
+    * ircd/m_join.c (m_join): Remove redundant check for control
+    characters (clean_channelname() will get them). Reorganize initial
+    flags calculation.  Accept channel keys like RFC 1459 says; this
+    requires the old compall()/can_join() logic to modify 'keys', so
+    inline the code and reorganize it.
+
 2005-08-30  Michael Poole <mdpoole@troilus.org>
 
 	* include/channel.h (PASSLEN): Remove; use KEYLEN instead.
