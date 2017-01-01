@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl
 dnl IRC-Dev IRCD - An advanced and innovative IRC Daemon, configure
 dnl
-dnl Copyright (C) 2002-2015 IRC-Dev Development Team <devel@irc-dev.net>
+dnl Copyright (C) 2002-2017 IRC-Dev Development Team <devel@irc-dev.net>
 dnl Copyright (C) 2005  Kevin L. Mitchell <klmitch@mit.edu>
 dnl Copyright (C) 2001  Kevin L. Mitchell <klmitch@mit.edu>
 dnl Copyright (c) 1997, by Carlo Wood <carlo@runaway.xs4all.nl>

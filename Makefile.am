@@ -1,6 +1,6 @@
 ## AutoMake top-level Makefile for the IRC-DEV IRC Daemon
 ##
-## Copyright (C) 2005-2015 IRC-Dev Development Team <devel@irc-dev.net>
+## Copyright (C) 2005-2017 IRC-Dev Development Team <devel@irc-dev.net>
 ## Copyright (C) 2005 by Kevin L. Mitchell <klmitch@mit.edu>
 ##
 ## This program is free software; you can redistribute it and/or modify

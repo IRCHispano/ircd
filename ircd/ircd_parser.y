@@ -1,7 +1,7 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ircd_parser.y
  *
- * Copyright (C) 2002-2015 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2002-2017 IRC-Dev Development Team <devel@irc-dev.net>
  * Copyright (C) 2001 by Andrew Miller, Diana Bruce and ircd-hybrid team
  *
  * This program is free software; you can redistribute it and/or modify

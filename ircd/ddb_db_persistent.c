@@ -1,8 +1,8 @@
 /*
  * IRC-Dev IRCD - An advanced and innovative IRC Daemon, ircd/ddb_db_persistent.c
  *
- * Copyright (C) 2002-2015 IRC-Dev Development Team <devel@irc-dev.net>
- * Copyright (C) 2004-2015 Toni Garcia (zoltan) <zoltan@irc-dev.net>
+ * Copyright (C) 2002-2017 IRC-Dev Development Team <devel@irc-dev.net>
+ * Copyright (C) 2004-2007 Toni Garcia (zoltan) <zoltan@irc-dev.net>
  * Copyright (C) 1999-2003 Jesus Cea Avion <jcea@argo.es> Esnet IRC Network
  *
  * This program is free software; you can redistribute it and/or modify
