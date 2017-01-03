@@ -129,12 +129,16 @@ static void IPregistry_canonicalize(struct irc_in_addr *out, const struct irc_in
         out->in6_16[0] = htons(0x2002);
         out->in6_16[1] = in->in6_16[6];
         out->in6_16[2] = in->in6_16[7];
-        out->in6_16[3] = out->in6_16[4] = out->in6_16[5] = 0;
-        out->in6_16[6] = out->in6_16[7] = 0;
-    } else
-        memcpy(out, in, sizeof(*out));
-        //Renunciamos a los 64 bits restantes, no es necesario
-        out->in6_16[4] = out->in6_16[5] = out->in6_16[6] = out->in6_16[7] = 0;
+        out->in6_16[3] = 0;
+    } else {
+        out->in6_16[0] = in->in6_16[0];
+        out->in6_16[1] = in->in6_16[1];
+        out->in6_16[2] = in->in6_16[2];
+        out->in6_16[3] = in->in6_16[3];
+    }
+
+    out->in6_16[4] = out->in6_16[5] = 0;
+    out->in6_16[6] = out->in6_16[7] = 0;
 }
 
 static struct IPregistry *IPregistry_add(struct IPregistry_vector *iprv)
@@ -571,9 +575,12 @@ int IPbusca_clones(aClient *cptr)
   if (!IsUnixSocket(cptr))
   {
     struct irc_in_addr range;
-    IPregistry_canonicalize(&range, &cptr->ip);
+    char IPCidr[512];
 
-    reg = db_buscar_registro(ESNET_CLONESDB, (char *)ircd_ntoa(&range));
+    IPregistry_canonicalize(&range, &cptr->ip);
+    sprintf(IPCidr, "%s/%d", ircd_ntoa(&range), ((&range)->in6_16[0] == htons(0x2002)) ? 48 : 64);
+
+    reg = db_buscar_registro(ESNET_CLONESDB, IPCidr);
     if (reg == NULL) {
         return -1;
     }
