@@ -592,7 +592,7 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
 ** Informacion adicional bajo base de datos
 */
     buf[0] = '\0';
-    reg = db_buscar_registro(BDD_CONFIGDB, BDD_MENSAJE_DE_DEMASIADOS_CLONES);
+    reg = db_buscar_registro(BDD_FEATURESDB, BDD_MENSAJE_DE_DEMASIADOS_CLONES);
     if (reg)
     {
       strcpy(buf, ". ");
