@@ -1,15 +1,15 @@
-* 2017/01/03  zoltan@irc-dev.net (u2.10.H.10.242)                    FIX
+* 2017/01/03  toni@tonigarcia.es (u2.10.H.10.243)                    FIX
 ------------------------------------------------------------------------
   Se corrige un par de cosillas en el soporte de Clones. Hay que
   especificar la mascara CIDR en la iline en la tabla i de la BDD.
   Suele ser /48 en IPv4 (6to4) y /64 en IPv6.
 
-* 2016/12/31  zoltan@irc-dev.net (u2.10.H.10.242)                    FIX
+* 2016/12/31  toni@tonigarcia.es (u2.10.H.10.242)                    FIX
 ------------------------------------------------------------------------
   Fix en el parche u2.10.H.10.225 de Proxy que provocaba cores aleatorios
   y se aprovecha para optimizar un poco el codigo.
 
-* 2016/12/15  zoltan@irc-dev.net (u2.10.H.10.241)                FEATURE
+* 2016/12/15  toni@tonigarcia.es (u2.10.H.10.241)                FEATURE
 ------------------------------------------------------------------------
   Completamos el parche u2.10.H.10.230 para tener soporte IPv6 completo.
 
@@ -19,12 +19,12 @@
   usa el rango 2002::/16 para embebir la IPv4 dentro de una IPv6. En este
   caso se usan solo los primeros 48 bits, estando a 0 el resto.
 
-* 2016/11/10  zoltan@irc-dev.net (u2.10.H.10.240)                FEATURE
+* 2016/11/10  toni@tonigarcia.es (u2.10.H.10.240)                FEATURE
 ------------------------------------------------------------------------
   Nuevo Modo +K de Docking.
    Permite saltar limite de canales, flood y target.
 
-* 2016/08/17  zoltan@irc-dev.net (u2.10.H.10.239)                    FIX
+* 2016/08/17  toni@tonigarcia.es (u2.10.H.10.239)                    FIX
 ------------------------------------------------------------------------
   Fix en el ban de host virtuales genericas, el match era sin case, 
   implicaba que se baneaban a muchas ips cuando se ponia ban a un host 
@@ -32,7 +32,7 @@
 
   Se cambia el match a nocase.
 
-* 2016/07/06  zoltan@irc-dev.net (u2.10.H.10.238)                FEATURE
+* 2016/07/06  toni@tonigarcia.es (u2.10.H.10.238)                FEATURE
 ------------------------------------------------------------------------
   Cambios en registros BDD.
 
@@ -64,58 +64,58 @@
    Se aÃ±ade part:servidor para especificar un part por defecto de la misma
    forma que el quit por defecto.
 
-* 2016/05/11  zoltan@irc-dev.net (u2.10.H.10.237)                FEATURE
+* 2016/05/11  toni@tonigarcia.es (u2.10.H.10.237)                FEATURE
 ------------------------------------------------------------------------
   Se agrega la posibilidad de mostrar un notice al recibir una Gline
   para dar instrucciones de como proceder ante la Gline.
   Se hace con el registro mensaje.gline en la tabla z de la BDD.
 
-* 2016/05/11  zoltan@irc-dev.net (u2.10.H.10.236)                CLEANUP
+* 2016/05/11  toni@tonigarcia.es (u2.10.H.10.236)                CLEANUP
 ------------------------------------------------------------------------
   Se elimina totalmente el soporte propietario de Webchat Flash que
   utilizaba un protocolo distinto e incompatible con RFC1459.
   Al dejar de usarlo en IRC-Hispano, ya no se hace necesario dicho
   soporte.
 
-* 2016/04/18  zoltan@irc-dev.net (u2.10.H.10.235)                FEATURE
+* 2016/04/18  toni@tonigarcia.es (u2.10.H.10.235)                FEATURE
 ------------------------------------------------------------------------
   Cambios en el modo +X, los Opers no pueden ver la IP a otros Opers o
   Admins. Solo podran a usuarios.
 
-* 2016/04/17  zoltan@irc-dev.net (u2.10.H.10.234)                    FIX
+* 2016/04/17  toni@tonigarcia.es (u2.10.H.10.234)                    FIX
 ------------------------------------------------------------------------
   Los que entran por PROXY no se consideran Webchat para el +W de canal.
 
-* 2016/04/11  zoltan@irc-dev.net (u2.10.H.10.233)                    FIX
+* 2016/04/11  toni@tonigarcia.es (u2.10.H.10.233)                    FIX
 ------------------------------------------------------------------------
   Faltaba un par de cosas en el parche u2.10.H.10.231.
 
-* 2016/04/04  zoltan@irc-dev.net (u2.10.H.10.232)                CLEANUP
+* 2016/04/04  toni@tonigarcia.es (u2.10.H.10.232)                CLEANUP
 ------------------------------------------------------------------------
   Deshacemos el parche u2.10.H.10.165, porque los motivos para su
   implementacion no han sido claros ni justificados tecnicamente.
   Se vuelve a permitir poner todos los caracteres definidos por el
   RFC1459.
 
-* 2016/04/04  zoltan@irc-dev.net (u2.10.H.10.231)                FEATURE
+* 2016/04/04  toni@tonigarcia.es (u2.10.H.10.231)                FEATURE
 ------------------------------------------------------------------------
   Nuevo modo +W de canal que solo permite hablar en el canal a los @,+,
   nicks registrados y usuarios que entran por WEBIRC.
  
-* 2016/02/01  zoltan@irc-dev.net (u2.10.H.10.230)                    FIX
+* 2016/02/01  toni@tonigarcia.es (u2.10.H.10.230)                    FIX
 ------------------------------------------------------------------------
   En los Clones siempre por IP, usar primero host y despues IP da muchos
   problemas.
 
-* 2016/01/15  zoltan@irc-dev.net (u2.10.H.10.229)                FEATURE
+* 2016/01/15  toni@tonigarcia.es (u2.10.H.10.229)                FEATURE
 ------------------------------------------------------------------------
   Modo +n disponible para usuarios +r
 
-* 2015/02/16  zoltan@irc-dev.net (u2.10.H.10.228)                    FIX
+* 2015/02/16  toni@tonigarcia.es (u2.10.H.10.228)                    FIX
 ------------------------------------------------------------------------
   Fix en PONG remoto que hace matar los hubs.
 
-* 2015/02/16  zoltan@irc-dev.net (u2.10.H.10.227)                    FIX
+* 2015/02/16  toni@tonigarcia.es (u2.10.H.10.227)                    FIX
 ------------------------------------------------------------------------
   Correcciones:
   - El WHO sin parametros no salen ips reales, hay que usar x%.
@@ -137,21 +137,21 @@
   coma de los proxies autorizados a conectar. HAproxy debe ser tener la
   opcion 'send-proxy' habilitada.
 
-* 2015/02/16  zoltan@irc-dev.net (u2.10.H.10.224)                CLEANUP
+* 2015/02/16  toni@tonigarcia.es (u2.10.H.10.224)                CLEANUP
 ------------------------------------------------------------------------
   Eliminamos el parche u2.10.H.10.187 de deep.space para pasar a ser
   mediante parche en el directorio patches.
 
-* 2014/10/07  zoltan@irc-dev.net (u2.10.H.10.222)                FEATURE
+* 2014/10/07  toni@tonigarcia.es (u2.10.H.10.222)                FEATURE
 ------------------------------------------------------------------------
   El WHO muestra vhost aun teniendo +X. Para ver con host real hay que
   usar el flag h.
  
-* 2014/10/07  zoltan@irc-dev.net (u2.10.H.10.221)                CLEANUP
+* 2014/10/07  toni@tonigarcia.es (u2.10.H.10.221)                CLEANUP
 ------------------------------------------------------------------------
   Cambiamos el F de negociacion por N en el config y comando STATS. 
 
-* 2014/07/26  zoltan@irc-dev.net (u2.10.H.10.220)                CLEANUP
+* 2014/07/26  toni@tonigarcia.es (u2.10.H.10.220)                CLEANUP
 ------------------------------------------------------------------------
   Eliminado soporte de UNIXPORT por carecer de sentido hoy en dia.
   Idem con USEONE.
@@ -159,7 +159,7 @@
   Eliminadas compilaciones condicionales de BADCHAN y WATCH por ser
   features obligatorias.
 
-* 2014/07/25  zoltan@irc-dev.net (u2.10.H.10.219)                FEATURE
+* 2014/07/25  toni@tonigarcia.es (u2.10.H.10.219)                FEATURE
 ------------------------------------------------------------------------
   Con el fin de facilitar la transicion al nuevo ircd, el MOTD por BDD
   va por la tabla m.
@@ -173,7 +173,7 @@
     Existe la opciÃ³n de incluir el MOTD local en cualquier posiciÃ³n,
     especificando "%LOCALMOTD" en una lÃ­nea.
 
-* 2014/07/07  zoltan@irc-dev.net (u2.10.H.10.218)                    FIX
+* 2014/07/07  toni@tonigarcia.es (u2.10.H.10.218)                    FIX
 ------------------------------------------------------------------------
   Fix modo +S reportado por varios usuarios.
 
@@ -181,21 +181,21 @@
     http://tools.ietf.org/html/draft-hardy-irc-isupport-00
     http://www.irc.org/tech_docs/005.html
 
-* 2014/06/09  zoltan@irc-dev.net (u2.10.H.10.217)                    FIX
+* 2014/06/09  toni@tonigarcia.es (u2.10.H.10.217)                    FIX
 ------------------------------------------------------------------------
   Comprobador de -lrt para el check_gettime() en el Configure.
 
-* 2014/05/10  zoltan@irc-dev.net (u2.10.H.10.216)                    FIX
+* 2014/05/10  toni@tonigarcia.es (u2.10.H.10.216)                    FIX
 ------------------------------------------------------------------------
   Fixes en modo WEBCHAT FLASH cuando el usuario es de IRC.
 
-* 2014/04/14  zoltan@irc-dev.net (u2.10.H.10.215)                    FIX
+* 2014/04/14  toni@tonigarcia.es (u2.10.H.10.215)                    FIX
 ------------------------------------------------------------------------
   Limpiamos un poco la version del ircd.
 
   Fix en el parche de checkban.
 
-* 2014/04/11  zoltan@irc-dev.net (u2.10.H.10.214)                FEATURE
+* 2014/04/11  toni@tonigarcia.es (u2.10.H.10.214)                FEATURE
 ------------------------------------------------------------------------
   Con el fin de mas transparencia en el codigo, agrego soporte de parches
   externos y/o especificos para algun servidor.
@@ -213,11 +213,11 @@
 
   Aplicando los parches modifica la version visible del ircd.
 
-* 2014/04/01  zoltan@irc-dev.net (u2.10.H.10.213)                    FIX
+* 2014/04/01  toni@tonigarcia.es (u2.10.H.10.213)                    FIX
 ------------------------------------------------------------------------
   Los +h pueden ver los modos ocultos.
 
-* 2014/03/27  zoltan@irc-dev.net (u2.10.H.10.212)                    FIX
+* 2014/03/27  toni@tonigarcia.es (u2.10.H.10.212)                    FIX
 ------------------------------------------------------------------------
   Corregido fix que hacia que no se propagase correctamente los nicks
   webchat-*.
@@ -226,7 +226,7 @@
   m_nick_remoto no funciona correctamente. Pero lo dejo asi por los
   posibles efectos colaterales y que pronto se cambiara de base.
 
-* 2014/03/27  zoltan@irc-dev.net (u2.10.H.10.211)                    FIX
+* 2014/03/27  toni@tonigarcia.es (u2.10.H.10.211)                    FIX
 ------------------------------------------------------------------------
   Los usuarios con +k no estan protegidos a si mismo, es decir, pueden
   quitarse la op. 
@@ -234,7 +234,7 @@
   Habilito en memoria las tablas l,m,p y q que serÃ¡n usadas en el futuro
   ircd para evitar problemas de sincronizaciones.
 
-* 2014/03/13  zoltan@irc-dev.net (u2.10.H.10.210)                    FIX
+* 2014/03/13  toni@tonigarcia.es (u2.10.H.10.210)                    FIX
 ------------------------------------------------------------------------
   Modifico el parche u2.10.H.10.150, para que sea activable via BDD
   la conversion UTF8 a LATIN de los join. Es con la entrada conversion.utf
@@ -244,7 +244,7 @@
 
   Los +o/h pueden ver los canales de los usuarios con +n.
 
-* 2014/03/09  zoltan@irc-dev.net (u2.10.H.10.209)                    FIX
+* 2014/03/09  toni@tonigarcia.es (u2.10.H.10.209)                    FIX
 ------------------------------------------------------------------------
   Modos de usuarios nuevos en el WHO.
 
@@ -255,11 +255,11 @@
   Registro operschan en tabla z para el canal de disponible para ayuda.
 
 
-* 2014/01/01  zoltan@irc-dev.net (u2.10.H.10.208)                    FIX
+* 2014/01/01  toni@tonigarcia.es (u2.10.H.10.208)                    FIX
 ------------------------------------------------------------------------
   Ajustes en stats W y DBQ para WEBIRC.
 
-* 2014/01/01  zoltan@irc-dev.net (u2.10.H.10.207)                CLEANUP
+* 2014/01/01  toni@tonigarcia.es (u2.10.H.10.207)                CLEANUP
 ------------------------------------------------------------------------
   Reorganizamos el sistema antispam.
 
@@ -269,22 +269,22 @@
   - P  No puede mandar ni recibir privados excepto si es/a un clon.
   - J  Si hace un JOIN, entra a un canal sumidero.
 
-* 2013/12/31  zoltan@irc-dev.net (u2.10.H.10.206)                CLEANUP
+* 2013/12/31  toni@tonigarcia.es (u2.10.H.10.206)                CLEANUP
 ------------------------------------------------------------------------
   Eliminamos soporte de RENAME por ser obsoleto. En su lugar se usa
   SVSNICK.
 
-* 2013/12/31  zoltan@irc-dev.net (u2.10.H.10.205)                    FIX
+* 2013/12/31  toni@tonigarcia.es (u2.10.H.10.205)                    FIX
 ------------------------------------------------------------------------
   Fix de compilacion reportado por donostiarra en entornos FreeBSD.
 
   Fixes de los parches anteriores.
 
-* 2013/12/31  zoltan@irc-dev.net (u2.10.H.10.204)                    FIX
+* 2013/12/31  toni@tonigarcia.es (u2.10.H.10.204)                    FIX
 ------------------------------------------------------------------------
   Fixes de optimizacion.
 
-* 2013/12/31  zoltan@irc-dev.net (u2.10.H.10.203)                CLEANUP
+* 2013/12/31  toni@tonigarcia.es (u2.10.H.10.203)                CLEANUP
 ------------------------------------------------------------------------
   Por cuestiones operativas, eliminamos las transiciones introducidas en
   las versiones u2.10.H.10.196 y u2.10.H.10.199.
@@ -293,7 +293,7 @@
   los vhost de colores.
   En su lugar se usaran OPMODE y tabla v con separacion ! respectivamente.
 
-* 2013/10/06  zoltan@irc-dev.net (u2.10.H.10.202)                CLEANUP
+* 2013/10/06  toni@tonigarcia.es (u2.10.H.10.202)                CLEANUP
 ------------------------------------------------------------------------
   Dado que ya hay soporte de Webchat HTML con un estandar mundial, se
   elimina del codigo todo el codigo del soporte propietario de Webchat
@@ -301,7 +301,7 @@
 
   Limpieza de funciones en desuso.
 
-* 2013/10/06  zoltan@irc-dev.net (u2.10.H.10.201)                FEATURE
+* 2013/10/06  toni@tonigarcia.es (u2.10.H.10.201)                FEATURE
 ------------------------------------------------------------------------
   Implementacion del estandar WEBIRC orientado para los webchats HTML
   que entran al IRC con la IP del servidor HTTP.
@@ -330,7 +330,7 @@
   Se recomienda usar global para que funcione en todos los servidores con
   puerto 6667.
     
-* 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.200)                FEATURE
+* 2013/08/27  toni@tonigarcia.es (u2.10.H.10.200)                FEATURE
 ------------------------------------------------------------------------
   Se modifica el comportamiento de la tabla o.
   Si detecta que el contenido del registro es un numero, actua como hasta
@@ -366,7 +366,7 @@
   la version u2.10.H.10.200 o superior. No es necesario activar la
   "transicion.ircd".
 
-* 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.199)                FEATURE
+* 2013/08/27  toni@tonigarcia.es (u2.10.H.10.199)                FEATURE
 ------------------------------------------------------------------------
   En su dia, en el parche u2.10.H.10.63, establecia una tabla propia
   para usar colores en el whois.
@@ -384,7 +384,7 @@
   Se ha elegido el caracter '!' por ser ':' un caracter valido en IPs,
   aunque no en hosts, para no impedir la posibilidad de poner IPv6 "fakes".  
 
-* 2013/09/01  zoltan@irc-dev.net (u2.10.H.10.198)                    FIX
+* 2013/09/01  toni@tonigarcia.es (u2.10.H.10.198)                    FIX
 ------------------------------------------------------------------------
   Por notificacion de Corleone se ha corregido un problema con el registro
   "debugchan" de la tabla z de la BDD.
@@ -396,7 +396,7 @@
   Ahora esta corregido. Tambien se corrige otro bug, ahora solo lo hace
   localmente en vez de todos los servidores.
 
-* 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.197)                FEATURE
+* 2013/08/27  toni@tonigarcia.es (u2.10.H.10.197)                FEATURE
 ------------------------------------------------------------------------
   Soporte de SSL con stunnel y similares.
 
@@ -405,7 +405,7 @@
 
   El soporte nativo de SSL lo tendra el nuevo ircd.
 
-* 2013/08/27  zoltan@irc-dev.net (u2.10.H.10.196)                FEATURE
+* 2013/08/27  toni@tonigarcia.es (u2.10.H.10.196)                FEATURE
 ------------------------------------------------------------------------
   Con el fin de facilitar la transicion a la nueva base de ircd basado
   en Quakenet+Undernet, se introducen nuevos modos:
@@ -426,19 +426,19 @@
 
   Este diff es parcial, la otra parte del diff esta en la revision 434.
 
-* 2013/06/14  zoltan@irc-dev.net (u2.10.H.10.195)                    FIX
+* 2013/06/14  toni@tonigarcia.es (u2.10.H.10.195)                    FIX
 ------------------------------------------------------------------------
   Corregido un error de compilacion aportado por donostiarra que impedia
   compilar con BDD_MMAP y sin WEBCHAT.
 
-* 2013/06/11  zoltan@irc-dev.net (u2.10.H.10.194)                FEATURE
+* 2013/06/11  toni@tonigarcia.es (u2.10.H.10.194)                FEATURE
 ------------------------------------------------------------------------
   Nuevo modo 'n' como en Quakenet.
 
   Solo puede ponerlo por un servidor/service y es para ocultar todos los
   canales en el whois.
 
-* 2013/06/10  zoltan@irc-dev.net (u2.10.H.10.193)                FEATURE
+* 2013/06/10  toni@tonigarcia.es (u2.10.H.10.193)                FEATURE
 ------------------------------------------------------------------------
   Soporte de SVSKICK.
 
@@ -451,17 +451,17 @@
   Se puede definir un mensaje fijo para el PART con el registro
   "mensaje.part.svskick" en la tabla z.
 
-* 2013/06/09  zoltan@irc-dev.net (u2.10.H.10.192)                    FIX
+* 2013/06/09  toni@tonigarcia.es (u2.10.H.10.192)                    FIX
 ------------------------------------------------------------------------
   Por una limitacion debido por un requisito imprescindible de los
   Webchats no se puede jupear la mascara "webchat-*", hago que si se
   compila para clientes IRC no se pueda poner de ningun modo ese nick.
 
-* 2013/06/08  zoltan@irc-dev.net (u2.10.H.10.191)                    FIX
+* 2013/06/08  toni@tonigarcia.es (u2.10.H.10.191)                    FIX
 ------------------------------------------------------------------------
   Correcciones de nicks reservados para webchats.
 
-* 2013/06/06  zoltan@irc-dev.net (u2.10.H.10.190)             TRANSITION
+* 2013/06/06  toni@tonigarcia.es (u2.10.H.10.190)             TRANSITION
 ------------------------------------------------------------------------
   Empezamos con la transicion al nuevo IRCD.
 
@@ -479,23 +479,23 @@
   - Se desactiva el XMODE de Jcea y se activa el OPMODE de Undernet que
     el funcionamiento es similar pero más limpio y con warning/logging.
 
-* 2013/04/08  zoltan@irc-dev.net (u2.10.H.10.189)                FEATURE
+* 2013/04/08  toni@tonigarcia.es (u2.10.H.10.189)                FEATURE
 ------------------------------------------------------------------------
   Cambio la restrccion para tener +X, ahora basta con tener nivel 5
   en vez de 10 de antes.
 
-* 2013/01/20  zoltan@irc-dev.net (u2.10.H.10.188)                FEATURE
+* 2013/01/20  toni@tonigarcia.es (u2.10.H.10.188)                FEATURE
 ------------------------------------------------------------------------
   Faltaban 4 casos mas del parche anterior.
 
-* 2013/01/20  zoltan@irc-dev.net (u2.10.H.10.187)                FEATURE
+* 2013/01/20  toni@tonigarcia.es (u2.10.H.10.187)                FEATURE
 ------------------------------------------------------------------------
   Otro parche de transicion de deep.space a P10.
   En el SERVER manda los modos de los servidores.
 
   Solo aplicable si se compila con MIGRACION_DEEPSPACE_P10
 
-* 2012/09/26  zoltan@irc-dev.net (u2.10.H.10.186)                FEATURE
+* 2012/09/26  toni@tonigarcia.es (u2.10.H.10.186)                FEATURE
 ------------------------------------------------------------------------
   Parche para facilitar la transicion de deep.space a P10.
   Ahora en el NICK manda el numerico para poder gestionar bien los nicks
@@ -504,25 +504,25 @@
 
   Solo aplicable si se compila con MIGRACION_DEEPSPACE_P10
   
-* 2012/09/06  zoltan@irc-dev.net (u2.10.H.10.185)                    FIX
+* 2012/09/06  toni@tonigarcia.es (u2.10.H.10.185)                    FIX
 ------------------------------------------------------------------------
   Hay problemas de propagacion de IPs transitorias, anulamos la transicion
   y ahora se manda en IPv6 si o si, en vez de depender de la version del
   servidor.
 
-* 2012/09/02  zoltan@irc-dev.net (u2.10.H.10.184)                CLEANUP
+* 2012/09/02  toni@tonigarcia.es (u2.10.H.10.184)                CLEANUP
 ------------------------------------------------------------------------
   Prioridad de SVSNICK sobre RENAME de cara al futuro.
   Cuando todos los servidores sean .184 o superior, retirar el rename.
   El soporte de SVSNICK se introdujo en el u2.10.H.10.65 y se nos olvido
   de ello.
 
-* 2012/09/02  zoltan@irc-dev.net (u2.10.H.10.183)                FEATURE
+* 2012/09/02  toni@tonigarcia.es (u2.10.H.10.183)                FEATURE
 ------------------------------------------------------------------------
   Introducimos una transicion para los clientes Web. Si se especifica 
   "webp" en el config req se manda el doble ping y si "web2" no.
 
-* 2012/09/02  zoltan@irc-dev.net (u2.10.H.10.182)                FEATURE
+* 2012/09/02  toni@tonigarcia.es (u2.10.H.10.182)                FEATURE
 ------------------------------------------------------------------------
   Modifico el parche u.2.10.H.10.94 cuando se compila sin WEBCHAT para que
   genere el ping numerico de toda la vida ejecutando mucho menos codigo.
@@ -537,19 +537,19 @@
   clave de cifrado de cookies del ircd. Si una de las dos claves no existe
   manda un "0".
 
-* 2012/09/02  zoltan@irc-dev.net (u2.10.H.10.181)                    FIX
+* 2012/09/02  toni@tonigarcia.es (u2.10.H.10.181)                    FIX
 ------------------------------------------------------------------------
   Cuando se compila para WEBCHAT (para clientes flash), los notices a
   nicks se envian como privmsg al cliente flash.
 
-* 2012/08/12  zoltan@irc-dev.net (u2.10.H.10.180)                CLEANUP
+* 2012/08/12  toni@tonigarcia.es (u2.10.H.10.180)                CLEANUP
 ------------------------------------------------------------------------
   Revierto el parche anterior, no existe el bug, funciona perfectamente.
   Se ha debido a una equivocacion de versiones.
   
   Mantengo lo de BADCHAN.
 
-* 2012/08/12  zoltan@irc-dev.net (u2.10.H.10.179)                    FIX
+* 2012/08/12  toni@tonigarcia.es (u2.10.H.10.179)                    FIX
 ------------------------------------------------------------------------
   Tras no poder conseguir reproducir un misterioso bug del CIDR y por
   necesidades de la red, desactivo el codigo de CIDR.
@@ -558,22 +558,22 @@
   Ademas provoco error de compilacion si se compila el ircd sin soporte
   de Glines de canales (BADCHAN).
 
-* 2012/08/01  zoltan@irc-dev.net (u2.10.H.10.178)                    FIX
+* 2012/08/01  toni@tonigarcia.es (u2.10.H.10.178)                    FIX
 ------------------------------------------------------------------------
   Bug detectado cuando hay mas de 3 hopcounts en el envio de IP base64
   segun si el servidor soporta IPv6 o no.
 
-* 2012/07/31  zoltan@irc-dev.net (u2.10.H.10.177)                    FIX
+* 2012/07/31  toni@tonigarcia.es (u2.10.H.10.177)                    FIX
 ------------------------------------------------------------------------
   Fix estetico en el whois.
 
-* 2012/07/19  zoltan@irc-dev.net (u2.10.H.10.176)                FEATURE
+* 2012/07/19  toni@tonigarcia.es (u2.10.H.10.176)                FEATURE
 ------------------------------------------------------------------------
   Descapo LINKS y MAP.
 
   Varios fixes esteticos en el LUSERS y USERS.
 
-* 2012/07/18  zoltan@irc-dev.net (u2.10.H.10.175)                FEATURE
+* 2012/07/18  toni@tonigarcia.es (u2.10.H.10.175)                FEATURE
 ------------------------------------------------------------------------
   Cambio de la forma de funcionamiento de los vhosts.
 
@@ -590,11 +590,11 @@
   Por la reescritura, se ha eliminado codigo de overriden de Watch que ya
   no hace falta.
 
-* 2012/07/18  zoltan@irc-dev.net (u2.10.H.10.174)                    FIX
+* 2012/07/18  toni@tonigarcia.es (u2.10.H.10.174)                    FIX
 ------------------------------------------------------------------------
   Un par de fixes de Glines CIDR.
 
-* 2012/06/22  zoltan@irc-dev.net (u2.10.H.10.173)                FEATURE
+* 2012/06/22  toni@tonigarcia.es (u2.10.H.10.173)                FEATURE
 ------------------------------------------------------------------------
   Soporte de Webchat HTML con IPv6. 
 
@@ -604,29 +604,29 @@
 
   Limpieza de diverso codigo provisional de IPv6.
 
-* 2011/12/20  zoltan@irc-dev.net (u2.10.H.10.172)                CLEANUP
+* 2011/12/20  toni@tonigarcia.es (u2.10.H.10.172)                CLEANUP
 ------------------------------------------------------------------------
   Limpieza de codigo de primera version de Apps Web, ya no se usa.
 
   Se aprovecha para poner pregunta en el conf para Webchat HTML.
 
-* 2011/12/20  zoltan@irc-dev.net (u2.10.H.10.171)                FEATURE
+* 2011/12/20  toni@tonigarcia.es (u2.10.H.10.171)                FEATURE
 ------------------------------------------------------------------------
   Soporte de Glines con CIDR para IPv4 y IPv6 y mejoras de gline a IP.
 
-* 2011/12/06  zoltan@irc-dev.net (u2.10.H.10.170)                FEATURE
+* 2011/12/06  toni@tonigarcia.es (u2.10.H.10.170)                FEATURE
 ------------------------------------------------------------------------
   Dado que los deep.space manejan las IPs con 128 bits (IPv6) fuerzo que
   los P09 reciban las IPv6 en formato de 128 bits en vez de 32 bits.
 
-* 2011/12/05  zoltan@irc-dev.net (u2.10.H.10.169)                FEATURE
+* 2011/12/05  toni@tonigarcia.es (u2.10.H.10.169)                FEATURE
 ------------------------------------------------------------------------
   Segunda version para Apps Web, que reduce mas aun el trafico. Se ahorra
   mas del 50% con respecto al rfc1459 original.
 
   Mandar "web2" en el Config Req.
 
-* 2011/12/02  zoltan@irc-dev.net (u2.10.H.10.168)                FEATURE
+* 2011/12/02  toni@tonigarcia.es (u2.10.H.10.168)                FEATURE
 ------------------------------------------------------------------------
   Version para aplicaciones Web del protocolo server->cliente para un
   ahorro considerable de trafico. Pregunta WEBCHAT en el make config dentro
@@ -634,16 +634,16 @@
 
   Se activa enviando "CONFIG REQ :web" al conectar al ircd.
 
-* 2011/11/28  zoltan@irc-dev.net (u2.10.H.10.167)                    FIX
+* 2011/11/28  toni@tonigarcia.es (u2.10.H.10.167)                    FIX
 ------------------------------------------------------------------------
   Fix del parche 10.152 y 10.156, que no se contemplaba los SVSJOIN en los
   joins.
 
-* 2011/11/02  zoltan@irc-dev.net (u2.10.H.10.166)                    FIX
+* 2011/11/02  toni@tonigarcia.es (u2.10.H.10.166)                    FIX
 ------------------------------------------------------------------------
   Lote de fixes.
 
-* 2011/10/26  zoltan@irc-dev.net (u2.10.H.10.165)                FEATURE
+* 2011/10/26  toni@tonigarcia.es (u2.10.H.10.165)                FEATURE
 ------------------------------------------------------------------------
   A peticion de la Admin. de IRC-Hispano, no se permite utilizar nicks
   que contengan los caracteres [\\]^{|}~` en nicks no registrados. Se
@@ -652,17 +652,17 @@
 
   Este parche se puede desactivar con #define NO_NICKS_HISPANO.
  
-* 2011/10/25  zoltan@irc-dev.net (u2.10.H.10.164)                    FIX
+* 2011/10/25  toni@tonigarcia.es (u2.10.H.10.164)                    FIX
 ------------------------------------------------------------------------
   Correccion del calculo de virtuales en IPv4.
 
   Aprovechamos para meter el calculo de virtuales en IPv6.
 
-* 2011/05/01  zoltan@irc-dev.net (u2.10.H.10.163)                    FIX
+* 2011/05/01  toni@tonigarcia.es (u2.10.H.10.163)                    FIX
 ------------------------------------------------------------------------
   Lote de fixes de los parches de IPv6.
 
-* 2011/04/22  zoltan@irc-dev.net (u2.10.H.10.162)                FEATURE
+* 2011/04/22  toni@tonigarcia.es (u2.10.H.10.162)                FEATURE
 ------------------------------------------------------------------------
   Parche de compatibilidad de IPv6 para aceptar clientes de servidores
   IPv6.
@@ -675,7 +675,7 @@
 
   No está implementado aun el cifrado en IPv6, sale "ip:real.virtual6".
 
-* 2011/01/28  zoltan@irc-dev.net (u2.10.H.10.161)                    FIX
+* 2011/01/28  toni@tonigarcia.es (u2.10.H.10.161)                    FIX
 ------------------------------------------------------------------------
   Subo los BAN a 200.
 
@@ -684,11 +684,11 @@
 
   Actualizacion del configure que estaba un poco antiguo.
 
-* 2010/12/30  zoltan@irc-dev.net (u2.10.H.10.160)                    FIX
+* 2010/12/30  toni@tonigarcia.es (u2.10.H.10.160)                    FIX
 ------------------------------------------------------------------------
   Par de fixes del parche anterior.
 
-* 2010/12/30  zoltan@irc-dev.net (u2.10.H.10.159)                    FIX
+* 2010/12/30  toni@tonigarcia.es (u2.10.H.10.159)                    FIX
 ------------------------------------------------------------------------
   Corrigo el contador de Bots no oficiales que no in/decrementa cuando se
   hace un SVSMODE.
@@ -698,19 +698,19 @@
   Permito que un ircop pueda meter una gline a un nick y el ircd la trata
   a la IP del nick. Para el antispam.
 
-* 2010/12/29  zoltan@irc-dev.net (u2.10.H.10.158)                FEATURE
+* 2010/12/29  toni@tonigarcia.es (u2.10.H.10.158)                FEATURE
 ------------------------------------------------------------------------
   Con el fin de facilitar el trabajo del nuevo bot de antispam (Nick O en
   IRC-Hispano), pudiendose meter glines por sí mismo, sin necesidad de 
   un service, modifico el comando GLINE para que un IRCop con Uworld pueda
   meter glines locales.
 
-* 2010/12/01  zoltan@irc-dev.net (u2.10.H.10.157)                    FIX
+* 2010/12/01  toni@tonigarcia.es (u2.10.H.10.157)                    FIX
 ------------------------------------------------------------------------
   Un par de fixes del parche anterior.
   Hay que completar más el parche con el PART, KICK y MODE.
 
-* 2010/11/18  zoltan@irc-dev.net (u2.10.H.10.156)                FEATURE
+* 2010/11/18  toni@tonigarcia.es (u2.10.H.10.156)                FEATURE
 ------------------------------------------------------------------------
   Implementacion de numericos de canales, sólo para usuarios locales. Se
   usa para los usuarios que negocian TOKENIZADO al conectar para reducir
@@ -804,7 +804,7 @@
 
   Cambio include de res.c para compilacion en Mac OS X 10.6
   
-* 2010/03/25 zoltan@irc-dev.net  (u2.10.H.10.142)                FEATURE
+* 2010/03/25 toni@tonigarcia.es  (u2.10.H.10.142)                FEATURE
 ------------------------------------------------------------------------
   Parches temporales para la migración de deep.space a P10.
 
@@ -1106,7 +1106,7 @@
   
   GLINE_BURST_TIME esta definido en s_serv.h y actualmente es 120
 
-* 2009/02/26 zoltan@irc-dev.net  (u2.10.H.10.111)                CLEANUP
+* 2009/02/26 toni@tonigarcia.es  (u2.10.H.10.111)                CLEANUP
 ------------------------------------------------------------------------
   En el u2.10.H.10.104 se habia introducido un parche para los 
   deep.space, pero va a dar problemas para otros P09.
@@ -1158,7 +1158,7 @@
   
   Correccion de GLINES a IPs numericas.
 
-* 2009/02/03 zoltan@irc-dev.net  (u2.10.H.10.104)            FEATURE/FIX
+* 2009/02/03 toni@tonigarcia.es  (u2.10.H.10.104)            FEATURE/FIX
 ------------------------------------------------------------------------
   Modifico el comando NICK de P09 para agregar un parametro extra, la IP
   en formato base64, para que los Services pueda conocer la IP numerica
@@ -1523,55 +1523,55 @@
   real es de 9 salvo si se inserta un registro "nicklen" con un valor 
   mayor en la tabla z. Mirar parche u2.10.H.10.71
   
-* 2008/10/20 zoltan@irc-dev.net      (u2.10.H.10.77)                 
+* 2008/10/20 toni@tonigarcia.es      (u2.10.H.10.77)                 
 ------------------------------------------------------------------------
   No hay cambios, se libero un tar.gz con version 77 con codigo de 76.
   Se gasta la version para evitar equivocaciones.
   
-* 2008/10/20 zoltan@irc-dev.net      (u2.10.H.10.76)                 FIX
+* 2008/10/20 toni@tonigarcia.es      (u2.10.H.10.76)                 FIX
 ------------------------------------------------------------------------
   Al hacer cleanup en el parche u2.10.H.10.52, habia algun cabo suelto
   por el codigo ininteligible. Lo pongo mas clarito.
   
-* 2008/10/15 zoltan@irc-dev.net      (u2.10.H.10.75)                 FIX
+* 2008/10/15 toni@tonigarcia.es      (u2.10.H.10.75)                 FIX
 ------------------------------------------------------------------------
   En el parche u2.10.H.10.63 no contemplaba 1 de los 2 casos del WHOIS.
   
-* 2008/10/08 zoltan@irc-dev.net      (u2.10.H.10.74)             FEATURE
+* 2008/10/08 toni@tonigarcia.es      (u2.10.H.10.74)             FEATURE
 ------------------------------------------------------------------------
   Soporte de jupe de nicks con mascara, se permite comodines * y ?.
   
-* 2008/10/08 zoltan@irc-dev.net      (u2.10.H.10.73)                 FIX
+* 2008/10/08 toni@tonigarcia.es      (u2.10.H.10.73)                 FIX
 ------------------------------------------------------------------------
   Fix del parche u2.10.H.10.67.
   
-* 2008/09/26 zoltan@irc-dev.net      (u2.10.H.10.72)                 FIX
+* 2008/09/26 toni@tonigarcia.es      (u2.10.H.10.72)                 FIX
 ------------------------------------------------------------------------
   No se compila cuando se activa DEBUGMALLOC.
   Reportado en el canal #ircu.
   
-* 2008/09/25 zoltan@irc-dev.net      (u2.10.H.10.71)             FEATURE
+* 2008/09/25 toni@tonigarcia.es      (u2.10.H.10.71)             FEATURE
 ------------------------------------------------------------------------
   Longitud de nicks dinamica, el minimo es 9 por el RFC1459 y el maximo
   por el macro NICKLEN que tiene que tener el mismo valor en TODA la red.
   
   Ajustable via BDD mediante el valor "nicklen" en la tabla z.
   
-* 2008/09/25 zoltan@irc-dev.net      (u2.10.H.10.70)             FEATURE
+* 2008/09/25 toni@tonigarcia.es      (u2.10.H.10.70)             FEATURE
 ------------------------------------------------------------------------
   Personalizo los mensajes del numerico 433 (ERR_NICKNAMEINUSE) para ser
   mas explicitos.
   
-* 2008/09/23 zoltan@irc-dev.net      (u2.10.H.10.69)             FEATURE
+* 2008/09/23 toni@tonigarcia.es      (u2.10.H.10.69)             FEATURE
 ------------------------------------------------------------------------
   Habilito la tabla d para registros de usuarios en los canales.
 
-* 2008/09/23 zoltan@irc-dev.net      (u2.10.H.10.68)             FEATURE
+* 2008/09/23 toni@tonigarcia.es      (u2.10.H.10.68)             FEATURE
 ------------------------------------------------------------------------
   Modificacion en m_gline() para permitir 2 parametros opcionales que 
   se usaran en el futuro.
   
-* 2008/09/23 zoltan@irc-dev.net      (u2.10.H.10.67)             FEATURE
+* 2008/09/23 toni@tonigarcia.es      (u2.10.H.10.67)             FEATURE
 ------------------------------------------------------------------------
   Soporte de SVSMODE para forzar modos de usuario desde un Service.
   
@@ -1585,18 +1585,18 @@
               
   Peticion de NiKoLaS.
                 
-* 2008/09/20 zoltan@irc-dev.net      (u2.10.H.10.66)                 FIX
+* 2008/09/20 toni@tonigarcia.es      (u2.10.H.10.66)                 FIX
 ------------------------------------------------------------------------
   Suprimo SNO_RENAME y SNO_RENAME2 de las mascaras de +s, creo el
   SNO_SERVICE para notificaciones de comandos SVS*.
   
   Correccion de los mensajes de SNO_SERVICE.
   
-* 2008/09/20 zoltan@irc-dev.net      (u2.10.H.10.65)                 FIX
+* 2008/09/20 toni@tonigarcia.es      (u2.10.H.10.65)                 FIX
 ------------------------------------------------------------------------
   Si mandamos SVSNICK/SN, lo trata como un rename. Admite numericos.
   
-* 2008/09/20 zoltan@irc-dev.net      (u2.10.H.10.64)             FEATURE
+* 2008/09/20 toni@tonigarcia.es      (u2.10.H.10.64)             FEATURE
 ------------------------------------------------------------------------
   Soporte de SVSJOIN y SVSPART para forzar JOIN/PART desde un Service.
   
@@ -1610,18 +1610,18 @@
   
   Peticion de NiKoLaS.
     
-* 2008/09/08 zoltan@irc-dev.net      (u2.10.H.10.63)             FEATURE
+* 2008/09/08 toni@tonigarcia.es      (u2.10.H.10.63)             FEATURE
 ------------------------------------------------------------------------
   Se da la posibilidad de establecer un vhost diferente en el whois
   usando la tabla w. Por ejemplo Whois de colores.
   
   Peticion de NiKoLaS.
 
-* 2008/09/08 zoltan@irc-dev.net      (u2.10.H.10.62)             FEATURE
+* 2008/09/08 toni@tonigarcia.es      (u2.10.H.10.62)             FEATURE
 ------------------------------------------------------------------------
   Jupe de servidores via BDD de forma analoga al parche u2.10.H.10.59.
   
-* 2008/09/05 zoltan@irc-dev.net      (u2.10.H.10.61)             FEATURE
+* 2008/09/05 toni@tonigarcia.es      (u2.10.H.10.61)             FEATURE
 ------------------------------------------------------------------------
   Soporte de REHASH, RESTART y DIE remotos en P10 usando los mismos
   parametros que el ircu de undernet.
@@ -1634,38 +1634,38 @@
   pero se mantiene por compatibilidad para una red mixta ircd actual con
   ircd futuro.
   
-* 2008/09/05 zoltan@irc-dev.net      (u2.10.H.10.60)              FEATURE
+* 2008/09/05 toni@tonigarcia.es      (u2.10.H.10.60)              FEATURE
 -------------------------------------------------------------------------
   Para la transicion al nuevo ircd, doy de alta 2 tablas para residir en
   la memoria para las comprobaciones.
   
   Se trata de f (features) y p (privilegios).
   
-* 2008/09/05 zoltan@irc-dev.net      (u2.10.H.10.59)              FEATURE
+* 2008/09/05 toni@tonigarcia.es      (u2.10.H.10.59)              FEATURE
 -------------------------------------------------------------------------
   Soporte de jupe de nicks via BDD.
   
-* 2008/09/03 zoltan@irc-dev.net      (u2.10.H.10.58)              CLEANUP
+* 2008/09/03 toni@tonigarcia.es      (u2.10.H.10.58)              CLEANUP
 -------------------------------------------------------------------------
   Para normalizar, los registros de Uworld los muevo a la tabla u.
 
-* 2008/08/12 zoltan@irc-dev.net      (u2.10.H.10.57)              FEATURE
+* 2008/08/12 toni@tonigarcia.es      (u2.10.H.10.57)              FEATURE
 -------------------------------------------------------------------------
   Soporte de AUTO +i al conectar. Activable mediante tabla z, registro
   "auto.invisible".
 
   Peticion de NiKoLaS.
    
-* 2008/08/12 zoltan@irc-dev.net      (u2.10.H.10.56)                  FIX
+* 2008/08/12 toni@tonigarcia.es      (u2.10.H.10.56)                  FIX
 -------------------------------------------------------------------------
   Pequenio fix que no se compilaba sin modo debug heredado del 
   u2.10.H.10.48.
 
-* 2008/08/12 zoltan@irc-dev.net      (u2.10.H.10.55)                  FIX
+* 2008/08/12 toni@tonigarcia.es      (u2.10.H.10.55)                  FIX
 -------------------------------------------------------------------------
   Fix para compilar sin problemas en Solaris 10.
   
-* 2008/08/09 zoltan@irc-dev.net      (u2.10.H.10.54)              FEATURE
+* 2008/08/09 toni@tonigarcia.es      (u2.10.H.10.54)              FEATURE
 -------------------------------------------------------------------------
   Burst de TOPIC como en los modernos IRCU de Undernet.
   Se ha ampliado el comando TOPIC en P10 para mandar los TS de creacion
@@ -1674,84 +1674,84 @@
   
   Peticion de NiKoLaS.
 
-* 2008/08/09 zoltan@irc-dev.net      (u2.10.H.10.53)                  FIX
+* 2008/08/09 toni@tonigarcia.es      (u2.10.H.10.53)                  FIX
 -------------------------------------------------------------------------
   Fix del parche de mount de rename_user que no se ajustaba localmente
   un vhost si lo tiene personalizado al hacer un rename.
   
-* 2008/08/06 zoltan@irc-dev.net      (u2.10.H.10.52)              CLEANUP
+* 2008/08/06 toni@tonigarcia.es      (u2.10.H.10.52)              CLEANUP
 -------------------------------------------------------------------------
   Se elimina el soporte de tabla w ya que se deja de usar en IRC-Hispano.
   Se optimiza el codigo de vhosts y se aumenta de 256 a 4096 las tablas
   hash para la tabla v.
 
-* 2008/08/06 zoltan@irc-dev.net      (u2.10.H.10.51)              CLEANUP
+* 2008/08/06 toni@tonigarcia.es      (u2.10.H.10.51)              CLEANUP
 -------------------------------------------------------------------------
   Se deshace el parche u2.10.H.05.34 de NiKoLaS de bans con caracteres
   invalidos.
 
-* 2008/08/03 zoltan@irc-dev.net      (u2.10.H.10.50)                  FIX
+* 2008/08/03 toni@tonigarcia.es      (u2.10.H.10.50)                  FIX
 -------------------------------------------------------------------------
   Fix del parche u2.10.H.10.48.
   
-* 2008/07/08 zoltan@irc-dev.net      (u2.10.H.10.49)              FEATURE
+* 2008/07/08 toni@tonigarcia.es      (u2.10.H.10.49)              FEATURE
 -------------------------------------------------------------------------
   Agrego soporte limitado de +c de colores, solo para reconocer y 
   propagar el modo. Parche de transicion.
 
-* 2008/07/07 zoltan@irc-dev.net      (u2.10.H.10.48)              FEATURE
+* 2008/07/07 toni@tonigarcia.es      (u2.10.H.10.48)              FEATURE
 -------------------------------------------------------------------------
   Para que el nuevo IRCD funcione sin problemas, he agregado soporte de
   +h (HUB) y +s (Services) en la propagacion de SERVER.
   
   Mas info en u2.10.H.10.08.
   
-* 2008/04/23 zoltan@irc-dev.net      (u2.10.H.10.47)                  FIX
+* 2008/04/23 toni@tonigarcia.es      (u2.10.H.10.47)                  FIX
 -------------------------------------------------------------------------
   En ciertas circustancias se moria el IRCD, efecto colateral del parche
   u2.10.H.10.27.
   
-* 2008/04/13 zoltan@irc-dev.net      (u2.10.H.10.46)                  FIX
+* 2008/04/13 toni@tonigarcia.es      (u2.10.H.10.46)                  FIX
 -------------------------------------------------------------------------
   En el caso de WIPEOUT en un burst, no se ajustaban los modos introducidos
   por IRC-Hispano: +RASMCNuD.
   
-* 2008/04/13 zoltan@irc-dev.net      (u2.10.H.10.45)                  FIX
+* 2008/04/13 toni@tonigarcia.es      (u2.10.H.10.45)                  FIX
 -------------------------------------------------------------------------
   En un caso del BURST no se procesan los nuevos modos +CNuD.
   
-* 2008/04/13 zoltan@irc-dev.net      (u2.10.H.10.44)              CLEANUP
+* 2008/04/13 toni@tonigarcia.es      (u2.10.H.10.44)              CLEANUP
 -------------------------------------------------------------------------
   Dado que todos los servidores estan actualizados, eliminamos codigo
   temporal de activacion de modos introducido en u2.10.H.10.17.
   
-* 2008/04/08 zoltan@irc-dev.net      (u2.10.H.10.43)                  FIX
+* 2008/04/08 toni@tonigarcia.es      (u2.10.H.10.43)                  FIX
 -------------------------------------------------------------------------
   En un caso, se mandaba el BURST sin token.
 
-* 2008/xx/xx zoltan@irc-dev.net      (u2.10.H.10.43)                  FIX
+* 2008/xx/xx toni@tonigarcia.es      (u2.10.H.10.43)                  FIX
 -------------------------------------------------------------------------
  
      
-* 2008/02/07 zoltan@irc-dev.net      (u2.10.H.10.41)              FEATURE
+* 2008/02/07 toni@tonigarcia.es      (u2.10.H.10.41)              FEATURE
 -------------------------------------------------------------------------
   Un whois a un nick de un service (u-line) muestra el servidor.
 
-* 2008/02/07 zoltan@irc-dev.net      (u2.10.H.10.40)                  FIX
+* 2008/02/07 toni@tonigarcia.es      (u2.10.H.10.40)                  FIX
 -------------------------------------------------------------------------
   Un nick si esta baneado, o esta en un canal +R/+M sin +r o si esta en +m
   no podra cambiarse de nick.
 
-* 2008/02/07 zoltan@irc-dev.net      (u2.10.H.10.39)                  FIX
+* 2008/02/07 toni@tonigarcia.es      (u2.10.H.10.39)                  FIX
 -------------------------------------------------------------------------
   Efecto colateral del parche u2.10.H.10.37, en el whois.
 
-* 2008/02/03 zoltan@irc-dev.net      (u2.10.H.10.38)                  FIX
+* 2008/02/03 toni@tonigarcia.es      (u2.10.H.10.38)                  FIX
 -------------------------------------------------------------------------
   Estaba incompleto el parche u2.10.H.10.36 porque el codigo no estaba
   nada claro.
 
-* 2008/01/31 zoltan@irc-dev.net      (u2.10.H.10.37)              FEATURE
+* 2008/01/31 toni@tonigarcia.es      (u2.10.H.10.37)              FEATURE
 -------------------------------------------------------------------------
   Nuevos numericos RAW:
 
@@ -1772,36 +1772,36 @@
   Tambien se muestra en el WHOWAS para los que tienen +X, hasta ahora no
   se guardaban los hosts de los usuarios con +x.
 
-* 2008/01/30 zoltan@irc-dev.net      (u2.10.H.10.36)              FEATURE
+* 2008/01/30 toni@tonigarcia.es      (u2.10.H.10.36)              FEATURE
 -------------------------------------------------------------------------
   Implementacion de RENAME a un nick en concreto, es el segundo parametro.
   Requiere actualizacion de todos los servidores para que funcione corre-
   ctamente.
 
-* 2008/01/30 zoltan@irc-dev.net      (u2.10.H.10.35)                  FIX
+* 2008/01/30 toni@tonigarcia.es      (u2.10.H.10.35)                  FIX
 -------------------------------------------------------------------------
   Bajo el define de HISPANO_WEBCHAT no se comprueba el IDENT.
 
-* 2008/01/30 zoltan@irc-dev.net      (u2.10.H.10.34)              FEATURE
+* 2008/01/30 toni@tonigarcia.es      (u2.10.H.10.34)              FEATURE
 -------------------------------------------------------------------------
   Hacemos que el chequeo de IDENT vuelva a estar disponible.
 
   Esta vez es activable/desactivable por la BDD usando el registro
   "activar.ident" en la tabla z.
 
-* 2008/01/28 zoltan@irc-dev.net      (u2.10.H.10.33)                  FIX
+* 2008/01/28 toni@tonigarcia.es      (u2.10.H.10.33)                  FIX
 -------------------------------------------------------------------------
   Obfuscamos el origen de los mensajes de numericos remotos como un whois
   silence, etc...
 
-* 2008/01/28 zoltan@irc-dev.net      (u2.10.H.10.32)              FEATURE
+* 2008/01/28 toni@tonigarcia.es      (u2.10.H.10.32)              FEATURE
 -------------------------------------------------------------------------
   Se aumenta el REALLEN de 50 a 70 que es el maximo que admite en el
   textbox de Realname del mIRC.
   
   Peticion de NiKoLaS.
 
-* 2008/01/28 zoltan@irc-dev.net      (u2.10.H.10.31)              FEATURE
+* 2008/01/28 toni@tonigarcia.es      (u2.10.H.10.31)              FEATURE
 -------------------------------------------------------------------------
   Por peticion de NiKoLaS, se implementa la posibilidad de configurar el
   nombre de servidor y descripcion bajo el modo obfuscado.
@@ -1809,22 +1809,22 @@
   Se usan los registros "servidor.oculto" y "servidor.info.oculto" respe-
   ctivamente en la tabla z.
 
-* 2008/01/24 zoltan@irc-dev.net      (u2.10.H.10.30)                  FIX
+* 2008/01/24 toni@tonigarcia.es      (u2.10.H.10.30)                  FIX
 -------------------------------------------------------------------------
   Con ocultacion de servidores activado, haciendo un invite a un usuario
   sale un Wallchops con el nombre de servidor del invitado.
   Corregido.
 
-* 2008/01/21 zoltan@irc-dev.net      (u2.10.H.10.29)                  FIX
+* 2008/01/21 toni@tonigarcia.es      (u2.10.H.10.29)                  FIX
 -------------------------------------------------------------------------
   Los usuarios, aun teniendo +s capado reciben service notices. Corrigo
   poniendo a piñon la mascara a 0 cuando no es +o/+h
 
-* 2008/01/21 zoltan@irc-dev.net      (u2.10.H.10.28)                  FIX
+* 2008/01/21 toni@tonigarcia.es      (u2.10.H.10.28)                  FIX
 -------------------------------------------------------------------------
   Los usuarios con +k se saltan los +CN.
 
-* 2008/01/17 zoltan@irc-dev.net      (u2.10.H.10.27)              FEATURE
+* 2008/01/17 toni@tonigarcia.es      (u2.10.H.10.27)              FEATURE
 -------------------------------------------------------------------------
   Reforma del comando LIST, los cambios son:
 
@@ -1835,14 +1835,14 @@
   de 10 usuarios. OJO, el /LIST del MIRC metpiñon un LIST con un
   maximo.
 
-* 2008/01/17 zoltan@irc-dev.net      (u2.10.H.10.26)                  FIX
+* 2008/01/17 toni@tonigarcia.es      (u2.10.H.10.26)                  FIX
 -------------------------------------------------------------------------
   Bajo ciertas circunstancias se propagaba un SILENCE con el origen de un
   servidor, que provocaba un core dump al hub.
   Se trata de un error del parche de migracion al P10 FULL del comando 
   SILENCE.
 
-* 2008/01/05 zoltan@irc-dev.net      (u2.10.H.10.25)                  FIX
+* 2008/01/05 toni@tonigarcia.es      (u2.10.H.10.25)                  FIX
 -------------------------------------------------------------------------
   Las GLINES a usuarios de Webch solo se hacian efecto en el momento y
   no al reentrar.
@@ -1850,18 +1850,18 @@
   Los renames provocados por la BDD (registro de nicks) provocaba un
   efecto raro, danio colateral del parche 10.19.
 
-* 2008/01/04 zoltan@irc-dev.net      (u2.10.H.10.24)              FEATURE
+* 2008/01/04 toni@tonigarcia.es      (u2.10.H.10.24)              FEATURE
 -------------------------------------------------------------------------
   Se da soporte limitado del modo +D de canales de "Delayed-join", no
   hace ningun efecto y el modo solo pueden poner los servidores, es un
   parche de transicion al nuevo IRCD.
 
-* 2008/01/02 zoltan@irc-dev.net      (u2.10.H.10.23)                  FIX
+* 2008/01/02 toni@tonigarcia.es      (u2.10.H.10.23)                  FIX
 -------------------------------------------------------------------------
   Modifico la forma de poner un nick aleatorio con NICK * porque el codigo
   de rename_user generaba core dumped. 
 
-* 2008/01/01 zoltan@irc-dev.net      (u2.10.H.10.22)              FEATURE
+* 2008/01/01 toni@tonigarcia.es      (u2.10.H.10.22)              FEATURE
 -------------------------------------------------------------------------
   Paso de int de 8 bits a int de 16 bits el contador de numero de clones
   que puede tener una IP.
@@ -1872,7 +1872,7 @@
   Requiere que toda la red este actualizada para poder admitir mas de 255
   clientes.
 
-* 2008/01/01 zoltan@irc-dev.net      (u2.10.H.10.21)              FEATURE
+* 2008/01/01 toni@tonigarcia.es      (u2.10.H.10.21)              FEATURE
 -------------------------------------------------------------------------
   Bajo el define de HISPANO_WEBCHAT esta el codigo especifico para que
   los clientes de Webchat puedan mostrar su IP real en USERIP, Silences,
@@ -1885,7 +1885,7 @@
   Lo malo es que a la hora de contablizar los clones, lo hace a la IP de
   la web, pero es un mal menor. Esto si, se quita el chequeo de throttle.
 
-* 2007/12/25 zoltan@irc-dev.net      (u2.10.H.10.20)              FEATURE
+* 2007/12/25 toni@tonigarcia.es      (u2.10.H.10.20)              FEATURE
 -------------------------------------------------------------------------
   Para facilitar el registro de nicks/canales/apoyos desde la web,
   mientras no esten los nuevos servicios, permito que un usuario con +k
@@ -1896,18 +1896,18 @@
   
   Peticion de NiKoLaS.
 
-* 2007/12/25 zoltan@irc-dev.net      (u2.10.H.10.19)              FEATURE
+* 2007/12/25 toni@tonigarcia.es      (u2.10.H.10.19)              FEATURE
 -------------------------------------------------------------------------
   Si especificamos un nick '*' se pone un nick de invitado. Esta indicado
   para webchats.
   
 
-* 2007/12/24 zoltan@irc-dev.net      (u2.10.H.10.18)                  FIX
+* 2007/12/24 toni@tonigarcia.es      (u2.10.H.10.18)                  FIX
 -------------------------------------------------------------------------
   Se corrige un viejo bug introducido hace mucho tiempo, en un CPRIVMSG
   se podia enviar mensajes privados sin tener +r hacia un usuario con +R.
 
-* 2007/12/23 zoltan@irc-dev.net      (u2.10.H.10.17)              FEATURE
+* 2007/12/23 toni@tonigarcia.es      (u2.10.H.10.17)              FEATURE
 -------------------------------------------------------------------------
   Para evitar lios de los usuarios en la aplicacion del parche u2.10.H.13
   el ajuste de los nuevos modos +CNu por usuarios locales se desactiva
@@ -1917,16 +1917,16 @@
   La operacion se debe realizar cuando TODOS los nodos tengan la version
   u2.10.H.10.17 o superior.
 
-* 2007/12/23 zoltan@irc-dev.net      (u2.10.H.10.16)                  FIX
+* 2007/12/23 toni@tonigarcia.es      (u2.10.H.10.16)                  FIX
 -------------------------------------------------------------------------
   Correcciones de los ultimos 3 parches.
 
-* 2007/12/16 zoltan@irc-dev.net      (u2.10.H.10.15)              FEATURE
+* 2007/12/16 toni@tonigarcia.es      (u2.10.H.10.15)              FEATURE
 -------------------------------------------------------------------------
   Se adapta la funcion hunt_server() para que mande en formato P09 o P10
   FULL segun el caso.
 
-* 2007/12/16 zoltan@irc-dev.net      (u2.10.H.10.14)              FEATURE
+* 2007/12/16 toni@tonigarcia.es      (u2.10.H.10.14)              FEATURE
 -------------------------------------------------------------------------
   Se completan los parches de transicion para tener P10 Full manteniendo
   el soporte P09 para facilitar la implementacion de nuevos services P10
@@ -1951,7 +1951,7 @@
   NOTA: El comando DB manda en formato P10 a servidores P09, no lo corrigo
   por desconocer la posible incidencia con los actuales deep.space.
 
-* 2007/12/16 zoltan@irc-dev.net      (u2.10.H.10.13)              FEATURE
+* 2007/12/16 toni@tonigarcia.es      (u2.10.H.10.13)              FEATURE
 -------------------------------------------------------------------------
   Nuevos modos de canal:
 
@@ -1961,13 +1961,13 @@
      que +b o +m en el sentido de que si el usuario ea en al menos un 
      canal con +u, se borrara el mensaje comun de QUIT.
 
-* 2007/11/29 zoltan@irc-dev.net      (u2.10.H.10.12)                  FIX
+* 2007/11/29 toni@tonigarcia.es      (u2.10.H.10.12)                  FIX
 -------------------------------------------------------------------------
   Capamos el modo +s para usuarios.
 
   FEATURE SF ID TRACKER: #1743993
 
-* 2007/11/29 zoltan@irc-dev.net      (u2.10.H.10.11)                  FIX
+* 2007/11/29 toni@tonigarcia.es      (u2.10.H.10.11)                  FIX
 -------------------------------------------------------------------------
   Del parche de Ocultamiento de Servers faltaban capar los STATS para
   usuarios normales:
@@ -1981,17 +1981,17 @@
 
   Todos muestran informacion sobre hubs.
 
-* 2007/11/29 zoltan@irc-dev.net      (u2.10.H.10.10)                  FIX
+* 2007/11/29 toni@tonigarcia.es      (u2.10.H.10.10)                  FIX
 -------------------------------------------------------------------------
   Bug introducido en el u2.10.H.07 que impedia linkar bajo ciertas
   condiciones.
 
-* 2007/11/26 zoltan@irc-dev.net      (u2.10.H.10.09)              FEATURE
+* 2007/11/26 toni@tonigarcia.es      (u2.10.H.10.09)              FEATURE
 -------------------------------------------------------------------------
   Aplico el parche de FERGUSON FLUSHER procedente de Undernet para minimizar
   las caidas por Buffer Allocation Error.
 
-* 2007/11/14 zoltan@irc-dev.net      (u2.10.H.10.08)              CLEANUP
+* 2007/11/14 toni@tonigarcia.es      (u2.10.H.10.08)              CLEANUP
 -------------------------------------------------------------------------
   Revierto el parche u2.10.H.06.94 de JCEA porque rompe el protocolo P10
   ya que el penultimo parametro no es para poner un timestamp sino para
@@ -2003,7 +2003,7 @@
   No toco nada en la parte del P09 para no afectar el funcionamiento con
   los services P09.
 
-* 2007/11/13 zoltan@irc-dev.net      (u2.10.H.10.07)              FEATURE
+* 2007/11/13 toni@tonigarcia.es      (u2.10.H.10.07)              FEATURE
 -------------------------------------------------------------------------
   Se inician los parches de transicion para tener P10 Full manteniendo 
   el soporte P09 para facilitar la implementacion de nuevos services P10
@@ -2025,7 +2025,7 @@
   (Rev.23) Comandos PRIVMSG, CNOTICE y CPRIVMSG
 
 
-* 2007/09/07 zoltan@irc-dev.net      (u2.10.H.10.06)              FEATURE
+* 2007/09/07 toni@tonigarcia.es      (u2.10.H.10.06)              FEATURE
 -------------------------------------------------------------------------
   Parche de ocultacion de servidores para dificultar donde estan los
   usuarios, que tipologia lleva la red, entre otros.
@@ -2088,7 +2088,7 @@
 
   BUG SF ID TRACKER: #1754115
 
-* 2007/09/04 zoltan@irc-dev.net      (u2.10.H.10.02)              FEATURE
+* 2007/09/04 toni@tonigarcia.es      (u2.10.H.10.02)              FEATURE
 -------------------------------------------------------------------------
   Se agregan dentro del directorio ircd/crypt/tea dos aplicaciones para
   pasar de IP real a IP virtual y viceversa.
@@ -2101,7 +2101,7 @@
 
   BUG SF ID TRACKER: #1743535
 
-* 2007/06/26 zoltan@irc-dev.net      (u2.10.H.10.00)              CLEANUP
+* 2007/06/26 toni@tonigarcia.es      (u2.10.H.10.00)              CLEANUP
   -----------------------------------------------------------------------
   Tres anios y 3 meses despues, volvemos a la carga.
 
