@@ -1,6 +1,6 @@
 $Id: CAMBIOS2_10_H_02,v 1.56 2001/09/10 18:50:48 jcea Exp $
 
-* 2001/09/10 jcea@argo.es          (u2.10.H.02.67)                    FIX
+* 2001/09/10 jcea@jcea.es          (u2.10.H.02.67)                    FIX
   -----------------------------------------------------------------------
   Solucionamos un problema de visualización de clave cuando usamos la
   sintaxis de ghost "ghost nick:clave". Ahora ya no se imprime la clave.
@@ -15,11 +15,11 @@ $Id: CAMBIOS2_10_H_02,v 1.56 2001/09/10 18:50:48 jcea Exp $
   de irc para que se pueda usar la identificacion de red que llevan varios
   clientes, entre ellos el mIRC (la variable es $network), en la red.
 
-* 2001/09/10 jcea@argo.es          (u2.10.H.02.65)                FEATURE
+* 2001/09/10 jcea@jcea.es          (u2.10.H.02.65)                FEATURE
   -----------------------------------------------------------------------
   El comando ghost admite tambien "ghost nick:clave".
 
-* 2001/09/10 jcea@argo.es          (u2.10.H.02.64)                FEATURE
+* 2001/09/10 jcea@jcea.es          (u2.10.H.02.64)                FEATURE
   -----------------------------------------------------------------------
   En el comando "GHOST":
 
@@ -30,14 +30,14 @@ $Id: CAMBIOS2_10_H_02,v 1.56 2001/09/10 18:50:48 jcea Exp $
 
   - Cambio "contraseña" por "clave", por los clientes que no sean LATIN-1.
 
-* 2001/09/10 jcea@argo.es          (u2.10.H.02.63)                CLEANUP
+* 2001/09/10 jcea@jcea.es          (u2.10.H.02.63)                CLEANUP
   -----------------------------------------------------------------------
   Separo la rutina de verificacion de claves de nicks, ya que con el parche
   u2.10.H.02.62 la funcionalidad se necesita en varios sitios.
 
   Elimino factores comunes, por tanto, en las rutinas "m_nick" y "m_ghost".
 
-* 2001/09/10 jcea@argo.es          (DB84 - u2.10.H.02.63)         CLEANUP
+* 2001/09/10 jcea@jcea.es          (DB84 - u2.10.H.02.63)         CLEANUP
   -----------------------------------------------------------------------
   Elimino la tabla 't' de ayuda a la migracion de nicks, ya que la migracion
   en IRC-Hispano ya esta en curso y no usa esa tabla para nada.
@@ -53,19 +53,19 @@ $Id: CAMBIOS2_10_H_02,v 1.56 2001/09/10 18:50:48 jcea Exp $
      5) Contraseña correcta?
   Luego hace un KILL al usuario y lo propaga por la red.
 
-* 2001/08/23 jcea@argo.es          (VIP27 - u2.10.H.02.61)            FIX
+* 2001/08/23 jcea@jcea.es          (VIP27 - u2.10.H.02.61)            FIX
   -----------------------------------------------------------------------
   Si compilamos el servidor con la opcion de no dar +x a los usuarios
   propios (pero aceptando los que llegan por la red), un usuario
   con +r puede ponerse y sacarse el +x libremente.
 
-* 2001/08/22 jcea@argo.es          (VIP26 - u2.10.H.02.60)            FIX
+* 2001/08/22 jcea@jcea.es          (VIP26 - u2.10.H.02.60)            FIX
   -----------------------------------------------------------------------
   Si compilamos el servidor con la opcion de no dar +x a los usuarios
   propios (pero aceptando los que llegan por la red), si un usuario
   tenia +r se le daba +x automaticamente al conectar.
 
-* 2001/08/17 jcea@argo.es          (DB82 - u2.10.H.02.59)             FIX
+* 2001/08/17 jcea@jcea.es          (DB82 - u2.10.H.02.59)             FIX
   -----------------------------------------------------------------------
   Cuando un usuario cambio modos en un canal con modos "extendidos", desde
   un nodo no actualizado, quitara los modos extendidos en cuestion. Este
@@ -80,24 +80,24 @@ $Id: CAMBIOS2_10_H_02,v 1.56 2001/09/10 18:50:48 jcea Exp $
 
   :jcea!~ee@jcea.admin.irc-hispano.org MODE #pericos -R+s
 
-* 2001/08/17 jcea@argo.es          (u2.10.H.02.58)                FEATURE
+* 2001/08/17 jcea@jcea.es          (u2.10.H.02.58)                FEATURE
   -----------------------------------------------------------------------
   Elimino el comando "DBH", que ya no esta implementado.
 
-* 2001/08/17 jcea@argo.es          (u2.10.H.02.57)                FEATURE
+* 2001/08/17 jcea@jcea.es          (u2.10.H.02.57)                FEATURE
   -----------------------------------------------------------------------
   Se fusionan las opciones de ESNET e IRC-HISPANO.
 
-* 2001/08/17 jcea@argo.es          (u2.10.H.02.56)                    FIX
+* 2001/08/17 jcea@jcea.es          (u2.10.H.02.56)                    FIX
   -----------------------------------------------------------------------
   Compila deshabilitando las opciones DBH y ESNET. Util para otras redes.
 
-* 2001/08/17 jcea@argo.es          (DB81 - u2.10.H.02.54)         FEATURE
+* 2001/08/17 jcea@jcea.es          (DB81 - u2.10.H.02.54)         FEATURE
   -----------------------------------------------------------------------
   Por peticion de Sisco, el modo "+X" *SOLO* debe
   ser admitido en admins. No en opers o IRCops.
 
-* 2001/08/16 jcea@argo.es          (u2.10.H.02.54)                FEATURE
+* 2001/08/16 jcea@jcea.es          (u2.10.H.02.54)                FEATURE
   -----------------------------------------------------------------------
   Que solo puedas hacer un "invite" si eres
   OP del canal en cuestion. Ahora mismo se puede
@@ -110,19 +110,19 @@ $Id: CAMBIOS2_10_H_02,v 1.56 2001/09/10 18:50:48 jcea Exp $
   invitar y salirse del canal. Pero no creo que eso, ahora, sea un problema
   en IRC-Hispano. Ademas, deberia estar controlado por el limite de "targets".
 
-* 2001/08/16 jcea@argo.es          (u2.10.H.02.53)                    FIX
+* 2001/08/16 jcea@jcea.es          (u2.10.H.02.53)                    FIX
   -----------------------------------------------------------------------
   Un "dns -l" cuando no eres IRCop se ignora, cuando deberia
   dar un error de que no tienes permiso.
 
-* 2001/08/16 jcea@argo.es          (u2.10.H.02.52)                FEATURE
+* 2001/08/16 jcea@jcea.es          (u2.10.H.02.52)                FEATURE
   -----------------------------------------------------------------------
   No permitir caracteres de control en los nombres de los
   canales (por ejemplo, control+o).
 
   No se permite ningun ASCII < 32.
 
-* 2001/08/16 jcea@argo.es          (DB80 - u2.10.H.02.51)         FEATURE
+* 2001/08/16 jcea@jcea.es          (DB80 - u2.10.H.02.51)         FEATURE
   -----------------------------------------------------------------------
   Ahora que ya tenemos nicks en la BDD, debemos restaurar
   el modo que no permite entrar en un canal a gente sin el +r.
@@ -182,11 +182,11 @@ gcc version 2.95.2 20000220 (Debian GNU/Linux)
 
   
 
-* 2001/05/17 jcea@argo.es          (u2.10.H.02.48)                    FIX
+* 2001/05/17 jcea@jcea.es          (u2.10.H.02.48)                    FIX
   -----------------------------------------------------------------------
   Simplificacion.
 
-* 2001/05/17 jcea@argo.es          (u2.10.H.02.47)                FEATURE
+* 2001/05/17 jcea@jcea.es          (u2.10.H.02.47)                FEATURE
   -----------------------------------------------------------------------
 
 24/Abr/01
@@ -212,7 +212,7 @@ Mientras haya servidores en la red sin este parche, se pueden producir
 se supone que nadie los usa, y aunque se usasen no repercute en la
 estabilidad de la red (esos desync).
 
-* 2001/04/26 jcea@argo.es          (DB79 - u2.10.H.02.46)         FEATURE
+* 2001/04/26 jcea@jcea.es          (DB79 - u2.10.H.02.46)         FEATURE
   -----------------------------------------------------------------------
   Amplio el taman~o de las rafagas DB a 1000 entradas, en vez de las 100
   actuales. De esta forma sincronizamos las bases de datos antes, y seguimos
@@ -222,7 +222,7 @@ estabilidad de la red (esos desync).
   estas crezcan, lo que es previsible a medio plazo.
 
 
-* 2001/05/17 jcea@argo.es          (u2.10.H.02.45)                CLEANUP
+* 2001/05/17 jcea@jcea.es          (u2.10.H.02.45)                CLEANUP
   -----------------------------------------------------------------------
   Elimino la funcion "sendto_ops_helpers_butone", que con el parche
   anterior ya no es necesaria, y clarifico un poco el parche anterior.
@@ -236,7 +236,7 @@ estabilidad de la red (esos desync).
   "remote connect".
   
 
-* 2001/04/26 jcea@argo.es          (u2.10.H.02.43)                    FIX
+* 2001/04/26 jcea@jcea.es          (u2.10.H.02.43)                    FIX
   -----------------------------------------------------------------------
   Solucionado un problema de rutado con los silences y P10.
 
@@ -253,41 +253,41 @@ situacion.
 Tendria que ser el nodo originario el que enviase el "notice" al
 usuario.
 
-* 2001/04/26 jcea@argo.es          (VIP24 - u2.10.H.02.42)            FIX
+* 2001/04/26 jcea@jcea.es          (VIP24 - u2.10.H.02.42)            FIX
   -----------------------------------------------------------------------
   Eliminacion de mensajes de activacion de IPs virtuales espureos.
 
-* 2001/04/26 jcea@argo.es          (VIP23 - u2.10.H.02.41)            FIX
+* 2001/04/26 jcea@jcea.es          (VIP23 - u2.10.H.02.41)            FIX
   -----------------------------------------------------------------------
   El "silence" no actua sobre las IPs virtuales.
 
-* 2001/04/26 jcea@argo.es          (VIP22 - u2.10.H.02.40)            FIX
+* 2001/04/26 jcea@jcea.es          (VIP22 - u2.10.H.02.40)            FIX
   -----------------------------------------------------------------------
   Ahora los baneos comprueban también la IP cifrada, aunque no tengamos
   el +x activado.
 
-* 2001/04/25 jcea@argo.es          (u2.10.H.02.39)                FEATURE
+* 2001/04/25 jcea@jcea.es          (u2.10.H.02.39)                FEATURE
   -----------------------------------------------------------------------
   Traduzco las fechas al castellano, con formato castellano.
 
-* 2001/04/25 jcea@argo.es          (u2.10.H.02.38)                FEATURE
+* 2001/04/25 jcea@jcea.es          (u2.10.H.02.38)                FEATURE
   -----------------------------------------------------------------------
   En los record de usuarios, en vez de imprimir un "timestamp", imprimimos
   una fecha "humana".
 
-* 2001/04/25 jcea@argo.es          (u2.10.H.02.37)                    FIX
+* 2001/04/25 jcea@jcea.es          (u2.10.H.02.37)                    FIX
   -----------------------------------------------------------------------
   Activacion de los cambios anteriores.
 
-* 2001/04/25 jcea@argo.es          (u2.10.H.02.36)                    FIX
+* 2001/04/25 jcea@jcea.es          (u2.10.H.02.36)                    FIX
   -----------------------------------------------------------------------
   Correcciones relativas a los parches de FreeMind.
 
-* 2001/04/25 jcea@argo.es          (u2.10.H.02.35)                FEATURE
+* 2001/04/25 jcea@jcea.es          (u2.10.H.02.35)                FEATURE
   -----------------------------------------------------------------------
   En "users" ponemos la fecha de los maximos.
 
-* 2001/04/25 jcea@argo.es          (u2.10.H.02.34)                FEATURE
+* 2001/04/25 jcea@jcea.es          (u2.10.H.02.34)                FEATURE
   -----------------------------------------------------------------------
   Desvinculo el "lusers" de "users". Es decir, que la ejecucion de
   "lusers" ya no supone un "users" implicito.
@@ -295,7 +295,7 @@ usuario.
   Cambio la rutina de entrada un nuevo usuario para que le mande
   un "lusers" seguido de un "users", en vez de un "lusers" a secas.
 
-* 2001/04/24 jcea@argo.es          (u2.10.H.02.33)                FEATURE
+* 2001/04/24 jcea@jcea.es          (u2.10.H.02.33)                FEATURE
   -----------------------------------------------------------------------
   Implemento el comando "users", como el de DAL.NET.
 
@@ -316,7 +316,7 @@ usuario.
   Muestra estadisticas de usuarios actuales y de pico, tanto locales
   como remotos.
 
-* 2001/04/24 jcea@argo.es          (u2.10.H.02.31)                CLEANUP
+* 2001/04/24 jcea@jcea.es          (u2.10.H.02.31)                CLEANUP
   -----------------------------------------------------------------------
   Limpieza de los parches anteriores. Por ejemplo, corrijo la dependencia
   en el "Makefile", y muevo cosas que no requieren estar en los "*.h"
@@ -334,11 +334,11 @@ usuario.
   Devolvemos el uso de "who i%" a los usuarios, pero devuelve 0.0.0.0 si
   no nos hacemos el "who" a nosotros mismos ni no tenemos el flag "+X".
 
-* 2001/04/16 jcea@argo.es          (Z12 - u2.10.H.02.28)              FIX
+* 2001/04/16 jcea@jcea.es          (Z12 - u2.10.H.02.28)              FIX
   -----------------------------------------------------------------------
   Error mecanografico...
 
-* 2001/04/16 jcea@argo.es          (Z11 - u2.10.H.02.27)              FIX
+* 2001/04/16 jcea@jcea.es          (Z11 - u2.10.H.02.27)              FIX
   -----------------------------------------------------------------------
   Bug comunicado por {^DaNi^}.
 
@@ -358,7 +358,7 @@ usuario.
   durante unos ocho meses. Por lo tanto, no me preocupo de este tema
   de momento...
 
-* 2001/04/10 jcea@argo.es          (u2.10.H.02.26)                    FIX
+* 2001/04/10 jcea@jcea.es          (u2.10.H.02.26)                    FIX
   -----------------------------------------------------------------------
   Bug comunicado por "glog" (Ignasi Cavero).
 
@@ -366,17 +366,17 @@ usuario.
   con los permisos del servidor, ya que DBPATH="", y hace un
   "chown", "chgrp" y "chmod", se crean ficheros, etc.
 
-* 2001/04/10 jcea@argo.es          (u2.10.H.02.25)                    FIX
+* 2001/04/10 jcea@jcea.es          (u2.10.H.02.25)                    FIX
   -----------------------------------------------------------------------
   Si el nombre del directorio de base de datos no es el por defecto ("database"),
   algunas operaciones de "make install" no se ejecutaban correctamente.
 
-* 2001/03/13 jcea@argo.es          (u2.10.H.02.24)                    FIX
+* 2001/03/13 jcea@jcea.es          (u2.10.H.02.24)                    FIX
   -----------------------------------------------------------------------
   El "rename" convertia los nicks a "intXXXXXX", en vez de al correcto
   "invXXXXXX".
 
-* 2001/03/06 jcea@argo.es          (u2.10.H.02.23)                    FIX
+* 2001/03/06 jcea@jcea.es          (u2.10.H.02.23)                    FIX
   -----------------------------------------------------------------------
   Quitamos a Sputnik definitivamente, ya que no es capaz de soportar
   redes P10+ (Numerics de 3 y 5 caracteres, mezclados).
@@ -384,34 +384,34 @@ usuario.
   Cambio el sistema para que admita un numero arbitrario de P09, no
   exactamente 4.
 
-* 2001/03/06 jcea@argo.es          (u2.10.H.02.22)                    FIX
+* 2001/03/06 jcea@jcea.es          (u2.10.H.02.22)                    FIX
   -----------------------------------------------------------------------
   Glog me tenia engan~ado: Sputnik es un P10, no un P09.
 
-* 2001/03/06 jcea@argo.es          (u2.10.H.02.21)                    FIX
+* 2001/03/06 jcea@jcea.es          (u2.10.H.02.21)                    FIX
   -----------------------------------------------------------------------
   Sin tocar codigo, no es posible meter servicios P09 con numerics
   extendidos.
 
-* 2001/03/06 jcea@argo.es          (u2.10.H.02.20)                FEATURE
+* 2001/03/06 jcea@jcea.es          (u2.10.H.02.20)                FEATURE
   -----------------------------------------------------------------------
   Reasignacion de los 'numerics' de los servicios P09.
 
-* 2001/03/05 jcea@argo.es          (u2.10.H.02.19)                    FIX
+* 2001/03/05 jcea@jcea.es          (u2.10.H.02.19)                    FIX
   -----------------------------------------------------------------------
   Con el cambio en los 'numerics', 'map.c' depende de 'numnicks.h'. Hago
   los cambios de dependencias en el 'Makefile.in'.
 
-* 2001/03/05 jcea@argo.es          (u2.10.H.02.18)                    FIX
+* 2001/03/05 jcea@jcea.es          (u2.10.H.02.18)                    FIX
   -----------------------------------------------------------------------
   Solucionado un problema en la impresion de "/map", con los 'numerics'
   extendidos.
 
-* 2001/03/05 jcea@argo.es          (u2.10.H.02.17)                    FIX
+* 2001/03/05 jcea@jcea.es          (u2.10.H.02.17)                    FIX
   -----------------------------------------------------------------------
   Falla un "assert()" si el nodo tiene 'numeric' largo.
 
-* 2001/02/26 jcea@argo.es          (u2.10.H.02.16)                FEATURE
+* 2001/02/26 jcea@jcea.es          (u2.10.H.02.16)                FEATURE
   -----------------------------------------------------------------------
   Soporte para mas de 64 nodos y 4096 usuarios por nodo.
 
@@ -421,16 +421,16 @@ usuario.
   Si nuestro "numeric" es mayor o igual que 64, trabajaremos con numerics
   de 5 caracteres, y tendremos hasta 262144 usuarios.
 
-* 2001/02/23 jcea@argo.es          (u2.10.H.02.15)                FEATURE
+* 2001/02/23 jcea@jcea.es          (u2.10.H.02.15)                FEATURE
   -----------------------------------------------------------------------
   Actualizamos "rename" para que pueda trabajar con 'numerics' extendidos.
 
-* 2001/02/13 jcea@argo.es          (u2.10.H.02.14)                    FIX
+* 2001/02/13 jcea@jcea.es          (u2.10.H.02.14)                    FIX
   -----------------------------------------------------------------------
   El servidor no compilaba si se configura sin soporte IRC-HISPANO ni
   soporte ESNET.
 
-* 2001/02/12 jcea@argo.es          (PX18 - u2.10.H.02.13)             FIX
+* 2001/02/12 jcea@jcea.es          (PX18 - u2.10.H.02.13)             FIX
   -----------------------------------------------------------------------
   Las rutinas de verificacion viejas enviaban como nombre de usuario el
   UID bajo el cual se ejecuta el proceso, cuando se hace una verificacion
@@ -439,24 +439,24 @@ usuario.
 
   Las rutinas modernas no mandan NINGUN usuario.
   
-* 2001/01/22 jcea@argo.es          (u2.10.H.02.12)                    FIX
+* 2001/01/22 jcea@jcea.es          (u2.10.H.02.12)                    FIX
   -----------------------------------------------------------------------
   El servidor deberia compilar sin el soporte de IPs virtuales. Aunque
   ello no se admita en Hispano, parece que el servidor se utiliza en
   otras redes tambien.
 
-* 2001/01/15 jcea@argo.es          (u2.10.H.02.11)                    FIX
+* 2001/01/15 jcea@jcea.es          (u2.10.H.02.11)                    FIX
   -----------------------------------------------------------------------
   No intenta "sobre-optimizar" la rutina "sprintf_irc".
 
-* 2001/01/10 jcea@argo.es          (u2.10.H.02.10)                    FIX
+* 2001/01/10 jcea@jcea.es          (u2.10.H.02.10)                    FIX
   -----------------------------------------------------------------------
   Parece que los topics de los canales "&" se
   propagan por la red.
 
   Solucionado.
 
-* 2001/01/08 jcea@argo.es          (u2.10.H.02.09)                    FIX
+* 2001/01/08 jcea@jcea.es          (u2.10.H.02.09)                    FIX
   -----------------------------------------------------------------------
   Lo correcto es verificar el FLAG "+h", y no buscar en la base de datos
   cada vez.
@@ -534,45 +534,45 @@ key)))
   MacHo.     
 
 
-* 2000/12/29 jcea@argo.es          (u2.10.H.02.08)                   SYNC 
+* 2000/12/29 jcea@jcea.es          (u2.10.H.02.08)                   SYNC 
   -----------------------------------------------------------------------
   Verificacion del bug  en la gestion de DNS, publicado en Bugtraq
   el 6 de Diciembre. Nuestra version del servidor de IRC, basado en el
   codigo Undernet, no es vulnerable al problema.
 
-* 2000/12/20 jcea@argo.es          (u2.10.H.02.07)                    FIX
+* 2000/12/20 jcea@jcea.es          (u2.10.H.02.07)                    FIX
   -----------------------------------------------------------------------
   "Cannot kill, kick or deop channel service", se cambia el mensaje,
   porque en Hispano si que se le puede hacer un kill.
 
-* 2000/12/19 jcea@argo.es          (u2.10.H.02.06)                    FIX
+* 2000/12/19 jcea@jcea.es          (u2.10.H.02.06)                    FIX
   -----------------------------------------------------------------------
   Separa adecuadamente los campos en "stats l".
 
   Problema comunicado por Glog.
 
-* 2000/12/04 jcea@argo.es          (VIP20 - u2.10.H.02.05)            FIX
+* 2000/12/04 jcea@jcea.es          (VIP20 - u2.10.H.02.05)            FIX
   -----------------------------------------------------------------------
   Cambiamos el WHO para que tampoco se pueda buscar por IP si no somos
   opers/IRCops.
 
-* 2000/12/04 jcea@argo.es          (VIP19 - u2.10.H.02.04)            FIX
+* 2000/12/04 jcea@jcea.es          (VIP19 - u2.10.H.02.04)            FIX
   -----------------------------------------------------------------------
   El comando "who" con el modo "%i" SOLO esta disponible para operadores
   o IRCops.
 
-* 2000/12/04 jcea@argo.es          (u2.10.H.02.03)                    FIX
+* 2000/12/04 jcea@jcea.es          (u2.10.H.02.03)                    FIX
   -----------------------------------------------------------------------
   A ver si ahora YA no imprimimos los "connect" salvo a los opers y los
   IRCops...
 
-* 2000/11/24 jcea@argo.es          (DB78 - u2.10.H.02.02)         FEATURE
+* 2000/11/24 jcea@jcea.es          (DB78 - u2.10.H.02.02)         FEATURE
   -----------------------------------------------------------------------
   Doy acceso a los registros sensibles, solo a determinada gente (admins).
 
   Ponemos controles de acceso en la BDD (con el comando "dbq").
 
-* 2000/11/21 jcea@argo.es          (u2.10.H.02.01)                   SYNC
+* 2000/11/21 jcea@jcea.es          (u2.10.H.02.01)                   SYNC
   -----------------------------------------------------------------------
   "make indent" con el nuevo indent 2.2.6.
 

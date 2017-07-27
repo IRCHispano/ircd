@@ -1,10 +1,10 @@
 $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
 
-* 2003/09/08 jcea@argo.es            (u2.10.H.08.01)              CLEANUP
+* 2003/09/08 jcea@jcea.es            (u2.10.H.08.01)              CLEANUP
   -----------------------------------------------------------------------
   "make indent".
 
-* 2003/09/10 jcea@argo.es            (DB119 - u2.10.H.08.02)          FIX
+* 2003/09/10 jcea@jcea.es            (DB119 - u2.10.H.08.02)          FIX
   -----------------------------------------------------------------------
   Solucionado un grave problema de seguridad, potencialmente explotable
   de forma remota. Para ello el atacante debe poder introducir datos
@@ -14,7 +14,7 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
 
   A actualizar todo dios.
 
-* 2003/09/10 jcea@argo.es            (u2.10.H.08.03)              CLEANUP
+* 2003/09/10 jcea@jcea.es            (u2.10.H.08.03)              CLEANUP
   -----------------------------------------------------------------------
   Movemos los servidores P09 "cableados" en el codigo fuente a la tabla
   'z', registros "p09:*".
@@ -23,25 +23,25 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   IRCD sin soporte de BDD, dado que espero que en un par de dias
   se opte por ese camino en todo el codigo.
 
-* 2003/09/10 jcea@argo.es            (u2.10.H.08.04)              CLEANUP
+* 2003/09/10 jcea@jcea.es            (u2.10.H.08.04)              CLEANUP
   -----------------------------------------------------------------------
   Si intenta conectar un nodo P09 que no tenemos en la BDD, denegamos
   la conexion.
 
-* 2003/09/10 jcea@argo.es            (u2.10.H.08.05)              CLEANUP
+* 2003/09/10 jcea@jcea.es            (u2.10.H.08.05)              CLEANUP
   -----------------------------------------------------------------------
   Se limpian algunos rastos de Undernet sacados a la luz con los parches
   anteriores.
 
-* 2003/09/10 jcea@argo.es            (u2.10.H.08.06)              CLEANUP
+* 2003/09/10 jcea@jcea.es            (u2.10.H.08.06)              CLEANUP
   -----------------------------------------------------------------------
   Cuando se cumple u2.10.H.08.04, avisamos a los ops.
 
-* 2003/09/10 jcea@argo.es            (u2.10.H.08.07)              CLEANUP
+* 2003/09/10 jcea@jcea.es            (u2.10.H.08.07)              CLEANUP
   -----------------------------------------------------------------------
   Soluciono un par de problemas de seguridad potenciales adicionales.
 
-* 2003/09/15 jcea@argo.es            (u2.10.H.08.08)              CLEANUP
+* 2003/09/15 jcea@jcea.es            (u2.10.H.08.08)              CLEANUP
   -----------------------------------------------------------------------
   1063566087 KaLDoR SYMLINK : What should the name of the installed
              symbolic link to the exectuable be <--- aunque sea una
@@ -52,16 +52,16 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   -----------------------------------------------------------------------
   Eliminamos la opcion de compilar sin BDD y todo lo que ello implica.
 
-* 2003/09/15 jcea@argo.es            (u2.10.H.08.10)              CLEANUP
+* 2003/09/15 jcea@jcea.es            (u2.10.H.08.10)              CLEANUP
   -----------------------------------------------------------------------
   Corregidos un par de temas de indentacion del parche anterior, y
   actualizacion del "/version".
 
-* 2003/09/16 jcea@argo.es            (u2.10.H.08.11)                  FIX
+* 2003/09/16 jcea@jcea.es            (u2.10.H.08.11)                  FIX
   -----------------------------------------------------------------------
   Parche de seguridad IRCD.
 
-* 2003/09/16 zoltan@irc-dev.net      (u2.10.H.08.12)                  FIX
+* 2003/09/16 toni@tonigarcia.es      (u2.10.H.08.12)                  FIX
   -----------------------------------------------------------------------
   Al hacer un "rehash", los que accedieron saltando una linea K con una E,
   recibian un kill. Pasaba porque se borraba el valor de cptr->passwd, cosa
@@ -79,7 +79,7 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   Hago lo mismo que con el parche anterior, pero en este caso, cambio los
   #ifndef X's por #if !defined(X)'s.
 
-* 2003/09/18 jcea@argo.es            (u2.10.H.08.15)                  FIX
+* 2003/09/18 jcea@jcea.es            (u2.10.H.08.15)                  FIX
   -----------------------------------------------------------------------
   El parche u2.10.H.08.09 no esta completo. Hay que eliminar un par
   de compilaciones condicionales que se habian transpapelado.
@@ -131,7 +131,7 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   -----------------------------------------------------------------------
   Elimino de m_nick_remoto algunas variables que ya no se usan.
 
-* 2003/09/22 jcea@argo.es            (u2.10.H.08.25)              CLEANUP
+* 2003/09/22 jcea@jcea.es            (u2.10.H.08.25)              CLEANUP
   -----------------------------------------------------------------------
   "make indent".
 
@@ -141,32 +141,32 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   'n'. Esto daba problemas al hacer 'make install', en partes del script
   que contienen ifdef's.
 
-* 2003/09/25 jcea@argo.es            (u2.10.H.08.27)                  FIX
+* 2003/09/25 jcea@jcea.es            (u2.10.H.08.27)                  FIX
   -----------------------------------------------------------------------
   Tras u2.10.H.08.23, el código no compila en algunas versiones de GCC.
 
-* 2003/09/29 jcea@argo.es            (u2.10.H.08.28)              CLEANUP
+* 2003/09/29 jcea@jcea.es            (u2.10.H.08.28)              CLEANUP
   -----------------------------------------------------------------------
   Se pueden borrar mas cosas que en "u2.10.H.08.22", aprovechando que
   "IsServer(cptr)" siempre es TRUE para este caso.
 
   Asi limpiamos mas codigo.
 
-* 2003/09/29 jcea@argo.es            (u2.10.H.08.29)              CLEANUP
+* 2003/09/29 jcea@jcea.es            (u2.10.H.08.29)              CLEANUP
   -----------------------------------------------------------------------
   El "Jupe" de nicks no debe procesarse cuando el comando nos llega
   de forma remota.
 
   Mas limpieza de adicional a "u2.10.H.08.22".
 
-* 2003/09/29 jcea@argo.es            (u2.10.H.08.30)              CLEANUP
+* 2003/09/29 jcea@jcea.es            (u2.10.H.08.30)              CLEANUP
   -----------------------------------------------------------------------
   Comprobar que el usuario que nos llega no sea un "inv123456" o
   "invitado-123456" sobra cuando el usuario que nos llega es remoto.
 
   Mas limpieza de adicional a "u2.10.H.08.22".
 
-* 2003/09/29 jcea@argo.es            (u2.10.H.08.31)              CLEANUP
+* 2003/09/29 jcea@jcea.es            (u2.10.H.08.31)              CLEANUP
   -----------------------------------------------------------------------
   Con la limpieza anterior hay variables que ya no se usan y sobran.
   Las eliminamos.
@@ -184,7 +184,7 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   Se elimina el código del registro temporal de la BDD
   'permite.nicks.largos.en.local', de la tabla 'z'.
 
-* 2003/09/30 jcea@argo.es            (u2.10.H.08.35)              CLEANUP
+* 2003/09/30 jcea@jcea.es            (u2.10.H.08.35)              CLEANUP
   -----------------------------------------------------------------------
   Eliminamos el codigo asociado a "PROFIL", cuyo soporte hace años
   que es inexistente.
@@ -195,31 +195,31 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   Se almacena la clave en ASCII y BINARIO, para agilizar procesos
   criptográficos.
 
-* 2003/10/01 jcea@argo.es            (u2.10.H.08.37)              CLEANUP
+* 2003/10/01 jcea@jcea.es            (u2.10.H.08.37)              CLEANUP
   -----------------------------------------------------------------------
   Elimino "dead code" dejado por el parche anterior.
 
-* 2003/10/02 jcea@argo.es            (u2.10.H.08.38)              CLEANUP
+* 2003/10/02 jcea@jcea.es            (u2.10.H.08.38)              CLEANUP
   -----------------------------------------------------------------------
   Añado a "mount@irc-dev" al "/info". Es una respuesta a haberse ganado
   la mascara de "devel".
 
-* 2003/10/10 jcea@argo.es            (u2.10.H.08.39)              CLEANUP
+* 2003/10/10 jcea@jcea.es            (u2.10.H.08.39)              CLEANUP
   -----------------------------------------------------------------------
   Divido la rutina "set_mode" en "set_mode_local" y "set_mode_remoto",
   para poder hacer limpieza. Es muy buena idea, porque la rutina
   original es muy compleja y mide... !!!1107 lineas de codigo!!!.
 
-* 2003/10/10 jcea@argo.es            (u2.10.H.08.40)              CLEANUP
+* 2003/10/10 jcea@jcea.es            (u2.10.H.08.40)              CLEANUP
   -----------------------------------------------------------------------
   Meto un par de "assert()" en el parche anterior, para detectar
   inconsistencias cuanto antes.
  
-* 2003/10/10 jcea@argo.es            (u2.10.H.08.41)              CLEANUP
+* 2003/10/10 jcea@jcea.es            (u2.10.H.08.41)              CLEANUP
   -----------------------------------------------------------------------
   Empiezo a quitar "dead code" en "set_mode_local".
 
-* 2003/10/10 jcea@argo.es            (u2.10.H.08.42)              CLEANUP
+* 2003/10/10 jcea@jcea.es            (u2.10.H.08.42)              CLEANUP
   -----------------------------------------------------------------------
   Empiezo a quitar "dead code" en "set_mode_remoto".
 
@@ -239,23 +239,23 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   ahora esta llama a rename_user(), esto se hace así para poder
   renombrar nicks facilmente, y no tener partes duplicadas de código.
 
-* 2003/10/15 jcea@argo.es            (u2.10.H.08.44)              CLEANUP
+* 2003/10/15 jcea@jcea.es            (u2.10.H.08.44)              CLEANUP
   -----------------------------------------------------------------------
   Algo de limpieza del codigo anterior, y compilacion correcta.
 
-* 2003/10/15 jcea@argo.es            (u2.10.H.08.45)                  FIX
+* 2003/10/15 jcea@jcea.es            (u2.10.H.08.45)                  FIX
   -----------------------------------------------------------------------
   El parche de mount no tiene en cuenta que llegue un "rename" para
   un usuario de otro nodo. Ese es un error CRITICO.
 
-* 2003/10/15 jcea@argo.es            (u2.10.H.08.46)              CLEANUP
+* 2003/10/15 jcea@jcea.es            (u2.10.H.08.46)              CLEANUP
   -----------------------------------------------------------------------
   Cansado de tener problemas con los tabuladores, cambio todos los
   tabuladores del IRCD por dos espacios.
 
   "make indent".
 
-* 2003/10/15 jcea@argo.es            (u2.10.H.08.47)                  FIX
+* 2003/10/15 jcea@jcea.es            (u2.10.H.08.47)                  FIX
   -----------------------------------------------------------------------
   El parche u2.10.H.08.26 introduce el bug de que los simbolos booleanos
   marcados como "NO" no se guardan en la configuracion, por lo que en el
@@ -263,7 +263,7 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
 
   Deshago ese parche.
 
-* 2003/10/15 jcea@argo.es            (u2.10.H.08.48)                  FIX
+* 2003/10/15 jcea@jcea.es            (u2.10.H.08.48)                  FIX
   -----------------------------------------------------------------------
   Solucionamos el problema que pretendia solucionar u2.10.H.08.26, espero
   que esta vez de la forma correcta.
@@ -283,7 +283,7 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   Movemos el limpiado de la caché de ips virtuales en el cambio de clave
   de cifrado al s_bdd.c
 
-* 2003/10/21 jcea@argo.es            (u2.10.H.08.52)                  FIX
+* 2003/10/21 jcea@jcea.es            (u2.10.H.08.52)                  FIX
   -----------------------------------------------------------------------
   Deshago los parches u2.10.H.07.19, u2.10.H.07.21, u2.10.H.07.62.
 
@@ -300,24 +300,24 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   -----------------------------------------------------------------------
   Las ips virtuales solo se regeneran cuando es necesario.
 
-* 2003/10/21 jcea@argo.es            (u2.10.H.08.55)              CLEANUP
+* 2003/10/21 jcea@jcea.es            (u2.10.H.08.55)              CLEANUP
   -----------------------------------------------------------------------
   Algo de limpieza y reestructuracion de los dos parches anteriores.
 
-* 2003/10/21 jcea@argo.es            (u2.10.H.08.56)                  FIX
+* 2003/10/21 jcea@jcea.es            (u2.10.H.08.56)                  FIX
   -----------------------------------------------------------------------
   Bugfix en la optimizacion de cache de IPs virtuales personalizadas.
 
-* 2003/10/21 jcea@argo.es            (u2.10.H.08.57)                  FIX
+* 2003/10/21 jcea@jcea.es            (u2.10.H.08.57)                  FIX
   -----------------------------------------------------------------------
   Cuando borramos la IP virtual, tambien debemos hacer un
   "ClearIpVirtualPersonalizada()".
 
-* 2003/10/21 jcea@argo.es            (u2.10.H.08.58)                  FIX
+* 2003/10/21 jcea@jcea.es            (u2.10.H.08.58)                  FIX
   -----------------------------------------------------------------------
   Bugfix en la optimizacion de cache de IPs virtuales personalizadas.
 
-* 2003/10/21 jcea@argo.es            (u2.10.H.08.59)                  FIX
+* 2003/10/21 jcea@jcea.es            (u2.10.H.08.59)                  FIX
   -----------------------------------------------------------------------
   La logica del parche "u2.10.H.08.54" no funciona. Desactivo el parche
   de forma temporal, hasta tener algo que funcione y este probado de verdad...
@@ -338,19 +338,19 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   -----------------------------------------------------------------------
   Reparada la optimizacion de generado de ips virtuales.
 
-* 2003/10/22 jcea@argo.es            (u2.10.H.08.63)              CLEANUP
+* 2003/10/22 jcea@jcea.es            (u2.10.H.08.63)              CLEANUP
   -----------------------------------------------------------------------
   Limpieza y clarificacion del parche anterior.
 
-* 2003/10/22 jcea@argo.es            (u2.10.H.08.64)              CLEANUP
+* 2003/10/22 jcea@jcea.es            (u2.10.H.08.64)              CLEANUP
   -----------------------------------------------------------------------
   Simplificacion y optimizacion de codigo en "make_virtualhost()".
 
-* 2003/10/22 jcea@argo.es            (u2.10.H.08.65)                  FIX
+* 2003/10/22 jcea@jcea.es            (u2.10.H.08.65)                  FIX
   -----------------------------------------------------------------------
   Solucionado unn bug en introducido en "u2.10.H.08.63".
 
-* 2003/10/22 jcea@argo.es            (u2.10.H.08.66)              CLEANUP
+* 2003/10/22 jcea@jcea.es            (u2.10.H.08.66)              CLEANUP
   -----------------------------------------------------------------------
   Limpieza de algunos "warnings" de compilacion.
 
@@ -367,7 +367,7 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
     2. Gestión correcta de modos.
     3. Gestión correcta de contadores de HELPERS.
 
-* 2003/10/29 jcea@argo.es            (u2.10.H.08.69)                  FIX
+* 2003/10/29 jcea@jcea.es            (u2.10.H.08.69)                  FIX
   -----------------------------------------------------------------------
   Bug fix y limpieza del parche anterior.
 
@@ -395,13 +395,13 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   -----------------------------------------------------------------------
   La clave de un canal pasa a ser memoria dinamica.
 
-* 2003/10/31 jcea@argo.es            (u2.10.H.08.75)                  FIX
+* 2003/10/31 jcea@jcea.es            (u2.10.H.08.75)                  FIX
   -----------------------------------------------------------------------
   Algo de limpieza y documentacion del parche anterior. Soluciono
   un posible "buffer overflow" introducido en "u2.10.H.08.74",
   al gestionar el "burst".
 
-* 2003/11/03 jcea@argo.es            (u2.10.H.08.76)                  FIX
+* 2003/11/03 jcea@jcea.es            (u2.10.H.08.76)                  FIX
   -----------------------------------------------------------------------
   Tengo que añadir algunos "IsUser()" antes de limpiar las IPs virtuales,
   ya que se está llamando a las rutinas con estructuras a medio inicializar.
@@ -414,7 +414,7 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   valor del registro de ocultar la ip cifrada en ips virtuales
   personalizadas 2.
 
-* 2003/11/10 jcea@argo.es            (u2.10.H.08.78)                  FIX
+* 2003/11/10 jcea@jcea.es            (u2.10.H.08.78)                  FIX
   -----------------------------------------------------------------------
   Cambio algunos "sptr->user" por "IsUser(sptr)", que es una comprobación
   "mas fuerte".
@@ -423,43 +423,43 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   -----------------------------------------------------------------------
   Pasamos el miembro "name" de la estructura aClient a memoria dinamica.
 
-* 2003/11/12 jcea@argo.es            (u2.10.H.08.80)              CLEANUP
+* 2003/11/12 jcea@jcea.es            (u2.10.H.08.80)              CLEANUP
   -----------------------------------------------------------------------
   Un pelin de limpieza de estilo en el parche anterior.
 
-* 2003/11/12 jcea@argo.es            (u2.10.H.08.81)                  FIX
+* 2003/11/12 jcea@jcea.es            (u2.10.H.08.81)                  FIX
   -----------------------------------------------------------------------
   El parche u2.10.H.08.79 esta incompleto. No gestiona todos los casos.
 
-* 2003/11/13 jcea@argo.es            (u2.10.H.08.82)                  FIX
+* 2003/11/13 jcea@jcea.es            (u2.10.H.08.82)                  FIX
   -----------------------------------------------------------------------
   Con el parche u2.10.H.08.79 se puede dar el caso de que una rutina
   libere la cadena y luego intente usar "parv[0]", que apuntara a
   dios sabe donde.
 
-* 2003/11/13 jcea@argo.es            (u2.10.H.08.83)                  FIX
+* 2003/11/13 jcea@jcea.es            (u2.10.H.08.83)                  FIX
   -----------------------------------------------------------------------
   Otro bug de u2.10.H.08.79, que ocurre al conectar un usuario y forzar
   un "ghost" durante la conexion (no despues).
 
-* 2003/11/13 jcea@argo.es            (u2.10.H.08.84)                  FIX
+* 2003/11/13 jcea@jcea.es            (u2.10.H.08.84)                  FIX
   -----------------------------------------------------------------------
   Limpieza de u2.10.H.08.81.
 
-* 2003/11/18 jcea@argo.es            (u2.10.H.08.85)                  FIX
+* 2003/11/18 jcea@jcea.es            (u2.10.H.08.85)                  FIX
   -----------------------------------------------------------------------
   Soluciono un "memory leak" en u2.10.H.08.79.
 
-* 2003/11/18 jcea@argo.es            (u2.10.H.08.86)                  FIX
+* 2003/11/18 jcea@jcea.es            (u2.10.H.08.86)                  FIX
   -----------------------------------------------------------------------
   Otro bug en u2.10.H.08.79, en "/stats l".
 
-* 2003/11/18 jcea@argo.es            (u2.10.H.08.87)              FEATURE
+* 2003/11/18 jcea@jcea.es            (u2.10.H.08.87)              FEATURE
   -----------------------------------------------------------------------
   Empiezo a definir algunas funciones del "slab allocator", para poder
   usarlas ya aunque aun no esten implementadas como un "slab allocator".
 
-* 2003/11/18 jcea@argo.es            (u2.10.H.08.88)              CLEANUP
+* 2003/11/18 jcea@jcea.es            (u2.10.H.08.88)              CLEANUP
   -----------------------------------------------------------------------
   Movemos los cambios en u2.10.H.08.79 a los prototipos del
   "slab allocator".
@@ -469,7 +469,7 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   Pasamos el miembro "username" de la estructura aClient a memoria
   dinámica.
 
-* 2003/11/27 jcea@argo.es            (u2.10.H.08.90)              CLEANUP
+* 2003/11/27 jcea@jcea.es            (u2.10.H.08.90)              CLEANUP
   -----------------------------------------------------------------------
   Algo de limpieza.
 
@@ -508,21 +508,21 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   NOTICE. Ponemos GHOST como destinatario:
   :nick2!-@- NOTICE GHOST :*** Sesión fantasma del nick N3 ha sido liberada.
 
-* 2003/12/03 jcea@argo.es            (u2.10.H.08.98)              CLEANUP
+* 2003/12/03 jcea@jcea.es            (u2.10.H.08.98)              CLEANUP
   -----------------------------------------------------------------------
   Algo de limpieza en el parche u2.10.H.08.94.
 
-* 2003/12/03 jcea@argo.es            (u2.10.H.08.99)              CLEANUP
+* 2003/12/03 jcea@jcea.es            (u2.10.H.08.99)              CLEANUP
   -----------------------------------------------------------------------
   Algo de limpieza en el parche u2.10.H.08.95. En especial, nos aseguramos
   de que nunca se genere un PING con el valor "COOKIE_VERIFIED". Tambien
   cambiamos del sitio el "assert()".
 
-* 2003/12/08 jcea@argo.es            (u2.10.H.08.100)                 FIX
+* 2003/12/08 jcea@jcea.es            (u2.10.H.08.100)                 FIX
   -----------------------------------------------------------------------
   BugFix. Evitamos un DoS a traves de "/whois".
 
-* 2003/12/17 jcea@argo.es            (u2.10.H.08.101)                 FIX
+* 2003/12/17 jcea@jcea.es            (u2.10.H.08.101)                 FIX
   -----------------------------------------------------------------------
   Se solucionan otros bugs derivados de la migracion de memoria
   estatica a dinamica, que pueden matar el servidor.
@@ -558,17 +558,17 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   Pasamos el miembro "sockhost" de la estructura Client a memoria
   dinámica.
 
-* 2004/01/27 jcea@argo.es            (u2.10.H.08.109)                 FIX
+* 2004/01/27 jcea@jcea.es            (u2.10.H.08.109)                 FIX
   -----------------------------------------------------------------------
   Soluciono un problema con los parches anteriores, cuando un nodo
   recibe una conexion de otro y hay un intento de negociacion.
 
-* 2004/01/27 jcea@argo.es            (u2.10.H.08.110)                 FIX
+* 2004/01/27 jcea@jcea.es            (u2.10.H.08.110)                 FIX
   -----------------------------------------------------------------------
   Soluciono otro problema con u2.10.H.08.108 y la desconexion de
   usuarios remotos.
 
-* 2004/01/27 jcea@argo.es            (u2.10.H.08.111)                 FIX
+* 2004/01/27 jcea@jcea.es            (u2.10.H.08.111)                 FIX
   -----------------------------------------------------------------------
   Soluciono un problema introducido en u2.10.H.08.105, cuando llegan
   registros por la BDD que afectan a un usuario conectado.
@@ -582,11 +582,11 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   Arreglados unos bugs de los parches anteriores que no compilaban en
   modo debug.
 
-* 2004/01/27 jcea@argo.es            (u2.10.H.08.114)                 FIX
+* 2004/01/27 jcea@jcea.es            (u2.10.H.08.114)                 FIX
   -----------------------------------------------------------------------
   Elimino un "memory leak" introducido en u2.10.H.08.112.
 
-* 2004/01/27 jcea@argo.es            (u2.10.H.08.115)             CLEANUP
+* 2004/01/27 jcea@jcea.es            (u2.10.H.08.115)             CLEANUP
   -----------------------------------------------------------------------
   Doy de alta a RyDeN como "devel" de la red, en el "version.c.SH".
 
@@ -595,7 +595,7 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   Eliminamos un assert mal puesto que mataba al ircd cuando se compilaba
   con modo debug.
 
-* 2004/02/03 jcea@argo.es            (u2.10.H.08.117)             CLEANUP
+* 2004/02/03 jcea@jcea.es            (u2.10.H.08.117)             CLEANUP
   -----------------------------------------------------------------------
   Soluciono un par de "warnings" en la compilacion.
 
@@ -617,32 +617,32 @@ $Id: CAMBIOS2_10_H_08,v 1.110 2004/02/04 11:28:27 jcea Exp $
   Modificamos el ejemplo.conf para estar al dia con la eliminacion de las
   N-lines.
 
-* 2004/02/04 jcea@argo.es            (u2.10.H.08.122)             CLEANUP
+* 2004/02/04 jcea@jcea.es            (u2.10.H.08.122)             CLEANUP
   -----------------------------------------------------------------------
   Mas limpieza de los parches de eliminacion de las lineas N.
 
-* 2004/02/04 jcea@argo.es            (u2.10.H.08.123)             CLEANUP
+* 2004/02/04 jcea@jcea.es            (u2.10.H.08.123)             CLEANUP
   -----------------------------------------------------------------------
   Mas limpieza de los parches de eliminacion de las lineas N.
 
-* 2004/02/04 jcea@argo.es            (u2.10.H.08.124)             CLEANUP
+* 2004/02/04 jcea@jcea.es            (u2.10.H.08.124)             CLEANUP
   -----------------------------------------------------------------------
   Mas limpieza de los parches de eliminacion de las lineas N.
 
-* 2004/02/04 jcea@argo.es            (u2.10.H.08.125)             CLEANUP
+* 2004/02/04 jcea@jcea.es            (u2.10.H.08.125)             CLEANUP
   -----------------------------------------------------------------------
   Mas limpieza de los parches de eliminacion de las lineas N.
 
-* 2004/02/04 jcea@argo.es            (u2.10.H.08.126)             CLEANUP
+* 2004/02/04 jcea@jcea.es            (u2.10.H.08.126)             CLEANUP
   -----------------------------------------------------------------------
   Mas limpieza de los parches de eliminacion de las lineas N.
 
-* 2004/02/04 jcea@argo.es            (u2.10.H.08.127)                 FIX
+* 2004/02/04 jcea@jcea.es            (u2.10.H.08.127)                 FIX
   -----------------------------------------------------------------------
   El parche de eliminacion de las lineas N no configura correctamente la
   clase de conexion a la que pertenece un servidor determinado.
 
-* 2004/02/04 jcea@argo.es            (u2.10.H.08.128)             CLEANUP
+* 2004/02/04 jcea@jcea.es            (u2.10.H.08.128)             CLEANUP
   -----------------------------------------------------------------------
   Mas limpieza en "ejemplo.conf", no realizada en u2.10.H.08.121.
 

@@ -1,6 +1,6 @@
 $Id: CAMBIOS2_10_H_03,v 1.47 2002/03/14 19:54:34 jcea Exp $
 
-* 2002/03/14 jcea@argo.es          (u2.10.H.03.54)                CLEANUP
+* 2002/03/14 jcea@jcea.es          (u2.10.H.03.54)                CLEANUP
   -----------------------------------------------------------------------
   Cambiamos el mensaje de suspension, ya que no sabemos si es temporal
   o no :-).
@@ -31,12 +31,12 @@ $Id: CAMBIOS2_10_H_03,v 1.47 2002/03/14 19:54:34 jcea Exp $
   final, en caso afirmativo el nick esta suspendido y en caso contrario
   nick activo (no suspendido).
 
-* 2002/03/14 jcea@argo.es          (Z13 - u2.10.H.03.49)              FIX
+* 2002/03/14 jcea@jcea.es          (Z13 - u2.10.H.03.49)              FIX
   -----------------------------------------------------------------------
   Actualizamos la libreria ZLIB de 1.1.3 a 1.1.4, debido a un problema
   de seguridad detectado.
 
-* 2002/03/13 jcea@argo.es          (u2.10.H.03.48)                CLEANUP
+* 2002/03/13 jcea@jcea.es          (u2.10.H.03.48)                CLEANUP
   -----------------------------------------------------------------------
   "make indent".
 
@@ -58,7 +58,7 @@ $Id: CAMBIOS2_10_H_03,v 1.47 2002/03/14 19:54:34 jcea Exp $
   un usuario tiene el nick suspendido.
 
 
-* 2002/03/12 jcea@argo.es          (DB92 - u2.10.H.03.46)         CLEANUP
+* 2002/03/12 jcea@jcea.es          (DB92 - u2.10.H.03.46)         CLEANUP
   -----------------------------------------------------------------------
   Desde DB16, los nodos envian la version de base de datos distribuida
   que se esta utilizando. Por ello se enviaba primero el JOIN de la
@@ -93,7 +93,7 @@ $Id: CAMBIOS2_10_H_03,v 1.47 2002/03/14 19:54:34 jcea Exp $
   -----------------------------------------------------------------------
   En el "/map", el porcentaje del propio nodo siempre sale como 0.0%.
 
-* 2002/02/20 jcea@argo.es          (u2.10.H.03.42)                FEATURE
+* 2002/02/20 jcea@jcea.es          (u2.10.H.03.42)                FEATURE
   -----------------------------------------------------------------------
   Nos encontramos que, a veces, se generan "quit :" espureos, lo que
   puede convertirse en un "quit ()" en el cliente.
@@ -102,17 +102,17 @@ $Id: CAMBIOS2_10_H_03,v 1.47 2002/03/14 19:54:34 jcea Exp $
   Lo he cambiado para que si no se indica ningún mensaje de salida,
   no aparezca nada.
 
-* 2002/02/20 jcea@argo.es          (u2.10.H.03.41)                    FIX
+* 2002/02/20 jcea@jcea.es          (u2.10.H.03.41)                    FIX
   -----------------------------------------------------------------------
   Cuando un usuario no pone ningún mensaje, no añadimos un "User Quit:"
   gratuito.
 
-* 2002/02/18 jcea@argo.es          (u2.10.H.03.40)                FEATURE
+* 2002/02/18 jcea@jcea.es          (u2.10.H.03.40)                FEATURE
   -----------------------------------------------------------------------
   Cuando se hace un "/map", se indica el porcentaje de usuarios que
   tiene cada nodo de la red.
 
-* 2002/02/18 jcea@argo.es          (u2.10.H.03.39)                FEATURE
+* 2002/02/18 jcea@jcea.es          (u2.10.H.03.39)                FEATURE
   -----------------------------------------------------------------------
   Cuando un usuario hace un "quit", su mensaje de salida aparece precedido
   con "User Quit:".
@@ -142,13 +142,13 @@ $Id: CAMBIOS2_10_H_03,v 1.47 2002/03/14 19:54:34 jcea Exp $
   Al perder el modo de operador, el usuario vuelve a la clase a la que
   pertenecia anteriormente.
 
-* 2001/12/12 jcea@argo.es          (u2.10.H.03.37)                    FIX
+* 2001/12/12 jcea@jcea.es          (u2.10.H.03.37)                    FIX
   -----------------------------------------------------------------------
   Debemos considerar tambien el caso de que haya cambios de nick
   equivalentes provenientes del resto de la red. En esos casos
   tampoco debemos tocar modos.
 
-* 2001/12/12 jcea@argo.es          (u2.10.H.03.36)                    FIX
+* 2001/12/12 jcea@jcea.es          (u2.10.H.03.36)                    FIX
   -----------------------------------------------------------------------
   Hay un problema de compatibilidad entre los nodos "antiguos" y los
   nodos con parche 34 aplicado.
@@ -159,11 +159,11 @@ $Id: CAMBIOS2_10_H_03,v 1.47 2002/03/14 19:54:34 jcea Exp $
   de nick hasta que todo dios actualice, y luego eliminar eso, una
   vez que ya no es preciso.
 
-* 2001/12/11 jcea@argo.es          (u2.10.H.03.35)                CLEANUP
+* 2001/12/11 jcea@jcea.es          (u2.10.H.03.35)                CLEANUP
   -----------------------------------------------------------------------
   "make indent".
 
-* 2001/12/11 jcea@argo.es          (u2.10.H.03.34)                    FIX
+* 2001/12/11 jcea@jcea.es          (u2.10.H.03.34)                    FIX
   -----------------------------------------------------------------------
   El parche anterior eliminaba corectamente la necesidad de quitar
   modos, ya que los modos no cambian, pero no tocaba la necesidad
@@ -189,24 +189,24 @@ $Id: CAMBIOS2_10_H_03,v 1.47 2002/03/14 19:54:34 jcea Exp $
   Los cambios de nick entre nicks equivalentes, no deberian
   necesitar la clave.
 
-* 2001/12/11 jcea@argo.es          (DB91 - u2.10.H.03.32)         FEATURE
+* 2001/12/11 jcea@jcea.es          (DB91 - u2.10.H.03.32)         FEATURE
   -----------------------------------------------------------------------
   Complementa el parche anterior para "DBQ", para el caso de que la
   tabla no exista o no sea residente.
  
-* 2001/12/11 jcea@argo.es          (DB90 - u2.10.H.03.31)         FEATURE
+* 2001/12/11 jcea@jcea.es          (DB90 - u2.10.H.03.31)         FEATURE
   -----------------------------------------------------------------------
   El comando "DBQ" deberia imprimir la clave de busqueda
   aunque el registro no exista, para poder casar facilmente las
   preguntas con las respuestas.
 
-* 2001/12/11 jcea@argo.es          (u2.10.H.03.30)                FEATURE
+* 2001/12/11 jcea@jcea.es          (u2.10.H.03.30)                FEATURE
   -----------------------------------------------------------------------
   "RELIABLE_CLOCK" desactivado para todo el mundo. La hora de la red
   la debe fijar un "service", ya que hay nodos que dicen que tienen
   un reloj fiable y ni por asomo...
 
-* 2001/12/11 jcea@argo.es          (u2.10.H.03.29)                    FIX
+* 2001/12/11 jcea@jcea.es          (u2.10.H.03.29)                    FIX
   -----------------------------------------------------------------------
   Cuando se hace un "SETTIME", si el offset es de 0 segundos, se imprime
   "clock is set 0 seconds backwards", en vez de "forward".
@@ -224,11 +224,11 @@ $Id: CAMBIOS2_10_H_03,v 1.47 2002/03/14 19:54:34 jcea Exp $
   evitar desync's con nodos usando versiones anteriores, se permiten pasar
   si vienen de estos o de sus usuarios.
 
-* 2001/12/07 jcea@argo.es          (u2.10.H.03.26)                    FIX
+* 2001/12/07 jcea@jcea.es          (u2.10.H.03.26)                    FIX
   -----------------------------------------------------------------------
   En "/time" se imprimia "Deciembre", en vez de "Diciembre".
 
-* 2001/11/26 jcea@argo.es          (u2.10.H.03.25)                    FIX
+* 2001/11/26 jcea@jcea.es          (u2.10.H.03.25)                    FIX
   -----------------------------------------------------------------------
   No tiene sentido que un nodo pida a otro un "DBQ", ya que la respuesta
   llega como un "NOTICE".
@@ -254,11 +254,11 @@ información visible de TODOS los canales de la red, lo que provoca una caida
 sendQ exceeded". La respuesta al /names sin parámetros, debería ser "Not
 enough parameters" y la sintaxis de /names <#canal>.
        
-* 2001/11/12 jcea@argo.es          (u2.10.H.03.22)                CLEANUP
+* 2001/11/12 jcea@jcea.es          (u2.10.H.03.22)                CLEANUP
   -----------------------------------------------------------------------
   An~adimos "Amn3s1a" a los creditos.
 
-* 2001/11/12 jcea@argo.es          (u2.10.H.03.21)                    FIX
+* 2001/11/12 jcea@jcea.es          (u2.10.H.03.21)                    FIX
   -----------------------------------------------------------------------
   Creo que en u2.10.H.03.17 se introduce un bug en el comando "hunt_server",
   ya que no estoy seguro de la conveniencia de enviar SIEMPRE un mensaje
@@ -314,7 +314,7 @@ enough parameters" y la sintaxis de /names <#canal>.
   Solucionado un bug del parche anterior, sobraba un %s y junto los
   XMODE y GHOST en el mismo 005.
 
-* 2001/10/25 jcea@argo.es          (u2.10.H.03.15)                    FIX
+* 2001/10/25 jcea@jcea.es          (u2.10.H.03.15)                    FIX
   -----------------------------------------------------------------------
   Solucionados un par de faltas ortografias en el parche anterior, y
   envio de varios "005" en vez de uno largo.
@@ -350,7 +350,7 @@ enough parameters" y la sintaxis de /names <#canal>.
   Se añade nueva sintaxis para matar ghosts. Es la siguiente:
            /nick jcea !clave
 
-* 2001/10/24 jcea@argo.es          (u2.10.H.03.09)                CLEANUP
+* 2001/10/24 jcea@jcea.es          (u2.10.H.03.09)                CLEANUP
   -----------------------------------------------------------------------
   Cambios cosmeticos en el parche anterior.
 
@@ -411,6 +411,6 @@ Dani----[ppp34-sa1.Acer.BCN.ES.INTELIDEAS.NET] [carme.irc-hispano.org]:
   el de la tabla 'v' que solo denegaba si se consultaba el registro '.'
   en vez de a todos los registros como debe ser.
 
-* 2001/09/14 jcea@argo.es          (u2.10.H.03.01)                CLEANUP 
+* 2001/09/14 jcea@jcea.es          (u2.10.H.03.01)                CLEANUP 
   -----------------------------------------------------------------------
   "make indent".

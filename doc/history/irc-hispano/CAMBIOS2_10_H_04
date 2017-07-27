@@ -11,25 +11,25 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   completa el "handshake", en vez de mandarlo al ftp de Undernet, lo
   mandamos al ftp de www.irc.org.
 
-* 2002/07/09 jcea@argo.es           (u2.10.H.04.79)                   FIX
+* 2002/07/09 jcea@jcea.es           (u2.10.H.04.79)                   FIX
   -----------------------------------------------------------------------
   Releer las bases de datos puede llevar un buen ratillo, asi que
   es conveniente poner un "now=time()" al final, para que el reloj
   no se desajuste, especialmente si, a continuacion, se intenta
   hacer un NETJOIN.
 
-* 2002/07/09 jcea@argo.es           (VIP39 - u2.10.H.04.78)           FIX
+* 2002/07/09 jcea@jcea.es           (VIP39 - u2.10.H.04.78)           FIX
   -----------------------------------------------------------------------
   En el parche VIP38 (u2.10.H.04.73), si el usuario no es local,
   hace caso al modo "+x" si lo tiene.
 
-* 2002/07/09 jcea@argo.es           (u2.10.H.04.77)                   FIX
+* 2002/07/09 jcea@jcea.es           (u2.10.H.04.77)                   FIX
   -----------------------------------------------------------------------
   El parche original de normalizacion de claves de busqueda en la BDD
   tenia un BUG muy gordo, que es intentar usar la clave antes de que
   se haya definido siquiera.
 
-* 2002/07/09 jcea@argo.es           (u2.10.H.04.76)               CLEANUP
+* 2002/07/09 jcea@jcea.es           (u2.10.H.04.76)               CLEANUP
   -----------------------------------------------------------------------
   Optimizamos el parche anterior para evitar "malloc()" a menos que
   sea necesario.
@@ -45,53 +45,53 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   Cuando alguien se cae por PING TIMEOUT, no ponemos "ping timeout for
   nick", que es redundante, sino "ping timeout" a secas.
 
-* 2002/07/09 jcea@argo.es           (VIP38 - u2.10.H.04.73)       FEATURE
+* 2002/07/09 jcea@jcea.es           (VIP38 - u2.10.H.04.73)       FEATURE
   -----------------------------------------------------------------------
   Podemos configurar el servidor para que solo interprete el modo "+x"
   si el nick aparece en la tabla "v" o "w". Esto es un pseudoapaño para
   mi sistema de túneles. Habría que afinarlo mejor.
 
-* 2002/07/09 jcea@argo.es           (VIP37 - u2.10.H.04.72)           FIX
+* 2002/07/09 jcea@jcea.es           (VIP37 - u2.10.H.04.72)           FIX
   -----------------------------------------------------------------------
   En los nodos compilados sin soporte +x para todo el mundo, debe
   permitirse el +x si el nick esta en la tabla "w", no solo
   en la tabla "v".
 
-* 2002/06/26 jcea@argo.es           (u2.10.H.04.71)               CLEANUP
+* 2002/06/26 jcea@jcea.es           (u2.10.H.04.71)               CLEANUP
   -----------------------------------------------------------------------
   "make indent".
 
-* 2002/06/26 jcea@argo.es           (u2.10.H.04.70)               CLEANUP
+* 2002/06/26 jcea@jcea.es           (u2.10.H.04.70)               CLEANUP
   -----------------------------------------------------------------------
   Soporte para "indent" version 2.2.8.
 
-* 2002/06/25 jcea@argo.es           (u2.10.H.04.69)               FEATURE
+* 2002/06/25 jcea@jcea.es           (u2.10.H.04.69)               FEATURE
   -----------------------------------------------------------------------
   Bajo ciertas circunstancias, un "CREATE" se transforma en un "JOIN" por
   el camino. Nos aseguramos de que dicha transformacion sea P10 para
   los nodos que soporten P10.
 
-* 2002/06/24 jcea@argo.es           (u2.10.H.04.68)                   FIX
+* 2002/06/24 jcea@jcea.es           (u2.10.H.04.68)                   FIX
   -----------------------------------------------------------------------
   A ver si con este parche el calculo del HASH global de todas las BDD
   funciona correctamente tambien bajo plataformas 64 bits, concretamente
   Alpha.
 
-* 2002/06/24 jcea@argo.es           (VIP36 - u2.10.H.04.67)           FIX
+* 2002/06/24 jcea@jcea.es           (VIP36 - u2.10.H.04.67)           FIX
   -----------------------------------------------------------------------
   Detalle cosmetico en las IPs virtuales personalizadas.
 
-* 2002/06/24 jcea@argo.es           (DB94 - u2.10.H.04.66)        FEATURE
+* 2002/06/24 jcea@jcea.es           (DB94 - u2.10.H.04.66)        FEATURE
   -----------------------------------------------------------------------
   Un "stats b" muestra las tablas residentes, AUNQUE no tengan ningun
   registro.
 
-* 2002/06/24 jcea@argo.es           (VIP35 - u2.10.H.04.65)           FIX
+* 2002/06/24 jcea@jcea.es           (VIP35 - u2.10.H.04.65)           FIX
   -----------------------------------------------------------------------
   Si no hay clave de cifrado, lo indica claramente aunque el usuario este
   presente en la nueva tabla 'w'.
 
-* 2002/06/24 jcea@argo.es           (VIP34 - u2.10.H.04.64)       FEATURE
+* 2002/06/24 jcea@jcea.es           (VIP34 - u2.10.H.04.64)       FEATURE
   -----------------------------------------------------------------------
   Creo una tabla nueva, la "w". Los usuarios +r con entradas en esta tabla
   disfrutan de una IP personalizada del tipo
@@ -102,22 +102,22 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
 
   XXXXXX.YYYYYY.virtual.
 
-* 2002/06/24 jcea@argo.es           (u2.10.H.04.63)               CLEANUP
+* 2002/06/24 jcea@jcea.es           (u2.10.H.04.63)               CLEANUP
   -----------------------------------------------------------------------
   Cambio el nombre de la base de datos distribuida 'v', para evitar
   confusiones con la inminente tabla nueva "w".
 
-* 2002/06/24 jcea@argo.es           (u2.10.H.04.62)                   FIX
+* 2002/06/24 jcea@jcea.es           (u2.10.H.04.62)                   FIX
   -----------------------------------------------------------------------
   El servidor falla si el que hace el KICK es un nodo, no un usuario.
 
   Problema diagnosticado por Amn3s1a, NiKoLaS y Zoltan.
 
-* 2002/06/21 jcea@argo.es           (u2.10.H.04.61)                   FIX
+* 2002/06/21 jcea@jcea.es           (u2.10.H.04.61)                   FIX
   -----------------------------------------------------------------------
   Solucionado un problemilla en casos extremos y servidores P09.
 
-* 2002/06/21 jcea@argo.es           (u2.10.H.04.60)               FEATURE
+* 2002/06/21 jcea@jcea.es           (u2.10.H.04.60)               FEATURE
   -----------------------------------------------------------------------
   A los nodos P10 enviamos
 
@@ -130,7 +130,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   Bajo ciertas condiciones, se sigue enviando el PART antiguo. En particular,
   cuando llega un "JOIN 0". ¿Esto solo se enviaria a clientes?
 
-* 2002/06/21 jcea@argo.es           (u2.10.H.04.59)               FEATURE
+* 2002/06/21 jcea@jcea.es           (u2.10.H.04.59)               FEATURE
   -----------------------------------------------------------------------
   A los nodos P10 enviamos
 
@@ -143,7 +143,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   Bajo ciertas condiciones, un CREATE se transforma en un "JOIN", y lo
   hace segun el formato antiguo.
 
-* 2002/06/21 jcea@argo.es           (u2.10.H.04.58)               FEATURE
+* 2002/06/21 jcea@jcea.es           (u2.10.H.04.58)               FEATURE
   -----------------------------------------------------------------------
   A los nodos P10 enviamos
 
@@ -181,7 +181,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   defecto del sistema sea GNU. Si no lo es, busca el gmake, y nos informa
   de ello al finalizar el configure.
 
-* 2002/06/13 zoltan@irc-dev.net    (VIP33 - u2.10.H.04.53)            FIX
+* 2002/06/13 toni@tonigarcia.es    (VIP33 - u2.10.H.04.53)            FIX
   -----------------------------------------------------------------------
   La cache del virtualhost, ha de borrarse despues de mandar un
    :nick_antiguo!user@QwErTy:AsDfGh.virtual NICK nick_nuevo
@@ -200,7 +200,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
       multiples iteraciones con una cola, asi no satura la conexion al
       usuario. 
 
-* 2002/06/13 zoltan@irc-dev.net    (u2.10.H.04.51)                FEATURE
+* 2002/06/13 toni@tonigarcia.es    (u2.10.H.04.51)                FEATURE
   -----------------------------------------------------------------------
   Se implementa soporte de nicks prohibidos (forbid), si la clave
   encriptada de un nick, contiene un '*' al final, el nick esta en estado
@@ -215,12 +215,12 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   -----------------------------------------------------------------------
   Correccion gramatical de los mensajes en las g-lines.
 
-* 2002/06/11 zoltan@irc-dev.net    (u2.10.H.04.48)                FEATURE
+* 2002/06/11 toni@tonigarcia.es    (u2.10.H.04.48)                FEATURE
   -----------------------------------------------------------------------
   En los notices de las GLINE's cuando se agregan o se cambia la
   expiracion, aparece el tiempo en formato "humano".
 
-* 2002/06/11 zoltan@irc-dev.net    (W8 - u2.10.H.04.47)               FIX
+* 2002/06/11 toni@tonigarcia.es    (W8 - u2.10.H.04.47)               FIX
   -----------------------------------------------------------------------
   Se cambia de sitio la funcion chequea_estado_watch() en los casos de un
   cambio de nick. El nick anterior, se avisa antes de que el nick pierda
@@ -230,21 +230,21 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   Y el nick nuevo, ahora avisa despues de los modos, y solo si es un
   usuario.
 
-* 2002/05/30 jcea@argo.es          (TS6 - u2.10.H.04.46)          CLEANUP
+* 2002/05/30 jcea@jcea.es          (TS6 - u2.10.H.04.46)          CLEANUP
   -----------------------------------------------------------------------
   Ortografia.
 
-* 2002/05/30 jcea@argo.es          (TS5 - u2.10.H.04.45)              FIX
+* 2002/05/30 jcea@jcea.es          (TS5 - u2.10.H.04.45)              FIX
   -----------------------------------------------------------------------
   Las notificaciones las debe enviar tambien a los OPs locales, no solo
   a los remotos...
 
-* 2002/05/30 jcea@argo.es          (TS4 - u2.10.H.04.44)              FIX
+* 2002/05/30 jcea@jcea.es          (TS4 - u2.10.H.04.44)              FIX
   -----------------------------------------------------------------------
   El parche original de TS es incorrecto, ya que solo debe comprobarse
   el TS de los enlaces directos locales, no los de toda la red.
 
-* 2002/05/30 jcea@argo.es          (W7 - u2.10.H.04.43)               FIX
+* 2002/05/30 jcea@jcea.es          (W7 - u2.10.H.04.43)               FIX
   -----------------------------------------------------------------------
   Bajamos el MAXWATCH por defecto de 128 a 96 entradas, para evitar
   problemas con el CLIENT_FLOOD.
@@ -253,52 +253,52 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   mas o menos incompatibles. Los detalles son truculentos. Ver los
   comentarios en "ircd/m_watch.c".
 
-* 2002/05/30 jcea@argo.es          (TS3 - u2.10.H.04.42)              FIX
+* 2002/05/30 jcea@jcea.es          (TS3 - u2.10.H.04.42)              FIX
   -----------------------------------------------------------------------
   Cuando un nodo aborta el establecimiento de un enlace con otro, debido
   a excesivas diferencias de tiempo, informa a toda la red, no solo a los
   OPs locales a ese nodo.
 
-* 2002/05/30 jcea@argo.es          (TS2 - u2.10.H.04.41)          CLEANUP
+* 2002/05/30 jcea@jcea.es          (TS2 - u2.10.H.04.41)          CLEANUP
   -----------------------------------------------------------------------
   Un par de retoques al parche anterior.
 
-* 2002/05/29 zoltan@irc-dev.net    (TS1 - u2.10.H.04.40)          FEATURE
+* 2002/05/29 toni@tonigarcia.es    (TS1 - u2.10.H.04.40)          FEATURE
   -----------------------------------------------------------------------
   No permite que dos nodos se conecten si el desfase de tiempos entre
   ellos es mayor de 30 segundos. !!Para algo existe NTP!!.
 
-* 2002/05/29 zoltan@irc-dev.net    (W6 - u2.10.H.04.39)           CLEANUP
+* 2002/05/29 toni@tonigarcia.es    (W6 - u2.10.H.04.39)           CLEANUP
   -----------------------------------------------------------------------
   Se deshabilita la feature de que al hacer un "WATCH S" nos diga el
   numero de gente que nos tiene en sus notifys.
   Se mantiene el codigo en las fuentes.
 
-* 2002/05/21 zoltan@irc-dev.net    (u2.10.H.04.38)                CLEANUP
+* 2002/05/21 toni@tonigarcia.es    (u2.10.H.04.38)                CLEANUP
   -----------------------------------------------------------------------
   Si se pone un valor en el MAXWATCH (maximo de entradas en la lista de
   WATCH) fuera del rango 32-256 dara un error.
 
-* 2002/05/21 zoltan@irc-dev.net    (u2.10.H.04.37)                FEATURE
+* 2002/05/21 toni@tonigarcia.es    (u2.10.H.04.37)                FEATURE
   -----------------------------------------------------------------------
   Un /VERSION nos dara informacion del valor de CLIENT_FLOOD y si WATCH
   esta activado, las entradas maximas permitidas.
 
-* 2002/05/20 jcea@argo.es          (u2.10.H.04.36)                    FIX
+* 2002/05/20 jcea@jcea.es          (u2.10.H.04.36)                    FIX
   -----------------------------------------------------------------------
   Cuando un nodo envia el primer "SERVER" al establecer un enlace,
   envia correctamente el prefijo.
 
   Problema detectado a traves de Olimpo.
 
-* 2002/05/20 jcea@argo.es          (u2.10.H.04.35)                    FIX
+* 2002/05/20 jcea@jcea.es          (u2.10.H.04.35)                    FIX
   -----------------------------------------------------------------------
   Cuando un nodo envia la clave de enlace a otro,
   envia correctamente el prefijo.
 
   Problema detectado a traves de Olimpo.
 
-* 2002/05/20 zoltan@irc-dev.net    (u2.10.H.04.34)                    FIX
+* 2002/05/20 toni@tonigarcia.es    (u2.10.H.04.34)                    FIX
   -----------------------------------------------------------------------
   En el parche u2.10.H.04.04, se ha omitido, por error, el mandar el
   notice de autentificacion cuando un nick entra en la red. Tambien
@@ -306,12 +306,12 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   teniendo en cuenta que esta dentro de un "if (sptr->name[0])". Asi nos
   curamos en salud.
 
-* 2002/05/20 zoltan@irc-dev.net    (u2.10.H.04.33)                FEATURE
+* 2002/05/20 toni@tonigarcia.es    (u2.10.H.04.33)                FEATURE
   -----------------------------------------------------------------------
   Se mete WATCH en el 005, asi, los clientes de IRC detectan el comando
   WATCH y lo utilizaran en detrimento del ISON.
 
-* 2002/05/20 zoltan@irc-dev.net    (W5 - u2.10.H.04.32)           FEATURE
+* 2002/05/20 toni@tonigarcia.es    (W5 - u2.10.H.04.32)           FEATURE
   -----------------------------------------------------------------------
   Nuevos parametros soportados para el WATCH.
       WATCH S/s  Da el estado del notify, nos dice cuantos nicks tenemos
@@ -324,7 +324,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
       WATCH L    Lita tanto los off-line como on-line de la lista.
       WATCH      Hace lo mismo que un WATCH l.
 
-* 2002/05/20 zoltan@irc-dev.net    (W4 - u2.10.H.04.31)           FEATURE
+* 2002/05/20 toni@tonigarcia.es    (W4 - u2.10.H.04.31)           FEATURE
   -----------------------------------------------------------------------
   Se define la funcion externa chequea_estado_watch() para los 
   seguimientos de nicks cuando un nick entra/sale en la red.
@@ -334,7 +334,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   lo tengan en sus notifys un RPL_LOGON si se trata de una entrada o un
   RPL_LOGOFF en el caso de una salida.
 
-* 2002/05/20 zoltan@irc-dev.net    (W3 - u2.10.H.04.30)           FEATURE
+* 2002/05/20 toni@tonigarcia.es    (W3 - u2.10.H.04.30)           FEATURE
   -----------------------------------------------------------------------
   Implementa el comando WATCH. Las sintaxis son las siguientes:
       WATCH +nick   Agrega un nick
@@ -344,7 +344,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   Los parametros se pueden combinar, es decir, WATCH C +nick1 +nick2 -nick2
   Se pueden separar los parametros por " " o "," o ambos.
 
-* 2002/05/20 zoltan@irc-dev.net    (W2 - u2.10.H.04.29)           FEATURE
+* 2002/05/20 toni@tonigarcia.es    (W2 - u2.10.H.04.29)           FEATURE
   -----------------------------------------------------------------------
   Se introducen en el codigo los numericos relacionados con el WATCH. Son
   los siguientes:
@@ -361,7 +361,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   Para enviar raws del rango 600-607, se ha definido la funcion externa
   watch_str.
 
-* 2002/05/20 zoltan@irc-dev.net    (W1 - u2.10.H.04.28)           FEATURE
+* 2002/05/20 toni@tonigarcia.es    (W1 - u2.10.H.04.28)           FEATURE
   -----------------------------------------------------------------------
   Primer parche de implementacion del comando WATCH.
   La activacion es opcional y es configurable en el "make config", asi
@@ -407,12 +407,12 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
      aWatch *make_watch(char *nick); Para reservar una entrada.
      void free_watch(aWatch *wptr);  Para borrar una entrada.
 
-* 2002/05/20 zoltan@irc-dev.net    (u2.10.H.04.27)               CLEANUP
+* 2002/05/20 toni@tonigarcia.es    (u2.10.H.04.27)               CLEANUP
   ----------------------------------------------------------------------
   Se cambia el numerico del "ERR_NOSUCHGLINE" del 512 al 514, ya que el
   WATCH utiliza el 512 para avisar de lista de watch llena.
 
-* 2002/05/20 zoltan@irc-dev.net    (u2.10.H.04.26)                   FIX
+* 2002/05/20 toni@tonigarcia.es    (u2.10.H.04.26)                   FIX
   ----------------------------------------------------------------------
   16/May/02
   Los comandos que requieren privilegios especiales, deberian
@@ -421,7 +421,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
 
   Ejemplos: "kill" y "wallops".
 
-* 2002/05/20 zoltan@irc-dev.net    (u2.10.H.04.25)                   FIX
+* 2002/05/20 toni@tonigarcia.es    (u2.10.H.04.25)                   FIX
   ----------------------------------------------------------------------
   Los notices de autentificacion, mandaban al nick nuevo cuando el
   servidor aun no ha cambiado el nick. Se cambia, para que mande el
@@ -437,13 +437,13 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   :nick2!-@- NOTICE Melange :*** Contraseña aceptada. Bienvenid@ a casa ;)
   :Melange!~zolty@DKs0ce.ConlBw.virtual NICK :zoltan
 
-* 2002/05/09 zoltan@irc-dev.net    (u2.10.H.04.24)                   FIX
+* 2002/05/09 toni@tonigarcia.es    (u2.10.H.04.24)                   FIX
   ----------------------------------------------------------------------
   Corregido un bug cosmetico, que si hacias /silence <nuestro_nick>,
   salia el error de "You can't see another user silence list", cuando
   debe mostrar la lista de silences.
 
-* 2002/05/09 jcea@argo.es          (DB93 - u2.10.H.04.23)         FEATURE
+* 2002/05/09 jcea@jcea.es          (DB93 - u2.10.H.04.23)         FEATURE
   -----------------------------------------------------------------------
   Cuando se pide un HASH remoto de base de datos, para
   verificar su integridad, deberia existir alguna manera de
@@ -451,13 +451,13 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   enseguida si un servidor tiene alguna mal o no, sin tener
   que consultar las 26.
 
-* 2002/04/25 zoltan@irc-dev.net    (u2.10.H.04.22)                CLEANUP
+* 2002/04/25 toni@tonigarcia.es    (u2.10.H.04.22)                CLEANUP
   -----------------------------------------------------------------------
   Ahora que todos los nodos estan actualizados a u2.10.H.04.20 o superior,
   hacemos limpieza del codigo que quedaba de "-r+r" en el cambio de
   nicks equivalentes.
 
-* 2002/04/22 zoltan@irc-dev.net    (u2.10.H.04.21)                FEATURE
+* 2002/04/22 toni@tonigarcia.es    (u2.10.H.04.21)                FEATURE
   -----------------------------------------------------------------------
   Ya que el IRCD de Hispano te avisa con notices cuando estas silenciando
   por un usuario, eliminamos la posibilidad de ver la lista de silences
@@ -465,7 +465,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   Se ha an~adido un nuevo error con el numerico 494 (ERR_SILECANTBESHOWN)
   con el mensaje "You can't see another user silence list".
 
-* 2002/04/19 zoltan@irc-dev.net    (u2.10.H.04.20)                    FIX
+* 2002/04/19 toni@tonigarcia.es    (u2.10.H.04.20)                    FIX
   -----------------------------------------------------------------------
   Parche temporal de -r+r.
   Lo que hace es en caso de cambio de nick equivalente, es que no mande
@@ -478,32 +478,32 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   vera un +r, ya que al no mandar un -r, fuerzo a mandar los modos
   hispano (hmode) que tiene. Es solo temporal.
 
-* 2002/04/18 jcea@argo.es          (u2.10.H.04.19)                    FIX
+* 2002/04/18 jcea@jcea.es          (u2.10.H.04.19)                    FIX
   -----------------------------------------------------------------------
   Deshago el parche anterior. Los parches originales de Amn3s1a
   son incorrectos.
 
-* 2002/04/18 jcea@argo.es          (u2.10.H.04.18)                CLEANUP
+* 2002/04/18 jcea@jcea.es          (u2.10.H.04.18)                CLEANUP
   -----------------------------------------------------------------------
   Ahora que todos los nodos estan actualizados a u2.10.H.04.00 o superior,
   hacemos limpieza del codigo que quedaba de "-r+r" en el cambio de
   nicks equivalentes.
 
-* 2002/04/18 jcea@argo.es          (u2.10.H.04.17)                CLEANUP
+* 2002/04/18 jcea@jcea.es          (u2.10.H.04.17)                CLEANUP
   -----------------------------------------------------------------------
   "make indent".
 
-* 2002/04/18 jcea@argo.es          (u2.10.H.04.16)                CLEANUP
+* 2002/04/18 jcea@jcea.es          (u2.10.H.04.16)                CLEANUP
   -----------------------------------------------------------------------
   Bajamos la longitud maxima del nombres de los canales de 200 a 64
   caracteres.
 
-* 2002/04/17 jcea@argo.es          (u2.10.H.04.15)                CLEANUP
+* 2002/04/17 jcea@jcea.es          (u2.10.H.04.15)                CLEANUP
   -----------------------------------------------------------------------
   El parche anterior define un macro MAXLEN, pero luego solo lo usa
   para comprobar taman~os, no para reservar memoria.
 
-* 2002/04/17 zoltan@irc-dev.net    (u2.10.H.04.14)                FEATURE
+* 2002/04/17 toni@tonigarcia.es    (u2.10.H.04.14)                FEATURE
   -----------------------------------------------------------------------
   25/Mar/02
   En las GLINES debe aparecer el tiempo de expiracion,
@@ -517,7 +517,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   "/gline mascara" y te daba el motivo y la expiracion sin necesidad de
   ser Ircop o Helper.
 
-* 2002/04/17 zoltan@irc-dev.net    (u2.10.H.04.13)                    FIX
+* 2002/04/17 toni@tonigarcia.es    (u2.10.H.04.13)                    FIX
   -----------------------------------------------------------------------
   Se arregla el parche del /OPER (u2.10.H.03.38).
 
@@ -532,7 +532,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
  
   Cuando se hace un mode -o, mantienes en la misma clase.
   
-* 2002/04/17 zoltan@irc-dev.net    (u2.10.H.04.12)                FEATURE
+* 2002/04/17 toni@tonigarcia.es    (u2.10.H.04.12)                FEATURE
   -----------------------------------------------------------------------
   17/Ago/00
   Cuando la clase de IRCops esta lleno, que no salga
@@ -546,7 +546,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
    492  ERR_OPERCLASSFULL "Class %d is full!"
    493  ERR_NOOPERCLASS   "Class %d non-existent"
 
-* 2002/04/17 zoltan@irc-dev.net    (u2.10.H.04.11)                CLEANUP
+* 2002/04/17 toni@tonigarcia.es    (u2.10.H.04.11)                CLEANUP
   -----------------------------------------------------------------------
   Se limpian las partes del parche u2.10.H.03.38 que no tienen ninguna
   utilidad.
@@ -556,7 +556,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   Se introduce "CHANLEN" al numeric 005 de RPL_ISUPPORT. Es la longitud
   maxima del nombre de canal.
 
-* 2002/04/12 zoltan@irc-dev.net    (u2.10.H.04.09)                    FIX
+* 2002/04/12 toni@tonigarcia.es    (u2.10.H.04.09)                    FIX
   -----------------------------------------------------------------------
   Al cambiar de directorio del programa de encriptado de claves de nick
   para la DB introducido en la version u2.10.H.04.04, no se ha modificado
@@ -565,25 +565,25 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
 
   El nuevo directorio es ircd/crypt/tea/
 
-* 2002/04/12 jcea@argo.es          (u2.10.H.04.08)                    FIX
+* 2002/04/12 jcea@jcea.es          (u2.10.H.04.08)                    FIX
   -----------------------------------------------------------------------
   Si hacemos un cambio entre nicks equivalentes, pero no tenemos
   modos +r o +S y el nick SI que tiene asociada una clave (por ejemplo,
   lo acabamos de registrar), nos debe exigir una clave para cambiar a nick
   equivalente.
 
-* 2002/04/11 jcea@argo.es          (u2.10.H.04.07)                CLEANUP
+* 2002/04/11 jcea@jcea.es          (u2.10.H.04.07)                CLEANUP
   -----------------------------------------------------------------------
   Permite compilar el server sin soporte de BDD (Base de Datos Distribuida).
 
-* 2002/04/09 zoltan@irc-dev.net    (u2.10.H.04.06)                CLEANUP
+* 2002/04/09 toni@tonigarcia.es    (u2.10.H.04.06)                CLEANUP
   -----------------------------------------------------------------------
   Se cambia en los creditos los mails de zoltan y Amn3s1a y se a¤ade dos
   lineas que pueden encontrar mas informacion sobre el ircd en la web
   http://www.irc-dev.net
 
 
-* 2002/04/08 zoltan@irc-dev.net    (u2.10.H.04.05)                    FIX
+* 2002/04/08 toni@tonigarcia.es    (u2.10.H.04.05)                    FIX
   -----------------------------------------------------------------------
   02/Abr/02
   Problema detectado por "RyDeN":
@@ -593,7 +593,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   deniega el cambio de nick. Queda un poco mal...  
 
 
-* 2002/04/08 zoltan@irc-dev.net    (u2.10.H.04.04)                FEATURE
+* 2002/04/08 toni@tonigarcia.es    (u2.10.H.04.04)                FEATURE
   -----------------------------------------------------------------------
   Por peticion popular, se introduce un programa para encriptar las 
   claves de los nicks para meterlos en la tabla n del ircd.
@@ -607,7 +607,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   el programa. Esta en el directorio tea
 
 
-* 2002/04/08 jcea@argo.es          (u2.10.H.04.03)                    FIX
+* 2002/04/08 jcea@jcea.es          (u2.10.H.04.03)                    FIX
   -----------------------------------------------------------------------
   Anulo el parche anterior, ya que mata el proceso.
 
@@ -619,7 +619,7 @@ $Id: CAMBIOS2_10_H_04,v 1.58 2002/07/22 19:15:01 jcea Exp $
   Cuando se pierde +o, la clase no cambia, no se recupera la original.
   Cambios en el parche u2.10.H.04.38.
 
-* 2002/03/20 jcea@argo.es          (u2.10.H.04.01)                CLEANUP 
+* 2002/03/20 jcea@jcea.es          (u2.10.H.04.01)                CLEANUP 
   -----------------------------------------------------------------------
   "make indent".
 
