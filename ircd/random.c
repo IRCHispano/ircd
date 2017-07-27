@@ -19,6 +19,7 @@
 #include "sys.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif

@@ -29,6 +29,7 @@
 #include "s_user.h"
 #include "s_bsd.h"
 #include "struct.h"
+#include "match.h"
 #if defined(GODMODE)
 #include "numnicks.h"
 #endif

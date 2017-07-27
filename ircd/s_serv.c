@@ -34,6 +34,7 @@
 #include "send.h"
 #include "s_err.h"
 #include "numeric.h"
+#include "class.h"
 #include "s_bsd.h"
 #include "s_conf.h"
 #include "hash.h"

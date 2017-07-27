@@ -1,3 +1,8 @@
+* 2017/02/28  toni@tonigarcia.es (u2.10.H.10.244)                CLEANUP
+------------------------------------------------------------------------
+  Al pasar de Jessie a Stretch, la version gcc pasa de 4.9 a 6.3 y es
+  mas exigiente, se corrige muchos warnings.
+
 * 2017/01/03  toni@tonigarcia.es (u2.10.H.10.243)                    FIX
 ------------------------------------------------------------------------
   Se corrige un par de cosillas en el soporte de Clones. Hay que

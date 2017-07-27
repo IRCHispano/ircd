@@ -39,6 +39,7 @@ extern void server_reboot(void);
 extern void update_nextdnscheck(int timeout);
 extern void update_nextconnect(int timeout);
 extern void update_nextexpire(int timeout);
+extern void init_timers(void);
 
 extern aClient me;
 extern aClient his;

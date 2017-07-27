@@ -68,6 +68,10 @@
 #include "persistent_malloc.h"
 #endif
 
+static int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_t lastmod, time_t lifetime, int parc, char **parv);
+static int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtype, time_t expire, time_t lastmod, time_t lifetime, char *who);
+static int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[]);
+static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[]);
 
 RCSTAG_CC("$Id$");
 
@@ -2215,7 +2219,7 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * parv[parc - 1] = Comment
  *
  */
-int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
+static int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
 {
   char *user, *host;
   int active, gtype = 0;
@@ -2346,7 +2350,7 @@ int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
  * parv[3] = Comment
  *
  */
-int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
+static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[])
 {
   char *user, *host;
   int active, gtype = 0;
@@ -2588,7 +2592,7 @@ int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int 
  /*
   * Funcion para propagar una gline a otros servidores
   */
-int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_t lastmod, time_t lifetime, int parc, char **parv) {
+static int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_t lastmod, time_t lifetime, int parc, char **parv) {
   aClient *acptr = NULL;
 
   /* forward the message appropriately */
@@ -2693,7 +2697,7 @@ int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_
   return 1;
 }
 
-int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtype, time_t expire, time_t lastmod, time_t lifetime, char *who) {
+static int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtype, time_t expire, time_t lastmod, time_t lifetime, char *who) {
 
   if(!buscar_uline(cptr->confs, sptr->name) && /* Si el que la envia no tiene uline Y*/
       (agline->lastmod >= lastmod))            /* tenemos una version igual o mayor salimos */

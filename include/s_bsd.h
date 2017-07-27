@@ -217,6 +217,7 @@ extern void event_client_read_callback(int fd, short event, aClient *cptr);
 extern void event_client_write_callback(int fd, short event, aClient *cptr);
 extern void event_connection_callback(int fd, short event, aClient *cptr);
 extern void event_checkping_callback(int fd, short event, aClient *cptr);
+extern void update_now(void);
 
 extern int highest_fd, resfd;
 extern unsigned int readcalls;

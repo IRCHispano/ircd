@@ -125,6 +125,7 @@ extern int rehash(aClient *cptr, int sig);
 extern int initconf(int opt);
 extern void read_tlines(void);
 extern int find_kill(aClient *cptr);
+extern int find_exception(aClient *cptr);
 extern int find_restrict(aClient *cptr);
 extern int find_port_cookie_encrypted(aClient *cptr);
 extern int find_port_ssl(aClient *cptr);

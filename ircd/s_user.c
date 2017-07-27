@@ -38,6 +38,7 @@
 #define _NOTSENDER_INCLUIDO_
 
 #include <assert.h>
+#include <ctype.h>
 #include <netdb.h>
 #include <netinet/in.h>
 
@@ -76,6 +77,7 @@
 #include "slab_alloc.h"
 #include "network.h"
 #include "aes.h"
+#include "m_config.h"
 
 
 RCSTAG_CC("$Id$");
