@@ -982,7 +982,7 @@ int m_opmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   int badop, sendts;
   aChannel *chptr;
 
-  if (!IsServer(cptr) && !IsAnOper(sptr) && !IsHelpOp(sptr)) {
+  if (!IsServer(cptr) && !HasPriv(sptr, PRIV_OPMODE)) {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;
   }
@@ -1143,7 +1143,6 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   {
     if (badop != 2 && strlen(modebuf) > (size_t)1)
     {
-#if defined(OPER_MODE_LCHAN)
       if (LocalChanOperMode)
       {
         sendto_channel_butserv(chptr, &me, ":%s MODE %s %s %s",
@@ -1153,7 +1152,6 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
             sptr->name, chptr->chname, modebuf, parabuf);
       }
       else
-#endif
         sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s %s",
             parv[0], chptr->chname, modebuf, parabuf);
     }
@@ -1500,10 +1498,8 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
   if (!(IsServicesBot(cptr) || (tmp = IsMember(sptr, chptr))))
     return 0;
 
-#if defined(OPER_MODE_LCHAN)
   if (IsOperOnLocalChannel(sptr, chptr->chname) && !(tmp->flags & CHFL_CHANOP))
     LocalChanOperMode = 1;
-#endif
 
   newmode = mode->mode;
 
@@ -1558,19 +1554,20 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
               me.name, cptr->name, parv[0], chptr->chname);
           break;
         }
-#if defined(NO_OPER_DEOP_LCHAN)
+
         /*
          * if the user is an oper on a local channel, prevent him
          * from being deoped. that oper can deop himself though.
          */
         if (whatt == MODE_DEL && IsOperOnLocalChannel(who, chptr->chname) &&
+            HasPriv(who, PRIV_DEOP_LCHAN) &&
             (who != sptr) && *curr == 'o')
         {
           sendto_one(cptr, err_str(ERR_ISOPERLCHAN), me.name,
               cptr->name, parv[0], chptr->chname);
           break;
         }
-#endif
+
         if (whatt == MODE_ADD)
         {
           lp = &chops[opcnt++];
@@ -1785,13 +1782,10 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
   if (*badop >= 2 && buscar_uline(cptr->confs, sptr->name))
     *badop = 4;
 
-#if defined(OPER_MODE_LCHAN)
   bounce = (*badop == 1 || *badop == 2 ||
       (is_deopped(sptr, chptr) &&
+      HasPriv(sptr, PRIV_MODE_LCHAN) &&
       !IsOperOnLocalChannel(sptr, chptr->chname))) ? 1 : 0;
-#else
-  bounce = (*badop == 1 || *badop == 2 || is_deopped(sptr, chptr)) ? 1 : 0;
-#endif
 
   if (IsServicesBot(sptr) || botmode)
   {
@@ -2416,10 +2410,8 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
   mode = &(chptr->mode);
   memcpy(&oldm, mode, sizeof(Mode));
 
-#if defined(OPER_MODE_LCHAN)
   if (IsOperOnLocalChannel(sptr, chptr->chname) && !(tmp->flags & CHFL_CHANOP))
     LocalChanOperMode = 1;
-#endif
 
   newmode = mode->mode;
 
@@ -2705,13 +2697,10 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
   if (*badop >= 2 && buscar_uline(cptr->confs, sptr->name))
     *badop = 4;
 
-#if defined(OPER_MODE_LCHAN)
   bounce = (*badop == 1 || *badop == 2 ||
       (is_deopped(sptr, chptr) &&
+      HasPriv(sptr, PRIV_MODE_LCHAN) &&
       !IsOperOnLocalChannel(sptr, chptr->chname))) ? 1 : 0;
-#else
-  bounce = (*badop == 1 || *badop == 2 || is_deopped(sptr, chptr)) ? 1 : 0;
-#endif
 
   if (IsServicesBot(sptr) || botmode)
   {
@@ -3369,66 +3358,49 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
 {
   int overrideJoin = 0;
 
-/*
-** Si somos IRCOPs y hemos puesto la clave GOD, podemos
-** entrar en el canal pase lo que pase.
-** jcea@argo.es - 26/03/97
-*/
-
-#if defined(OPER_JOIN_GOD_ESNET)
-  if ((IsOper(sptr)) && (!BadPtr(key)) && (!compall("GOD", key)))
-    return 0;
-#endif
-
-#if (defined(BDD_OPER_HACK) || defined(BDD_CHAN_HACK))
+#if defined(BDD_CHAN_HACK_OLD)
   if (!BadPtr(key))
   {
     struct db_reg *reg;
 
     reg = db_buscar_registro(BDD_CHANDB_OLD, (char *)chptr->chname);
-#if defined(BDD_OPER_HACK)
-/*
-* El hack de la base de datos de opers permite que estos dispongan
-* de la facilidad parecida a JOIN_GOD_ESNET, pero la clave es OPER
-* Si activamos el hack ONLYREG, solo funcionara en canales registrados.
-*                                    1999/06/30 savage@apostols.org
-*/
-    if (
-#if defined(BDD_OPER_HACK_ONLYREG)
-        reg &&
-#endif
-        IsNickRegistered(sptr) && IsHelpOp(sptr) && (!compall("OPER", key)))
-      return 0;
-#endif
 
-#if defined(BDD_CHAN_HACK)
 /*
  * El hack de la base de datos de canales permite que el fundador de
  * un canal dispongan de una facilidad parecida a JOIN_GOD_ESNET,
  * pero la clave es FUNDADOR
  *                                    1999/06/30 savage@apostols.org
  */
-
     if ((!BadPtr(key)) && IsNickRegistered(sptr)
         && db_es_miembro(BDD_CHANDB_OLD, chptr->chname, sptr->name) == 1
         && (!compall("FUNDADOR", key)))
       return 0;
-#endif
   }
+
+#endif /* (BDD_CHAN_HACK) */
 
   if (RestrictedChannel(chptr) && !IsNickRegistered(sptr))
     return ERR_NEEDREGGEDNICK;
 
-#endif /* (BDD_OPER_HACK || BDD_CHAN_HACK) */
+  /* An oper can force a join on a channel using "OVERRIDE" as the key.
+     a HACK(4) notice will be sent if he would not have been supposed
+     to join normally. */
+  if (!BadPtr(key) &&
+      HasPriv(sptr, PRIV_WALK_CHAN) &&
+      compall("OVERRIDE", key) == 0)
+    overrideJoin = MAGIC_OPER_OVERRIDE;
 
-#if defined(OPER_WALK_THROUGH_LMODES)
   /* An oper can force a join on a local channel using "OVERRIDE" as the key.
      a HACK(4) notice will be sent if he would not have been supposed
      to join normally. */
   if (IsOperOnLocalChannel(sptr, chptr->chname) && !BadPtr(key) &&
+      HasPriv(sptr, PRIV_WALK_LCHAN) &&
       compall("OVERRIDE", key) == 0)
     overrideJoin = MAGIC_OPER_OVERRIDE;
-#endif
+
+  if (RestrictedChannel(chptr) && !IsNickRegistered(sptr))
+    return (overrideJoin + ERR_NEEDREGGEDNICK);
+
   /*
    * Now a banned user CAN join if invited -- Nemesi
    * Now a user CAN escape channel limit if invited -- bfriendly
@@ -3935,12 +3907,8 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendcreate = 1;
         }
 
-        if (!IsChannelService(sptr) && !IsDocking(sptr)
-            && (sptr->user->joined >= MAXCHANNELSPERUSER)
-#if defined(OPER_NO_CHAN_LIMIT)
-            && !IsAnOper(sptr)
-#endif
-            )
+        if (!IsDocking(sptr) && (sptr->user->joined >= MAXCHANNELSPERUSER)
+            && !HasPriv(sptr, PRIV_CHAN_LIMIT))
         {
           chptr = get_channel(sptr, name, !CREATE);
           sendto_one(sptr, err_str(ERR_TOOMANYCHANNELS),
@@ -3995,7 +3963,6 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
         if ((i = can_join(sptr, chptr, keysOrTS)))
         {
-#if defined(OPER_WALK_THROUGH_LMODES)
           if (i > MAGIC_OPER_OVERRIDE)
           {
             switch (i - MAGIC_OPER_OVERRIDE)
@@ -4024,10 +3991,6 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
             sendto_one(sptr, err_str(i), me.name, parv[0], chptr->chname);
             continue;
           }
-#else
-          sendto_one(sptr, err_str(i), me.name, parv[0], chptr->chname);
-          continue;
-#endif
         }
       }
       /*
@@ -5755,17 +5718,16 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
   else if (!(who = findNUser(parv[2])))
     return 0;                   /* No such user left! */
-#if defined(NO_OPER_DEOP_LCHAN)
+
   /*
    * Prevent kicking opers from local channels -DM-
    */
-  if (IsOperOnLocalChannel(who, chptr->chname))
+  if (IsOperOnLocalChannel(who, chptr->chname) && HasPriv(who, PRIV_DEOP_LCHAN))
   {
     sendto_one(sptr, err_str(ERR_ISOPERLCHAN), me.name,
         parv[0], who->name, chptr->chname);
     return 0;
   }
-#endif
 
   if (((lp = find_user_link(chptr->members, who)) &&
       !(lp->flags & CHFL_ZOMBIE)) || IsServer(sptr))
@@ -6582,7 +6544,7 @@ param_parse(aClient *sptr, const char *param, aListingArgs *args,
       if (!sptr)
         break;
 
-      if (!(IsAnOper(sptr) && IsHelpOp(sptr)))
+      if (!IsAnOper(sptr) || !HasPriv(sptr, PRIV_LIST_CHAN))
         return show_usage(sptr);
 
       args->flags |= LISTARG_SHOWSECRET;

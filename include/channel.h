@@ -137,10 +137,8 @@ extern int m_opmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
                                           && (IsLocalChannel(chname)))
 
 
-#if defined(OPER_WALK_THROUGH_LMODES)
   /* used in can_join to determine if an oper forced a join on a channel */
 #define MAGIC_OPER_OVERRIDE 1000
-#endif
 
 
 

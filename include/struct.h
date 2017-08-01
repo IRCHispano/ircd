@@ -184,6 +184,7 @@ struct Client {
   
   struct event *evcheckping;    /* Evento para controlar cuando se debe revisar el ping */
   struct timeval *tm_checkping; /* Temporizador del chequeo del proximo ping */
+  uint64_t privs;  /* Privilegios de ejecución */
 };
 
 struct Server {

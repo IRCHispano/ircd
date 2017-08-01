@@ -97,51 +97,14 @@ char serveropts[] = {
 #if defined(DEBUGMODE)
     'D',
 #endif
-#if defined(LOCOP_REHASH)
-    'e',
-#endif
-#if defined(OPER_REHASH)
-    'E',
-#endif
-#if defined(OPER_NO_CHAN_LIMIT)
-    'F',
-#endif
-#if defined(OPER_MODE_LCHAN)
-    'f',
-#endif
 #if defined(HUB)
     'H',
-#endif
-#if defined(SHOW_INVISIBLE_USERS) ||  defined(SHOW_ALL_INVISIBLE_USERS)
-#if defined(SHOW_ALL_INVISIBLE_USERS)
-    'I',
-#else
-    'i',
-#endif
-#endif
-#if defined(WHOX_HELPERS)
-    '+',
-#else
-    '-',
-#endif
-#if defined(OPER_KILL)
-#if defined(LOCAL_KILL_ONLY)
-    'k',
-#else
-    'K',
-#endif
 #endif
 #if defined(LEAST_IDLE)
     'L',
 #endif
-#if defined(OPER_WALK_THROUGH_LMODES)
-    'l',
-#endif
 #if defined(IDLE_FROM_MSG)
     'M',
-#endif
-#if defined(NO_OPER_DEOP_LCHAN)
-    'o',
 #endif
 #if defined(CRYPT_OPER_PASSWORD)
     'p',
@@ -155,12 +118,6 @@ char serveropts[] = {
 #endif
 #if defined(RELIABLE_CLOCK)
     'R',
-#endif
-#if defined(LOCOP_RESTART)
-    's',
-#endif
-#if defined(OPER_RESTART)
-    'S',
 #endif
 #if defined(OPER_REMOTE)
     't',
@@ -193,24 +150,6 @@ char serveropts[] = {
 #endif
     (char)('0' + (MAXCHANNELSPERUSER/1) % 10),
     '.',
-    'J','G',
-#if defined(OPER_JOIN_GOD_ESNET)
-    '+',
-#else
-    '-',
-#endif
-    'C','S',
-#if defined(OPER_CHANNEL_SERVICE_ESNET)
-    '+',
-#else
-    '-',
-#endif
-    'C','S','F',
-#if defined(CS_NO_FLOOD_ESNET)
-    '+',
-#else
-    '-',
-#endif
     'D','B',
 #if defined(BDD_MMAP)
     '.',
@@ -272,18 +211,6 @@ char serveropts[] = {
    ')','+',
 #else
    '-',
-#endif
-   'C','H',
-#if defined(BDD_OPER_HACK)
-    '+',
-#else
-    '-',
-#endif
-    'C','r',
-#if defined(BDD_OPER_HACK_ONLYREG)
-    '+',
-#else
-    '-',
 #endif
     'C',
 #if defined(BDD_CHAN_HACK)

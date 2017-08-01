@@ -73,7 +73,6 @@ extern int check_target_limit(aClient *sptr, void *target, const char *name,
 extern void add_target(aClient *sptr, void *target);
 extern int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int get_status(aClient *sptr);
-extern int get_privs(aClient *sptr, int flag);
 #if defined(BDD_VIP)
 extern int can_viewhost(aClient *sptr, aClient *acptr);
 extern char *get_virtualhost(aClient *sptr, int perso);
@@ -81,6 +80,7 @@ extern char *get_visiblehost(aClient *sptr, aClient *acptr);
 void make_vhost(aClient *acptr, int mostrar);
 void make_vhostperso(aClient *acptr, int mostrar);
 #endif
+extern int HasPriv(aClient *sptr, uint64_t priv);
 extern void rename_user(aClient *sptr, char *nick_nuevo);
 extern void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh, int registrado);
 

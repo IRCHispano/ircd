@@ -57,6 +57,7 @@
 #include "s_user.h"
 #include "numnicks.h"
 #include "msg.h"
+#include "s_bdd.h"
 #include "slab_alloc.h"
 
 
@@ -320,7 +321,7 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
   unsigned short int port;
   int fd, opt;
 
-  if (!IsPrivileged(sptr))
+  if (!IsServer(sptr) && !HasPriv(sptr, PRIV_NETWORK))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return -1;

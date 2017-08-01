@@ -97,41 +97,18 @@ RCSTAG_CC("$Id$");
 
 #define IS_VISIBLE_USER(s,ac) ((s==ac) || (!IsInvisible(ac)))
 
-#if defined(SHOW_INVISIBLE_LUSERS) || defined(SHOW_ALL_INVISIBLE_USERS)
-#if defined(WHOX_HELPERS)
-#define SEE_LUSER(s, ac, b) (IS_VISIBLE_USER(s, ac) || ((b & WHOSELECT_EXTRA) && MyConnect(ac) && (IsAnOper(s)||IsHelpOp(s))))
-#else
-#define SEE_LUSER(s, ac, b) (IS_VISIBLE_USER(s, ac) || ((b & WHOSELECT_EXTRA) && MyConnect(ac) && IsAnOper(s)))
-#endif /* WHOX_HELPERS */
-#else
-#define SEE_LUSER(s, ac, b) (IS_VISIBLE_USER(s, ac))
-#endif
+#define SEE_LUSER(s, ac, b) (IS_VISIBLE_USER(s, ac) || \
+                             ((b & WHOSELECT_EXTRA) && MyConnect(ac) && \
+                             (HasPriv((s), PRIV_SHOW_INVIS) || \
+                              HasPriv((s), PRIV_SHOW_ALL_INVIS))))
 
-#if defined(SHOW_ALL_INVISIBLE_USERS)
-#if defined(WHOX_HELPERS)
-#define SEE_USER(s, ac, b) (SEE_LUSER(s, ac, b) || ((b & WHOSELECT_EXTRA) && (IsOper(s)||IsHelpOp(s))))
-#else
-#define SEE_USER(s, ac, b) (SEE_LUSER(s, ac, b) || ((b & WHOSELECT_EXTRA) && IsOper(s)))
-#endif /* WHOX_HELPERS */
-#else
-#define SEE_USER(s, ac, b) (SEE_LUSER(s, ac, b))
-#endif
+#define SEE_USER(s, ac, b) (SEE_LUSER(s, ac, b) || \
+                            ((b & WHOSELECT_EXTRA) && \
+                              HasPriv((s), PRIV_SHOW_ALL_INVIS)))
 
-#if defined(UNLIMIT_OPER_QUERY)
-#define SHOW_MORE(sptr, counter) (IsAnOper(sptr) || IsHelpOp(sptr) || (!(counter-- < 0)) )
-#else
-#define SHOW_MORE(sptr, counter) (!(counter-- < 0))
-#endif
+#define SHOW_MORE(sptr, counter) (HasPriv(sptr, PRIV_UNLIMIT_QUERY) || (!(counter-- < 0)) )
 
-#if defined(OPERS_SEE_IN_SECRET_CHANNELS)
-#if defined(LOCOP_SEE_IN_SECRET_CHANNELS)
-#define SEE_CHANNEL(s, chptr, b) (!SecretChannel(chptr) || ((b & WHOSELECT_EXTRA) && IsAnOper(s)))
-#else
-#define SEE_CHANNEL(s, chptr, b) (!SecretChannel(chptr) || ((b & WHOSELECT_EXTRA) && IsOper(s)))
-#endif
-#else
-#define SEE_CHANNEL(s, chptr, b) (!SecretChannel(chptr))
-#endif
+#define SEE_CHANNEL(s, chptr, b) (!SecretChannel(chptr) || ((b & WHOSELECT_EXTRA) && HasPriv((s), PRIV_SEE_CHAN)))
 
 
 /*
@@ -178,9 +155,6 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
      that there are no common channels, thus use PubChannel and not
      SeeChannel */
   if (!chptr && (!fields || (fields & (WHO_FIELD_CHA | WHO_FIELD_FLA)))
-#if !defined(OPER_CHANNEL_SERVICE_ESNET)
-      && !IsChannelService(acptr)
-#endif
       && !IsNoChan(acptr) || acptr == sptr || IsHelpOp(sptr) || IsAnOper(sptr))
   {
     Reg3 Link *lp;
@@ -432,18 +406,15 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
           continue;
         case 'x':
         case 'X':
-          bitsel |= WHOSELECT_EXTRA;
+          if (HasPriv(sptr, PRIV_WHOX) && IsAnOper(sptr)) {
+            bitsel |= WHOSELECT_EXTRA;
 #if defined(WPATH)
-#if defined(WHOX_HELPERS)
-          if (IsAnOper(sptr) || IsHelpOp(sptr))
-#else
-          if (IsAnOper(sptr))
-#endif
             write_log(WPATH, "# " TIME_T_FMT " %s!%s@%s WHO %s %s\n",
                 now, sptr->name, PunteroACadena(sptr->user->username),
                 PunteroACadena(sptr->user->host),
                 (BadPtr(parv[3]) ? parv[1] : parv[3]), parv[2]);
 #endif /* WPATH */
+          }
           continue;
         case 'n':
         case 'N':
@@ -902,9 +873,6 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
       exact_match:
         if (user
-#if !defined(OPER_CHANNEL_SERVICE_ESNET)
-            && !IsChannelService(acptr)
-#endif
             && (!IsNoChan(acptr) || acptr == sptr || IsHelpOp(sptr) || IsAnOper(sptr))
             )
         {

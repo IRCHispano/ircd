@@ -91,7 +91,7 @@ int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char *comment = (parc > ((!IsServer(cptr)) ? 2 : 3) &&
       !BadPtr(parv[parc - 1])) ? parv[parc - 1] : cptr->name;
 
-  if (!IsPrivileged(sptr))
+  if (!IsServer(sptr) && !HasPriv(sptr, PRIV_NETWORK))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;
@@ -929,7 +929,7 @@ int m_connect(aClient *cptr, aClient *sptr, int parc, char *parv[])
   aConfItem *aconf, *cconf;
   aClient *acptr;
 
-  if (!IsPrivileged(sptr))
+  if (!IsServer(sptr) && !HasPriv(sptr, PRIV_NETWORK))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return -1;
@@ -1198,7 +1198,7 @@ int m_settime(aClient *cptr, aClient *sptr, int parc, char *parv[])
   static char tbuf[11];
   Dlink *lp;
 
-  if (!IsPrivileged(sptr))
+  if (!IsServer(sptr) && !HasPriv(sptr, PRIV_NETWORK))
     return 0;
 
   if (parc < 2)
@@ -1337,7 +1337,7 @@ int m_rping(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   aClient *acptr;
 
-  if (!IsPrivileged(sptr))
+  if (!IsServer(sptr) && !HasPriv(sptr, PRIV_NETWORK))
     return 0;
 
   if (parc < (IsAnOper(sptr) ? (MyConnect(sptr) ? 2 : 3) : 6))
@@ -1441,21 +1441,12 @@ int m_rpong(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
   return 0;
 }
 
-#if defined(OPER_REHASH) || defined(LOCOP_REHASH)
 /*
  * m_rehash
  */
 static int m_rehash_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-#if !defined(LOCOP_REHASH)
-  if (!MyUser(sptr) || !IsOper(sptr))
-#else
-#if defined(OPER_REHASH)
-  if (!MyUser(sptr) || !IsAnOper(sptr))
-#else
-  if (!MyUser(sptr) || !IsLocOp(sptr))
-#endif
-#endif
+  if (!HasPriv(sptr, PRIV_REHASH))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;
@@ -1467,8 +1458,6 @@ static int m_rehash_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
   return rehash(cptr, (parc > 1) ? ((*parv[1] == 'q') ? 2 : 0) : 0);
 }
-
-#endif
 
 static int m_rehash_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
@@ -1519,31 +1508,18 @@ static int m_rehash_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   if (MyUser(sptr))
-#if defined(OPER_REHASH) || defined(LOCOP_REHASH)
     return m_rehash_local(cptr, sptr, parc, parv);
-#else
-    return 0;
-#endif
   else
     return m_rehash_remoto(cptr, sptr, parc, parv);
 }
 
-#if defined(OPER_RESTART) || defined(LOCOP_RESTART)
 /*
  * m_restart
  */
 static int m_restart_local(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc),
     char *parv[])
 {
-#if !defined(LOCOP_RESTART)
-  if (!MyUser(sptr) || !IsOper(sptr))
-#else
-#if defined(OPER_RESTART)
-  if (!MyUser(sptr) || !IsAnOper(sptr))
-#else
-  if (!MyUser(sptr) || !IsLocOp(sptr))
-#endif
-#endif
+  if (!HasPriv(sptr, PRIV_RESTART))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;
@@ -1554,7 +1530,6 @@ static int m_restart_local(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc
   server_reboot();
   return 0;
 }
-#endif
 
 static int m_restart_remoto(aClient *cptr, aClient *sptr, int parc,
     char *parv[])
@@ -1598,11 +1573,7 @@ static int m_restart_remoto(aClient *cptr, aClient *sptr, int parc,
 int m_restart(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   if (MyUser(sptr))
-#if defined(OPER_RESTART) || defined(LOCOP_RESTART)
     return m_restart_local(cptr, sptr, parc, parv);
-#else
-    return 0;
-#endif
   else
     return m_restart_remoto(cptr, sptr, parc, parv);
 }
@@ -1892,7 +1863,6 @@ int m_close(aClient *cptr, aClient *sptr, int UNUSED(parc), char *parv[])
   return 0;
 }
 
-#if defined(OPER_DIE) || defined(LOCOP_DIE)
 /*
  * m_die
  */
@@ -1901,15 +1871,7 @@ static int m_die_local(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), c
   Reg1 aClient *acptr;
   Reg2 int i;
 
-#if !defined(LOCOP_DIE)
-  if (!MyUser(sptr) || !IsOper(sptr))
-#else
-#if defined(OPER_DIE)
-  if (!MyUser(sptr) || !IsAnOper(sptr))
-#else
-  if (!MyUser(sptr) || !IsLocOp(sptr))
-#endif
-#endif
+  if (!HasPriv(sptr, PRIV_DIE))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;
@@ -1940,7 +1902,6 @@ static int m_die_local(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), c
 #endif
   return 0;
 }
-#endif
 
 static int m_die_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
@@ -2003,11 +1964,7 @@ static int m_die_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_die(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   if (MyUser(sptr))
-#if defined(OPER_DIE) || defined(LOCOP_DIE)
     return m_die_local(cptr, sptr, parc, parv);
-#else
-    return 0;
-#endif
   else
     return m_die_remoto(cptr, sptr, parc, parv);
 }
@@ -2199,10 +2156,12 @@ int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (IsServer(cptr)) /* Si la gline la manda un servidor */
     ms_gline(cptr, sptr, agline, a2gline, parc, parv);
-  else if (IsUser(sptr) && IsAnOper(sptr))
-    ms_gline(cptr, sptr, agline, a2gline, parc, parv);
-  else
-    mo_gline(cptr, sptr, agline, a2gline, parc, parv);
+  else if (IsUser(sptr) && IsAnOper(sptr)) {
+    if (buscar_uline(cptr->confs, sptr->name))
+      ms_gline(cptr, sptr, agline, a2gline, parc, parv);
+    else
+      mo_gline(cptr, sptr, agline, a2gline, parc, parv);
+  }
 
   return 0;
 }
@@ -2362,8 +2321,7 @@ static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
     char buf[MAXLEN * 2];
     char comtemp[MAXLEN * 2];
 
-    /* Solo ircops y opers tienen acceso */
-    if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+    if (!HasPriv(sptr, PRIV_GLINE))
     {
       sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
       return 0;
@@ -2399,13 +2357,7 @@ static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
   }
   else
   {
-    int priv;
-
-#if defined(LOCOP_LGLINE)
-    priv = IsAnOper(cptr);
-#else
-    priv = IsOper(cptr);
-#endif
+    int priv = HasPriv(cptr, PRIV_LOCAL_GLINE);
 
     if (priv)
     {                           /* non-oper not permitted to change things */
@@ -2429,8 +2381,7 @@ static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
     else
       active = -1;
 
-    /* Solo ircops y opers tienen acceso */
-    if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+    if (!HasPriv(sptr, PRIV_GLINE))
     {
       sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
       return 0;
@@ -2446,12 +2397,12 @@ static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
       user = parv[1];
       *(host++) = '\0';         /* break up string at the '@' */
     }
-    if (*host == '#' || *host == '&' || *host == '+')
-#if !defined(LOCAL_BADCHAN)
-      return 0;
-#else
-      gtype = 1;                /* BAD CHANNEL */
-#endif
+    if (*host == '#' || *host == '&' || *host == '+') {
+      if (!HasPriv(sptr, PRIV_LOCAL_BADCHAN))
+        return 0;
+      else
+        gtype = 1;                /* BAD CHANNEL */
+    }
 
     for (agline = gtype ? badchan : gline, a2gline = NULL; agline;
         agline = agline->next)
@@ -2464,7 +2415,6 @@ static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
 
     if (!agline)
     {
-#if defined(OPER_LGLINE)
       if (priv && active && expire > now)
       {
         /* Add local G-line */
@@ -2477,7 +2427,6 @@ static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
         add_gline(cptr, sptr, host, parv[3], user, expire, lastmod, lifetime, 1);
       }
       else
-#endif
         sendto_one(cptr, err_str(ERR_NOSUCHGLINE), me.name, parv[0], user,
             host);
 
@@ -2526,8 +2475,7 @@ static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
     {
       if (active)               /* reset activation on gline */
         SetActive(agline);
-#if defined(OPER_LGLINE)
-      else if (GlineIsLocal(agline))
+      else if (GlineIsLocal(agline) && HasPriv(sptr, PRIV_LOCAL_GLINE))
       {
         /* Remove local G-line */
         sendto_op_mask(SNO_GLINE, "%s removed local %s for %s@%s",
@@ -2542,7 +2490,6 @@ static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
         free_gline(agline, a2gline);  /* remove the gline */
         return 0;
       }
-#endif
       else
         ClearActive(agline);
     }

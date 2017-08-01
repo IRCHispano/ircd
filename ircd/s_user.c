@@ -240,7 +240,7 @@ int hunt_server(int MustBeOper, aClient *cptr, aClient *sptr, char *command,
   if (IsMe(acptr))
     return (HUNTED_ISME);
 
-  if (MustBeOper && !IsPrivileged(sptr) && !IsHelpOp(sptr))
+  if (MustBeOper && !IsPrivileged(sptr))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, sptr->name);
     return HUNTED_NOSUCH;
@@ -1870,19 +1870,11 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char *user, *path, *killer;
   int chasing = 0;
 
-#if defined(OPER_KILL)
   if (!IsPrivileged(cptr))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;
   }
-#else
-  if (!IsServer(cptr))
-  {
-    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
-    return 0;
-  }
-#endif
 
   if (parc < 3 || *parv[1] == '\0')
   {
@@ -1935,7 +1927,7 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
           NumServ(&me), NumNick(sptr));
     return 0;
   }
-  if (!MyConnect(acptr) && IsLocOp(cptr))
+  if (!HasPriv(sptr, MyConnect(acptr) ? PRIV_LOCAL_KILL : PRIV_KILL))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;
@@ -1946,14 +1938,13 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-#if defined(LOCAL_KILL_ONLY)
-  if (MyConnect(sptr) && !MyConnect(acptr))
+  if (!MyConnect(acptr) && !HasPriv(sptr, PRIV_KILL))
   {
     sendto_one(sptr, ":%s NOTICE %s :Nick %s isnt on your server",
         me.name, parv[0], acptr->name);
     return 0;
   }
-#endif
+
   if (!IsServer(cptr))
   {
     /*
@@ -3091,18 +3082,12 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 ** jcea@argo.es - 16/Dic/97
 */
   if (!(setflags & FLAGS_CHSERV) && !IsServer(cptr)
-#if defined(OPER_CHANNEL_SERVICE_ESNET)
-      && !IsOper(sptr)
-#endif
-#if defined(BDD_OPER_HACK_KMODE)
-      && !IsHelpOp(sptr)
-#endif
-      && !IsAdmin(sptr) && !IsCoder(sptr))
+      && !HasPriv(sptr, PRIV_CHANSERV))
     sptr->flags &= ~FLAGS_CHSERV;
 
 /* MODO +s capado para usuarios */
   if (!(setflags & FLAGS_SERVNOTICE) && !IsServer(cptr)
-      && !IsOper(sptr) && !IsHelpOp(sptr))
+      && !IsAnOper(sptr))
   {
     sptr->flags &= ~FLAGS_SERVNOTICE;
     set_snomask(sptr, 0, SNO_SET);
@@ -3125,21 +3110,21 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 ** El +X solo se lo pueden poner usuarios autorizados
 */
   if (MyUser(sptr) && (!(sethmodes & HMODE_HIDDENVIEWER))
-      && IsHiddenViewer(sptr) && !get_privs(sptr, HMODE_HIDDENVIEWER))
+      && IsHiddenViewer(sptr) && !HasPriv(sptr, PRIV_HIDDEN_VIEWER))
     ClearHiddenViewer(sptr);
 
 /*
 ** El +W solo se lo pueden poner usuarios autorizados
 */
   if (MyUser(sptr) && (!(sethmodes & HMODE_WHOIS))
-      && IsWhois(sptr) && !get_privs(sptr, HMODE_WHOIS))
+      && IsWhois(sptr) && !HasPriv(sptr, PRIV_WHOIS_NOTICE))
     ClearWhois(sptr);
 
 /*
 ** El +I solo se lo pueden poner usuarios autorizados
 */
   if (MyUser(sptr) && (!(sethmodes & HMODE_NOIDLE))
-      && IsNoIdle(sptr) && !get_privs(sptr, HMODE_NOIDLE))
+      && IsNoIdle(sptr) && !HasPriv(sptr, PRIV_HIDE_IDLE))
     ClearNoIdle(sptr);
 
 
@@ -3840,45 +3825,6 @@ int get_status(aClient *sptr)
   return 0;
 }
 
-/* int have_privs(sptr, hmode)
- *
- * Da los privilegios segun tabla o de operadores
- *
- * Devuelve 1 si tiene el privilegio, 0 si no
- */
-int get_privs(aClient *sptr, int flag)
-{
-  int privs = 0;
-  struct db_reg *reg;
-
-  if (!IsNickRegistered(sptr))
-    return 0;
-
-  reg = db_buscar_registro(BDD_OPERDB, sptr->name);
-
-  if (reg) {
-      /* Sistema nuevo, por flags */
-      if (reg->valor[1] != ':')
-        return 0;
-      if (reg->valor[2] == '\0')
-        return 0;
-      privs = atoi(reg->valor + 2);
-
-      if (flag == HMODE_NOIDLE)
-        return privs;
-
-      if (flag == HMODE_HIDDENVIEWER)
-        return privs & 0x1;
-
-      if (flag == HMODE_WHOIS)
-        return privs & 0x2;
-
-      return 0;
-  }
-
-  return 0;
-}
-
 #if defined(BDD_VIP)
 /*
  * int can_viewhost(sptr, acptr)
@@ -4089,6 +4035,17 @@ void make_vhostperso(aClient *acptr, int mostrar)
   }
 }
 #endif
+
+/*
+ * Privilegios
+ */
+int HasPriv(aClient *sptr, uint64_t priv)
+{
+     if (!MyUser(sptr) || !IsAnOper(sptr))
+         return 0;
+
+     return sptr->privs & priv;
+}
 
 /*
  * 9 de Octubre de 2003, mount@irc-dev.net

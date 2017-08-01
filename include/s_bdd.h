@@ -74,6 +74,46 @@
 #define BDD_NICKSERV      "nickserv"
 #define BDD_CLONESSERV    "clonesserv"
 
+/* Privilegios IRCD */
+#define PRIV_CHAN_LIMIT      0x000000001 /**< no channel limit on oper */
+#define PRIV_MODE_LCHAN      0x000000002 /**< oper can mode local chans */
+#define PRIV_WALK_LCHAN      0x000000004 /**< oper can walk through local modes */
+#define PRIV_DEOP_LCHAN      0x000000008 /**< no deop oper on local chans */
+#define PRIV_SHOW_INVIS      0x000000010 /**< show local invisible users */
+#define PRIV_SHOW_ALL_INVIS  0x000000020 /**< show all invisible users */
+#define PRIV_UNLIMIT_QUERY   0x000000040 /**< unlimit who queries */
+#define PRIV_KILL            0x000000080 /**< oper can KILL */
+#define PRIV_LOCAL_KILL      0x000000100 /**< oper can local KILL */
+#define PRIV_REHASH          0x000000200 /**< oper can REHASH */
+#define PRIV_RESTART         0x000000400 /**< oper can RESTART */
+#define PRIV_DIE             0x000000800 /**< oper can DIE */
+#define PRIV_GLINE           0x000001000 /**< oper can GLINE */
+#define PRIV_LOCAL_GLINE     0x000002000 /**< oper can local GLINE */
+#define PRIV_JUPE            0x000004000 /**< oper can JUPE */
+#define PRIV_LOCAL_JUPE      0x000008000 /**< oper can local JUPE */
+#define PRIV_OPMODE          0x000010000 /**< oper can OP/CLEARMODE */
+#define PRIV_LOCAL_OPMODE    0x000020000 /**< oper can local OP/CLEARMODE */
+#define PRIV_SET             0x000040000 /**< oper can SET */
+#define PRIV_WHOX            0x000080000 /**< oper can use /who x */
+#define PRIV_BADCHAN         0x000100000 /**< oper can BADCHAN */
+#define PRIV_LOCAL_BADCHAN   0x000200000 /**< oper can local BADCHAN */
+#define PRIV_SEE_CHAN        0x000400000 /**< oper can see in secret chans */
+#define PRIV_PROPAGATE       0x000800000 /**< propagate oper status */
+#define PRIV_DISPLAY         0x001000000 /**< "Is an oper" displayed */
+#define PRIV_SEE_OPERS       0x002000000 /**< display hidden opers */
+#define PRIV_WIDE_GLINE      0x004000000 /**< oper can set wider G-lines */
+#define PRIV_LIST_CHAN       0x008000000 /**< oper can list secret channels */
+#define PRIV_FORCE_OPMODE    0x010000000/**< can hack modes on quarantined channels */
+#define PRIV_FORCE_LOCAL_OPMODE 0x020000000 /**< can hack modes on quarantined local channels */
+#define PRIV_APASS_OPMODE    0x040000000 /**< can hack modes +A/-A/+U/-U */
+#define PRIV_WALK_CHAN       0x080000000
+#define PRIV_NETWORK         0x100000000
+#define PRIV_CHANSERV        0x200000000
+#define PRIV_HIDDEN_VIEWER   0x400000000
+#define PRIV_WHOIS_NOTICE    0x800000000
+#define PRIV_HIDE_IDLE       0x1000000000
+
+
 struct db_reg {
   char *clave;
   char *valor;

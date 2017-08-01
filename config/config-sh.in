@@ -455,33 +455,7 @@ endmenu
 
 mainmenu_option next_comment
 comment 'Oper commands'
-  bool 'Allow (local) Opers to see all local invisible users' SHOW_INVISIBLE_USERS y
-  if [ "$SHOW_INVISIBLE_USERS" = "y" ]; then
-    bool 'Allow Opers to see all invisible users' SHOW_ALL_INVISIBLE_USERS y
-    bool 'Allow HELPERS to see all invisible users' WHOX_HELPERS y
-  fi
-  bool 'Allow global Opers (O:) to see inside secret channels' OPERS_SEE_IN_SECRET_CHANNELS y
-  if [ "$OPERS_SEE_IN_SECRET_CHANNELS" = "y" ]; then
-    bool 'Allow local Opers (o:) to see inside secret channels' LOCOP_SEE_IN_SECRET_CHANNELS n
-  fi
-  bool 'Do not truncate obnoxiously long /who output for opers' UNLIMIT_OPER_QUERY
-  bool 'Allow Opers to use the KILL command' OPER_KILL y
-  bool 'Allow Opers to use the REHASH command' OPER_REHASH y
-  bool 'Allow Opers to use the RESTART command' OPER_RESTART y
-  bool 'Allow Opers to use the DIE command' OPER_DIE y
-  bool 'Allow Opers to add local G-lines' OPER_LGLINE y
   bool 'Allow Opers to connect from a remote site' OPER_REMOTE y
-  bool 'Allow Opers to join channels using a master key - ESNET' OPER_JOIN_GOD_ESNET y
-  bool 'Allow Opers to became channel service - ESNET' OPER_CHANNEL_SERVICE_ESNET y
-  bool 'Local Channel Services has no Flood Control - ESNET' CS_NO_FLOOD_ESNET y
-  bool 'Allow local opers to use the REHASH command' LOCOP_REHASH y
-  bool 'Allow local opers to use the RESTART command' LOCOP_RESTART
-  bool 'Allow local opers to use the DIE command' LOCOP_DIE
-  bool 'Allow local opers to add local G-lines' LOCOP_LGLINE y
-  bool 'Allow local/global opers to be on any number of channels' OPER_NO_CHAN_LIMIT y
-  bool 'Allow local/global opers to set modes on local channels' OPER_MODE_LCHAN y
-  bool 'Allow local/global opers to walk through local channels modes' OPER_WALK_THROUGH_LMODES n
-  bool 'Prevent local/global opers from being kicked or deoped on local channels' NO_OPER_DEOP_LCHAN n
 endmenu
 
 mainmenu_option next_comment
@@ -510,11 +484,6 @@ comment 'Mandatory defines (you should leave these untouched)'
   fi
   bool 'HISPANO/ESNET: Distributed Clone Control support' BDD_CLONES y
   bool 'HISPANO/ESNET: CHAN_DB features (join # FUNDADOR, modeX)' BDD_CHAN_HACK y 
-  bool 'HISPANO/ESNET: OPER_DB features (join # OPER, modeX)' BDD_OPER_HACK y
-  if [ "$BDD_OPER_HACK" = "y" ]; then
-    # bool 'HISPANO/ESNET: OPER_DB features only on registered (CHAN_DB) channels' BDD_OPER_HACK_ONLYREG n
-      bool 'HISPANO/ESNET: OPER_DB members can be Chanserv (+k)' BDD_OPER_HACK_KMODE y
-  fi   
   bool 'HISPANO/ESNET: Soporte para la ocultacion de IPs' BDD_VIP y
   if [ "$BDD_VIP" = "y" ]; then
     bool 'HISPANO/ESNET: Ignorar el flag "+x" a menos que el usuario este en la tabla "v" o "w"' BDD_VIP3 n
@@ -525,18 +494,12 @@ comment 'Mandatory defines (you should leave these untouched)'
   bool 'HISPANO/ESNET: Dinamic Negotiation link-by-link' ESNET_NEG y
   if [ "$ESNET_NEG" = "y" ]; then
     bool 'HISPANO/ESNET: ZLIB compression between servers - ESNET' ZLIB_ESNET y
-    bool 'HISPANO: Webchat con protocolo propio server->cliente' WEBCHAT n
   fi
   int 'Max auto connects per class (1!)' MAXIMUM_LINKS 1
   echo '* Never define this on a production server:'
   bool 'Enable message logging' MSGLOG_ENABLED
   if [ "$MSGLOG_ENABLED" = "y" ]; then
     int 'Message log size' MSGLOG_SIZE 128
-  fi
-  if [ "$OPER_KILL" = "y" ]; then
-    bool 'Only allow KILLs of local clients' LOCAL_KILL_ONLY
-  else
-    define_bool LOCAL_KILL_ONLY $LOCAL_KILL_ONLY
   fi
   int 'KILL nick chase time limit (30)' KILLCHASETIMELIMIT 30
   int 'Max number of channels per user (recommended: 5)' MAXCHANNELSPERUSER 10
