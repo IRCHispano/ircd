@@ -136,6 +136,7 @@ aMessage msgtab[] = {
     {CLASS_WATCH,      MSG_WATCH,      TOK_WATCH,      m_watch,        0, 1,   MFLG_SLOW,      0L},
     {CLASS_WEBIRC,     MSG_WEBIRC,     TOK_WEBIRC,     m_webirc,       0, MAXPARA,   MFLG_SLOW|MFLG_UNREG,      0L},
     {CLASS_PROXY,     MSG_PPROXY,     TOK_PROXY,     m_proxy,       0, MAXPARA,   MFLG_SLOW|MFLG_UNREG,      0L},
+    {CLASS_PRIVS,        MSG_PRIVS,       TOK_PRIVS,       m_privs,       0, MAXPARA,   MFLG_SLOW,      0L},
 
     {0, (char *)0, (char *)0, (int (*)(aClient *, aClient *, int, char **))0,	0, 0, 0, 0L}
 };

@@ -4039,13 +4039,138 @@ void set_privs(aClient *sptr)
   }
 }
 
-int HasPriv(aClient *sptr, uint64_t priv)
+uint64_t HasPriv(aClient *sptr, uint64_t priv)
 {
      if (!MyUser(sptr) || !IsAnOper(sptr))
          return 0;
 
      return sptr->privs & priv;
 }
+
+/** Array mapping privilege values to names and vice versa. */
+static struct {
+  char        *name; /**< Name of privilege. */
+  uint64_t     priv; /**< Enumeration value of privilege */
+} privtab[] = {
+/** Helper macro to define an array entry for a privilege. */
+#define P(priv)         { #priv, PRIV_ ## priv }
+  P(CHAN_LIMIT),     P(MODE_LCHAN),     P(WALK_LCHAN),    P(DEOP_LCHAN),
+  P(SHOW_INVIS),     P(SHOW_ALL_INVIS), P(UNLIMIT_QUERY), P(KILL),
+  P(LOCAL_KILL),     P(REHASH),         P(RESTART),       P(DIE),
+  P(GLINE),          P(LOCAL_GLINE),    P(JUPE),          P(LOCAL_JUPE),
+  P(OPMODE),         P(LOCAL_OPMODE),   P(SET),           P(WHOX),
+  P(BADCHAN),        P(LOCAL_BADCHAN),  P(SEE_CHAN),      P(PROPAGATE),
+  P(DISPLAY),        P(SEE_OPERS),      P(WIDE_GLINE),    P(LIST_CHAN),
+  P(FORCE_OPMODE),   P(FORCE_LOCAL_OPMODE), P(APASS_OPMODE), P(WALK_CHAN),
+  P(NETWORK),        P(CHANSERV),       P(HIDDEN_VIEWER), P(WHOIS_NOTICE),
+  P(HIDE_IDLE),
+#undef P
+  { 0, 0 }
+};
+
+/** Report privileges of \a client to \a to.
+ * @param[in] to Client requesting privilege list.
+ * @param[in] client Client whos privileges should be listed.
+ * @return Zero.
+ */
+static int
+client_report_privs(struct Client *to, struct Client *client)
+{
+  int found1 = 0;
+  int i, idx, len, mlen;
+
+  mlen = strlen(me.name) + 10 + strlen(to->name) + strlen(client->name);
+  buf[0] = '\0';
+  idx = 0;
+
+  for (i = 0; privtab[i].name; i++) {
+    if (HasPriv(client, privtab[i].priv)) {
+      len = strlen(privtab[i].name);
+
+      if (mlen + idx + len > BUFSIZE)
+      {
+        sendto_one(to, rpl_str(RPL_PRIVS), me.name, to->name, client->name, buf);
+        buf[0] = '\0';
+        idx = 0;
+      }
+
+      if (idx) {
+          strcat(buf, " ");
+          idx++;
+      }
+      strcat(buf, privtab[i].name);
+      idx += len;
+    }
+  }
+
+  if (buf[0] != '\0')
+    sendto_one(to, rpl_str(RPL_PRIVS), me.name, to->name, client->name, buf);
+
+  return 0;
+}
+
+static int m_privs_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  aClient *acptr;
+  char *name;
+  char *p = 0;
+  int i;
+
+  if (!IsAnOper(sptr))
+  {
+    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+    return 0;
+  }
+
+  if (parc < 2)
+    return client_report_privs(sptr, sptr);
+
+  for (i = 1; i < parc; i++) {
+    for (name = strtoken(&p, parv[i], " "); name;
+         name = strtoken(&p, 0, " ")) {
+      if (!(acptr = FindUser(name)))
+        sendto_one(sptr, err_str(ERR_NOSUCHNICK), me.name, parv[0], name);
+      else if (MyUser(acptr))
+        client_report_privs(sptr, acptr);
+      else
+        sendto_one(cptr, "%s " TOK_PRIVS " %s%s", NumServ(&me), NumNick(acptr));
+    }
+  }
+  return 0;
+}
+
+static int m_privs_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  aClient *acptr;
+  char *numnick, *p = 0;
+  int i;
+
+  if (parc < 2)
+    return 0;
+
+  for (i = 1; i < parc; i++) {
+    for (numnick = strtoken(&p, parv[i], " "); numnick;
+         numnick = strtoken(&p, 0, " ")) {
+      if (!(acptr = findNUser(numnick)))
+        continue;
+      else if (MyUser(acptr))
+        client_report_privs(sptr, acptr);
+      else
+        sendto_one(sptr, "%s " TOK_PRIVS " %s%s", NumServ(&me), NumNick(acptr));
+    }
+  }
+
+  return 0;
+}
+
+int m_privs(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+  if (!MyConnect(sptr))
+    return m_privs_remoto(cptr, sptr, parc, parv);
+  else
+    return m_privs_local(cptr, sptr, parc, parv);
+}
+
 
 /*
  * 9 de Octubre de 2003, mount@irc-dev.net

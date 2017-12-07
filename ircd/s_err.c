@@ -687,7 +687,7 @@ static Numeric numeric_replies[] = {
 /* 269 */
     {0, (char *)NULL},
 /* 270 */
-    {0, (char *)NULL},
+    {RPL_PRIVS, "%s :%s"},
 /* 271 */
     {RPL_SILELIST, "%s %s"},
 /* 272 */

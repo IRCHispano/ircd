@@ -414,7 +414,7 @@
 /*      RPL_START_NETSTAT    267          Aircd */
 /*      RPL_NETSTAT          268          Aircd */
 /*      RPL_END_NETSTAT      269          Aircd */
-/*      RPL_PRIVS            270          Undernet extension */
+#define RPL_PRIVS            270        /* Undernet extension - privs */
 #define RPL_SILELIST	     271  /* Undernet extension */
 #define RPL_ENDOFSILELIST    272  /* Undernet extension */
 /*      RPL_NOTIFY           273          Aircd */

@@ -60,6 +60,7 @@ extern int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_userhost(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_userip(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_ison(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+extern int m_privs(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern void send_features(aClient *sptr, char *nick);
 extern char *umode_str(aClient *cptr, aClient *acptr);
 extern void send_umode(aClient *cptr, aClient *sptr, int old, int sendmask,
@@ -81,7 +82,7 @@ void make_vhost(aClient *acptr, int mostrar);
 void make_vhostperso(aClient *acptr, int mostrar);
 #endif
 extern void set_privs(aClient *sptr);
-extern int HasPriv(aClient *sptr, uint64_t priv);
+extern uint64_t HasPriv(aClient *sptr, uint64_t priv);
 extern void rename_user(aClient *sptr, char *nick_nuevo);
 extern void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh, int registrado);
 

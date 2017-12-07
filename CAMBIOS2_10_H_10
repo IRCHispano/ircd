@@ -1,3 +1,8 @@
+* 2017/12/07  toni@tonigarcia.es (u2.10.H.10.247)                FEATURE
+------------------------------------------------------------------------
+  Nuevo comando PRIVS para visualizar los privilegios que tiene un
+  Operador.
+
 * 2017/12/07  toni@tonigarcia.es (u2.10.H.10.246)                FEATURE
 ------------------------------------------------------------------------
   El modo +h deja de ser modo de privilegios y pasa a ser un mero modo
