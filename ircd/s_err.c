@@ -651,7 +651,7 @@ static Numeric numeric_replies[] = {
 /* 251 */
     {RPL_LUSERCLIENT, ":There are %d users and %d invisible on %d servers"},
 /* 252 */
-    {RPL_LUSEROP, "%d :Helper(s), %d IRCop(s) and %d official bot(s) online"},
+    {RPL_LUSEROP, "%d :operator(s) online"},
 /* 253 */
     {RPL_LUSERUNKNOWN, "%d :unknown connection(s)"},
 /* 254 */

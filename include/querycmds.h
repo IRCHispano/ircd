@@ -20,8 +20,6 @@ struct lusers_st {
   unsigned int opers;           /* IsUser() && IsOper() */
   /* Misc: */
   unsigned int channels;
-  unsigned int helpers;         /* IsHelpOp() */
-  unsigned int bots_oficiales;  /* IsServicesBot() */
 };
 
 /*=============================================================================

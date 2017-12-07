@@ -492,13 +492,8 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
          of = sptr->flags;
          oh = sptr->hmodes;
 
-         if (IsHelpOp(sptr))
-           --nrof.helpers;
-
-         if (IsServicesBot(sptr))
-           --nrof.bots_oficiales;
-
          ClearHelpOp(sptr);
+         ClearOper(sptr);
          ClearAdmin(sptr);
          ClearCoder(sptr);
          ClearServicesBot(sptr);
@@ -871,8 +866,6 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       */
    case BDD_OPERDB:
    {
-    int nivel = atoi(valor);
-
     aClient *sptr;
 
     /* Solo usuario con +r y en nuestro servidor */
@@ -895,24 +888,17 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
           SetCoder(sptr);
 
         if (status & HMODE_SERVICESBOT)
-        {
-          if (!IsServicesBot(sptr))
-            nrof.bots_oficiales++;
           SetServicesBot(sptr);
-        }
 
         if (status & HMODE_HELPOP)
-        {
-          if (!IsHelpOp(sptr))
-            nrof.helpers++;
           SetHelpOp(sptr);
-        }
 
         if (status & FLAGS_OPER)
         {
           if (!IsAnOper(sptr))
             nrof.opers++;
           SetOper(sptr);
+          set_privs(sptr);
         }
 
         send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
@@ -2863,7 +2849,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!IsUser(sptr))
     return 0;                   /* Ignoramos peticiones de nodos */
 
-  if (!IsOper(sptr) && !IsHelpOp(sptr))
+  if (!IsOper(sptr))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;                   /* No autorizado */

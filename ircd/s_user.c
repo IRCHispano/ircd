@@ -630,10 +630,6 @@ static int register_user(aClient *cptr, aClient *sptr,
     ++nrof.inv_clients;
   if (IsOper(sptr))
     ++nrof.opers;
-  if (!MyUser(sptr) && IsHelpOp(sptr))  /* Sumamos para entradas REMOTAS de +h */
-    ++nrof.helpers;             /* Las locales se procesan en m_nick   */
-  if (IsServicesBot(sptr))
-    ++nrof.bots_oficiales;
 
   if (MyConnect(sptr))
   {
@@ -2297,7 +2293,7 @@ void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh,
   if (cptr && MyUser(cptr)) {
     int HMODES;
 
-    if (IsAnOper(sptr) || IsHelpOp(sptr)) {
+    if (IsAnOper(sptr)) {
       if (IsAdmin(sptr) || IsCoder(sptr) || sptr == cptr)
         HMODES = ALL_HMODES;
       else
@@ -2460,6 +2456,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
       /* prevent someone from being both oper and local oper */
       ClearLocOp(sptr);
       SetOper(sptr);
+      set_privs(sptr);
       ++nrof.opers;
     }
     *--s = '@';
@@ -2475,6 +2472,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);
     set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
+    sptr->privs = aconf->port;
     send_umode_out(cptr, sptr, old, oldh, IsRegistered(sptr));
     /*
      * Pone una clase o se pilla de una linea O:
@@ -2662,15 +2660,12 @@ int m_userhost(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
     {
       if (i < j)
         *sbuf++ = ' ';
-#if defined(BDD_VIP)
-      sbuf = sprintf_irc(sbuf, "%s%s=%c%s@%s", acptr->name,
-          (IsAnOper(acptr)
-          || IsHelpOp(acptr)) ? "*" : "", (acptr->user->away) ? '-' : '+',
-          PunteroACadena(acptr->user->username), get_visiblehost(acptr, sptr));
-#else
       sbuf = sprintf_irc(sbuf, "%s%s=%c%s@%s", acptr->name,
           IsAnOper(acptr) ? "*" : "", (acptr->user->away) ? '-' : '+',
           PunteroACadena(acptr->user->username),
+#if defined(BDD_VIP)
+          get_visiblehost(acptr, sptr));
+#else
           PunteroACadena(acptr->user->host));
 #endif
     }
@@ -2713,8 +2708,7 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
       if (i < j)
         *sbuf++ = ' ';
       sbuf = sprintf_irc(sbuf, "%s%s=%c%s@%s", acptr->name,
-          (IsAnOper(acptr)
-          || IsHelpOp(acptr)) ? "*" : "", (acptr->user->away) ? '-' : '+',
+          IsAnOper(acptr) ? "*" : "", (acptr->user->away) ? '-' : '+',
           PunteroACadena(acptr->user->username), (sptr == acptr
           || can_viewhost(sptr, acptr)
           || !IsHidden(acptr)) ? ircd_ntoa_c(acptr) : "::ffff:0.0.0.0");
@@ -3032,6 +3026,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     ClearHelpOp(sptr);
     ClearAdmin(sptr);
     ClearCoder(sptr);
+    ClearOper(sptr);
     ClearServicesBot(sptr);
 #if defined(BDD_VIP) && !defined(BDD_VIP2)
     if (!db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
@@ -3137,14 +3132,6 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     --nrof.opers;
   if (!(setflags & FLAGS_OPER) && IsOper(sptr))
     ++nrof.opers;
-  if ((sethmodes & HMODE_HELPOP) && !IsHelpOp(sptr))
-    --nrof.helpers;
-  if (!(sethmodes & HMODE_HELPOP) && IsHelpOp(sptr))
-    ++nrof.helpers;
-  if ((sethmodes & HMODE_SERVICESBOT) && !IsServicesBot(sptr))
-    --nrof.bots_oficiales;
-  if (!(sethmodes & HMODE_SERVICESBOT) && IsServicesBot(sptr))
-    ++nrof.bots_oficiales;
 
   if ((setflags & FLAGS_INVISIBLE) && !IsInvisible(sptr))
     --nrof.inv_clients;
@@ -3267,14 +3254,6 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     --nrof.opers;
   if (!(setflags & FLAGS_OPER) && IsOper(acptr))
     ++nrof.opers;
-  if ((sethmodes & HMODE_HELPOP) && !IsHelpOp(acptr))
-    --nrof.helpers;
-  if (!(sethmodes & HMODE_HELPOP) && IsHelpOp(acptr))
-    ++nrof.helpers;
-  if ((sethmodes & HMODE_SERVICESBOT) && !IsServicesBot(sptr))
-    --nrof.bots_oficiales;
-  if (!(sethmodes & HMODE_SERVICESBOT) && IsServicesBot(sptr))
-    ++nrof.bots_oficiales;
   if ((setflags & FLAGS_INVISIBLE) && !IsInvisible(acptr))
     --nrof.inv_clients;
   if (!(setflags & FLAGS_INVISIBLE) && IsInvisible(acptr))
@@ -3289,7 +3268,7 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if 1 /* ALTERNATIVA SVSMODE A TODOS */
 
   if (MyUser(acptr))
-    send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, (IsOper(acptr) || IsHelpOp(acptr)) ? SEND_HMODES : SEND_HMODES & ~HMODES_HIDDEN);
+    send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, IsAnOper(acptr) ? SEND_HMODES : SEND_HMODES & ~HMODES_HIDDEN);
 #if !defined(NO_PROTOCOL9)
   sendto_lowprot_butone(cptr, 9, ":%s SVSMODE %s %s", acptr->name, acptr->name, parv[2]);
 #endif
@@ -3328,7 +3307,7 @@ char *umode_str(aClient *cptr, aClient *acptr)
       {
         if (flag & HMODES_HIDDEN)
         {
-          if (IsAnOper(acptr) || IsHelpOp(acptr))
+          if (IsAnOper(acptr))
             *m++ = *(s + 1);
         } else
           *m++ = *(s + 1);
@@ -3347,7 +3326,7 @@ char *umode_str(aClient *cptr, aClient *acptr)
         if ((flag & FLAGS_INVISIBLE) || (flag & FLAGS_WALLOP)
             || (flag & FLAGS_DEBUG))
         {
-          if (IsAnOper(acptr) || IsHelpOp(acptr) || (acptr == cptr))
+          if (IsAnOper(acptr) || (acptr == cptr))
             *m++ = *(s + 1);
         }
         else
@@ -3518,10 +3497,10 @@ void set_snomask(aClient *cptr, snomask_t newmask, int what)
   else if (what != SNO_SET)     /* absolute set, no math needed */
     sendto_ops("setsnomask called with %d ?!", what);
 
-  if (IsAnOper(cptr) || IsHelpOp(cptr))
-    newmask &= (IsAnOper(cptr) ? SNO_ALL : SNO_USER);
+  if (IsAnOper(cptr))
+    newmask &= SNO_ALL;
   else
-    newmask = 0;
+    newmask = 0; /* &= SNO_USER; */
 
   diffmask = oldmask ^ newmask;
 
@@ -3815,6 +3794,11 @@ int get_status(aClient *sptr)
           break;
 
         case 'h':
+          status |= FLAGS_OPER;
+
+        case 'o':
+          status |= FLAGS_OPER;
+
         case 'p':
           status |= HMODE_HELPOP;
           break;
@@ -3840,12 +3824,12 @@ int can_viewhost(aClient *sptr, aClient *acptr)
   if (!IsHiddenViewer(sptr))
     return 0;
 
-  /* Los Opers solo hacia usuarios */
-  if (IsHelpOp(sptr) && !IsHelpOp(acptr) && !IsAdmin(acptr) && !IsCoder(acptr))
-    return 1;
-
   /* Los Admins y Coders a todos */
   if (IsAdmin(sptr) || IsCoder(sptr))
+    return 1;
+
+  /* El resto solo hacia usuarios */
+  if (!IsAnOper(acptr) && !IsAdmin(acptr) && !IsCoder(acptr))
     return 1;
 
   return 0;
@@ -4039,6 +4023,22 @@ void make_vhostperso(aClient *acptr, int mostrar)
 /*
  * Privilegios
  */
+void set_privs(aClient *sptr)
+{
+  struct db_reg *reg;
+
+  if (!MyConnect(sptr))
+    return;
+
+  reg = db_buscar_registro(BDD_OPERDB, sptr->name);
+
+  if (reg) {
+    sptr->privs = atoll(reg->valor+2);
+  } else {
+    sptr->privs = 0;
+  }
+}
+
 int HasPriv(aClient *sptr, uint64_t priv)
 {
      if (!MyUser(sptr) || !IsAnOper(sptr))
@@ -4117,23 +4117,11 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       ClearNoChan(sptr);
       ClearDocking(sptr);
       ClearWhois(sptr);
-
-      /* 23-Oct-2003: mount@irc-dev.net
-       *
-       * Gestionamos correctamente los contadores ;-)
-       */
-      if (IsHelpOp(sptr))
-      {
-        --nrof.helpers;
-        ClearHelpOp(sptr);
-      }
+      ClearHelpOp(sptr);
       ClearAdmin(sptr);
       ClearCoder(sptr);
-      if (IsServicesBot(sptr))
-      {
-        --nrof.bots_oficiales;
-        ClearServicesBot(sptr);
-      }
+      ClearOper(sptr);
+      ClearServicesBot(sptr);
 
 #if defined(BDD_VIP)
 #if !defined(BDD_VIP2)
@@ -4274,24 +4262,17 @@ void rename_user(aClient *sptr, char *nick_nuevo)
             SetCoder(sptr);
 
           if (status & HMODE_SERVICESBOT)
-          {
-            if (!IsServicesBot(sptr))
-              nrof.bots_oficiales++;
             SetServicesBot(sptr);
-          }
 
           if (status & HMODE_HELPOP)
-          {
-            if (!IsHelpOp(sptr))
-              nrof.helpers++;
             SetHelpOp(sptr);
-          }
 
           if (status & FLAGS_OPER)
           {
             if (!IsAnOper(sptr))
               nrof.opers++;
             SetOper(sptr);
+            set_privs(sptr);
           }
         }
       }
@@ -5313,18 +5294,11 @@ nickkilldone:
           ClearMsgOnlyReg(sptr);
           ClearNoChan(sptr);
           ClearDocking(sptr);
-          if (IsHelpOp(sptr))
-          {
-            ClearHelpOp(sptr);
-            --nrof.helpers;
-          }
+          ClearHelpOp(sptr);
           ClearAdmin(sptr);
           ClearCoder(sptr);
-          if (IsServicesBot(sptr))
-          {
-            ClearServicesBot(sptr);
-            --nrof.bots_oficiales;
-          }
+          ClearOper(sptr);
+          ClearServicesBot(sptr);
 #if defined (BDD_VIP)
 #if !defined(BDD_VIP2)
           ClearHidden(sptr);
@@ -5496,27 +5470,23 @@ nickkilldone:
           SetCoder(sptr);
 
         if (statusbdd & HMODE_SERVICESBOT)
-        {
           SetServicesBot(sptr);
-          nrof.bots_oficiales++;
-        }
 
         if (statusbdd & HMODE_HELPOP)
-        {
           SetHelpOp(sptr);
-          nrof.helpers++;
-        }
 
         if (statusbdd & FLAGS_OPER)
         {
           SetOper(sptr);
           nrof.opers++;
+          set_privs(sptr);
         }
 
       } else {
         ClearHelpOp(sptr);
         ClearAdmin(sptr);
         ClearCoder(sptr);
+        ClearOper(sptr);
         ClearServicesBot(sptr);
       }
     }
@@ -5530,6 +5500,7 @@ nickkilldone:
       ClearHelpOp(sptr);
       ClearAdmin(sptr);
       ClearCoder(sptr);
+      ClearOper(sptr);
       ClearServicesBot(sptr);
     }
 #if defined(BDD_VIP)
@@ -5988,18 +5959,11 @@ nickkilldone:
           ClearMsgOnlyReg(sptr);
           ClearNoChan(sptr);
           ClearDocking(sptr);
-          if (IsHelpOp(sptr))
-          {
-            ClearHelpOp(sptr);
-            --nrof.helpers;
-          }
+          ClearHelpOp(sptr);
           ClearAdmin(sptr);
           ClearCoder(sptr);
-          if (IsServicesBot(sptr))
-          {
-            ClearServicesBot(sptr);
-            --nrof.bots_oficiales;
-          }
+          ClearOper(sptr);
+          ClearServicesBot(sptr);
           if (!IsAnOper(sptr)) {
             ClearHiddenViewer(sptr);
             ClearNoIdle(sptr);

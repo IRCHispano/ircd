@@ -155,7 +155,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
      that there are no common channels, thus use PubChannel and not
      SeeChannel */
   if (!chptr && (!fields || (fields & (WHO_FIELD_CHA | WHO_FIELD_FLA)))
-      && !IsNoChan(acptr) || acptr == sptr || IsHelpOp(sptr) || IsAnOper(sptr))
+      && !IsNoChan(acptr) || acptr == sptr || IsAnOper(sptr))
   {
     Reg3 Link *lp;
     for (lp = acptr->user->channel; lp && !chptr; lp = lp->next)
@@ -226,7 +226,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
 
   if (!fields || (fields & WHO_FIELD_SER))
   {
-    Reg3 char *p2 = (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr))) ? 
+    Reg3 char *p2 = (ocultar_servidores && !IsAnOper(sptr)) ?
                      his.name : acptr->user->server->name;
     *(p1++) = ' ';
     while ((*p2) && (*(p1++) = *(p2++)));
@@ -246,7 +246,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
       *(p1++) = 'G';
     else
       *(p1++) = 'H';
-    if (IsAnOper(acptr) || IsHelpOp(acptr))
+    if (IsAnOper(acptr))
     {
       *(p1++) = '*';
     }
@@ -294,7 +294,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
     if (IsDocking(acptr))
       *(p1++) = 'K';
 
-    if (IsAnOper(sptr) || IsHelpOp(sptr))
+    if (IsAnOper(sptr))
     {
       if (IsInvisible(acptr))
         *(p1++) = 'i';
@@ -320,7 +320,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
     *p1++ = ' ';
     if (!fields)
       *p1++ = ':';              /* Place colon here for default reply */
-    if (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr)))
+    if (ocultar_servidores && !IsAnOper(sptr))
       *p1++ = (sptr == acptr) ? '0' : '3';
     else
       p1 = sprintf_irc(p1, "%d", acptr->hopcount);
@@ -500,7 +500,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
   if (!fields)
     counter = 7;
 
-  if (ocultar_servidores && !(IsAnOper(sptr) || IsHelpOp(sptr)))
+  if (ocultar_servidores && !IsAnOper(sptr))
     matchsel &= ~WHO_FIELD_SER;
 
   if (qrt && (fields & WHO_FIELD_QTY))
@@ -539,8 +539,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
           for (lp = chptr->members; lp; lp = lp->next)
           {
             acptr = lp->value.cptr;
-            if ((bitsel & WHOSELECT_OPER) && !(IsAnOper(acptr))
-                && !(IsHelpOp(acptr)))
+            if ((bitsel & WHOSELECT_OPER) && !(IsAnOper(acptr)))
             {
               continue;
             }
@@ -559,7 +558,6 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
       else
       {
         if ((acptr = FindUser(nick)) && ((!(bitsel & WHOSELECT_OPER)) ||
-            IsHelpOp(acptr) ||
             IsAnOper(acptr)) && Process(acptr) && SHOW_MORE(sptr, counter))
         {
           do_who(sptr, acptr, NULL, fields, bitsel & WHOSELECT_EXTRA, qrt);
@@ -603,8 +601,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             continue;           /* Now Process() is at the beginning, if we fail
                                    we'll never have to show this acptr in this query */
 
-          if ((bitsel & WHOSELECT_OPER) && !(IsAnOper(acptr))
-              && !(IsHelpOp(acptr)))
+          if ((bitsel & WHOSELECT_OPER) && !(IsAnOper(acptr)))
           {
             continue;
           }
@@ -653,8 +650,7 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
       {
         if (!(IsUser(acptr) && Process(acptr)))
           continue;
-        if ((bitsel & WHOSELECT_OPER) && !(IsAnOper(acptr))
-            && !(IsHelpOp(acptr)))
+        if ((bitsel & WHOSELECT_OPER) && !(IsAnOper(acptr)))
         {
           continue;
         }
@@ -873,7 +869,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
       exact_match:
         if (user
-            && (!IsNoChan(acptr) || acptr == sptr || IsHelpOp(sptr) || IsAnOper(sptr))
+            && (!IsNoChan(acptr) || acptr == sptr || IsAnOper(sptr))
             )
         {
           mlen = strlen(me.name) + strlen(parv[0]) + 12 + strlen(name);
@@ -940,7 +936,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
 
         if (ocultar_servidores && !IsService(a2cptr) &&
-            !(IsAnOper(sptr) || IsHelpOp(sptr) || (sptr == acptr)))
+            !(IsAnOper(sptr) || (sptr == acptr)))
           sendto_one(sptr, rpl_str(RPL_WHOISSERVER), me.name,
               parv[0], name, his.name, his.info);
         else
@@ -977,13 +973,10 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
           if (IsAdmin(acptr))
             sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
-                "Es un ADMINistrador de los servicios de red");
+                "IS an IRC Administrator");
           else if (IsCoder(acptr))
             sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
-                "Es un Desarrollador de la red");
-          else if (IsHelpOp(acptr))
-            sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
-                "Es un OPERador de los servicios de red");
+                "Is an IRC Coder");
           else if (IsAnOper(acptr))
             sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
                 "Is an IRC Operator");
@@ -1005,7 +998,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_one(sptr, rpl_str(RPL_WHOISSSL), me.name, parv[0], name);
 
          if (MyConnect(acptr) && (!IsNoIdle(acptr) && !IsAnOper(sptr)) && (!ocultar_servidores ||
-                  (sptr == acptr || IsAnOper(sptr) || IsHelpOp(sptr) || parc >= 3)))
+                  (sptr == acptr || IsAnOper(sptr) || parc >= 3)))
             sendto_one(sptr, rpl_str(RPL_WHOISIDLE), me.name,
                 parv[0], name, now - user->last, acptr->firsttime);
 

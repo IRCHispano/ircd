@@ -390,12 +390,6 @@ int exit_client(aClient *cptr,  /* Connection being handled by
 #endif
   char comment1[HOSTLEN + HOSTLEN + 2];
 
-  if (!IsServer(bcptr) && IsHelpOp(bcptr))
-  {
-    --nrof.helpers;
-    ClearHelpOp(bcptr);
-  }
-
   if (MyConnect(bcptr))
   {
     bcptr->flags |= FLAGS_CLOSING;
@@ -652,10 +646,6 @@ static void exit_one_client(aClient *bcptr, char *comment)
     if (IsInvisible(bcptr))
       --nrof.inv_clients;
 
-    if (IsHelpOp(bcptr))
-      --nrof.helpers;
-    if (IsServicesBot(bcptr))
-      --nrof.bots_oficiales;
     if (IsOper(bcptr))
       --nrof.opers;
 

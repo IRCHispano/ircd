@@ -113,7 +113,7 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask,
 int m_map(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
 {
 
-  if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
+  if (ocultar_servidores && !IsAnOper(cptr))
   {
     aClient *acptr;
     unsigned int clientes;

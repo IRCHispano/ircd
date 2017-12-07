@@ -127,7 +127,7 @@ int m_version(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (MyConnect(sptr) && parc > 1)
   {
-    if (IsUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
+    if (IsUser(sptr) && !IsAnOper(sptr))
     {
       sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
       return 0;
@@ -199,7 +199,7 @@ int m_links(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char *mask;
   aClient *acptr;
 
-  if (ocultar_servidores && !(IsAnOper(cptr) || IsHelpOp(cptr)))
+  if (ocultar_servidores && !IsAnOper(cptr))
   {
     /* Links especial solo mostrando services*/
     sendto_one(sptr, rpl_str(RPL_LINKS),
@@ -287,13 +287,13 @@ int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
   Reg1 struct tm *since_t = localtime(&me.since);
   char since[15];
 
-  /* Solo ircops y opers tienen acceso a users remotos */
-  if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
+  /* Solo ircops tienen acceso a users remotos */
+  if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr))
     if (hunt_server(1, cptr, sptr, MSG_USERS, TOK_USERS, "%s :%s", 2, parc, parv) !=
         HUNTED_ISME)
       return 0;
 
-  if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr))) {
+  if (ocultar_servidores && MyUser(sptr) && !IsAnOper(sptr)) {
     sendto_one(sptr, ":%s 265 %s :Current local users: %d Max: %d",
         me.name, parv[0], nrof.clients - nrof.services, max_global_count - nrof.services);
     sendto_one(sptr, ":%s 266 %s :Current global users: %d Max: %d",
@@ -320,34 +320,33 @@ int m_users(aClient *cptr, aClient *sptr, int parc, char *parv[])
  */
 int m_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  /* Solo ircops y opers tienen acceso a users remotos */
-  if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
+  /* Solo ircops tienen acceso a users remotos */
+  if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr))
     if (hunt_server(1, cptr, sptr, MSG_LUSERS, TOK_USERS, "%s :%s", 2, parc, parv) !=
         HUNTED_ISME)
       return 0;
 
-  if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr)))
+  if (ocultar_servidores && MyUser(sptr) && !IsAnOper(sptr))
     sendto_one(sptr, rpl_str(RPL_LUSERCLIENT), me.name, parv[0],
         nrof.clients - nrof.inv_clients, nrof.inv_clients, nrof.pservers + 1);
   else
     sendto_one(sptr, rpl_str(RPL_LUSERCLIENT), me.name, parv[0],
         nrof.clients - nrof.inv_clients, nrof.inv_clients, nrof.servers);
-  if ((nrof.opers) || (nrof.helpers) || (nrof.bots_oficiales))
-    sendto_one(sptr, rpl_str(RPL_LUSEROP), me.name, parv[0], nrof.helpers,
-        nrof.opers, nrof.bots_oficiales);
+  if (nrof.opers)
+    sendto_one(sptr, rpl_str(RPL_LUSEROP), me.name, parv[0], nrof.opers);
   if (nrof.unknowns > 0)
     sendto_one(sptr, rpl_str(RPL_LUSERUNKNOWN), me.name, parv[0],
         nrof.unknowns);
   if (nrof.channels > 0)
     sendto_one(sptr, rpl_str(RPL_LUSERCHANNELS), me.name, parv[0],
         nrof.channels);
-  if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr)))
+  if (ocultar_servidores && MyUser(sptr) && !IsAnOper(sptr))
     sendto_one(sptr, rpl_str(RPL_LUSERME), me.name, parv[0], nrof.clients - nrof.services,
         nrof.pservers);
   else
     sendto_one(sptr, rpl_str(RPL_LUSERME), me.name, parv[0], nrof.local_clients,
         nrof.local_servers);
-  if (ocultar_servidores && MyUser(sptr) && !(IsAnOper(sptr) || IsHelpOp(sptr)))
+  if (ocultar_servidores && MyUser(sptr) && !IsAnOper(sptr))
     sendto_one(sptr, rpl_str(RPL_STATSCONN), me.name, parv[0],
         max_global_count - nrof.services, max_global_count - nrof.services - nrof.pservers);
   else

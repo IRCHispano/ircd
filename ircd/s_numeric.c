@@ -96,7 +96,7 @@ int do_numeric(int numeric, int nnn, aClient *cptr, aClient *sptr,
 
   if (acptr)
     sendto_prefix_one(acptr, sptr, ":%s %d %s%s",
-        (ocultar_servidores && !(IsHelpOp(acptr) || IsAnOper(acptr))) ? me.name : sptr->name, numeric, acptr->name, buffer);
+        (ocultar_servidores && !IsAnOper(acptr)) ? me.name : sptr->name, numeric, acptr->name, buffer);
   else
     sendto_channel_butone(cptr, sptr, achptr, ":%s %d %s%s",
         ocultar_servidores ? me.name : sptr->name, numeric, achptr->chname, buffer);

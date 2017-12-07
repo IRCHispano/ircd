@@ -997,7 +997,7 @@ void sendto_ops_butone(aClient *one, aClient *from, char *pattern, ...)
   for (cptr = client; cptr; cptr = cptr->next)
   {
     /*if (!IsAnOper(cptr)) */
-    if (!(SendWallops(cptr) && (IsAnOper(cptr) || IsHelpOp(cptr))))
+    if (!(SendWallops(cptr) && IsAnOper(cptr)))
       continue;
     i = cptr->from->fd;         /* find connection oper is on */
     if (sentalong[i] == sentalong_marker) /* sent message along it already ? */

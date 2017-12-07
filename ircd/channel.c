@@ -6448,10 +6448,10 @@ show_usage(aClient *sptr)
     sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
              "Note: Patterns may contain * and ?. "
              "You may only give one pattern match constraint.");
-    if (IsAnOper(sptr) && IsHelpOp(sptr))
+    if (HasPriv(sptr, PRIV_LIST_CHAN))
       sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
                " \002S\002             ; Show secret channels.");
-    if (IsAnOper(sptr) || IsHelpOp(sptr))
+    if (IsAnOper(sptr))
       sendto_one(sptr, rpl_str(RPL_LISTUSAGE), me.name, sptr->name,
                " \002M\002             ; Show channel modes.");
 
@@ -6556,7 +6556,7 @@ param_parse(aClient *sptr, const char *param, aListingArgs *args,
 
     case 'M':
     case 'm':
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      if (!IsAnOper(sptr))
         return show_usage(sptr);
 
       args->flags |= LISTARG_SHOWMODES;
@@ -6699,7 +6699,7 @@ int m_list(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
     if (!chptr)
         continue;
     if (ShowChannel(sptr, chptr)
-        || (IsAnOper(sptr) && IsHelpOp(sptr)))
+        || IsAnOper(sptr))
       sendto_one(sptr, rpl_str(RPL_LIST), me.name, parv[0],
           chptr->chname, chptr->users - number_of_zombies(chptr), PunteroACadena(chptr->topic));
   }

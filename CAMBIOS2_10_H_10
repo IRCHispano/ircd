@@ -1,3 +1,12 @@
+* 2017/12/07  toni@tonigarcia.es (u2.10.H.10.246)                FEATURE
+------------------------------------------------------------------------
+  El modo +h deja de ser modo de privilegios y pasa a ser un mero modo
+  indicador de que esta disponible para ayudar.
+  Ahora los Operadores reciben el +o y el acceso a comandos o funciones
+  se hara mediante privilegios.
+  Se eliminan contadores de helpers y bots en la 252 para cumplir los
+  estandares.
+
 * 2017/08/01  toni@tonigarcia.es (u2.10.H.10.245)                FEATURE
 ------------------------------------------------------------------------
   Con el fin de personalizar los accesos de cada integrante del Staff en

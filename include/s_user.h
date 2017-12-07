@@ -80,6 +80,7 @@ extern char *get_visiblehost(aClient *sptr, aClient *acptr);
 void make_vhost(aClient *acptr, int mostrar);
 void make_vhostperso(aClient *acptr, int mostrar);
 #endif
+extern void set_privs(aClient *sptr);
 extern int HasPriv(aClient *sptr, uint64_t priv);
 extern void rename_user(aClient *sptr, char *nick_nuevo);
 extern void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh, int registrado);

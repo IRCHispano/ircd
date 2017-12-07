@@ -323,8 +323,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
   unsigned char stat = parc > 1 ? parv[1][0] : '\0';
   Reg1 int i;
 
-  /* Solo ircops y opers tienen acceso a hacer stats remotos */
-  if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr) && !IsHelpOp(sptr))
+  /* Solo ircops tienen acceso a hacer stats remotos */
+  if (parc > 2 && MyUser(sptr) && !IsAnOper(sptr))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;
@@ -413,8 +413,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       int doall = 0, wilds = 0;
       char *name = "*";
 
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -485,8 +485,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     case 'C':
     case 'c':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -500,8 +500,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       char buf[MAXLEN * 2];
       char comtemp[MAXLEN * 2];
 
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -544,8 +544,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       break;
     }
     case 'E':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -563,8 +563,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       }
       break;
     case 'e':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -574,8 +574,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     case 'H':
     case 'h':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo opers tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -592,8 +592,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       char *user, *host, *p;
       int conf_status = (stat == 'k' || stat == 'K') ? CONF_KLINE : CONF_CLIENT;
 
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -711,8 +711,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(ESNET_NEG)
     case 'n':
     case 'N':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -722,8 +722,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
     case 'o':
     case 'O':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -768,8 +768,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
       break;
     case 'D':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -777,8 +777,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       report_configured_links(sptr, CONF_CRULEALL);
       break;
     case 'd':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -819,8 +819,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       calc_load(sptr);
       break;
     case 'W':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -853,8 +853,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       break;
     case 'B':
     case 'b':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -890,8 +890,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
       break;
     case 'J':
     case 'j':
-      /* Solo ircops y opers tienen acceso */
-      if (!IsAnOper(sptr) && !IsHelpOp(sptr))
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
       {
         sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
         return 0;
@@ -1595,7 +1595,7 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
   int cnt = 0, wilds, dow;
 
 #if defined(BDD_VIP)
-  if (!IsAnOper(cptr) && !IsHelpOp(cptr) && !IsServer(cptr))
+  if (!IsAnOper(cptr) && !IsServer(cptr))
   {
     sendto_one(cptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;                   /* no puedes */
