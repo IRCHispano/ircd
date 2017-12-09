@@ -15,9 +15,11 @@ extern void sendto_one(aClient *to, char *pattern, ...)
     __attribute__ ((format(printf, 2, 3)));
 extern void sendto_one_hunt(aClient *to, aClient *from, char *cmd,
     char *token, const char *pattern, ...)
-    __attribute__ ((format(printf, 5, 6))); 
+    __attribute__ ((format(printf, 5, 6)));
 extern void sendbufto_one(aClient *to);
 extern void sendto_ops(const char *pattern, ...)
+    __attribute__ ((format(printf, 1, 2)));
+extern void sendto_debug_channel(char *pattern, ...)
     __attribute__ ((format(printf, 1, 2)));
 extern void sendto_channel_butserv(aChannel *chptr, aClient *from,
     char *pattern, ...) __attribute__ ((format(printf, 3, 4)));

@@ -3826,11 +3826,17 @@ int can_viewhost(aClient *sptr, aClient *acptr)
 
   /* Los Admins y Coders a todos */
   if (IsAdmin(sptr) || IsCoder(sptr))
+  {
+    sendto_debug_channel("[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
     return 1;
+  }
 
   /* El resto solo hacia usuarios */
   if (!IsAnOper(acptr) && !IsAdmin(acptr) && !IsCoder(acptr))
+  {
+    sendto_debug_channel("[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
     return 1;
+  }
 
   return 0;
 }

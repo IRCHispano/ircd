@@ -39,6 +39,8 @@
 #include "slab_alloc.h"
 #include "sprintf_irc.h"
 #include "numnicks.h"
+#include "hash.h"
+#include "s_bdd.h"
 #include <assert.h>
 
 RCSTAG_CC("$Id$");
@@ -443,6 +445,53 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
   else
     vsprintf_irc(sendbuf, pattern, vl);
   sendbufto_one(to);
+}
+
+/*
+ * send debug message to channel
+ */
+void sendto_debug_channel(char *pattern, ...)
+{
+  va_list vl;
+  Reg1 Link *lp;
+  Reg2 aClient *acptr;
+  Reg3 int i;
+  Reg4 aChannel *chptr;
+  static char fmt[1024];
+  char *fmt_target;
+
+  chptr = FindChannel(canal_privsdebug);
+  if (!chptr)
+      return;
+
+  va_start(vl, pattern);
+
+  fmt_target = sprintf_irc(fmt, ":%s PRIVMSG ", me.name);
+  strcpy(fmt_target, chptr->chname);
+  strcat(fmt_target, " :");
+  strcat(fmt_target, pattern);
+
+  ++sentalong_marker;
+  for (lp = chptr->members; lp; lp = lp->next)
+  {
+    acptr = lp->value.cptr;
+    if (acptr->from == &me ||   /* ...was the one I should skip */
+        (lp->flags & CHFL_ZOMBIE) || IsDeaf(acptr))
+      continue;
+    if (MyConnect(acptr)) {       /* (It is always a client) */
+      vsendto_prefix_one(acptr, &me, fmt, vl);
+    }
+    else if (sentalong[(i = acptr->from->fd)] != sentalong_marker)
+    {
+      sentalong[i] = sentalong_marker;
+      /* Don't send channel messages to links that are still eating
+         the net.burst: -- Run 2/1/1997 */
+      if (!IsBurstOrBurstAck(acptr->from))
+        vsendto_prefix_one(acptr, &me, fmt, vl);
+    }
+  }
+  va_end(vl);
+  return;
 }
 
 void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,

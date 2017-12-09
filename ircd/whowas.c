@@ -364,7 +364,7 @@ int m_whowas(aClient *cptr, aClient *sptr, int parc, char *parv[])
             me.name, parv[0], temp->name, temp->username,
             temp->hostname, temp->realname);
 #endif
-       if (IsHiddenViewer(sptr))
+       if (IsHiddenViewer(sptr) && (IsAdmin(sptr) || IsCoder(sptr)))
           sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY), me.name, parv[0],
             temp->name, temp->username, temp->hostname, "<untracked>");
 

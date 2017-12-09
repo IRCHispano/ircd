@@ -90,6 +90,7 @@ char *mensaje_gline = NULL;
 char *network = NULL;
 char *canal_operadores = NULL;
 char *canal_debug = NULL;
+char *canal_privsdebug = NULL;
 int conversion_utf = 0;
 
 /*
@@ -625,6 +626,14 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                 canal_debug=NULL;
               }
             }
+            else if(!strcmp(c, BDD_CANAL_PRIVSDEBUG))
+            {
+              if(canal_privsdebug)
+              {
+                RunFree(canal_privsdebug);
+                canal_privsdebug=NULL;
+              }
+            }
 
             else if (!strcmp(c, BDD_CONVERSION_UTF))
             {
@@ -1008,6 +1017,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if(!strcmp(c, BDD_CANAL_DEBUG))
       {
         SlabStringAllocDup(&canal_debug, v, 0);
+      }
+      else if(!strcmp(c, BDD_CANAL_PRIVSDEBUG))
+      {
+        SlabStringAllocDup(&canal_privsdebug, v, 0);
       }
       else if (!strcmp(c, BDD_CONVERSION_UTF))
       {

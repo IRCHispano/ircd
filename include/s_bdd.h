@@ -65,6 +65,7 @@
 #define BDD_NETWORK                             "network"
 #define BDD_CANAL_OPERS                         "operschan"
 #define BDD_CANAL_DEBUG                         "debugchan"
+#define BDD_CANAL_PRIVSDEBUG                    "privsdebugchan"
 #define BDD_CONVERSION_UTF                      "utf8_conversion"
 #define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA       "msg_fullcapacity"
 #define BDD_MENSAJE_PART_SVSKICK                "msg_svskick"
@@ -160,6 +161,7 @@ extern char *mensaje_gline;
 extern char *network;
 extern char *canal_operadores;
 extern char *canal_debug;
+extern char *canal_privsdebug;
 extern int conversion_utf;
 
 /* -- mman.h no contiene algunas definicieones en plataformas antiguas -- */
