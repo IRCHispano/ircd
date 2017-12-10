@@ -1923,7 +1923,7 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
           NumServ(&me), NumNick(sptr));
     return 0;
   }
-  if (!HasPriv(sptr, MyConnect(acptr) ? PRIV_LOCAL_KILL : PRIV_KILL))
+  if (MyUser(sptr) && !HasPriv(sptr, MyConnect(acptr) ? PRIV_LOCAL_KILL : PRIV_KILL))
   {
     sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
     return 0;
@@ -1934,7 +1934,7 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-  if (!MyConnect(acptr) && !HasPriv(sptr, PRIV_KILL))
+  if (MyUser(sptr) && !MyConnect(acptr) && !HasPriv(sptr, PRIV_KILL))
   {
     sendto_one(sptr, ":%s NOTICE %s :Nick %s isnt on your server",
         me.name, parv[0], acptr->name);
@@ -3827,14 +3827,16 @@ int can_viewhost(aClient *sptr, aClient *acptr)
   /* Los Admins y Coders a todos */
   if (IsAdmin(sptr) || IsCoder(sptr))
   {
-    sendto_debug_channel("[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
+    if (sptr != acptr)
+      sendto_debug_channel("[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
     return 1;
   }
 
   /* El resto solo hacia usuarios */
   if (!IsAnOper(acptr) && !IsAdmin(acptr) && !IsCoder(acptr))
   {
-    sendto_debug_channel("[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
+    if (sptr != acptr)
+      sendto_debug_channel("[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
     return 1;
   }
 
@@ -4139,7 +4141,7 @@ static int m_privs_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
       else if (MyUser(acptr))
         client_report_privs(sptr, acptr);
       else
-        sendto_one(cptr, "%s " TOK_PRIVS " %s%s", NumServ(&me), NumNick(acptr));
+        sendto_one(acptr->from, "%s " TOK_PRIVS " %s%s", NumServ(&me), NumNick(acptr));
     }
   }
   return 0;
@@ -4162,7 +4164,7 @@ static int m_privs_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
       else if (MyUser(acptr))
         client_report_privs(sptr, acptr);
       else
-        sendto_one(sptr, "%s " TOK_PRIVS " %s%s", NumServ(&me), NumNick(acptr));
+        sendto_one(acptr->from, "%s " TOK_PRIVS " %s%s", NumServ(&me), NumNick(acptr));
     }
   }
 
