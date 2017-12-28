@@ -1421,14 +1421,14 @@ static int read_packet(aClient *cptr, int socket_ready)
 
 #if !defined(NOFLOODCONTROL)
     if (IsUser(cptr) && DBufLength(&cptr->recvQ) > CLIENT_FLOOD
-        && !IsDocking(cptr) && !IsChannelService(cptr)
+        && !IsDocking(cptr) && !IsAnOper(cptr)
         )
       return exit_client(cptr, cptr, &me, "Excess Flood");
 #endif
 
     while (DBufLength(&cptr->recvQ) && (!NoNewLine(cptr))
 #if !defined(NOFLOODCONTROL)
-        && (IsChannelService(cptr) || IsDocking(cptr) || cptr->since - now < 10)
+        && (IsChannelService(cptr) || IsAnOper(cptr) || IsDocking(cptr) || cptr->since - now < 10)
 #endif
         )
     {

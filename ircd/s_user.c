@@ -953,7 +953,7 @@ int check_target_limit(aClient *sptr, void *target, const char *name,
   unsigned int tmp = ((size_t)target & 0xffff00) >> 8;
   unsigned char hash = (tmp * tmp) >> 12;
 
-  if (IsChannelService(sptr) || IsDocking(sptr))
+  if (IsChannelService(sptr) || IsAnOper(sptr) || IsDocking(sptr))
     return 0;
 
   if (sptr->targets[0] == hash) /* Same target as last time ? */
@@ -5357,7 +5357,7 @@ nickkilldone:
         /* bounce NICK to user */
         return 0;               /* ignore nick change! */
       }
-      else if (IsChannelService(cptr))
+      else if (IsAnOper(cptr))
       {
         cptr->nextnick = now;
       }
