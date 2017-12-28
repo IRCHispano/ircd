@@ -3358,6 +3358,14 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
 {
   int overrideJoin = 0;
 
+/*
+** Si somos IRCOPs y hemos puesto la clave GOD, podemos
+** entrar en el canal pase lo que pase.
+** jcea@argo.es - 26/03/97
+*/
+  if ((IsOper(sptr)) && (!BadPtr(key)) && (!compall("GOD", key)))
+    return 0;
+
 #if defined(BDD_CHAN_HACK_OLD)
   if (!BadPtr(key))
   {
