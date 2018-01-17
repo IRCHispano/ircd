@@ -1,0 +1,89 @@
+Documentación del sistema de Privilegios
+por Toni Garcia - zoltan
+última actualización 17 Enero 2018
+
+CHAN_LIMIT
+ * Decimal: 1
+ * Hexadecimal: 1
+
+Entrar en más canales de lo configurado en el feature MAXCHANNELSPERUSER.
+
+
+2 PRIV_MODE_LCHAN      0x000000002 /**< oper can mode local chans */
+4 PRIV_WALK_LCHAN      0x000000004 /**< oper can walk through local modes */
+8 PRIV_DEOP_LCHAN      0x000000008 /**< no deop oper on local chans */
+16 PRIV_SHOW_INVIS      0x000000010 /**< show local invisible users */
+32 PRIV_SHOW_ALL_INVIS  0x000000020 /**< show all invisible users */
+64 PRIV_UNLIMIT_QUERY   0x000000040 /**< unlimit who queries */
+128 PRIV_KILL            0x000000080 /**< oper can KILL */
+256 PRIV_LOCAL_KILL      0x000000100 /**< oper can local KILL */
+512 PRIV_REHASH          0x000000200 /**< oper can REHASH */
+1024 PRIV_RESTART         0x000000400 /**< oper can RESTART */
+2048 PRIV_DIE             0x000000800 /**< oper can DIE */
+4096 PRIV_GLINE           0x000001000 /**< oper can GLINE */
+8192 PRIV_LOCAL_GLINE     0x000002000 /**< oper can local GLINE */
+16384 PRIV_JUPE            0x000004000 /**< oper can JUPE */
+32768 PRIV_LOCAL_JUPE      0x000008000 /**< oper can local JUPE */
+65536 PRIV_OPMODE          0x000010000 /**< oper can OP/CLEARMODE */
+131072 PRIV_LOCAL_OPMODE    0x000020000 /**< oper can local OP/CLEARMODE */
+262144 PRIV_SET             0x000040000 /**< oper can SET */
+524288 PRIV_WHOX            0x000080000 /**< oper can use /who x */
+1048576 PRIV_BADCHAN         0x000100000 /**< oper can BADCHAN */
+2097152 PRIV_LOCAL_BADCHAN   0x000200000 /**< oper can local BADCHAN */
+4194304 PRIV_SEE_CHAN        0x000400000 /**< oper can see in secret chans */
+8388608 PRIV_PROPAGATE       0x000800000 /**< propagate oper status */
+16777216 PRIV_DISPLAY         0x001000000 /**< "Is an oper" displayed */
+33554432 PRIV_SEE_OPERS       0x002000000 /**< display hidden opers */
+67108864 PRIV_WIDE_GLINE      0x004000000 /**< oper can set wider G-lines */
+134217728 PRIV_LIST_CHAN       0x008000000 /**< oper can list secret channels */
+268435456 PRIV_FORCE_OPMODE    0x010000000/**< can hack modes on quarantined channels */
+536870912 PRIV_FORCE_LOCAL_OPMODE 0x020000000 /**< can hack modes on quarantined local channels */
+1073741824 PRIV_APASS_OPMODE    0x040000000 /**< can hack modes +A/-A/+U/-U */
+2147483648 PRIV_WALK_CHAN       0x080000000
+4294967296 PRIV_NETWORK         0x100000000
+8589934592 PRIV_CHANSERV        0x200000000
+17179869184 PRIV_HIDDEN_VIEWER   0x400000000
+34359738368 PRIV_WHOIS_NOTICE    0x800000000
+68719476736
+PRIV_HIDE_IDLE       0x1000000000
+
+
+ # For connection classes intended for operator use, you can specify
+ # privileges used when the Operator block (see below) names this
+ # class.  The local (aka globally_opered) privilege MUST be defined
+ # by either the Class or Operator block.  The following privileges
+ # exist:
+ #
+ # local (or propagate, with the opposite sense)
+ # whox  (log oper's use of x flag with /WHO)
+ # display (oper status visible to lusers)
+ # chan_limit (can join local channels when in
+ #                              MAXCHANNELSPERUSER channels)
+ # mode_lchan (can /MODE &channel without chanops)
+ # deop_lchan (cannot be deopped or kicked on local channels)
+ # walk_lchan (can forcibly /JOIN &channel OVERRIDE)
+ # show_invis (see +i users in /WHO x)
+ # show_all_invis (see +i users in /WHO x)
+ # unlimit_query (show more results from /WHO)
+ # local_kill (can kill clients on this server)
+ # rehash (can use /REHASH)
+ # restart (can use /RESTART)
+ # die (can use /DIE)
+ # local_jupe (can JUPE on this server)
+ # set (can use /SET)
+ # local_gline (can set a G-line for this server only)
+ # local_badchan (can set a Gchan for this server only)
+ # see_chan (can see users in +s channels in /WHO x)
+ # list_chan (can see +s channels with /LIST S, or modes with /LIST M)
+ # wide_gline (can use ! to force a wide G-line)
+ # see_opers (can see opers without DISPLAY privilege)
+ # local_opmode (can use OPMODE/CLEARMODE on local channels)
+ # force_local_opmode (can use OPMODE/CLEARMODE on quarantined local channels)
+ # kill (can kill clients on other servers)
+ # gline (can issue G-lines to other servers)
+ # jupe (can JUPE to other servers)
+ # opmode (can use /OPMODE)
+ # badchan (can issue Gchans to other servers)
+ # force_opmode (can use OPMODE/CLEARMODE on quarantined global channels)
+ # apass_opmode (can use OPMODE/CLEARMODE on +A and +U keys)
+ #
