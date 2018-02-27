@@ -151,9 +151,7 @@ if test x"$unet_have_sockaddr_in6" = xyes; then
 fi
 
 dnl Let's find the library containing json...
-AC_SEARCH_LIBS([json_object_object_get_ex], [json-c json], , [AC_MSG_ERROR([Json not found, required. Install libjson-c-dev])])
-
-#dnl CFLAGS="$CFLAGS -I/usr/include -I/usr/include/json-c"
+AC_SEARCH_LIBS(json_object_object_get_ex, json-c json, , [AC_MSG_ERROR([Json not found, required. Install libjson-c-dev])])
 
 #dnl Do we have a system call poll?
 #unet_FUNC_POLL_SYSCALL

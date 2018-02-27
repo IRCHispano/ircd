@@ -5751,8 +5751,6 @@ else
 fi
 
 
-#dnl CFLAGS="$CFLAGS -I/usr/include -I/usr/include/json-c"
-
 #dnl Do we have a system call poll?
 #unet_FUNC_POLL_SYSCALL
 
