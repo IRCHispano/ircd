@@ -257,6 +257,8 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
     }
     else
     {
+      if (chptr && is_chan_owner(acptr, chptr))
+        *(p1++) = '.';
       if (chptr && is_chan_op(acptr, chptr))
         *(p1++) = '@';
       if (chptr && has_voice(acptr, chptr))
@@ -902,6 +904,8 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
               }
               else
               {
+                if (is_chan_owner(acptr, chptr))
+                  *(buf + len++) = '.';
                 if (is_chan_op(acptr, chptr))
                   *(buf + len++) = '@';
                 if (has_voice(acptr, chptr))
@@ -973,7 +977,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
           if (IsAdmin(acptr))
             sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
-                "IS an IRC Administrator");
+                "Is an IRC Administrator");
           else if (IsCoder(acptr))
             sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR), me.name, parv[0], name,
                 "Is an IRC Coder");

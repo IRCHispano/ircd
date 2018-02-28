@@ -332,7 +332,32 @@ static Numeric numeric_errors[] = {
 /* 513 */
     {ERR_BADPING, (char *)NULL},
 /* 514 */
-    {ERR_NOSUCHGLINE, "%s@%s :No such gline"}
+    {ERR_NOSUCHGLINE, "%s@%s :No such gline"},
+/* 515 */
+    {0, (char *)NULL},
+/* 516 */
+    {0, (char *)NULL},
+/* 517 */
+    {0, (char *)NULL},
+/* 518 */
+    {0, (char *)NULL},
+/* 519 */
+    {0, (char *)NULL},
+/* 520 */
+    {0, (char *)NULL},
+/* 521 */
+    {0, (char *)NULL},
+/* 522 */
+    {0, (char *)NULL},
+/* 523 */
+    {0, (char *)NULL},
+/* 524 */
+    {0, (char *)NULL},
+/* 525 */
+    {0, (char *)NULL},
+/* 526 */
+    {ERR_OPERONLY, "%s :Cannot join channel (+O) - "
+                      "Necesita ser IRC Operator para entrar" }
 };
 
 static Numeric numeric_replies[] = {

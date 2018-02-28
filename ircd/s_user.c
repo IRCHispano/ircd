@@ -793,7 +793,7 @@ void send_features(aClient *sptr, char *nick)
 {
   char buf[500];
 
-  sprintf(buf, "CHANMODES=b,k,l,imnpstcRMCNuWz");
+  sprintf(buf, "CHANMODES=b,k,l,imnpstcORMCNuWz");
   strcat(buf, "crRMCNuz");
   sprintf(buf, "%s CHANTYPES=#&+ KICKLEN=%d MAXBANS=%d", buf, KICKLEN, MAXBANS);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
@@ -802,7 +802,7 @@ void send_features(aClient *sptr, char *nick)
       MAXCHANNELSPERUSER, CHANNELLEN, MAXTARGETS, MAXMODEPARAMS, nicklen);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
-  sprintf(buf, "PREFIX=(ov)@+ SILENCE=%d TOPICLEN=%d WALLCHOPS WHOX",
+  sprintf(buf, "PREFIX=(qov).@+ SILENCE=%d TOPICLEN=%d WALLCHOPS WHOX",
       MAXSILES, TOPICLEN);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
@@ -4405,6 +4405,8 @@ void rename_user(aClient *sptr, char *nick_nuevo)
             if (!IsAnOper(sptr))
               nrof.opers++;
             SetOper(sptr);
+            sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);
+            set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
             set_privs(sptr);
           }
         }
@@ -4544,7 +4546,7 @@ int m_svsnick(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
   {
     sendto_serv_butone(cptr,
-        ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
+        ":%s DESYNCH :HACK(4): El nodo '%s' dice que '%s' solicita "
         "cambio de nick para '%s'", me.name, cptr->name, sptr->name, parv[1]);
     sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
         "HACK(4): El nodo '%s' dice que '%s' solicita "
@@ -4598,7 +4600,7 @@ int m_svsnick(aClient *cptr, aClient *sptr, int parc, char *parv[])
      if (c == '*')
      {
        sendto_serv_butone(cptr,
-           ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' ha intentado poner un "
+           ":%s DESYNCH :HACK(4): El nodo '%s' dice que '%s' ha intentado poner un "
            "nick forbid '%s' para el nick '%s'", me.name, cptr->name, sptr->name, parv[2], parv[1]);
        sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
            "HACK(4): El nodo '%s' dice que '%s' ha intentado poner un "
@@ -5612,6 +5614,8 @@ nickkilldone:
         {
           SetOper(sptr);
           nrof.opers++;
+          sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);
+          set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
           set_privs(sptr);
         }
 

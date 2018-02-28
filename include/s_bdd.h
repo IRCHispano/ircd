@@ -129,7 +129,6 @@ int m_db(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 
 void tea(unsigned int v[], unsigned int k[], unsigned int x[]);
 struct db_reg *db_buscar_registro(unsigned char tabla, char *clave);
-int db_es_miembro(unsigned char tabla, char *clave, char *subcadena);
 int db_es_residente(unsigned char tabla);
 unsigned int db_num_serie(unsigned char tabla);
 unsigned int db_cuantos(unsigned char tabla);

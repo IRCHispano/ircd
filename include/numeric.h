@@ -198,7 +198,7 @@
 /*      ERR_LISTSYNTAX       521          Dalnet extension */
 /*     ERR_WHOSYNTAX        522           Dalnet extension */
 /*     ERR_WHOLIMEXCEED     523           Dalnet extension */
-
+#define ERR_OPERONLY         526      /* 520 Unreal */
 /*      ERR_NOTLOWEROPLEVEL  550          Undernet extension */
 /*      ERR_NOTMANAGER       551          Undernet extension */
 /*      ERR_CHANSECURED      552          Undernet extension */

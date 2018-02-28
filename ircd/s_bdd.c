@@ -71,6 +71,9 @@
 #include "msg.h"
 #include "support.h"
 
+#include <json-c/json.h>
+#include <json-c/json_object.h>
+
 char *bot_nickserv = NULL;
 char *bot_chanserv = NULL;
 char *bot_clonesserv = NULL;
@@ -541,11 +544,31 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               chptr->mode.mode = mode & (~(MODE_REGCHAN));  /* Modos vinculados a +r */
               chptr->modos_obligatorios = chptr->modos_prohibidos = 0;
+              if (chptr->owner)
+                RunFree(chptr->owner);
+
               if (chptr->users)
               {                 /* Quedan usuarios */
+                Link *lp;
+
                 strcpy(buf, "-r");
                 sendto_channel_butserv(chptr, &me, ":%s MODE %s %s", bot_chanserv ? bot_chanserv : me.name,
                     chptr->chname, buf);
+
+                /* Eliminamos antiguo founder si existe */
+                for (lp = chptr->members; lp; lp = lp->next)
+                {
+                  if ((lp->flags & CHFL_OWNER)
+                      && MyUser(lp->value.cptr))
+                  {
+                    lp->flags &= ~CHFL_OWNER;
+                    sendto_channel_butserv(chptr, &me, ":%s MODE %s -q %s",
+                        bot_chanserv ? bot_chanserv : me.name, chptr->chname, lp->value.cptr->name);
+                    sendto_serv_butone(&me, "%s " TOK_BMODE " %s %s -q %s%s",
+                        NumServ(&me), BDD_CHANSERV, chptr->chname, NumNick(lp->value.cptr));
+                    break;
+                  }
+                }
               }
               else
               {                 /* Canal Vacio */
@@ -736,49 +759,110 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
 static inline void crea_canal_persistente(char *nombre, char *valor, int virgen)
 {
   aChannel *chptr;
+  aClient *acptr;
+  Link *lp;
   int add, del;
-  char *modos = NULL;
-  char *tmp;
+  char *name;
+  char *modes = NULL;
+  char *owner = NULL;
   int cambionombre = 0;
 
-  DupString(modos, valor);
-  tmp=strchr(modos,':'); /* Nombre con mays/mins correcto */
-
-  /* Si hay nombre especificado ... */
-  if(tmp!=NULL)
+  if (*valor == '{')
   {
-    *tmp='\0';                  /* corto token */
-    tmp++;                      /* avanzo un caracter */
-    if (strCasecmp(nombre, tmp)) /* Si no coincide el nombre vuelvo al original */
-      tmp=nombre;
+    /* Formato nuevo JSON */
+    json_object *json, *json_name, *json_modes, *json_owner;
+    enum json_tokener_error jerr = json_tokener_success;
+
+    json = json_tokener_parse_verbose(valor, &jerr);
+    if (jerr != json_tokener_success)
+      return;
+
+    json_object_object_get_ex(json, "name", &json_name);
+    name = (char *)json_object_get_string(json_name);
+    json_object_object_get_ex(json, "modes", &json_modes);
+    modes = (char *)json_object_get_string(json_modes);
+    json_object_object_get_ex(json, "owner", &json_owner);
+    owner = (char *)json_object_get_string(json_owner);
+  }
+  else
+  {
+    /* Formato antiguo modos:nombre */
+    DupString(modes, valor);
+    name=strchr(modes,':'); /* Nombre con mays/mins correcto */
+
+    /* Si hay nombre especificado ... */
+    if (name != NULL)
+    {
+      *name='\0';                  /* corto token */
+      name++;
+    }
+  }
+
+  if (name != NULL)
+  {
+    if (strCasecmp(nombre, name)) /* Si no coincide el nombre vuelvo al original */
+      name=nombre;
     else
       cambionombre = 1;
   } else
-    tmp=nombre;   /* Si no hay nombre especificado vuelvo al original */
+    name=nombre;   /* Si no hay nombre especificado vuelvo al original */
 
-  chptr = get_channel(NULL, tmp, CREATE);
-  mascara_canal_flags(modos, &add, &del);
+  chptr = get_channel(NULL, name, CREATE);
+  mascara_canal_flags(modes, &add, &del);
   chptr->modos_obligatorios = add | MODE_REGCHAN;
   chptr->modos_prohibidos = del & ~MODE_REGCHAN;
+
+  if (chptr->owner)
+    RunFree(chptr->owner);
+  if (owner)
+     DupString(chptr->owner, owner);
 
   if (chptr->users)
   {                             /* Hay usuarios dentro */
     /* ajustamos el nombre equivalente */
-    if (cambionombre && strcmp(nombre, tmp)) {
+    if (cambionombre && strcmp(nombre, name)) {
         hRemChannel(chptr);
-        strcpy(chptr->chname, tmp);
+        strcpy(chptr->chname, name);
         hAddChannel(chptr);
     }
-/*
-    char *buf;
 
-    buf=adapta_y_visualiza_canal_flags(chptr,add,del);
-    sendto_channel_butserv(chptr, &me, ":%s MODE %s %s", me.name, chptr->chname,buf);
-*/
     if (!(chptr->mode.mode & MODE_REGCHAN))
     {
       sendto_channel_butserv(chptr, &me, ":%s MODE %s +r", bot_chanserv ? bot_chanserv : me.name,
           chptr->chname);
+    }
+
+    /* Eliminamos antiguo founder si existe */
+    for (lp = chptr->members; lp; lp = lp->next)
+    {
+      if ((lp->flags & CHFL_OWNER)
+          && MyUser(lp->value.cptr))
+      {
+        lp->flags &= ~CHFL_OWNER;
+        sendto_channel_butserv(chptr, &me, ":%s MODE %s -q %s",
+            bot_chanserv ? bot_chanserv : me.name, chptr->chname, lp->value.cptr->name);
+        sendto_serv_butone(&me, "%s " TOK_BMODE " %s %s -q %s%s",
+            NumServ(&me), BDD_CHANSERV, chptr->chname, NumNick(lp->value.cptr));
+        break;
+      }
+    }
+
+    /* Ponemos founder nuevo si es usuario local */
+    if (owner)
+    {
+      acptr = FindUser(owner);
+      if (acptr && MyUser(acptr))
+      {
+        lp = IsMember(acptr, chptr);
+        if (lp)
+        {
+          lp->flags |= CHFL_OWNER;
+          sendto_channel_butserv(chptr, &me, ":%s MODE %s +q %s",
+              bot_chanserv ? bot_chanserv : me.name, chptr->chname, lp->value.cptr->name);
+          sendto_serv_butone(&me, "%s " TOK_BMODE " %s %s +q %s%s",
+              NumServ(&me), BDD_CHANSERV, chptr->chname, NumNick(lp->value.cptr));
+        }
+      }
     }
   }
   if (virgen)
@@ -788,7 +872,9 @@ static inline void crea_canal_persistente(char *nombre, char *valor, int virgen)
     chptr->mode.mode &= ~MODE_WPARAS; /* Estos modos son especiales y no se guardan aqui */
   }
   chptr->mode.mode |= MODE_REGCHAN;
-  RunFree(modos);
+
+  if (*valor != '{')
+    RunFree(modes);
 }
 
 /*
@@ -907,6 +993,8 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
           if (!IsAnOper(sptr))
             nrof.opers++;
           SetOper(sptr);
+          sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);
+          set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
           set_privs(sptr);
         }
 
@@ -1125,48 +1213,6 @@ struct db_reg *db_buscar_registro(unsigned char tabla, char *clave)
     db_buf_cache_i = 0;
 
   return reg;
-}
-
-/*
- * db_es_miembro (tabla, clave, subcadena)
- *
- * valor registro es una lista separada por comas, y si subcadena es
- # una de ellas, retorna la posicion, sino 0
- *                                      1999/07/03 savage@apostols.org
- */
-int db_es_miembro(unsigned char tabla, char *clave, char *subcadena)
-{
-  int j, i = 0;
-  static char *buf = NULL;
-  static int buf_len = 0;
-  char *f, *s = NULL;
-  struct db_reg *reg;
-
-  if ((reg = db_buscar_registro(tabla, clave)) == NULL)
-    return 0;
-
-  if ((strlen(reg->valor) + 1 > buf_len) || (!buf))
-  {
-    buf_len = strlen(reg->valor) + 1;
-    if (buf)
-      RunFree(buf);
-    buf = RunMalloc(buf_len);
-    if (!buf)
-      return 0;
-  }
-
-  strcpy(buf, reg->valor);
-  for (f = strtoken(&s, buf, ","); f != NULL; f = strtoken(&s, NULL, ","))
-  {
-    j++;
-    if (!strCasediff(f, subcadena))
-    {
-      i++;
-      break;
-    }
-  }
-
-  return i;
 }
 
 /*

@@ -66,9 +66,11 @@
 #define CHFL_BANNED		0x1000    /* Channel member is banned */
 #define CHFL_SILENCE_IPMASK	0x2000  /* silence mask is an IP-number mask */
 #define CHFL_DELAYED		0x4000  /* User's join message is delayed */
+#define CHFL_OWNER              0x8000
 
 /* Channel Visibility macros */
 
+#define MODE_OWNER      CHFL_OWNER
 #define MODE_CHANOP	CHFL_CHANOP
 #define MODE_VOICE	CHFL_VOICE
 #define MODE_PRIVATE	0x0004
@@ -97,12 +99,14 @@
 #define MODE_NOCOLOUR    0x800000
 #define MODE_SSLONLY     0x1000000
 #define MODE_MSGNONWEB   0x2000000
+#define MODE_OPERONLY    0x4000000
 
 #define RegisteredChannel(x)    ((x) && ((x)->mode.mode & MODE_REGCHAN))
 #define RestrictedChannel(x)    ((x) && ((x)->mode.mode & MODE_REGNICKS))
 #define MsgOnlyRegChannel(x)   ((x) && ((x)->mode.mode & MODE_MSGNONREG))
 #define SSLOnlyChannel(x)      ((x) && ((x)->mode.mode & MODE_SSLONLY))
 #define MsgOnlyRegAndWebChannel(x) ((x) && ((x)->mode.mode & MODE_MSGNONWEB))
+#define OperOnlyChannel(x)      ((x) && ((x)->mode.mode & MODE_OPERONLY))
 
 extern int m_botmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_opmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
@@ -170,6 +174,7 @@ struct Channel {
   struct Channel *nextch, *prevch, *hnextch;
   Mode mode;
   int modos_obligatorios, modos_prohibidos;
+  char *owner;
   time_t creationtime;
 /*
 ** 'topic_nick' se almacena JUSTO A CONTINUACION
@@ -205,6 +210,7 @@ struct ListingArgs {
 extern int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern Link *IsMember(aClient *cptr, aChannel *chptr);
 extern void remove_user_from_channel(aClient *sptr, aChannel *chptr);
+extern int is_chan_owner(aClient *cptr, aChannel *chptr);
 extern int is_chan_op(aClient *cptr, aChannel *chptr);
 extern int is_zombie(aClient *cptr, aChannel *chptr);
 extern int has_voice(aClient *cptr, aChannel *chptr);

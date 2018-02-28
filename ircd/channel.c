@@ -526,6 +526,18 @@ void remove_user_from_channel(aClient *sptr, aChannel *chptr)
   sub1_from_channel(chptr);
 }
 
+int is_chan_owner(aClient *cptr, aChannel *chptr)
+{
+  Reg1 Link *lp;
+
+  if (chptr)
+    if ((lp = find_user_link(chptr->members, cptr)) &&
+        !(lp->flags & CHFL_ZOMBIE))
+      return (lp->flags & CHFL_OWNER);
+
+  return 0;
+}
+
 int is_chan_op(aClient *cptr, aChannel *chptr)
 {
   Reg1 Link *lp;
@@ -637,6 +649,8 @@ void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
     *mbuf++ = 'R';
   if (MsgOnlyRegChannel(chptr))
     *mbuf++ = 'M';
+  if (OperOnlyChannel(chptr))
+    *mbuf++ = 'O';
   if (chptr->mode.mode & MODE_NOCTCP)
     *mbuf++ = 'C';
   if (chptr->mode.mode & MODE_NOCOLOUR)
@@ -767,8 +781,15 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
   else
 #endif
   {
-    static unsigned int current_flags[4] =
-        { 0, CHFL_CHANOP | CHFL_VOICE, CHFL_VOICE, CHFL_CHANOP };
+    static unsigned int current_flags[8] =
+        { 0,
+          CHFL_CHANOP | CHFL_VOICE,
+          CHFL_VOICE,
+          CHFL_CHANOP,
+          CHFL_OWNER,
+          CHFL_OWNER | CHFL_CHANOP | CHFL_VOICE,
+          CHFL_OWNER | CHFL_VOICE,
+          CHFL_OWNER | CHFL_CHANOP };
     int first = 1, full = 1, flag_cnt = 0, new_mode = 0;
     size_t len, sblen;
     Link *lp1 = chptr->members;
@@ -801,7 +822,7 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
       /* Attach nicks, comma seperated " nick[:modes],nick[:modes],..." */
       /* Run 4 times over all members, to group the members with the
        * same mode together */
-      for (first = 1; flag_cnt < 4;
+      for (first = 1; flag_cnt < 8;
           lp1 = chptr->members, new_mode = 1, flag_cnt++)
       {
         for (; lp1; lp1 = lp1->next)
@@ -829,9 +850,11 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
           if (new_mode)         /* Do we have a nick with a new mode ? */
           {
             new_mode = 0;
-            if (lp1->flags & (CHFL_CHANOP | CHFL_VOICE))
+            if (lp1->flags & (CHFL_OWNER | CHFL_CHANOP | CHFL_VOICE))
             {
               sendbuf[sblen++] = ':';
+              if (lp1->flags & CHFL_OWNER)
+                sendbuf[sblen++] = 'q';
               if (lp1->flags & CHFL_CHANOP)
                 sendbuf[sblen++] = 'o';
               if (lp1->flags & CHFL_VOICE)
@@ -883,7 +906,7 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
 #if !defined(NO_PROTOCOL9)
     if (Protocol(cptr) < 10)
       sendto_one(cptr, ":%s TOPIC %s :%s", me.name, chptr->chname, chptr->topic);
-    else 
+    else
 #endif
       sendto_one(cptr, "%s " TOK_TOPIC " %s " TIME_T_FMT " " TIME_T_FMT " :%s",
                        NumServ(&me), chptr->chname, chptr->creationtime, chptr->topic_time, chptr->topic);
@@ -1057,7 +1080,7 @@ int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
   {
     sendto_serv_butone(cptr,
-        ":%s DESYNC :HACK(2): El nodo '%s' dice que '%s' solicita "
+        ":%s DESYNCH :HACK(2): El nodo '%s' dice que '%s' solicita "
         "cambio de modos '%s' para el nick '%s'", me.name, cptr->name,
         sptr->name, parv[2], parv[1]);
     sendto_op_mask(SNO_HACK2 | SNO_SERVICE,
@@ -1325,10 +1348,11 @@ static int canal_flags[] = {
   MODE_VOICE, 'v', MODE_KEY, 'k',
   MODE_LIMIT, 'l',              /* Rarezas del IRCD original. Necesitamos ponerlo para los canales persistentes */
   MODE_REGCHAN, 'r', MODE_REGNICKS, 'R',
-  MODE_MSGNONREG, 'M', MODE_NOCTCP, 'C',
-  MODE_NONOTICE, 'N', MODE_NOQUITPARTS, 'u',
-  MODE_DELJOINS, 'D', MODE_NOCOLOUR, 'c',
-  MODE_MSGNONWEB, 'W', MODE_SSLONLY, 'z',
+  MODE_OPERONLY, 'O', MODE_MSGNONREG, 'M',
+  MODE_NOCTCP, 'C', MODE_NONOTICE, 'N',
+  MODE_NOQUITPARTS, 'u', MODE_DELJOINS, 'D',
+  MODE_NOCOLOUR, 'c', MODE_MSGNONWEB, 'W',
+  MODE_SSLONLY, 'z',
   0x0, 0x0
 };
 
@@ -1733,6 +1757,11 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
       case 'r':
         break;
 
+        /* el modo +O solo pueden los opers */
+      case 'O':
+        if (!IsAnOper(cptr))
+          break;
+
       def:
       default:
         for (ip = canal_flags; *ip; ip += 2)
@@ -1937,6 +1966,10 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
        */
       switch (lp->flags & MODE_WPARAS)
       {
+        case MODE_OWNER:
+          c = 'q';
+          cp = lp->value.cptr->name;
+          break;
         case MODE_CHANOP:
           c = 'o';
           cp = lp->value.cptr->name;
@@ -2425,6 +2458,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
       case '-':
         whatt = MODE_DEL;
         break;
+      case 'q':
       case 'o':
       case 'v':
         if (--parc <= 0)
@@ -2831,6 +2865,10 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
        */
       switch (lp->flags & MODE_WPARAS)
       {
+        case MODE_OWNER:
+          c = 'q';
+          cp = lp->value.cptr->name;
+          break;
         case MODE_CHANOP:
           c = 'o';
           cp = lp->value.cptr->name;
@@ -3358,37 +3396,14 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
 {
   int overrideJoin = 0;
 
-/*
-** Si somos IRCOPs y hemos puesto la clave GOD, podemos
-** entrar en el canal pase lo que pase.
-** jcea@argo.es - 26/03/97
-*/
-  if ((IsOper(sptr)) && (!BadPtr(key)) && (!compall("GOD", key)))
-    return 0;
-
-#if defined(BDD_CHAN_HACK_OLD)
-  if (!BadPtr(key))
-  {
-    struct db_reg *reg;
-
-    reg = db_buscar_registro(BDD_CHANDB_OLD, (char *)chptr->chname);
-
-/*
- * El hack de la base de datos de canales permite que el fundador de
- * un canal dispongan de una facilidad parecida a JOIN_GOD_ESNET,
- * pero la clave es FUNDADOR
- *                                    1999/06/30 savage@apostols.org
- */
-    if ((!BadPtr(key)) && IsNickRegistered(sptr)
-        && db_es_miembro(BDD_CHANDB_OLD, chptr->chname, sptr->name) == 1
-        && (!compall("FUNDADOR", key)))
+  if ((!BadPtr(key)) && RegisteredChannel(chptr)
+       && IsNickRegistered(sptr) && chptr->owner
+       && !strcmp(chptr->owner, sptr->name)
+       && (!compall("OWNER", key)))
       return 0;
-  }
 
-#endif /* (BDD_CHAN_HACK) */
-
-  if (RestrictedChannel(chptr) && !IsNickRegistered(sptr))
-    return ERR_NEEDREGGEDNICK;
+  if (OperOnlyChannel(chptr) && !IsAnOper(sptr))
+    return ERR_OPERONLY;
 
   /* An oper can force a join on a channel using "OVERRIDE" as the key.
      a HACK(4) notice will be sent if he would not have been supposed
@@ -3435,7 +3450,7 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
       return overrideJoin + (ERR_NOSSL);
 
   /* now using compall (above) to test against a whole key ring -Kev */
-  if (chptr->mode.key && (BadPtr(key) || compall(chptr->mode.key, key)))
+ if (chptr->mode.key && (BadPtr(key) || compall(chptr->mode.key, key)))
     return overrideJoin + (ERR_BADCHANNELKEY);
 
   return 0;
@@ -3722,6 +3737,11 @@ void sub1_from_channel(aChannel *chptr)
     RunFree(chptr->mode.key);
   }
 
+  if (chptr->owner)
+  {
+    RunFree(chptr->owner);
+  }
+
   if (chptr->topic)
   {
     RunFree(chptr->topic);
@@ -3927,9 +3947,6 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
       }
       chptr = get_channel(sptr, name, CREATE);
-      if (chptr && db_buscar_registro(BDD_CHANDB_OLD, name))
-        chptr->mode.mode |= MODE_REGCHAN;
-      /* Aki debo implantar los modos por defecto sacados de la DBH */
       if (chptr && (lp = find_user_link(chptr->members, sptr)))
       {
         if (lp->flags & CHFL_ZOMBIE)
@@ -3975,6 +3992,9 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
           {
             switch (i - MAGIC_OPER_OVERRIDE)
             {
+              case ERR_NEEDREGGEDNICK:
+                i = 'R';
+                break;
               case ERR_CHANNELISFULL:
                 i = 'l';
                 break;
@@ -3991,8 +4011,11 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 i = 'z';
                 break;
             }
+            sendto_serv_butone(cptr, ":%s DESYNCH :OPER JOIN: %s JOIN %s (overriding +%c)",
+                me.name, sptr->name, chptr->chname, i);
             sendto_op_mask(SNO_HACK4, "OPER JOIN: %s JOIN %s (overriding +%c)",
                 sptr->name, chptr->chname, i);
+
           }
           else
           {
@@ -4000,6 +4023,11 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
             continue;
           }
         }
+
+        /* Si es Owner, se le ajusta +q */
+        if (RegisteredChannel(chptr) && IsNickRegistered(sptr)
+            && chptr->owner && !strcmp(chptr->owner, sptr->name))
+          flags = CHFL_OWNER;
       }
       /*
        * Complete user entry to the new channel (if any)
@@ -4135,7 +4163,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
   {
     sendto_serv_butone(cptr,
-        ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
+        ":%s DESYNCH :HACK(4): El nodo '%s' dice que '%s' solicita "
         "entrada de canal '%s' para el nick '%s'", me.name, cptr->name,
         sptr->name, parv[2], parv[1]);
     sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
@@ -4223,6 +4251,11 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
       chptr->creationtime = MAGIC_REMOTE_JOIN_TS;
     if (!zombie)
       flags |= CHFL_SERVOPOK;
+
+    /* Si es Owner, se le ajusta +q */
+    if (RegisteredChannel(chptr) && IsNickRegistered(sptr)
+        && chptr->owner && !strcmp(chptr->owner, sptr->name))
+      flags = CHFL_OWNER;
   
     /*
      * Complete user entry to the new channel (if any)
@@ -4825,6 +4858,20 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
                 modebuf[mblen2++] = 'm';
               break;
             }
+            case 'O':
+            {
+              int tmp;
+              prev_mode &= ~MODE_OPERONLY;
+              if (!(tmp = netride ||
+                  (current_mode->mode & MODE_OPERONLY)) || wipeout)
+              {
+                bmodebuf[mblen++] = 'O';
+                current_mode->mode |= MODE_OPERONLY;
+              }
+              if (!tmp)
+                modebuf[mblen2++] = 'O';
+              break;
+            }
             case 'R':
             {
               int tmp;
@@ -5296,6 +5343,8 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
       current_mode->key = NULL;
       cancel_mode(sptr, chptr, 'k', prev_key, &count);
     }
+    if ((prev_mode & MODE_OPERONLY))
+      cancel_mode(sptr, chptr, 'O', NULL, &count);
     if ((prev_mode & MODE_REGNICKS))
       cancel_mode(sptr, chptr, 'R', NULL, &count);
     if ((prev_mode & MODE_MSGNONREG))
@@ -5583,7 +5632,7 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
   {
     sendto_serv_butone(cptr,
-        ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
+        ":%s DESYNCH :HACK(4): El nodo '%s' dice que '%s' solicita "
         "salida de canal '%s' para el nick '%s'", me.name, cptr->name,
         sptr->name, parv[2], parv[1]);
     sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
@@ -5748,6 +5797,17 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
           me.name, parv[0], who->name, chptr->chname);
       return 0;
     }
+
+#if 0 /* ZOLTAN */
+    /* if the user is owner, prevent a kick from local user */
+    if (IsChannelService(who) && MyUser(sptr) && (sptr != who))
+    {
+      sendto_one(sptr,
+          IsService(who->user->server) ? err_str(ERR_ISREALSERVICE) : err_str(ERR_ISCHANSERVICE),
+          me.name, parv[0], who->name, chptr->chname);
+      return 0;
+    }
+#endif
 
     if (who->from != cptr &&
         !IsServicesBot(sptr) &&
@@ -5941,7 +6001,7 @@ int m_svskick(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!buscar_uline(cptr->confs, sptr->name) || (sptr->from != cptr))
   {
     sendto_serv_butone(cptr,
-        ":%s DESYNC :HACK(4): El nodo '%s' dice que '%s' solicita "
+        ":%s DESYNCH :HACK(4): El nodo '%s' dice que '%s' solicita "
         "kick en el canal '%s' para el nick '%s'", me.name, cptr->name,
         sptr->name, parv[2], parv[1]);
     sendto_op_mask(SNO_HACK4 | SNO_SERVKILL | SNO_SERVICE,
@@ -6801,6 +6861,11 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
       }
       else
       {
+        if (lp->flags & CHFL_OWNER)
+        {
+          strcat(buf, ".");
+          idx++;
+        }
 /*
 ** Debemos enviar @+, no +@, por bug de clientes
 */
