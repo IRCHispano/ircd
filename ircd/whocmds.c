@@ -198,7 +198,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
     Reg3 char *p2 = NULL;
 
 #if defined(BDD_VIP)
-    if (IsHidden(acptr) && (!can_viewhost(sptr, acptr)) && (acptr != sptr))
+    if (IsHidden(acptr) && (!can_viewhost(sptr, acptr, 1)) && (acptr != sptr))
     {
       static char buf[8];
 
@@ -216,7 +216,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
   if (!fields || (fields & WHO_FIELD_HOS))
   {
 #if defined(BDD_VIP)
-    Reg3 char *p2 = get_visiblehost(acptr, extra ? sptr : NULL);
+    Reg3 char *p2 = get_visiblehost(acptr, extra ? sptr : NULL, 1);
 #else
     Reg3 char *p2 = acptr->user->host;
 #endif
@@ -616,12 +616,12 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
               minlen)) && ((!(matchsel & WHO_FIELD_SER))
               || (!(acptr->user->server->flags & FLAGS_MAP)))
               && ((!(matchsel & WHO_FIELD_HOS))
-              || (matchexec(get_visiblehost(acptr, sptr), mymask, minlen)
-              && matchexec(get_visiblehost(acptr, NULL), mymask, minlen)))
+              || (matchexec(get_visiblehost(acptr, sptr, 0), mymask, minlen)
+              && matchexec(get_visiblehost(acptr, NULL, 0), mymask, minlen)))
               && ((!(matchsel & WHO_FIELD_REN))
               || matchexec(PunteroACadena(acptr->info), mymask, minlen))
               && ((!(matchsel & WHO_FIELD_NIP)) || (IsHidden(acptr)
-              && !can_viewhost(sptr, acptr))
+              && !can_viewhost(sptr, acptr, 0))
               || !ipmask_check(&acptr->ip, &imask, ibits)))
             continue;
 #else
@@ -668,12 +668,12 @@ int m_who(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
             && ((!(matchsel & WHO_FIELD_SER))
             || (!(acptr->user->server->flags & FLAGS_MAP)))
             && ((!(matchsel & WHO_FIELD_HOS))
-            || (matchexec(get_visiblehost(acptr, sptr), mymask, minlen)
-            && matchexec(get_visiblehost(acptr, NULL), mymask, minlen)))
+            || (matchexec(get_visiblehost(acptr, sptr, 0), mymask, minlen)
+            && matchexec(get_visiblehost(acptr, NULL, 0), mymask, minlen)))
             && ((!(matchsel & WHO_FIELD_REN))
             || matchexec(PunteroACadena(acptr->info), mymask, minlen))
             && ((!(matchsel & WHO_FIELD_NIP))
-            || (IsHidden(acptr) && !can_viewhost(sptr, acptr))
+            || (IsHidden(acptr) && !can_viewhost(sptr, acptr, 0))
             || !ipmask_check(&acptr->ip, &imask, ibits)))
           continue;
 #else
@@ -853,7 +853,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
           } else
             sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
                 parv[0], name, PunteroACadena(user->username),
-                get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
+                get_visiblehost(acptr, NULL, 0), PunteroACadena(acptr->info));
 #else
           sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
               parv[0], name, PunteroACadena(user->username), user->host,
@@ -991,7 +991,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
           if (IsDocking(acptr))
             sendto_one(sptr, rpl_str(RPL_DOCKING), me.name, parv[0], name);
 
-          if (IsHidden(acptr) && (can_viewhost(sptr, acptr) || acptr == sptr))
+          if (IsHidden(acptr) && (can_viewhost(sptr, acptr, 1) || acptr == sptr))
             sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY),  me.name, parv[0],
                 name, user->username, user->host, ircd_ntoa_c(acptr));
 
@@ -1051,7 +1051,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
         } else
           sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
               parv[0], name, PunteroACadena(user->username),
-              get_visiblehost(acptr, NULL), PunteroACadena(acptr->info));
+              get_visiblehost(acptr, NULL, 0), PunteroACadena(acptr->info));
 #else
         sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
             parv[0], name, PunteroACadena(user->username), user->host,

@@ -1956,7 +1956,7 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else
     {
 #if defined(BDD_VIP)
-      inpath = get_visiblehost(cptr, NULL);
+      inpath = get_visiblehost(cptr, NULL, 0);
 #else
       inpath = PunteroACadena(cptr->user->host);
 #endif
@@ -2464,7 +2464,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_ops("%s (%s@%s) is now operator (%c)", parv[0],
         PunteroACadena(sptr->user->username),
 #if defined(BDD_VIP)
-        get_visiblehost(sptr, NULL),
+        get_visiblehost(sptr, NULL, 0),
 #else
         PunteroACadena(sptr->sockhost),
 #endif
@@ -2664,7 +2664,7 @@ int m_userhost(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
           IsAnOper(acptr) ? "*" : "", (acptr->user->away) ? '-' : '+',
           PunteroACadena(acptr->user->username),
 #if defined(BDD_VIP)
-          get_visiblehost(acptr, sptr));
+          get_visiblehost(acptr, sptr, 1));
 #else
           PunteroACadena(acptr->user->host));
 #endif
@@ -2710,7 +2710,7 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
       sbuf = sprintf_irc(sbuf, "%s%s=%c%s@%s", acptr->name,
           IsAnOper(acptr) ? "*" : "", (acptr->user->away) ? '-' : '+',
           PunteroACadena(acptr->user->username), (sptr == acptr
-          || can_viewhost(sptr, acptr)
+          || can_viewhost(sptr, acptr, 1)
           || !IsHidden(acptr)) ? ircd_ntoa_c(acptr) : "::ffff:0.0.0.0");
     }
     else
@@ -3816,7 +3816,7 @@ int get_status(aClient *sptr)
  * Da o no autorizacion para ver hosts segun los privilegios.
  *
  */
-int can_viewhost(aClient *sptr, aClient *acptr)
+int can_viewhost(aClient *sptr, aClient *acptr, int audit)
 {
   if (!acptr)
     return 0;
@@ -3827,7 +3827,7 @@ int can_viewhost(aClient *sptr, aClient *acptr)
   /* Los Admins y Coders a todos */
   if (IsAdmin(sptr) || IsCoder(sptr))
   {
-    if (sptr != acptr)
+    if (audit && (sptr != acptr))
       sendto_debug_channel("[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
     return 1;
   }
@@ -3835,7 +3835,7 @@ int can_viewhost(aClient *sptr, aClient *acptr)
   /* El resto solo hacia usuarios */
   if (!IsAnOper(acptr) && !IsAdmin(acptr) && !IsCoder(acptr))
   {
-    if (sptr != acptr)
+    if (audit && (sptr != acptr))
       sendto_debug_channel("[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
     return 1;
   }
@@ -3875,12 +3875,12 @@ char *get_virtualhost(aClient *sptr, int perso)
  * Si acptr es NULL, se considera un usuario "anonimo".
  *
  */
-char *get_visiblehost(aClient *sptr, aClient *acptr)
+char *get_visiblehost(aClient *sptr, aClient *acptr, int audit)
 {
   if (!IsUser(sptr) || (acptr && !IsUser(acptr)))
     return "*";                 /* Si el usuario no está registrado se manda un * como host visible */
 
-  if (!IsHidden(sptr) || (acptr && can_viewhost(acptr, sptr)) || sptr == acptr)
+  if (!IsHidden(sptr) || (acptr && can_viewhost(acptr, sptr, audit)) || sptr == acptr)
     return PunteroACadena(sptr->user->host);
   else
   {

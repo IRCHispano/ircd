@@ -2358,7 +2358,7 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
 #if defined(BDD_VIP)
     /* We rely on IsRegistered(sptr) being true for MODE */
     psblen = sprintf_irc(sendbuf, ":%s!%s@%s MODE %s -b", sptr->name,
-        PunteroACadena(sptr->user->username), get_visiblehost(sptr, NULL),
+        PunteroACadena(sptr->user->username), get_visiblehost(sptr, NULL, 0),
         chptr->chname) - sendbuf;
 #else
     /* We rely on IsRegistered(sptr) being true for MODE */
@@ -3285,7 +3285,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
 #if defined(BDD_VIP)
       /* We rely on IsRegistered(sptr) being true for MODE */
       psblen = sprintf_irc(sendbuf, ":%s!%s@%s MODE %s -b", sptr->name,
-          PunteroACadena(sptr->user->username), get_visiblehost(sptr, NULL),
+          PunteroACadena(sptr->user->username), get_visiblehost(sptr, NULL, 0),
           chptr->chname) - sendbuf;
 #else
       /* We rely on IsRegistered(sptr) being true for MODE */

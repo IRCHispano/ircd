@@ -116,7 +116,7 @@ void chequea_estado_watch(aClient *sptr, int raw)
     sendto_one(lp->value.cptr, watch_str(raw), me.name, lp->value.cptr->name,
         sptr->name, username,
 #if defined(BDD_VIP)
-        get_visiblehost(sptr, lp->value.cptr),
+        get_visiblehost(sptr, lp->value.cptr, 1),
 #else
         sptr->user->host,
 #endif
@@ -138,7 +138,7 @@ static void muestra_estado_watch(aClient *sptr, char *nick, int raw1, int raw2)
     sendto_one(sptr, watch_str(raw1), me.name, sptr->name,
         acptr->name, PunteroACadena(acptr->user->username),
 #if defined(BDD_VIP)
-        get_visiblehost(acptr, sptr),
+        get_visiblehost(acptr, sptr, 1),
 #else
         acptr->user->host,
 #endif
@@ -529,7 +529,7 @@ int m_watch(aClient *cptr, aClient *sptr, int parc, char *parv[])
           sendto_one(sptr, watch_str(RPL_NOWON), me.name, parv[0],
               acptr->name, PunteroACadena(acptr->user->username),
 #if defined(BDD_VIP)
-              get_visiblehost(acptr, cptr),
+              get_visiblehost(acptr, cptr, 1),
 #else
               acptr->user->host,
 #endif

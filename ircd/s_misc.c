@@ -240,7 +240,7 @@ char *get_visible_name(aClient *sptr, aClient *acptr)
 {
   static char nbuf[HOSTLEN * 2 + USERLEN + 5];
   sprintf_irc(nbuf, "%s[%s]", PunteroACadena(acptr->name),
-      get_visiblehost(acptr, sptr));
+      get_visiblehost(acptr, sptr, 1));
   return nbuf;
 }
 #endif

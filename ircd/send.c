@@ -414,7 +414,7 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
       {
         strcat(sender, "@");
 #if defined(BDD_VIP)
-        strcat(sender, get_visiblehost(from, NULL));
+        strcat(sender, get_visiblehost(from, NULL, 0));
 #else
         strcat(sender, user->host);
 #endif
@@ -429,7 +429,7 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
     {
       strcat(sender, "@");
 #if defined(BDD_VIP)
-      strcat(sender, get_visiblehost(from, NULL));
+      strcat(sender, get_visiblehost(from, NULL, 0));
 #else
       if (IsUnixSocket(from))
         strcat(sender, user->host);
