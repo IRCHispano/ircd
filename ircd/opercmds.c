@@ -2321,11 +2321,6 @@ static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
     char buf[MAXLEN * 2];
     char comtemp[MAXLEN * 2];
 
-    if (!HasPriv(sptr, PRIV_GLINE))
-    {
-      sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
-      return 0;
-    }
     /* Not enough args and a user; list glines */
     for (agline = gline; agline; agline = agline->next)
     {
