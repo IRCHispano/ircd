@@ -1001,7 +1001,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
          if (IsSSL(acptr))
           sendto_one(sptr, rpl_str(RPL_WHOISSSL), me.name, parv[0], name);
 
-         if (MyConnect(acptr) && (!IsNoIdle(acptr) && !IsAnOper(sptr)) && (!ocultar_servidores ||
+         if (MyConnect(acptr) && !IsNoIdle(acptr) && (!ocultar_servidores ||
                   (sptr == acptr || IsAnOper(sptr) || parc >= 3)))
             sendto_one(sptr, rpl_str(RPL_WHOISIDLE), me.name,
                 parv[0], name, now - user->last, acptr->firsttime);
