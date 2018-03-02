@@ -154,6 +154,7 @@
 #define ERR_NONONREG         486  /* Dalnet extension */
 /*      ERR_HTMDISABLED      486          Unreal */
 /*      ERR_CHANTOORECENT    487           IRCnet extension */
+#define ERR_ISOWNERCHAN      487  /* Hispano extension */
 /*      ERR_TSLESSCHAN       488           IRCnet extension */
 #define ERR_NOSSL            488
 #define ERR_VOICENEEDED	     489  /* Undernet extension */

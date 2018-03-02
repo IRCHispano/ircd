@@ -562,7 +562,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                       && MyUser(lp->value.cptr))
                   {
                     lp->flags &= ~CHFL_OWNER;
-                    sendto_channel_butserv(chptr, &me, ":%s MODE %s -q %s",
+                    sendto_channel_butserv(chptr, NULL, ":%s MODE %s -q %s",
                         bot_chanserv ? bot_chanserv : me.name, chptr->chname, lp->value.cptr->name);
                     sendto_serv_butone(&me, "%s " TOK_BMODE " %s %s -q %s%s",
                         NumServ(&me), BDD_CHANSERV, chptr->chname, NumNick(lp->value.cptr));
@@ -839,7 +839,7 @@ static inline void crea_canal_persistente(char *nombre, char *valor, int virgen)
           && MyUser(lp->value.cptr))
       {
         lp->flags &= ~CHFL_OWNER;
-        sendto_channel_butserv(chptr, &me, ":%s MODE %s -q %s",
+        sendto_channel_butserv(chptr, NULL, ":%s MODE %s -q %s",
             bot_chanserv ? bot_chanserv : me.name, chptr->chname, lp->value.cptr->name);
         sendto_serv_butone(&me, "%s " TOK_BMODE " %s %s -q %s%s",
             NumServ(&me), BDD_CHANSERV, chptr->chname, NumNick(lp->value.cptr));
@@ -857,7 +857,7 @@ static inline void crea_canal_persistente(char *nombre, char *valor, int virgen)
         if (lp)
         {
           lp->flags |= CHFL_OWNER;
-          sendto_channel_butserv(chptr, &me, ":%s MODE %s +q %s",
+          sendto_channel_butserv(chptr, NULL, ":%s MODE %s +q %s",
               bot_chanserv ? bot_chanserv : me.name, chptr->chname, lp->value.cptr->name);
           sendto_serv_butone(&me, "%s " TOK_BMODE " %s %s +q %s%s",
               NumServ(&me), BDD_CHANSERV, chptr->chname, NumNick(lp->value.cptr));

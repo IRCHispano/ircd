@@ -4028,6 +4028,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         if (RegisteredChannel(chptr) && IsNickRegistered(sptr)
             && chptr->owner && !strcmp(chptr->owner, sptr->name))
           flags = CHFL_OWNER;
+
       }
       /*
        * Complete user entry to the new channel (if any)
@@ -4040,6 +4041,10 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
       if (MyUser(sptr))
       {
+        if (flags == CHFL_OWNER)
+          sendto_channel_butserv(chptr, NULL, ":%s MODE %s +q %s",
+              bot_chanserv ? bot_chanserv : me.name, chptr->chname, sptr->name);
+
         del_invite(sptr, chptr);
         if (chptr->topic)
         {
@@ -4072,7 +4077,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
       *buflen += len;
     }
     sendcreate = 0;             /* Reset sendcreate */
-  }
+   }
 
 #if !defined(NO_PROTOCOL9)
   if (*jbuf || *mbuf)           /* Propagate joins to P09 servers */
@@ -4097,6 +4102,10 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_highprot_butone(cptr, 10, "%s%s " TOK_CREATE " %s " TIME_T_FMT,
         NumNick(sptr), mbuf, TStime());
 #endif
+
+  if (flags == CHFL_OWNER)
+    sendto_serv_butone(cptr, "%s " TOK_BMODE " %s %s +q %s%s",
+        NumServ(&me), BDD_CHANSERV, chptr->chname, NumNick(sptr));
 
   if (MyUser(sptr))
   {                             /* shouldn't ever set TS for remote JOIN's */
@@ -5798,16 +5807,13 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
       return 0;
     }
 
-#if 0 /* ZOLTAN */
     /* if the user is owner, prevent a kick from local user */
-    if (IsChannelService(who) && MyUser(sptr) && (sptr != who))
+    if (lp->flags & CHFL_OWNER && MyUser(sptr) && (sptr != who))
     {
-      sendto_one(sptr,
-          IsService(who->user->server) ? err_str(ERR_ISREALSERVICE) : err_str(ERR_ISCHANSERVICE),
+      sendto_one(sptr, err_str(ERR_ISOWNERCHAN),
           me.name, parv[0], who->name, chptr->chname);
       return 0;
     }
-#endif
 
     if (who->from != cptr &&
         !IsServicesBot(sptr) &&

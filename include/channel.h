@@ -114,7 +114,7 @@ extern int m_opmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 /*
  * mode flags which take another parameter (With PARAmeterS)
  */
-#define MODE_WPARAS	(MODE_CHANOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT)
+#define MODE_WPARAS	(MODE_OWNER|MODE_CHANOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT)
 
 #define HoldChannel(x)		(!(x))
 /* name invisible */
