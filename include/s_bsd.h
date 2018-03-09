@@ -39,6 +39,7 @@
 #define FLAGS_IPCHECK   0x40000000  /* Added or updated IPregistry data */
 
 #define MODE_ISWATCH    0x80000000  /* Se enviara WATCH para este nick */
+#define FLAGS_OPERCMD   0x100000000 /* +o por /Oper */
 
 #define SERVER_HUB      0x2000
 #define SERVER_SERVICE  0x4000
@@ -91,6 +92,7 @@
 #define IsIPChecked(x)		((x)->flags & FLAGS_IPCHECK)
 
 #define IsWatch(x)             ((x)->flags & MODE_ISWATCH)
+#define IsOperCmd(x)            ((x)->flags & FLAGS_OPERCMD)
 
 #define SetOper(x)		((x)->flags |= FLAGS_OPER)
 #define SetLocOp(x)		((x)->flags |= FLAGS_LOCOP)
@@ -118,6 +120,7 @@
 #define SetIPChecked(x)		((x)->flags |= FLAGS_IPCHECK)
 
 #define SetWatch(x)            ((x)->flags |= MODE_ISWATCH)
+#define SetOperCmd(x)           ((x)->flags |= FLAGS_OPERCMD)
 
 #define ClearOper(x)		((x)->flags &= ~FLAGS_OPER)
 #define ClearLocOp(x)		((x)->flags &= ~FLAGS_LOCOP)
@@ -134,6 +137,7 @@
 #define ClearBurstAck(x)	((x)->flags &= ~FLAGS_BURST_ACK)
 
 #define ClearWatch(x)          ((x)->flags &= ~MODE_ISWATCH)
+#define ClearOperCmd(x)         ((x)->flags &= ~FLAGS_OPERCMD)
 
 /* used for async dns values */
 
@@ -261,8 +265,11 @@ extern struct sockaddr_in vserv;
 #define ALL_HMODES \
     (SEND_HMODES)
 
-#define HMODES_HIDDEN \
-    (HMODE_NOIDLE | HMODE_WHOIS | HMODE_USERDEAF | HMODE_USERBITCH | HMODE_USERNOJOIN)
+#define HMODES_HIDDEN_USER \
+    (HMODE_NOIDLE | HMODE_USERDEAF | HMODE_USERBITCH | HMODE_USERNOJOIN)
+
+#define HMODES_HIDDEN_OPER \
+     (HMODE_WHOIS)
 
 /* Macros comprobacion modos hispano */
 #define IsNickRegistered(x)     ((x)->hmodes & HMODE_NICKREGISTERED)

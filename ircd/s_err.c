@@ -274,7 +274,7 @@ static Numeric numeric_errors[] = {
     {ERR_NONONREG, ":Necesita registrar su nick para poder hablar con %s, "
 	           "para más información escriba: /msg NiCK help REGISTER"},
 /* 487 */
-    {0, (char *)NULL},
+    {ERR_ISOWNERCHAN, "%s %s :Cannot kick an owner channel"},
 /* 488 */
     {ERR_NOSSL, "%s :Cannot join channel (+z) - "
                         "Necesita conectar de forma segura con SSL para entrar al canal"},

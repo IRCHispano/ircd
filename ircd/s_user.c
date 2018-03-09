@@ -793,8 +793,7 @@ void send_features(aClient *sptr, char *nick)
 {
   char buf[500];
 
-  sprintf(buf, "CHANMODES=b,k,l,imnpstcORMCNuWz");
-  strcat(buf, "crRMCNuz");
+  sprintf(buf, "CHANMODES=b,k,l,imnpstcrORMCNuWz");
   sprintf(buf, "%s CHANTYPES=#&+ KICKLEN=%d MAXBANS=%d", buf, KICKLEN, MAXBANS);
   sendto_one(sptr, rpl_str(RPL_ISUPPORT), me.name, nick, buf);
 
@@ -2297,9 +2296,9 @@ void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh,
       if (IsAdmin(sptr) || IsCoder(sptr) || sptr == cptr)
         HMODES = ALL_HMODES;
       else
-        HMODES = ALL_HMODES & ~HMODE_WHOIS;
+        HMODES = ALL_HMODES & ~HMODES_HIDDEN_OPER;
     } else
-      HMODES = ALL_HMODES & ~HMODES_HIDDEN;
+      HMODES = ALL_HMODES & ~(HMODES_HIDDEN_USER|HMODES_HIDDEN_OPER);
 
     send_umode(cptr, sptr, old, ALL_UMODES, oldh, HMODES);
   }
@@ -2473,6 +2472,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);
     set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
     sptr->privs = aconf->port;
+    SetOperCmd(sptr);
     send_umode_out(cptr, sptr, old, oldh, IsRegistered(sptr));
     /*
      * Pone una clase o se pilla de una linea O:
@@ -2892,7 +2892,10 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
               {
                 sptr->flags &= ~(FLAGS_OPER | FLAGS_LOCOP);
                 if (MyConnect(sptr))
+                {
                   tmpmask = sptr->snomask & ~SNO_OPER;
+                  ClearOperCmd(sptr);
+                }
               }
               /* allow either -o or -O to reset all operator status's... */
               else
@@ -2973,7 +2976,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       ClearUserNoJoin(sptr);
   }
 
-  if (IsNickRegistered(sptr))
+  if (MyConnect(sptr) && IsNickRegistered(sptr))
   {                             /* Nick Registrado */
 
     /* el modo +h solo se lo pueden poner los OPER y quitar a voluntad */
@@ -3026,6 +3029,8 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     ClearHelpOp(sptr);
     ClearAdmin(sptr);
     ClearCoder(sptr);
+    if (IsOper(sptr))
+      --nrof.opers;
     ClearOper(sptr);
     ClearServicesBot(sptr);
 #if defined(BDD_VIP) && !defined(BDD_VIP2)
@@ -3034,7 +3039,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       ClearHidden(sptr);
     }
 #endif
-    if (!IsAnOper(sptr)) {
+    if (!IsOperCmd(sptr)) {
       ClearHiddenViewer(sptr);
       ClearNoIdle(sptr);
     }
@@ -3268,7 +3273,7 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if 1 /* ALTERNATIVA SVSMODE A TODOS */
 
   if (MyUser(acptr))
-    send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, IsAnOper(acptr) ? SEND_HMODES : SEND_HMODES & ~HMODES_HIDDEN);
+    send_umode(acptr, acptr, setflags, SEND_UMODES, sethmodes, IsAnOper(acptr) ? SEND_HMODES : SEND_HMODES & ~HMODES_HIDDEN_USER);
 #if !defined(NO_PROTOCOL9)
   sendto_lowprot_butone(cptr, 9, ":%s SVSMODE %s %s", acptr->name, acptr->name, parv[2]);
 #endif
@@ -3305,7 +3310,12 @@ char *umode_str(aClient *cptr, aClient *acptr)
     if (c_hmodes & flag)
       if(acptr)
       {
-        if (flag & HMODES_HIDDEN)
+        if (flag & HMODES_HIDDEN_OPER)
+        {
+          if (IsAdmin(acptr) || IsCoder(acptr) || acptr == cptr)
+            *m++ = *(s + 1);
+        }
+        else if (flag & HMODES_HIDDEN_USER)
         {
           if (IsAnOper(acptr))
             *m++ = *(s + 1);
@@ -4253,6 +4263,8 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       ClearHelpOp(sptr);
       ClearAdmin(sptr);
       ClearCoder(sptr);
+      if (IsOper(sptr))
+        --nrof.opers;
       ClearOper(sptr);
       ClearServicesBot(sptr);
 
@@ -4261,7 +4273,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       ClearHidden(sptr);
 #endif
 #endif
-      if (!IsAnOper(sptr)) {
+      if (!IsOperCmd(sptr)) {
         ClearHiddenViewer(sptr);
         ClearNoIdle(sptr);
       }
@@ -5432,6 +5444,8 @@ nickkilldone:
           ClearHelpOp(sptr);
           ClearAdmin(sptr);
           ClearCoder(sptr);
+          if (IsOper(sptr))
+            --nrof.opers;
           ClearOper(sptr);
           ClearServicesBot(sptr);
 #if defined (BDD_VIP)
@@ -5443,7 +5457,7 @@ nickkilldone:
             vhperso = 1;
           }
 #endif
-          if (!IsAnOper(sptr)) {
+          if (!IsOperCmd(sptr)) {
             ClearHiddenViewer(sptr);
             ClearNoIdle(sptr);
           }
@@ -5623,6 +5637,8 @@ nickkilldone:
         ClearHelpOp(sptr);
         ClearAdmin(sptr);
         ClearCoder(sptr);
+        if (IsOper(sptr))
+          --nrof.opers;
         ClearOper(sptr);
         ClearServicesBot(sptr);
       }
@@ -5637,6 +5653,8 @@ nickkilldone:
       ClearHelpOp(sptr);
       ClearAdmin(sptr);
       ClearCoder(sptr);
+      if (IsOper(sptr))
+        --nrof.opers;
       ClearOper(sptr);
       ClearServicesBot(sptr);
     }
@@ -6099,9 +6117,11 @@ nickkilldone:
           ClearHelpOp(sptr);
           ClearAdmin(sptr);
           ClearCoder(sptr);
+          if (IsOper(sptr))
+            --nrof.opers;
           ClearOper(sptr);
           ClearServicesBot(sptr);
-          if (!IsAnOper(sptr)) {
+          if (!IsOperCmd(sptr)) {
             ClearHiddenViewer(sptr);
             ClearNoIdle(sptr);
           }

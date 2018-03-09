@@ -497,6 +497,9 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
          oh = sptr->hmodes;
 
          ClearHelpOp(sptr);
+         if (IsOper(sptr))
+             nrof.opers--;
+
          ClearOper(sptr);
          ClearAdmin(sptr);
          ClearCoder(sptr);
@@ -544,17 +547,20 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               chptr->mode.mode = mode & (~(MODE_REGCHAN));  /* Modos vinculados a +r */
               chptr->modos_obligatorios = chptr->modos_prohibidos = 0;
+#if 0
               if (chptr->owner)
                 RunFree(chptr->owner);
+#endif
 
               if (chptr->users)
               {                 /* Quedan usuarios */
-                Link *lp;
+//                Link *lp;
 
                 strcpy(buf, "-r");
                 sendto_channel_butserv(chptr, &me, ":%s MODE %s %s", bot_chanserv ? bot_chanserv : me.name,
                     chptr->chname, buf);
 
+#if 0
                 /* Eliminamos antiguo founder si existe */
                 for (lp = chptr->members; lp; lp = lp->next)
                 {
@@ -569,6 +575,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                     break;
                   }
                 }
+#endif
               }
               else
               {                 /* Canal Vacio */
@@ -759,13 +766,14 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
 static inline void crea_canal_persistente(char *nombre, char *valor, int virgen)
 {
   aChannel *chptr;
-  aClient *acptr;
-  Link *lp;
+//  aClient *acptr = NULL;
+//  Link *lp;
   int add, del;
-  char *name;
+  char *name = NULL;
   char *modes = NULL;
   char *owner = NULL;
   int cambionombre = 0;
+  int sameowner = 0;
 
   if (*valor == '{')
   {
@@ -812,32 +820,46 @@ static inline void crea_canal_persistente(char *nombre, char *valor, int virgen)
   chptr->modos_obligatorios = add | MODE_REGCHAN;
   chptr->modos_prohibidos = del & ~MODE_REGCHAN;
 
+  /* ajustamos el nombre equivalente */
+  if (cambionombre && strcmp(nombre, name)) {
+      hRemChannel(chptr);
+      strcpy(chptr->chname, name);
+      hAddChannel(chptr);
+  }
+
+#if 0
   if (chptr->owner)
     RunFree(chptr->owner);
   if (owner)
      DupString(chptr->owner, owner);
+#endif
 
   if (chptr->users)
   {                             /* Hay usuarios dentro */
-    /* ajustamos el nombre equivalente */
-    if (cambionombre && strcmp(nombre, name)) {
-        hRemChannel(chptr);
-        strcpy(chptr->chname, name);
-        hAddChannel(chptr);
-    }
-
     if (!(chptr->mode.mode & MODE_REGCHAN))
     {
       sendto_channel_butserv(chptr, &me, ":%s MODE %s +r", bot_chanserv ? bot_chanserv : me.name,
           chptr->chname);
     }
 
-    /* Eliminamos antiguo founder si existe */
+#if 0
+    if (owner)
+      acptr = FindUser(owner);
+
+    /* Eliminamos antiguo founder si existe y es un nick distinto */
     for (lp = chptr->members; lp; lp = lp->next)
     {
-      if ((lp->flags & CHFL_OWNER)
-          && MyUser(lp->value.cptr))
+      if (lp->flags & CHFL_OWNER)
       {
+        if (acptr && acptr == lp->value.cptr)
+        {
+          sameowner = 1;
+          break;
+        }
+
+        if (!MyUser(lp->value.cptr))
+          break;
+
         lp->flags &= ~CHFL_OWNER;
         sendto_channel_butserv(chptr, NULL, ":%s MODE %s -q %s",
             bot_chanserv ? bot_chanserv : me.name, chptr->chname, lp->value.cptr->name);
@@ -848,9 +870,8 @@ static inline void crea_canal_persistente(char *nombre, char *valor, int virgen)
     }
 
     /* Ponemos founder nuevo si es usuario local */
-    if (owner)
+    if (owner && !sameowner)
     {
-      acptr = FindUser(owner);
       if (acptr && MyUser(acptr))
       {
         lp = IsMember(acptr, chptr);
@@ -864,6 +885,7 @@ static inline void crea_canal_persistente(char *nombre, char *valor, int virgen)
         }
       }
     }
+#endif
   }
   if (virgen)
   {

@@ -674,7 +674,7 @@ void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
   if (chptr->mode.key)
   {
     *mbuf++ = 'k';
-    if (is_chan_op(cptr, chptr) || IsServer(cptr))
+    if (is_chan_owner(cptr, chptr) || is_chan_op(cptr, chptr) || IsServer(cptr))
     {
       if (chptr->mode.limit)
         strcat(pbuf, " ");
@@ -1966,10 +1966,12 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
        */
       switch (lp->flags & MODE_WPARAS)
       {
+#if 0
         case MODE_OWNER:
           c = 'q';
           cp = lp->value.cptr->name;
           break;
+#endif
         case MODE_CHANOP:
           c = 'o';
           cp = lp->value.cptr->name;
@@ -2458,7 +2460,7 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
       case '-':
         whatt = MODE_DEL;
         break;
-      case 'q':
+//      case 'q':
       case 'o':
       case 'v':
         if (--parc <= 0)
@@ -2865,10 +2867,12 @@ static int set_mode_remoto(aClient *cptr, aClient *sptr, aChannel *chptr,
        */
       switch (lp->flags & MODE_WPARAS)
       {
+#if 0
         case MODE_OWNER:
           c = 'q';
           cp = lp->value.cptr->name;
           break;
+#endif
         case MODE_CHANOP:
           c = 'o';
           cp = lp->value.cptr->name;
@@ -4041,10 +4045,6 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s", parv[0], name);
       if (MyUser(sptr))
       {
-        if (flags == CHFL_OWNER)
-          sendto_channel_butserv(chptr, NULL, ":%s MODE %s +q %s",
-              bot_chanserv ? bot_chanserv : me.name, chptr->chname, sptr->name);
-
         del_invite(sptr, chptr);
         if (chptr->topic)
         {
@@ -4104,8 +4104,13 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 
   if (flags == CHFL_OWNER)
+  {
+    sendto_channel_butserv(chptr, NULL, ":%s MODE %s +q %s",
+        bot_chanserv ? bot_chanserv : me.name, chptr->chname, sptr->name);
+
     sendto_serv_butone(cptr, "%s " TOK_BMODE " %s %s +q %s%s",
         NumServ(&me), BDD_CHANSERV, chptr->chname, NumNick(sptr));
+  }
 
   if (MyUser(sptr))
   {                             /* shouldn't ever set TS for remote JOIN's */
@@ -5765,7 +5770,7 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
         chptr->chname);
     return 0;
   }
-  if (!IsServicesBot(sptr) && !IsServer(cptr) && !is_chan_op(sptr, chptr))
+  if (!IsServicesBot(sptr) && !IsServer(cptr) && !is_chan_owner(sptr, chptr) && !is_chan_op(sptr, chptr))
   {
     sendto_one(sptr, err_str(ERR_CHANOPRIVSNEEDED),
         me.name, parv[0], chptr->chname);
@@ -6146,7 +6151,7 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
       }
     }
     else if ((((chptr->mode.mode & MODE_TOPICLIMIT) == 0 &&
-        !(b = is_banned(sptr, chptr, NULL))) || is_chan_op(sptr, chptr)
+        !(b = is_banned(sptr, chptr, NULL))) || is_chan_owner(sptr, chptr) || is_chan_op(sptr, chptr)
         || IsServicesBot(sptr) || IsServer(sptr)) && topic)
     {
       aClient *from;
@@ -6387,7 +6392,7 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
    * Para curar el posible desync quitamos el op
    * al usuario -- 21/11/03 N3TKaT
    */
-  if (!MyConnect(sptr) && !is_chan_op(sptr, chptr) && !IsServicesBot(sptr) && IsUser(sptr))
+  if (!MyConnect(sptr) && !is_chan_owner(sptr, chptr) && !is_chan_op(sptr, chptr) && !IsServicesBot(sptr) && IsUser(sptr))
   {
 #if !defined(NO_PROTOCOL9)
     if (Protocol(cptr) < 10)
@@ -6405,7 +6410,7 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (MyConnect(sptr))
   {
-    if (!is_chan_op(sptr, chptr) && !IsServicesBot(sptr))
+    if (!is_chan_owner(sptr, chptr) && !is_chan_op(sptr, chptr) && !IsServicesBot(sptr))
     {
       sendto_one(sptr, err_str(ERR_CHANOPRIVSNEEDED),
           me.name, parv[0], chptr->chname);

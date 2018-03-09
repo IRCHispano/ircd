@@ -1,3 +1,14 @@
+* 2018/03/09  toni@tonigarcia.es (u2.10.H.10.249)                FEATURE
+------------------------------------------------------------------------
+  Modo +O de canales only +o.
+
+  JOIN #canal OVERRIDE para entrar canales por los +o saltando los modos,
+  se eliminan los antiguos OPER y GOD.
+
+  Fixes en /gline, +I.
+
+  Soporte de Json en el ircd para la DDB.
+
 * 2017/12/09  toni@tonigarcia.es (u2.10.H.10.248)                FEATURE
 ------------------------------------------------------------------------
   Aviso en un canal de debug cuando se ve la IP de un usuario mediante
