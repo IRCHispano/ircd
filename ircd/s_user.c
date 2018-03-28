@@ -2664,7 +2664,7 @@ int m_userhost(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
           IsAnOper(acptr) ? "*" : "", (acptr->user->away) ? '-' : '+',
           PunteroACadena(acptr->user->username),
 #if defined(BDD_VIP)
-          get_visiblehost(acptr, sptr, 1));
+          get_visiblehost(acptr, NULL, 0));
 #else
           PunteroACadena(acptr->user->host));
 #endif
@@ -2705,13 +2705,13 @@ int m_userip(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
       s = strtoken(&p, (char *)NULL, " "), i--)
     if ((acptr = FindUser(s)))
     {
+      int viewhost = (sptr == acptr || can_viewhost(sptr, NULL, 0) || !IsHidden(acptr));
       if (i < j)
         *sbuf++ = ' ';
       sbuf = sprintf_irc(sbuf, "%s%s=%c%s@%s", acptr->name,
           IsAnOper(acptr) ? "*" : "", (acptr->user->away) ? '-' : '+',
-          PunteroACadena(acptr->user->username), (sptr == acptr
-          || can_viewhost(sptr, acptr, 1)
-          || !IsHidden(acptr)) ? ircd_ntoa_c(acptr) : "::ffff:0.0.0.0");
+          PunteroACadena(acptr->user->username),
+          viewhost ? ircd_ntoa_c(acptr) : "::ffff:0.0.0.0");
     }
     else
     {

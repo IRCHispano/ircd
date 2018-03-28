@@ -1325,7 +1325,7 @@ int m_desynch(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sprintf_irc(sendbuf, ":%s WALLOPS :%s", parv[0], parv[parc - 1]);
     for (i = 0; i <= highest_fd; i++)
       if ((acptr = loc_clients[i]) && !IsServer(acptr) && !IsMe(acptr) &&
-          SendDebug(acptr))
+          IsAnOper(acptr) && SendDebug(acptr))
         sendbufto_one(acptr);
     /* Send message to remote +g clients */
     sendto_g_serv_butone(cptr, "%s DESYNCH :%s", NumServ(sptr), parv[parc - 1]);
