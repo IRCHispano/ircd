@@ -2658,16 +2658,13 @@ int m_userhost(aClient *UNUSED(cptr), aClient *sptr, int parc, char *parv[])
       s = strtoken(&p, (char *)NULL, " "), i--)
     if ((acptr = FindUser(s)))
     {
+      int viewhost = (sptr == acptr || can_viewhost(sptr, NULL, 0) || !IsHidden(acptr));
       if (i < j)
         *sbuf++ = ' ';
       sbuf = sprintf_irc(sbuf, "%s%s=%c%s@%s", acptr->name,
           IsAnOper(acptr) ? "*" : "", (acptr->user->away) ? '-' : '+',
           PunteroACadena(acptr->user->username),
-#if defined(BDD_VIP)
-          get_visiblehost(acptr, NULL, 0));
-#else
-          PunteroACadena(acptr->user->host));
-#endif
+          viewhost ? PunteroACadena(acptr->user->host) : get_virtualhost(acptr, 0));
     }
     else
     {
