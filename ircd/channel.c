@@ -3400,6 +3400,10 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
 {
   int overrideJoin = 0;
 
+  /* Los bots de servicio siempre entran */
+  if (IsServicesBot(sptr))
+    return 0;
+
   if ((!BadPtr(key)) && RegisteredChannel(chptr)
        && IsNickRegistered(sptr) && chptr->owner
        && !strcmp(chptr->owner, sptr->name)
