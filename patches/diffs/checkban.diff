@@ -1,6 +1,6 @@
 --- include/channel.h
 +++ include/channel.h
-@@ -230,6 +230,7 @@ extern int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+@@ -234,6 +234,7 @@ extern int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
  extern int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[]);
  extern int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[]);
  extern int m_svskick(aClient *cptr, aClient *sptr, int parc, char *parv[]);
@@ -10,7 +10,7 @@
  extern char *adapta_y_visualiza_canal_flags(aChannel *chptr, int add, int del);
 --- include/msg.h
 +++ include/msg.h
-@@ -100,6 +100,9 @@
+@@ -104,6 +104,9 @@
  #define TOK_PROXY		"PROXY"
  #define CLASS_PROXY		LEVEL_QUERY
  
@@ -22,7 +22,7 @@
  #define TOK_PRIVATE		"P"
 --- include/numeric.h
 +++ include/numeric.h
-@@ -427,6 +427,12 @@
+@@ -428,6 +428,12 @@
  /*      RPL_JUPELIST         282          Undernet extension */
  /*      RPL_ENDOFJUPELIST    283          Undernet extension */
  /*      RPL_FEATURE         284           Undernet extension */
@@ -37,7 +37,7 @@
  /*      RPL_CHANINFO_CHOPS   287          Aircd */
 --- ircd/channel.c
 +++ ircd/channel.c
-@@ -6959,6 +6959,175 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
+@@ -7009,6 +7009,175 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
    return (1);
  }
  
@@ -215,17 +215,17 @@
    Reg1 Link *lp;
 --- ircd/parse.c
 +++ ircd/parse.c
-@@ -136,6 +136,7 @@ aMessage msgtab[] = {
+@@ -134,6 +134,7 @@ aMessage msgtab[] = {
+     {CLASS_SVSPART,      MSG_SVSPART,     TOK_SVSPART,     m_svspart,     0, MAXPARA,   MFLG_SLOW,      0L},
+     {CLASS_SVSKICK,      MSG_SVSKICK,     TOK_SVSKICK,     m_svskick,     0, MAXPARA,   MFLG_SLOW,      0L},
      {CLASS_WATCH,      MSG_WATCH,      TOK_WATCH,      m_watch,        0, 1,   MFLG_SLOW,      0L},
++    {CLASS_CHECKBAN,   MSG_CHECKBAN,   TOK_CHECKBAN,   m_checkban,     0, MAXPARA,   MFLG_SLOW,      0L},
      {CLASS_WEBIRC,     MSG_WEBIRC,     TOK_WEBIRC,     m_webirc,       0, MAXPARA,   MFLG_SLOW|MFLG_UNREG,      0L},
      {CLASS_PROXY,     MSG_PPROXY,     TOK_PROXY,     m_proxy,       0, MAXPARA,   MFLG_SLOW|MFLG_UNREG,      0L},
-+    {CLASS_CHECKBAN,   MSG_CHECKBAN,   TOK_CHECKBAN,   m_checkban,     0, MAXPARA,   MFLG_SLOW,      0L},
- 
-     {0, (char *)0, (char *)0, (int (*)(aClient *, aClient *, int, char **))0,	0, 0, 0, 0L}
- };
+     {CLASS_PRIVS,        MSG_PRIVS,       TOK_PRIVS,       m_privs,       0, MAXPARA,   MFLG_SLOW,      0L},
 --- ircd/s_err.c
 +++ ircd/s_err.c
-@@ -709,7 +709,25 @@ static Numeric numeric_replies[] = {
+@@ -734,7 +734,25 @@ static Numeric numeric_replies[] = {
  /* 280 */
      {RPL_GLIST, "%s@%s " TIME_T_FMT " %s%s (expires at %s)"},
  /* 281 */
