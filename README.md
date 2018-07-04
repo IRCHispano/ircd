@@ -33,6 +33,8 @@ Este documento enumera las diferentes ramas del repositorio.
    desarrollo de nuevas caracteristicas y gestion de la base de datos.
 
    Etiqueta: master
+   
+   Esta rama se ha abandonado, ahora se usa su propio repositorio IRCh.
 
 
 
