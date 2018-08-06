@@ -9,6 +9,10 @@ RELACION DE PARCHES
  * deepspace
    Soporte de Nicks y Servidores con IPv6 en protocolo P09 para los services
    deep.space de la red IRC-Hispano.
+   Este parche esta en desuso ya que es P10. Se mantiene por razones historicas.
+
+*  hispano
+   Parches especificos para IRC-Hispano.
 
  * IPv6
    Agrega soporte de IPv6. En el ircd.conf se delimitan los parametros con
