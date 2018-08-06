@@ -1115,10 +1115,6 @@ static int m_message(aClient *cptr, aClient *sptr,
 
           if (IsUserDeaf(sptr))
             continue;
-
-          if (match("*cdn.chathispano.com*", parv[parc-1]) == 0)
-            continue;
-
           if(chptr->mode.mode & MODE_NOCOLOUR) {
             /* Calcula el color solo una vez */
             strip_color(parv[parc-1], sizeof(buffer_nocolor), buffer_nocolor);
