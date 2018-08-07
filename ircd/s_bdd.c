@@ -85,7 +85,7 @@ int activar_modos = 0;
 int activar_ident = 0;
 int auto_invisible = 0;
 int excepcion_invisible = 0;
-int activar_redireccion_canales = 0;
+int desactivar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
 char *mensaje_part_personalizado = NULL;
 char *mensaje_part_svskick = NULL;
@@ -683,9 +683,9 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               clave_de_cifrado_binaria[1] = 0;
               elimina_cache_ips_virtuales();
             }
-            else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
+            else if(!strncmp(c, "noredirect:", 9) && !strcmp(c+9, me.name))
             {
-              activar_redireccion_canales=0;
+              desactivar_redireccion_canales=0;
             }
             else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
             {
@@ -1152,9 +1152,9 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
         elimina_cache_ips_virtuales();
       }
-      else if(!strncmp(c, "redirect:", 9) && !strcmp(c+9, me.name))
+      else if(!strncmp(c, "noredirect:", 9) && !strcmp(c+9, me.name))
       {
-        activar_redireccion_canales=1;
+        desactivar_redireccion_canales=1;
       }
       else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
       {

@@ -1,3 +1,9 @@
+* 2018/08/07  toni@tonigarcia.es (u2.10.H.10.252)                CLEANUP
+------------------------------------------------------------------------
+  Se da la vuelta a la activacion de redireccion de canales, se cambia
+  redirect por noredirect en la tabla z.
+  Esto permite que sin configurar se usa en toda la red y solo se
+  configura su desactivacion en algun servidor.
 
 * 2018/04/05  toni@tonigarcia.es (u2.10.H.10.251)                FEATURE
 ------------------------------------------------------------------------

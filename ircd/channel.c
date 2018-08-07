@@ -3900,7 +3900,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
 
         /* Redireccion de canales */
-        if(activar_redireccion_canales && (ch_redir = db_buscar_registro(BDD_CHANREDIRECTDB, name)))
+        if(!desactivar_redireccion_canales && (ch_redir = db_buscar_registro(BDD_CHANREDIRECTDB, name)))
           name=ch_redir->valor;
 
         if (bad_channel(name) && !IsAnOper(sptr))
