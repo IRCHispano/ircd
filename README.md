@@ -5,10 +5,12 @@ El IRCD de IRC-Hispano se puede descargar en los siguientes repositorios de Git:
 
 - Sourceforge: git://git.code.sf.net/p/irc-hispano/ircd
 - GitHub: https://github.com/IRCHispano/ircd.git
+- GitLab: https://gitlab.com/IRCHispano/ircd.git
 - GitLab de IRC-Hispano (Privado): http://gitlab.chathispano.com/servicios/ircd.git
 
-Los desarrollos se hacen contra el Gitlab de IRC-Hispano y seran sincronizados con los
+Los desarrollos se hacen contra el Gitlab y seran sincronizados con los
 repositorios publicos para tener la ultima version del IRCD.
+Actualmente, el GitLab privado de IRC-Hispano no esta actualizado por motivos tecnicos ajenos.
 
 
 Este documento enumera las diferentes ramas del repositorio.
