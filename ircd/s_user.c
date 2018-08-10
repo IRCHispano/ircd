@@ -79,6 +79,9 @@
 #include "aes.h"
 #include "m_config.h"
 
+#include <json-c/json.h>
+#include <json-c/json_object.h>
+
 
 RCSTAG_CC("$Id$");
 
@@ -4330,14 +4333,37 @@ void rename_user(aClient *sptr, char *nick_nuevo)
     if (reg)
     {
       int of, oh;
-      char c;
+      int flagsddb = 0;
+      char *automodes;
 
       of = sptr->flags;
       oh = sptr->hmodes;
 
+      if (*reg->valor == '{')
+      {
+        /* Formato nuevo JSON */
+        json_object *json, *json_flags, *json_automodes;
+        enum json_tokener_error jerr = json_tokener_success;
+
+        json = json_tokener_parse_verbose(reg->valor, &jerr);
+        if (jerr == json_tokener_success) {
+          json_object_object_get_ex(json, "flags", &json_flags);
+          flagsddb = json_object_get_int(json_flags);
+          json_object_object_get_ex(json, "automodes", &json_automodes);
+          automodes = (char *)json_object_get_string(json_automodes);
+        }
+      } else {
+        /* Formato antiguo pass_flag */
+        char c;
+        c = reg->valor[strlen(reg->valor) - 1];
+        if (c == '+')
+          flagsddb = DDB_NICK_SUSPEND;
+
+        automodes = NULL;
+      }
+
       /* Rename a un nick registrado */
-      c = reg->valor[strlen(reg->valor) - 1];
-      if (c == '+')
+      if (flagsddb == DDB_NICK_SUSPEND)
         SetNickSuspended(sptr);
       else
         SetNickRegistered(sptr);
@@ -4419,6 +4445,12 @@ void rename_user(aClient *sptr, char *nick_nuevo)
             set_privs(sptr);
           }
         }
+
+      /* Automodes DDB */
+          sendto_one(sptr,
+              ":%s NOTICE %s :*** DEBUG, NUEVOS MODOS %s, PENDIENTE DE DESARROLLO",
+              bot_nickserv ? bot_nickserv : me.name, nick_nuevo, automodes ? automodes : "Sin automodes");
+
       }
       send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
     }
@@ -4509,7 +4541,28 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-  clave_ok = verifica_clave_nick(reg->clave, reg->valor, clave);
+  if (*reg->valor == '{')
+  {
+    /* Formato nuevo JSON */
+    json_object *json, *json_pass;
+    enum json_tokener_error jerr = json_tokener_success;
+    char *passddb;
+
+    json = json_tokener_parse_verbose(reg->valor, &jerr);
+    if (jerr != json_tokener_success) {
+      sendto_one(cptr,
+          ":%s NOTICE %s :*** El nick %s estï¿½ prohibido.",
+          bot_nickserv ? bot_nickserv : me.name, parv[0], acptr->name);
+      return 0;
+    }
+
+    json_object_object_get_ex(json, "pass", &json_pass);
+    passddb = (char *)json_object_get_string(json_pass);
+    clave_ok = verifica_clave_nick(reg->clave, reg->valor, clave);
+  } else {
+    /* Formato antiguo pass */
+    clave_ok = verifica_clave_nick(reg->clave, reg->valor, clave);
+  }
 
   if (!clave_ok)
   {
@@ -4604,9 +4657,28 @@ int m_svsnick(aClient *cptr, aClient *sptr, int parc, char *parv[])
    reg = db_buscar_registro(ESNET_NICKDB, nick);
    if (reg)
    {
-     char c = reg->valor[strlen(reg->valor) - 1];
+     int flagsddb = 0;
 
-     if (c == '*')
+     if (*reg->valor == '{')
+     {
+       /* Formato nuevo JSON */
+       json_object *json, *json_flags;
+       enum json_tokener_error jerr = json_tokener_success;
+
+       json = json_tokener_parse_verbose(reg->valor, &jerr);
+       if (jerr == json_tokener_success) {
+         json_object_object_get_ex(json, "flags", &json_flags);
+         flagsddb = json_object_get_int(json_flags);
+       }
+     } else {
+       /* Formato antiguo pass_flag */
+       char c;
+       c = reg->valor[strlen(reg->valor) - 1];
+       if (c == '*')
+         flagsddb = DDB_NICK_FORBID;
+     }
+
+     if (flagsddb == DDB_NICK_FORBID)
      {
        sendto_serv_butone(cptr,
            ":%s DESYNCH :HACK(4): El nodo '%s' dice que '%s' ha intentado poner un "
@@ -4666,6 +4738,8 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char *regexp;
   char nick_low[NICKLEN+1];
   char *tmp;
+  char *reason;
+  char *automodes;
 #if defined(BDD_VIP)
   int vhperso = 0;
 #endif
@@ -4922,10 +4996,32 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if (hacer_ghost && reg && (now >= cptr->nextnick))
     {
-      if (parc >= 3)
-        clave_ok = verifica_clave_nick(reg->clave, reg->valor, parv[2]);
-      else if (cptr->passbdd)
-        clave_ok = verifica_clave_nick(reg->clave, reg->valor, cptr->passbdd);
+      char *passddb;
+
+      if (*reg->valor == '{')
+      {
+        /* Formato nuevo JSON */
+        json_object *json, *json_pass;
+        enum json_tokener_error jerr = json_tokener_success;
+
+        json = json_tokener_parse_verbose(reg->valor, &jerr);
+        if (jerr != json_tokener_success)
+          passddb = NULL;
+        else {
+          json_object_object_get_ex(json, "pass", &json_pass);
+          passddb = (char *)json_object_get_string(json_pass);
+        }
+      } else {
+        /* Formato antiguo pass */
+          passddb = (char *)reg->valor;
+      }
+
+      if (passddb) {
+        if (parc >= 3)
+          clave_ok = verifica_clave_nick(reg->clave, passddb, parv[2]);
+        else if (cptr->passbdd)
+          clave_ok = verifica_clave_nick(reg->clave, passddb, cptr->passbdd);
+      }
     }
 
     if (clave_ok)
@@ -5122,18 +5218,49 @@ nickkilldone:
     char *nombre;
     int usa_clave = 0;
     int nick_forbid = 0;
-    char c;
+    int flagsddb = 0;
+    char *passddb;
 
-    /*
-     * Si el ultimo caracter de la clave (reg->valor) contiene:
-     *  '+'  El nick esta suspendido.
-     *  '*'  El nick esta prohibido (forbid).
-     * Cualquier otro caracter, el nick esta activo.
-     */
-    c = reg->valor[strlen(reg->valor) - 1];
-    if (c == '+')
+    if (*reg->valor == '{')
+    {
+      /* Formato nuevo JSON */
+      json_object *json, *json_flags, *json_reason, *json_pass, *json_automodes;
+      enum json_tokener_error jerr = json_tokener_success;
+
+      json = json_tokener_parse_verbose(reg->valor, &jerr);
+      if (jerr == json_tokener_success) {
+        json_object_object_get_ex(json, "flags", &json_flags);
+        flagsddb = json_object_get_int(json_flags);
+        json_object_object_get_ex(json, "reason", &json_reason);
+        reason = (char *)json_object_get_string(json_reason);
+        json_object_object_get_ex(json, "pass", &json_pass);
+        passddb = (char *)json_object_get_string(json_pass);
+        json_object_object_get_ex(json, "automodes", &json_automodes);
+        automodes = (char *)json_object_get_string(json_automodes);
+      }
+    } else {
+      /* Formato antiguo pass_flag
+       * Si el ultimo caracter de la clave (reg->valor) contiene:
+       *  '+'  El nick esta suspendido.
+       *  '*'  El nick esta prohibido (forbid).
+       * Cualquier otro caracter, el nick esta activo.
+       */
+      char c;
+      c = reg->valor[strlen(reg->valor) - 1];
+      if (c == '+')
+        flagsddb = DDB_NICK_SUSPEND;
+      else if (c == '*')
+        flagsddb = DDB_NICK_FORBID;
+
+      passddb = reg->valor;
+      /* No soportado */
+      reason = NULL;
+      automodes = NULL;
+    }
+
+    if (flagsddb == DDB_NICK_SUSPEND)
       nick_suspendido = 1;
-    else if (c == '*')
+    else if (flagsddb == DDB_NICK_FORBID)
       nick_forbid = 1;
 
     /*
@@ -5156,12 +5283,12 @@ nickkilldone:
       {
         if (parc >= 3)
         {
-          clave_ok = verifica_clave_nick(reg->clave, reg->valor, parv[2]);
+          clave_ok = verifica_clave_nick(reg->clave, passddb, parv[2]);
           usa_clave = 1;
         }
         else if (cptr->passbdd)
         {
-          clave_ok = verifica_clave_nick(reg->clave, reg->valor, cptr->passbdd);
+          clave_ok = verifica_clave_nick(reg->clave, passddb, cptr->passbdd);
         }
       }
     }
@@ -5188,8 +5315,8 @@ nickkilldone:
 
         if (nick_suspendido)
           sendto_one(cptr,
-              ":%s NOTICE %s :*** Tu nick %s está suspendido.",
-              bot_nickserv ? bot_nickserv : me.name, nick, nick);
+              ":%s NOTICE %s :*** Tu nick %s está suspendido. Motivo: %s",
+              bot_nickserv ? bot_nickserv : me.name, nick, nick, reason ? reason : "N.D.");
       }
       hflag = '+';
 
@@ -5197,8 +5324,8 @@ nickkilldone:
     else if (nick_forbid)
     {
       sendto_one(cptr,
-          ":%s NOTICE %s :*** El nick %s está prohibido, no puede ser utilizado.",
-          bot_nickserv ? bot_nickserv : me.name, nombre, nick);
+          ":%s NOTICE %s :*** El nick %s está prohibido, no puede ser utilizado. Motivo: %s",
+          bot_nickserv ? bot_nickserv : me.name, nombre, nick, reason ? reason : "N.D.");
       sendto_one(cptr, ":%s %d %s %s :Nickname is forbided, can not be used - El nick está prohibido, no puede ser utilizado",
           me.name, ERR_NICKNAMEINUSE, parv[0], nick);
       return 0;
@@ -5639,6 +5766,10 @@ nickkilldone:
         ClearOper(sptr);
         ClearServicesBot(sptr);
       }
+
+sendto_one(sptr,
+              ":%s NOTICE %s :*** DEBUG, NUEVOS MODOS %s, PENDIENTE DE DESARROLLO",
+              bot_nickserv ? bot_nickserv : me.name, sptr->name, automodes ? automodes : "Sin Automodes");
     }
     else
     {

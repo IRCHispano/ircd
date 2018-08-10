@@ -114,6 +114,8 @@
 #define PRIV_WHOIS_NOTICE    0x800000000
 #define PRIV_HIDE_IDLE       0x1000000000
 
+#define DDB_NICK_FORBID 1
+#define DDB_NICK_SUSPEND 2
 
 struct db_reg {
   char *clave;

@@ -479,6 +479,42 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
 
       switch (tabla)
       {
+        /*
+        *
+        * Baja de nicks instantï¿½nea.
+        *
+        */
+        case ESNET_NICKDB:
+       {
+        aClient *sptr;
+
+        if (!reemplazar && (sptr = FindUser(clave)) && MyConnect(sptr))
+        {
+         /* El usuario esta conectado, y en nuestro servidor. */
+         int of, oh;
+
+         of = sptr->flags;
+         oh = sptr->hmodes;
+
+         sendto_one(sptr,
+              ":%s NOTICE %s :*** Tu nick %s se ha dropado",
+              bot_nickserv ? bot_nickserv : me.name, clave, clave);
+
+         ClearNickRegistered(sptr);
+         ClearNickSuspended(sptr);
+         ClearHelpOp(sptr);
+         if (IsOper(sptr))
+             nrof.opers--;
+
+         ClearOper(sptr);
+         ClearAdmin(sptr);
+         ClearCoder(sptr);
+         ClearServicesBot(sptr);
+
+         send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
+        }
+        break;
+       }
         /* 05-Ene-04: mount@irc-dev.net
         *
         * Baja de operadores instantánea.
@@ -1032,34 +1068,116 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
        */
     case ESNET_NICKDB:
     {
-      char c = valor[strlen(valor) - 1];
-      int suspendido = 0;
-      int prohibido = 0;
       aClient *sptr;
 
-      if (c == '+')
-        suspendido = !0;
-      else if (c == '*')
-        prohibido = !0;
-
-      if ((suspendido || prohibido) &&
-          (sptr = FindUser(clave)) && MyConnect(sptr))
+      if ((sptr = FindUser(clave)) && MyConnect(sptr))
       {
-        char *botname;
-        struct db_reg *reg;
+        int suspendido = 0;
+        int prohibido = 0;
+        char *automodes;
+        char *reason;
 
-        /* Buscamos el nick del bot virtual de nicks (NiCK) */
-        reg = db_buscar_registro(BDD_BOTSDB, BDD_NICKSERV);
-        if (reg && reg->valor && (strlen(reg->valor) < HOSTLEN))
-          botname = reg->valor;
-        else
-          botname = me.name;
+        if (*valor == '{')
+        {
+          /* Formato nuevo JSON */
+          json_object *json, *json_flags, *json_reason, *json_automodes;
+          enum json_tokener_error jerr = json_tokener_success;
+          int flagsddb;
 
-        sendto_one(sptr,
-            ":%s NOTICE %s :*** Tu nick %s acaba de ser %s.",
-            botname, clave, clave, (suspendido ? "suspendido" : "prohibido"));
+          json = json_tokener_parse_verbose(reg->valor, &jerr);
+          if (jerr != json_tokener_success)
+            break;
 
-        rename_user(sptr, NULL);
+          json_object_object_get_ex(json, "flags", &json_flags);
+          flagsddb = json_object_get_int(json_flags);
+          json_object_object_get_ex(json, "reason", &json_reason);
+          reason = (char *)json_object_get_string(json_reason);
+          json_object_object_get_ex(json, "automodes", &json_automodes);
+          automodes = (char *)json_object_get_string(json_automodes);
+
+          if (flagsddb == DDB_NICK_SUSPEND)
+            suspendido = !0;
+          else if (flagsddb == DDB_NICK_FORBID)
+            prohibido = !0;
+
+        } else {
+          /* Formato antiguo pass_flag */
+          char c = valor[strlen(valor) - 1];
+
+          if (c == '+')
+            suspendido = !0;
+          else if (c == '*')
+            prohibido = !0;
+
+          /* No soportado */
+          automodes = NULL;
+          reason = NULL;
+
+        }
+
+         if (suspendido || prohibido)
+        {
+          sendto_one(sptr,
+              ":%s NOTICE %s :*** Tu nick %s acaba de ser %s. Motivo: %s",
+              bot_nickserv ? bot_nickserv : me.name, clave, clave, (suspendido ? "suspendido" : "prohibido"),
+              reason ? reason : "N.D.");
+
+          rename_user(sptr, NULL);
+
+        } else if (IsNickRegistered(sptr) || IsNickSuspended(sptr)) {
+          /* Igual hay un cambio de modos, mandamos nuevos modos */
+          int of, oh;
+
+          of = sptr->flags;
+          oh = sptr->hmodes;
+
+          if (IsNickSuspended(sptr))
+          {
+            /* Deja de tener nick suspendido, recuperamos */
+            int status;
+
+            ClearNickSuspended(sptr);
+            SetNickRegistered(sptr);
+
+            status = get_status(sptr);
+            if (status)
+            {
+              if (status & HMODE_ADMIN)
+                SetAdmin(sptr);
+
+              if (status & HMODE_CODER)
+                SetCoder(sptr);
+
+              if (status & HMODE_SERVICESBOT)
+                SetServicesBot(sptr);
+
+              if (status & HMODE_HELPOP)
+                SetHelpOp(sptr);
+
+              if (status & FLAGS_OPER)
+              {
+                if (!IsAnOper(sptr))
+                  nrof.opers++;
+                SetOper(sptr);
+                sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);
+                set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
+                set_privs(sptr);
+              }
+            }
+          }
+          sendto_one(sptr,
+              ":%s NOTICE %s :*** DEBUG, NUEVOS MODOS %s, PENDIENTE DE DESARROLLO",
+              bot_nickserv ? bot_nickserv : me.name, clave, automodes ? automodes : "sin automodes");
+
+          send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
+
+        } else {
+          /* No registrado */
+          sendto_one(sptr,
+              ":%s NOTICE %s :*** Tu nick %s acaba de ser registrado y se ha renombrado a otro. Para poner tu nick registro, utiliza \002/NICK %s:clave\002",
+              bot_nickserv ? bot_nickserv : me.name, clave, clave, clave);
+          rename_user(sptr, NULL);
+        }
       }
       break;
     }

@@ -1,3 +1,9 @@
+* 2018/08/10  toni@tonigarcia.es (u2.10.H.10.253)                FEATURE
+------------------------------------------------------------------------
+  Cambio de formato en la tabla n, ahora se usa JSON.
+  Se muestra el motivo de forbid/suspend de los nicks.
+  Se implementa accion instantanea al registrar/borrar nicks.
+
 * 2018/08/07  toni@tonigarcia.es (u2.10.H.10.252)                CLEANUP
 ------------------------------------------------------------------------
   Se da la vuelta a la activacion de redireccion de canales, se cambia
