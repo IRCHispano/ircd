@@ -497,7 +497,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
          oh = sptr->hmodes;
 
          sendto_one(sptr,
-              ":%s NOTICE %s :*** Tu nick %s se ha dropado",
+              ":%s NOTICE %s :*** Tu nick %s se ha eliminado",
               bot_nickserv ? bot_nickserv : me.name, clave, clave);
 
          ClearNickRegistered(sptr);
@@ -1165,16 +1165,22 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
               }
             }
           }
-          sendto_one(sptr,
-              ":%s NOTICE %s :*** DEBUG, NUEVOS MODOS %s, PENDIENTE DE DESARROLLO",
-              bot_nickserv ? bot_nickserv : me.name, clave, automodes ? automodes : "sin automodes");
+
+          if (automodes)
+          {
+              int addflags, addhmodes;
+
+              mask_user_flags(automodes, &addflags, &addhmodes);
+              sptr->flags |= addflags;
+              sptr->hmodes |= addhmodes;
+          }
 
           send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
 
         } else {
           /* No registrado */
           sendto_one(sptr,
-              ":%s NOTICE %s :*** Tu nick %s acaba de ser registrado y se ha renombrado a otro. Para poner tu nick registro, utiliza \002/NICK %s:clave\002",
+              ":%s NOTICE %s :*** Tu nick %s acaba de ser registrado y se ha renombrado a otro. Para poner tu nick registrado, utiliza \002/NICK %s:clave\002",
               bot_nickserv ? bot_nickserv : me.name, clave, clave, clave);
           rename_user(sptr, NULL);
         }

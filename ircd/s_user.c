@@ -3286,6 +3286,66 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 }
 
+void mask_user_flags(char *modes, int *addflags, int *addhmodes)
+{
+  char c, *p;
+  int *ip;
+  int addf, addh, modof, modoh;
+  int i;
+
+  p = modes;
+  modof = ~(addf = 0);
+  modoh = ~(addh = 0);
+  while (!0)
+  {
+    c = *p++;
+    switch (c)
+    {
+      case '\0':
+      case ' ':
+      case '\t':
+        goto out;
+      case '+':
+        modof = ~0;
+        modoh = ~0;
+        break;
+      case '-':
+        modof = 0;
+        modoh = 0;
+        break;
+      default:
+        for (ip = user_modes; *ip; ip += 2)
+        {
+          if (c == *(ip + 1))
+          {
+            i = *ip;
+            addf |= modof & i;
+            break;
+          }
+        }
+        for (ip = user_hmodes; *ip; ip += 2)
+        {
+          if (c == *(ip + 1))
+          {
+            i = *ip;
+            addh |= modoh & i;
+            break;
+          }
+        }
+        break;
+    }
+  }
+
+out:
+  if (addflags)
+  {
+    *addflags = addf;
+  }
+  if (addhmodes)
+  {
+    *addhmodes = addh;
+  }
+}
 
 /*
  * Build umode string for BURST command
@@ -4446,11 +4506,15 @@ void rename_user(aClient *sptr, char *nick_nuevo)
           }
         }
 
-      /* Automodes DDB */
-          sendto_one(sptr,
-              ":%s NOTICE %s :*** DEBUG, NUEVOS MODOS %s, PENDIENTE DE DESARROLLO",
-              bot_nickserv ? bot_nickserv : me.name, nick_nuevo, automodes ? automodes : "Sin automodes");
+        /* Automodes DDB */
+        if (automodes)
+        {
+            int addflags, addhmodes;
 
+            mask_user_flags(automodes, &addflags, &addhmodes);
+            sptr->flags |= addflags;
+            sptr->hmodes |= addhmodes;
+        }
       }
       send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
     }
@@ -5767,9 +5831,14 @@ nickkilldone:
         ClearServicesBot(sptr);
       }
 
-sendto_one(sptr,
-              ":%s NOTICE %s :*** DEBUG, NUEVOS MODOS %s, PENDIENTE DE DESARROLLO",
-              bot_nickserv ? bot_nickserv : me.name, sptr->name, automodes ? automodes : "Sin Automodes");
+      if (automodes && !nick_suspendido)
+      {
+        int addflags, addhmodes;
+
+        mask_user_flags(automodes, &addflags, &addhmodes);
+        sptr->flags |= addflags;
+        sptr->hmodes |= addhmodes;
+      }
     }
     else
     {

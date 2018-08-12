@@ -84,6 +84,7 @@ void make_vhostperso(aClient *acptr, int mostrar);
 extern void set_privs(aClient *sptr);
 extern uint64_t HasPriv(aClient *sptr, uint64_t priv);
 extern void rename_user(aClient *sptr, char *nick_nuevo);
+extern void mask_user_flags(char *modes, int *addflags, int *addhmodes);
 extern void send_umode_out(aClient *cptr, aClient *sptr, int old, int oldh, int registrado);
 
 extern int m_svsnick(aClient *cptr, aClient *sptr, int parc, char *parv[]);
