@@ -1000,13 +1000,12 @@ int check_target_limit(aClient *sptr, void *target, const char *name,
 
 /*
  * Elimino colores mIRC de un mensaje, adaptado de strip_color2 de xchat
- * 
- * -- FreeMind 2009/02/16 
+ *
+ * -- FreeMind 2009/02/16
  */
 void strip_color (const char *src, int maxlength, char *dst)
 {
   int rcol = 0, bgcol = 0;
-  char *start = dst;
   int pos=0;
 
   while (*src && pos<(maxlength - 1))
@@ -1036,7 +1035,6 @@ void strip_color (const char *src, int maxlength, char *dst)
             case '\035':
               break;
             default:
-              pass_char:
               *dst++ = *src;
             }
           }
@@ -1714,8 +1712,6 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char *parv[])
  */
 int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  struct ConfItem *aconf;
-  struct hostent *he;
   struct db_reg *reg;
   unsigned short access_allowed = 0;
 
@@ -2836,12 +2832,17 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   /* find flags already set for user */
   setflags = 0;
   for (s = user_modes; (flag = *s); s += 2)
+  {
     if (sptr->flags & flag)
       setflags |= flag;
+  }
+
   sethmodes = 0;
   for (s = user_hmodes; (flag = *s); s += 2)
+  {
     if (sptr->hmodes & flag)
       sethmodes |= flag;
+  }
 
   if (MyConnect(sptr))
     tmpmask = sptr->snomask;
@@ -3061,10 +3062,12 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 ** dfm@unr.com 20090427
 */
   if (!IsServer(cptr) && !IsOper(sptr))
+  {
     if(sethmodes & HMODE_USERDEAF)
       SetUserDeaf(sptr);
     else
       ClearUserDeaf(sptr);
+  }
 
 
 /*
@@ -3072,10 +3075,12 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 ** dfm@unr.com 20090427
 */
   if (!IsServer(cptr) && !IsOper(sptr))
+  {
     if(sethmodes & HMODE_USERBITCH)
       SetUserBitch(sptr);
     else
       ClearUserBitch(sptr);
+  }
 
 /*
 ** Si somos IRCOPs y hemos puesto el flag K, lo acepta.
@@ -3284,6 +3289,8 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
   send_umode_out(cptr, acptr, setflags, sethmodes, IsRegistered(acptr));
 
 #endif
+
+  return 0;
 }
 
 void mask_user_flags(char *modes, int *addflags, int *addhmodes)
@@ -3367,7 +3374,9 @@ char *umode_str(aClient *cptr, aClient *acptr)
   c_hmodes =  cptr->hmodes & SEND_HMODES;
 
   for (s = user_hmodes; (flag = *s); s += 2)
+  {
     if (c_hmodes & flag)
+    {
       if(acptr)
       {
         if (flag & HMODES_HIDDEN_OPER)
@@ -3384,6 +3393,8 @@ char *umode_str(aClient *cptr, aClient *acptr)
       }
       else
         *m++ = *(s + 1);
+    }
+  }
 
   c_flags = cptr->flags & SEND_UMODES;  /* cleaning up the original code */
 
@@ -3974,7 +3985,6 @@ char *get_visiblehost(aClient *sptr, aClient *acptr, int audit)
  */
 void make_vhost(aClient *acptr, int mostrar)
 {
-  struct db_reg *reg = NULL;
   unsigned int v[2], x[2];
   int ts = 0;
   char ip_virtual_temporal[HOSTLEN + 1];
@@ -4066,7 +4076,6 @@ void make_vhostperso(aClient *acptr, int mostrar)
   if ((reg = db_buscar_registro(BDD_IPVIRTUALDB, acptr->name)))
   {
     char *vhost;
-    char *tmp;
 
     /* Copio el valor en memoria para evitar que corte el registro en
      * memoria de la BDD cuando hay un ! de separacion de campos.
@@ -4154,7 +4163,6 @@ static struct {
 static int
 client_report_privs(struct Client *to, struct Client *client)
 {
-  int found1 = 0;
   int i, idx, len, mlen;
 
   mlen = strlen(me.name) + 10 + strlen(to->name) + strlen(client->name);
@@ -4394,7 +4402,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
     {
       int of, oh;
       int flagsddb = 0;
-      char *automodes;
+      char *automodes = NULL;
 
       of = sptr->flags;
       oh = sptr->hmodes;
@@ -4418,8 +4426,6 @@ void rename_user(aClient *sptr, char *nick_nuevo)
         c = reg->valor[strlen(reg->valor) - 1];
         if (c == '+')
           flagsddb = DDB_NICK_SUSPEND;
-
-        automodes = NULL;
       }
 
       /* Rename a un nick registrado */
@@ -4622,7 +4628,7 @@ int m_ghost(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     json_object_object_get_ex(json, "pass", &json_pass);
     passddb = (char *)json_object_get_string(json_pass);
-    clave_ok = verifica_clave_nick(reg->clave, reg->valor, clave);
+    clave_ok = verifica_clave_nick(reg->clave, passddb, clave);
   } else {
     /* Formato antiguo pass */
     clave_ok = verifica_clave_nick(reg->clave, reg->valor, clave);
@@ -4706,7 +4712,6 @@ int m_svsnick(aClient *cptr, aClient *sptr, int parc, char *parv[])
   else {
     char nick[NICKLEN + 2];
     struct db_reg *reg;
-    char c;
 
     strncpy(nick, parv[2], nicklen + 1);
     nick[nicklen] = 0;
@@ -4785,7 +4790,7 @@ int m_svsnick(aClient *cptr, aClient *sptr, int parc, char *parv[])
  */
 int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  struct db_reg *reg, *regj;
+  struct db_reg *reg;
   char hflag = '-';
   int clave_ok = 0;             /* Clave correcta */
   int hacer_ghost = 0;          /* Ha especificado nick! */
@@ -4802,8 +4807,8 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char *regexp;
   char nick_low[NICKLEN+1];
   char *tmp;
-  char *reason;
-  char *automodes;
+  char *reason = NULL;
+  char *automodes = NULL;
 #if defined(BDD_VIP)
   int vhperso = 0;
 #endif
@@ -5060,7 +5065,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if (hacer_ghost && reg && (now >= cptr->nextnick))
     {
-      char *passddb;
+      char *passddb = NULL;
 
       if (*reg->valor == '{')
       {
@@ -5090,7 +5095,6 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if (clave_ok)
     {
-      struct db_reg *reg2;
       char nickwho[NICKLEN + 2];
 
       if (cptr->name == NULL)
@@ -5280,10 +5284,9 @@ nickkilldone:
   if (reg && (now >= cptr->nextnick))
   {
     char *nombre;
-    int usa_clave = 0;
     int nick_forbid = 0;
     int flagsddb = 0;
-    char *passddb;
+    char *passddb = NULL;
 
     if (*reg->valor == '{')
     {
@@ -5317,9 +5320,6 @@ nickkilldone:
         flagsddb = DDB_NICK_FORBID;
 
       passddb = reg->valor;
-      /* No soportado */
-      reason = NULL;
-      automodes = NULL;
     }
 
     if (flagsddb == DDB_NICK_SUSPEND)
@@ -5332,11 +5332,7 @@ nickkilldone:
      * verificar la clave de nuevo ya que se ha hecho
      * antes al hacer el ghost.
      */
-    if (clave_ok)
-    {
-      usa_clave = 1;
-    }
-    else if (!nick_forbid)
+    if (!clave_ok && !nick_forbid)
     {
       if (nick_autentificado_en_bdd && !strCasediff(parv[0], nick))
       {
@@ -5348,7 +5344,6 @@ nickkilldone:
         if (parc >= 3)
         {
           clave_ok = verifica_clave_nick(reg->clave, passddb, parv[2]);
-          usa_clave = 1;
         }
         else if (cptr->passbdd)
         {
@@ -5524,8 +5519,6 @@ nickkilldone:
      */
     if (IsUser(sptr))
     {
-      int cansend;
-
       for (lp = cptr->user->channel; lp; lp = lp->next)
         if (can_send(cptr, lp->value.chptr) == MODE_BAN)
         {

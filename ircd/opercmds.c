@@ -2118,12 +2118,7 @@ static void add_gline(aClient *cptr, aClient *sptr, char *host, char *comment,
  */
 int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-  aClient *acptr = NULL;        /* Init. to avoid compiler warning. */
-
   aGline *agline, *a2gline;
-  char *user, *host;
-  int active, gtype = 0;
-  time_t expire = 0, lastmod = 0, lifetime = 0;
 
   /* Remove expired G-lines */
   for (agline = gline, a2gline = NULL; agline; agline = agline->next)
@@ -2668,5 +2663,7 @@ static int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtyp
   agline->expire = expire;  /* reset the expire time */
   agline->lastmod = lastmod;
   agline->lifetime = lifetime;
+
+  return 1;
 }
 

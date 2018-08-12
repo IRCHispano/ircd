@@ -261,55 +261,6 @@ static void actualiza_hash(char *registro, unsigned char que_bdd)
   tabla_hash_lo[que_bdd] = x[1];
 }
 
-static void segmentar(char *registro, char **num_serie, char **destino,
-    char **bdd, char **clave, char **clave_fin, char **valor, char **valor_fin)
-{
-  char *p;
-
-  if (destino)
-    *destino = NULL;
-  if (bdd)
-    *bdd = NULL;
-  if (clave)
-    *clave = NULL;
-  if (clave_fin)
-    *clave_fin = NULL;
-  if (valor)
-    *valor = NULL;
-  if (valor_fin)
-    *valor_fin = NULL;
-
-  if (num_serie)
-    *num_serie = p = registro;
-  p = strchr(p, ' ');
-  if (!p)
-    return;
-  if (destino)
-    *destino = ++p;
-  p = strchr(p, ' ');
-  if (!p)
-    return;
-  if (bdd)
-    *bdd = ++p;
-  p = strchr(p, ' ');
-  if (!p)
-    return;
-  if (clave)
-    *clave = ++p;
-  while ((*p != '0') && (*p != ' ') && (*p != '\n'))
-    p++;
-  if (clave_fin)
-    *clave_fin = p;
-  if (*p != ' ')
-    return;
-  if (valor)
-    *valor = ++p;
-  while ((*p != '\0') && (*p != '\n'))
-    p++;
-  if (valor_fin)
-    *valor_fin = p;
-}
-
 /*
 ** Esta funcion SOLO debe llamarse desde "db_iterador_init" y "db_iterador_next"
 */
@@ -397,11 +348,6 @@ static struct db_reg *db_busca_db_reg(unsigned char tabla, char *clave)
 
   for (reg = tabla_datos[tabla][hashi]; reg != NULL; reg = reg->next)
   {
-/*
-      segmentar(reg->p,NULL,NULL,NULL,&p,&p2,NULL,NULL);
-      if ((strlen(c)==p2-p) && (!strncmp (p, c,p2-p)))
-        return reg;
-*/
     if (!strcmp(reg->clave, c))
       return reg;
   }
@@ -809,7 +755,9 @@ static inline void crea_canal_persistente(char *nombre, char *valor, int virgen)
   char *modes = NULL;
   char *owner = NULL;
   int cambionombre = 0;
+#if 0
   int sameowner = 0;
+#endif
 
   if (*valor == '{')
   {
@@ -1342,9 +1290,6 @@ struct db_reg *db_buscar_registro(unsigned char tabla, char *clave)
   if (!reg)
     return NULL;
 
-/*
-  segmentar(reg->p,NULL,NULL,NULL,&clave_init,&clave_end,&valor_init,&valor_end);
-*/
 /* Lo que sigue lo sustituye */
   clave_init = reg->clave;
   clave_end = clave_init + strlen(clave_init);
@@ -1404,6 +1349,7 @@ static void db_die(char *msg, unsigned char que_bdd)
 #endif
 }
 
+#if defined(BDD_MMAP)
 static void db_die_persistent(struct portable_stat *st1,
     struct portable_stat *st2, char *msg, unsigned char que_bdd)
 {
@@ -1445,6 +1391,7 @@ static void db_die_persistent(struct portable_stat *st1,
   strcat(buf, "]");
   db_die(buf, que_bdd);         /* No regresa */
 }
+#endif
 
 /*
  * leer_db
@@ -1527,6 +1474,7 @@ seek_db(struct tabla_en_memoria *mapeo, char *buf, unsigned int registro)
   return leer_db(mapeo, buf);
 }
 
+#if defined(BDD_MMAP)
 /*
 ** ATENCION: El multiplicador al final de esta rutina
 ** me permite variar el número de version del MMAP cache.
@@ -1543,6 +1491,7 @@ static unsigned int mmap_cache_version(void)
 
   return version * MMAP_CACHE_VERSION;  /* El multiplicador me permite variar el numero de version del MMAP cache */
 }
+#endif
 
 /*
 ** mmap_cache
@@ -3157,7 +3106,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
     int status = get_status(sptr);
 
     if (status) {
-      if (status & FLAGS_OPER|HMODE_ADMIN|HMODE_CODER)
+      if (status & (FLAGS_OPER|HMODE_ADMIN|HMODE_CODER))
         nivel_helper = 10;
       else if (status & HMODE_HELPOP)
         nivel_helper = 5;

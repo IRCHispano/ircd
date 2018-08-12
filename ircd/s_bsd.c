@@ -523,7 +523,6 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
   int num_clones = -1;
   int iline = 0;
   struct db_reg *reg;
-  Reg3 const char *hname;
   static char sockname[HOSTLEN + 1];
   Reg2 struct hostent *hp = NULL;
   Reg3 int i;

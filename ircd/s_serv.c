@@ -916,14 +916,13 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t start_timestamp)
 {
   Reg3 aClient *acptr;
-  char *inpath, *host;
+  char *inpath;
   int split, i;
 
   split = (strCasediff(cptr->name, PunteroACadena(cptr->sockhost))
       && strnCasecmp(PunteroACadena(cptr->info), "JUPE", 4));
   inpath = cptr->name;
-  host = cptr->name;
-  
+
   if (IsUnknown(cptr))
   {
 #if defined(ESNET_NEG)

@@ -496,12 +496,12 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
   cptr_info_low[REALLEN]='\0';
 
   tmp=cptr_info_low;
-  
+
   while (*tmp) {
     *tmp=toLower(*tmp);
     *tmp++;
   }
-  
+
   while (agline)
   {                             /* look through all glines */
     if (agline->expire <= TStime())
@@ -520,7 +520,7 @@ aGline *find_gline(aClient *cptr, aGline **pgline)
 
     /* Does gline match? */
     /* Added a check against the user's IP address as well -Kev */
-        
+
     if ((GlineIsIpMask(agline) ? ipmask_check(&cptr->ip, &agline->gl_addr, agline->gl_bits) == 0 :
     	(GlineIsRealName(agline) ? match_pcre(agline->re, tmp) :
     	  match(agline->host, PunteroACadena(cptr->sockhost)))) == 0 &&

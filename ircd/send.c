@@ -567,7 +567,6 @@ void sendto_channel_nocolor_butone(aClient *one, aClient *from, aChannel *chptr,
   va_list vl;
   Reg1 Link *lp;
   Reg2 aClient *acptr;
-  Reg3 int i;
 
   va_start(vl, pattern);
 

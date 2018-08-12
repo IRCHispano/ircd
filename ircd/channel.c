@@ -1502,8 +1502,6 @@ static int set_mode_local(aClient *cptr, aClient *sptr, aChannel *chptr,
   Mode *mode, oldm;
   static char numeric[16];
   char *bmbuf = bmodebuf, *bpbuf = bparambuf, *nbpbuf = nbparambuf;
-  unsigned char *p;
-  int invalid_banmask;
 
   assert(!IsServer(cptr));
   assert(MyUser(sptr));
@@ -4170,7 +4168,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   Reg2 aClient *acptr;
   Reg3 aChannel *chptr;
   Reg4 char *name;
-  int i = 0, zombie = 0, sendcreate = 0;
+  int zombie = 0, sendcreate = 0;
   unsigned int flags = 0;
   char *p=NULL;
   char *names_parv[2];
@@ -4200,14 +4198,14 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   sendto_op_mask(SNO_SERVICE,
         "El nodo '%s' solicita una entrada de canal '%s' para el nick '%s'", sptr->name, parv[2], acptr->name);
     */
-  
+
   if(!MyUser(acptr))
   {
     if(parc>3)
       sendcmdto_one(acptr, sptr, "SVSJOIN", TOK_SVSJOIN, "%s %s", parv[2], parv[3]);
     else
       sendcmdto_one(acptr, sptr, "SVSJOIN", TOK_SVSJOIN, "%s", parv[2]);
-      
+
     return 0;
   }
 
@@ -4216,10 +4214,10 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     clean_channelname(name);
     if (IsLocalChannel(name))
       continue;
-  
+
     if (!IsChannelName(name))
       continue;
-    
+
     if (ChannelExists(name))
     {
       flags = CHFL_DEOPPED;
@@ -4244,14 +4242,14 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
       flags = IsModelessChannel(name) ? CHFL_DEOPPED : CHFL_CHANOP;
       sendcreate = 1;
     }
-  
+
     chptr = get_channel(acptr, name, CREATE);
-  
+
     /* Si no puede entrar y el tercer parametro empieza por C que no entre */
     if(parc>3 && *parv[3]=='C' && chptr && can_join(acptr, chptr, ""))
       continue;
-  
-    
+
+
     if (chptr && (lp = find_user_link(chptr->members, acptr)))
     {
       if (lp->flags & CHFL_ZOMBIE)
@@ -4264,7 +4262,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
       else
        continue;
     }
-  
+
     if (!chptr->creationtime) /* A remote JOIN created this channel ? */
       chptr->creationtime = MAGIC_REMOTE_JOIN_TS;
     if (!zombie)
@@ -4274,17 +4272,17 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (RegisteredChannel(chptr) && IsNickRegistered(sptr)
         && chptr->owner && !strcmp(chptr->owner, sptr->name))
       flags = CHFL_OWNER;
-  
+
     /*
      * Complete user entry to the new channel (if any)
      */
     add_user_to_channel(chptr, acptr, flags);
-  
+
     /*
      * Notify all other users on the new channel
      */
     sendto_channel_butserv(chptr, acptr, ":%s JOIN :%s", acptr->name, name);
-  
+
     del_invite(acptr, chptr);
     if (chptr->topic)
     {
@@ -4292,12 +4290,12 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
       sendto_one(acptr, rpl_str(RPL_TOPICWHOTIME), me.name, acptr->name, name,
           chptr->topic_nick, chptr->topic_time);
     }
-  
+
     names_parv[0] = acptr->name;
     names_parv[1] = name;
     m_names(cptr, acptr, 2, names_parv);
-  
-  
+
+
     /* Propagate joins to P09 servers */
   #if !defined(NO_PROTOCOL9)
     sendto_lowprot_butone(NULL, 9,  ":%s JOIN %s", acptr->name, name);
@@ -4307,7 +4305,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else                         /* and now creation events */
       sendto_highprot_butone(NULL, 10, "%s%s " TOK_CREATE " %s " TIME_T_FMT,
           NumNick(acptr), name, TStime());
-  
+
     /* shouldn't ever set TS for remote JOIN's */
     if (!sendcreate)
     {                           /* check for channels that need TS's */
@@ -4322,7 +4320,7 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
         /* reset flag */
       }
     }
-  
+
     if (sendcreate)
     {                           /* ok, send along modes for creation events to P09 */
       chptr = get_channel(acptr, name, !CREATE);
@@ -4332,6 +4330,8 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   #endif
     }
   }
+
+  return 0;
 }
 
 /*
@@ -5665,19 +5665,19 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
     acptr = FindClient(parv[1]);
   if (!acptr)
     return 0;
-  
+
     /*
   sendto_op_mask(SNO_SERVICE,
       "El nodo '%s' solicita una salida de canal '%s' para el nick '%s'", sptr->name, parv[2], acptr->name);
     */
-  
+
   if(!MyUser(acptr))
   {
     if (parc < 4)
       sendcmdto_one(acptr, sptr, "SVSPART", TOK_SVSPART, ":%s", parv[2]);
     else
       sendcmdto_one(acptr, sptr, "SVSPART", TOK_SVSPART, "%s :%s", parv[2], parv[3]);
-    
+
     return 0;
   }
 
@@ -5726,6 +5726,8 @@ int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
     sendto_highprot_butone(NULL, 10, PartFmt1Serv, NumNick(acptr), name);
   }
+
+  return 0;
 }
 
 /*
@@ -6006,7 +6008,7 @@ int m_svskick(aClient *cptr, aClient *sptr, int parc, char *parv[])
   aChannel *chptr;
   char *name;
   char *comment;
-  Link *lp, *lp2;
+  Link *lp;
 
   sptr->flags &= ~FLAGS_TS8;
 
@@ -6082,6 +6084,8 @@ int m_svskick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
     sendto_highprot_butone(NULL, 10, PartFmt1Serv, NumNick(acptr), name);
   }
+
+  return 0;
 }
 
 /*

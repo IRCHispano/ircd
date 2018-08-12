@@ -631,36 +631,6 @@ static aConfItem *find_conf_entry(aConfItem *aconf, unsigned int mask)
   return bconf;
 }
 
-/*
- * find_conf_entry
- *
- * - looks for a match on all given fields except passwd.
- */
-static aConfItem *find_conf_entry_but_passwd(aConfItem *aconf, unsigned int mask)
-{
-  Reg1 aConfItem *bconf;
-
-  for (bconf = conf, mask &= ~CONF_ILLEGAL; bconf; bconf = bconf->next)
-  {
-    if (!(bconf->status & mask) || (bconf->port != aconf->port))
-      continue;
-
-    if ((BadPtr(bconf->host) && !BadPtr(aconf->host)) ||
-        (BadPtr(aconf->host) && !BadPtr(bconf->host)))
-      continue;
-    if (!BadPtr(bconf->host) && strCasediff(bconf->host, aconf->host))
-      continue;
-
-    if ((BadPtr(bconf->name) && !BadPtr(aconf->name)) ||
-        (BadPtr(aconf->name) && !BadPtr(bconf->name)))
-      continue;
-    if (!BadPtr(bconf->name) && strCasediff(bconf->name, aconf->name))
-      continue;
-    break;
-  }
-  return bconf;
-}
-
 #if defined(ESNET_NEG)
 static void prepara_negociaciones(void)
 {
@@ -1339,7 +1309,7 @@ int find_exception(aClient *cptr)
 
   for (tmp = conf; tmp; tmp = tmp->next)
   {
-    if (!(tmp->status) & CONF_EXCEPTION)
+    if (!(tmp->status & CONF_EXCEPTION))
       continue;
 
     if ((tmp->host && (match(tmp->host, PunteroACadena(cptr->sockhost)) == 0 ||
@@ -1613,7 +1583,6 @@ static void killcomment(aClient *sptr, char *parv, char *filename)
   char line[80];
   Reg1 char *tmp;
   struct stat sb;
-  struct tm *tm;
 
   if (NULL == (file = fbopen(filename, "r")))
   {
@@ -1624,7 +1593,6 @@ static void killcomment(aClient *sptr, char *parv, char *filename)
     return;
   }
   fbstat(&sb, file);
-  tm = localtime((time_t *) & sb.st_mtime); /* NetBSD needs cast */
   while (fbgets(line, sizeof(line) - 1, file))
   {
     if ((tmp = strchr(line, '\n')))

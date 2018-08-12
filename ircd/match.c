@@ -1130,7 +1130,7 @@ int match_pcre(pcre *re, char *subject)
   if(re==NULL || subject==NULL)
     return 1;
   
-  if(rc = pcre_exec(re, NULL, subject, strlen(subject), 0, 0, ovector, OVECCOUNT)<0)
+  if ((rc = pcre_exec(re, NULL, subject, strlen(subject), 0, 0, ovector, OVECCOUNT))<0)
     return 1;
   
   if (rc == 0)

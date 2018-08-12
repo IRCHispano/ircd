@@ -155,7 +155,7 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
      that there are no common channels, thus use PubChannel and not
      SeeChannel */
   if (!chptr && (!fields || (fields & (WHO_FIELD_CHA | WHO_FIELD_FLA)))
-      && !IsNoChan(acptr) || acptr == sptr || IsAnOper(sptr))
+      && (!IsNoChan(acptr) || (acptr == sptr) || IsAnOper(sptr)))
   {
     Reg3 Link *lp;
     for (lp = acptr->user->channel; lp && !chptr; lp = lp->next)
