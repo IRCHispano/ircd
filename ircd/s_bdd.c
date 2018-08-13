@@ -96,6 +96,7 @@ char *canal_debug = NULL;
 char *canal_privsdebug = NULL;
 int conversion_utf = 0;
 int permite_nicks_random = 0;
+int permite_nicks_suspend = 0;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -656,7 +657,10 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               permite_nicks_random = 0;
             }
-
+            else if (!strcmp(c, BDD_PERMITE_NICKS_SUSPEND))
+            {
+              permite_nicks_suspend = 0;
+            }
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -1152,11 +1156,17 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       }
       else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
       {
-        ocultar_servidores = !0;
+        if (!strcasecmp(v, "TRUE"))
+          ocultar_servidores = !0;
+        else
+          ocultar_servidores = 0;
       }
-      else if (!strcmp(c, BDD_ACTIVAR_IDENT) && !strcasecmp(v, "FALSE"))
+      else if (!strcmp(c, BDD_ACTIVAR_IDENT))
       {
-        activar_ident = !0;
+        if (!strcasecmp(v, "TRUE"))
+          activar_ident = !0;
+        else
+          activar_ident = 0;
       }
       else if (!strcmp(c, BDD_SERVER_NAME))
       {
@@ -1211,11 +1221,24 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       }
       else if (!strcmp(c, BDD_CONVERSION_UTF))
       {
-        conversion_utf = !0;
+        if (!strcasecmp(v, "TRUE"))
+          conversion_utf = !0;
+        else
+          conversion_utf = 0;
       }
       else if (!strcmp(c, BDD_PERMITE_NICKS_RANDOM))
       {
-        permite_nicks_random = !0;
+        if (!strcasecmp(v, "TRUE"))
+          permite_nicks_random = !0;
+        else
+          permite_nicks_random = 0;
+      }
+      else if (!strcmp(c, BDD_PERMITE_NICKS_SUSPEND))
+      {
+        if (!strcasecmp(v, "TRUE"))
+          permite_nicks_suspend = !0;
+        else
+          permite_nicks_suspend = 0;
       }
       break;
     case BDD_CONFIGDB:

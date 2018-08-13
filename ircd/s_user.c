@@ -5355,7 +5355,7 @@ nickkilldone:
     else
       nombre = nick;
 
-    if (clave_ok)
+    if (clave_ok && (!nick_suspendido || (nick_suspendido && permite_nicks_suspend)))
     {
       if (sptr->name == NULL)
       {
@@ -5377,6 +5377,15 @@ nickkilldone:
       }
       hflag = '+';
 
+    }
+    else if (nick_suspendido && !permite_nicks_suspend)
+    {
+      sendto_one(cptr,
+          ":%s NOTICE %s :*** El nick %s esta suspendido, no puede ser utilizado. Motivo: %s",
+          bot_nickserv ? bot_nickserv : me.name, nombre, nick, reason ? reason : "N.D.");
+      sendto_one(cptr, ":%s %d %s %s :Nickname is suspended, can not be used - El nick esta suspendido, no puede ser utilizado",
+          me.name, ERR_NICKNAMEINUSE, parv[0], nick);
+      return 0;
     }
     else if (nick_forbid)
     {

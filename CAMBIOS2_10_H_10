@@ -1,6 +1,14 @@
-* 2018/08/13  toni@tonigarcia.es (u2.10.H.10.255)                FEATURE
+* 2018/08/13  toni@tonigarcia.es (u2.10.H.10.257)                FEATURE
 ------------------------------------------------------------------------
-  Variable "allow_randomnick" en tabla f para activar o desactivar poder
+  Variable "allow_suspend_nicks" en tabla f para activar o desactivar poder
+  poner un nick suspendido (se recibe +S) o no.
+
+  Durante los tests se han detectado un bug en la gestion de valores
+  booleanos de la tabla f.
+
+* 2018/08/13  toni@tonigarcia.es (u2.10.H.10.256)                FEATURE
+------------------------------------------------------------------------
+  Variable "allow_random_nicks" en tabla f para activar o desactivar poder
   escoger un nick aleatorio con NICK *.
  
 * 2018/08/12  toni@tonigarcia.es (u2.10.H.10.255)                CLEANUP

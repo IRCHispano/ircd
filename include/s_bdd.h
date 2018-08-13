@@ -69,7 +69,8 @@
 #define BDD_CONVERSION_UTF                      "utf8_conversion"
 #define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA       "msg_fullcapacity"
 #define BDD_MENSAJE_PART_SVSKICK                "msg_svskick"
-#define BDD_PERMITE_NICKS_RANDOM		"allow_randomnick"
+#define BDD_PERMITE_NICKS_RANDOM		"allow_random_nicks"
+#define BDD_PERMITE_NICKS_SUSPEND               "allow_suspend_nicks"
 
 /* Para las features de los pseudoBOTS tabla 'c' */
 #define BDD_CHANSERV      "chanserv"
@@ -166,6 +167,7 @@ extern char *canal_debug;
 extern char *canal_privsdebug;
 extern int conversion_utf;
 extern int permite_nicks_random;
+extern int permite_nicks_suspend;
 
 /* -- mman.h no contiene algunas definicieones en plataformas antiguas -- */
 #if !defined(MAP_FAILED)
