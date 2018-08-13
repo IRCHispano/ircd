@@ -1,3 +1,8 @@
+* 2018/08/13  toni@tonigarcia.es (u2.10.H.10.255)                FEATURE
+------------------------------------------------------------------------
+  Variable "allow_randomnick" en tabla f para activar o desactivar poder
+  escoger un nick aleatorio con NICK *.
+ 
 * 2018/08/12  toni@tonigarcia.es (u2.10.H.10.255)                CLEANUP
 ------------------------------------------------------------------------
   Limpieza y correccion warnings.

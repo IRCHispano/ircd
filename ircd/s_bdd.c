@@ -95,6 +95,7 @@ char *canal_operadores = NULL;
 char *canal_debug = NULL;
 char *canal_privsdebug = NULL;
 int conversion_utf = 0;
+int permite_nicks_random = 0;
 
 /*
  * Las tablas con los registros, serie, version ...
@@ -650,6 +651,10 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             else if (!strcmp(c, BDD_CONVERSION_UTF))
             {
               conversion_utf = 0;
+            }
+            else if (!strcmp(c, BDD_PERMITE_NICKS_RANDOM))
+            {
+              permite_nicks_random = 0;
             }
 
           }                     /* Fin de "!reemplazar" */
@@ -1207,6 +1212,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if (!strcmp(c, BDD_CONVERSION_UTF))
       {
         conversion_utf = !0;
+      }
+      else if (!strcmp(c, BDD_PERMITE_NICKS_RANDOM))
+      {
+        permite_nicks_random = !0;
       }
       break;
     case BDD_CONFIGDB:

@@ -4841,17 +4841,15 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-#if 0
   /* CASO ESPECIAL
    * NICK *
    * Sirve para poner un nick aleatorio
    */
-  if ((strlen(parv[1]) == 1) && (*parv[1] == '*'))
+  if (permite_nicks_random &&(strlen(parv[1]) == 1) && (*parv[1] == '*'))
   {
      parv[1] = nuevo_nick_aleatorio(sptr);
      nick_aleatorio = 1;
   }
-#endif
 
   strncpy(nick, parv[1], nicklen + 1);
   nick[nicklen] = 0;
