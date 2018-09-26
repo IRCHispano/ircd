@@ -88,7 +88,6 @@ int excepcion_invisible = 0;
 int desactivar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
 char *mensaje_part_personalizado = NULL;
-char *mensaje_part_svskick = NULL;
 char *mensaje_gline = NULL;
 char *network = NULL;
 char *canal_operadores = NULL;
@@ -599,14 +598,6 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             else if (!strcmp(c, BDD_NICKLEN))
             {
               nicklen = 30;
-            }
-            else if(!strcmp(c, BDD_MENSAJE_PART_SVSKICK))
-            {
-              if(mensaje_part_svskick)
-              {
-                RunFree(mensaje_part_svskick);
-                mensaje_part_svskick=NULL;
-              }
             }
             else if(!strcmp(c, BDD_MENSAJE_GLINE))
             {
@@ -1194,10 +1185,6 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
           nicklen = NICKLEN;
         else
           nicklen = x;
-      }
-      else if(!strcmp(c, BDD_MENSAJE_PART_SVSKICK))
-      {
-        SlabStringAllocDup(&mensaje_part_svskick, v, 0);
       }
       else if(!strcmp(c, BDD_MENSAJE_GLINE))
       {

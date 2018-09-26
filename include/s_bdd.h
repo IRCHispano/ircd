@@ -68,7 +68,6 @@
 #define BDD_CANAL_PRIVSDEBUG                    "privsdebugchan"
 #define BDD_CONVERSION_UTF                      "utf8_conversion"
 #define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA       "msg_fullcapacity"
-#define BDD_MENSAJE_PART_SVSKICK                "msg_svskick"
 #define BDD_PERMITE_NICKS_RANDOM		"allow_random_nicks"
 #define BDD_PERMITE_NICKS_SUSPEND               "allow_suspend_nicks"
 
@@ -159,7 +158,6 @@ extern int excepcion_invisible;
 extern int desactivar_redireccion_canales;
 extern char *mensaje_quit_personalizado;
 extern char *mensaje_part_personalizado;
-extern char *mensaje_part_svskick;
 extern char *mensaje_gline;
 extern char *network;
 extern char *canal_operadores;

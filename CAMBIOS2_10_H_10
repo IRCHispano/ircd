@@ -1,3 +1,8 @@
+* 2018/09/26  toni@tonigarcia.es (u2.10.H.10.255)                CLEANUP
+------------------------------------------------------------------------
+  Se elimina el SVSKICK introducido en u2.10.H.10.193 por peticion de
+  NiKoLaS, no tiene ninguna utilidad en la actualidad.
+
 * 2018/08/13  toni@tonigarcia.es (u2.10.H.10.257)                FEATURE
 ------------------------------------------------------------------------
   Variable "allow_suspend_nicks" en tabla f para activar o desactivar poder
