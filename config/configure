@@ -6268,6 +6268,39 @@ if test "$unet_cv_pipe_flags" = yes ; then
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if the compiler understands -no-pie" >&5
+$as_echo_n "checking if the compiler understands -no-pie... " >&6; }
+unet_cv_nopie_flags="$ac_cv_c_compiler_gnu"
+if test "$ac_cv_c_compiler_gnu" = no; then
+  OLDCFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -no-pie"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  unet_cv_nopie_flags=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS="$OLDCFLAGS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $unet_cv_nopie_flags" >&5
+$as_echo "$unet_cv_nopie_flags" >&6; }
+if test "$unet_cv_nopie_flags" = yes ; then
+  x=`echo $CFLAGS | grep 'no-pie' 2>/dev/null`
+  if test "$x" = "" ; then
+    CFLAGS="$CFLAGS -no-pie"
+  fi
+fi
+
+
 
 
 

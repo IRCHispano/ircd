@@ -21,6 +21,29 @@ if test "$unet_cv_pipe_flags" = yes ; then
   fi
 fi
 ])
+dnl
+dnl Macro: unet_PIPE_CFLAGS
+dnl
+dnl   If the compiler understands -pipe, add it to CFLAGS if not already
+dnl   there.
+dnl
+AC_DEFUN(unet_NOPIE_CFLAGS,
+[AC_MSG_CHECKING([if the compiler understands -no-pie])
+unet_cv_nopie_flags="$ac_cv_prog_gcc"
+if test "$ac_cv_prog_gcc" = no; then
+  OLDCFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -no-pie"
+  AC_TRY_COMPILE(,,unet_cv_nopie_flags=yes,)
+  CFLAGS="$OLDCFLAGS"
+fi
+AC_MSG_RESULT($unet_cv_nopie_flags)
+if test "$unet_cv_nopie_flags" = yes ; then
+  x=`echo $CFLAGS | grep 'no-pie' 2>/dev/null`
+  if test "$x" = "" ; then
+    CFLAGS="$CFLAGS -no-pie"
+  fi
+fi
+])
 
 dnl
 dnl Macro: unet_CHECK_LIB_RESOLV

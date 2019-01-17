@@ -187,6 +187,9 @@ unet_SIGNALS
 dnl Add -pipe when possible
 unet_PIPE_CFLAGS
 
+dnl Add -no-pie when possible
+unet_NOPIE_CFLAGS
+
 dnl Used in config-sh.
 AC_SUBST(ac_cv_header_poll_h)
 AC_SUBST(ac_cv_header_syslog_h)
