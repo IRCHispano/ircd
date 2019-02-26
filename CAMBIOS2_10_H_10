@@ -1,3 +1,8 @@
+* 2019/02/26  toni@tonigarcia.es (u2.10.H.10.260)                CLEANUP
+------------------------------------------------------------------------
+  Correccion MOTD por DDB.
+  Limpieza codigo sin usar.
+
 * 2019/01/17  toni@tonigarcia.es (u2.10.H.10.259)                CLEANUP
 ------------------------------------------------------------------------
   Soporte de Debian Buster 10.

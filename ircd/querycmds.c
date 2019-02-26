@@ -500,7 +500,7 @@ int m_motd(aClient *cptr, aClient *sptr, int parc, char *parv[])
       else
         sendto_one(sptr, rpl_str(RPL_MOTD), me.name, parv[0], reg->valor);
       sprintf(tmp_str, "%d", ++i);
-      reg = db_buscar_registro(BDD_CONFIGDB, tmp_str);
+      reg = db_buscar_registro(BDD_MOTDDB, tmp_str);
     }
 
     if (!i)

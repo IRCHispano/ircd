@@ -67,7 +67,7 @@ OBJS=IPcheck.o bsd.o channel.o class.o common.o crule.o dbuf.o fileio.o ircd.o \
      random.o res.o runmalloc.o s_auth.o s_bsd.o s_conf.o s_debug.o s_err.o \
      s_misc.o s_numeric.o s_ping.o s_serv.o s_user.o send.o sprintf_irc.o \
      support.o userload.o whocmds.o whowas.o hash.o s_bdd.o \
-     m_config.o m_watch.o persistent_malloc.o slab_alloc.o aes.o \
+     m_config.o m_watch.o persistent_malloc.o slab_alloc.o \
      pcre_compile.o pcre_exec.o pcre_newline.o pcre_globals.o \
      pcre_tables.o pcre_chartables.o pcre_try_flipped.o
 
@@ -247,8 +247,9 @@ IPcheck.o: IPcheck.c ../include/sys.h ../include/../config/config.h \
  ../libevent/event.h ../libevent/event-config.h ../libevent/evutil.h \
  ../include/res.h ../include/../libevent/event.h ../include/list.h \
  ../zlib/zlib.h ../zlib/zconf.h ../include/s_user.h ../include/s_bsd.h \
- ../include/s_conf.h ../include/send.h ../include/s_bdd.h \
- ../include/struct.h ../include/support.h
+ ../include/s_conf.h ../include/match.h ../include/pcre.h \
+ ../include/send.h ../include/s_bdd.h ../include/struct.h \
+ ../include/support.h
 bsd.o: bsd.c ../include/sys.h ../include/../config/config.h \
  ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
@@ -377,7 +378,7 @@ opercmds.o: opercmds.c ../include/sys.h ../include/../config/config.h \
  ../include/sprintf_irc.h ../include/userload.h ../include/parse.h \
  ../include/numnicks.h ../include/crule.h ../include/version.h \
  ../include/support.h ../include/s_serv.h ../include/hash.h \
- ../include/s_serv.h
+ ../include/s_serv.h ../include/persistent_malloc.h
 packet.o: packet.c ../include/sys.h ../include/../config/config.h \
  ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
@@ -530,7 +531,7 @@ s_ping.o: s_ping.c ../include/sys.h ../include/../config/config.h \
  ../include/s_ping.h ../include/support.h ../include/numeric.h \
  ../include/s_user.h ../include/s_err.h ../include/common.h \
  ../include/sys.h ../include/numnicks.h ../include/msg.h \
- ../include/slab_alloc.h
+ ../include/s_bdd.h ../include/slab_alloc.h
 s_serv.o: s_serv.c ../include/sys.h ../include/../config/config.h \
  ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
@@ -539,14 +540,15 @@ s_serv.o: s_serv.c ../include/sys.h ../include/../config/config.h \
  ../include/list.h ../zlib/zlib.h ../zlib/zconf.h ../include/ircd.h \
  ../include/s_serv.h ../include/struct.h ../include/s_misc.h \
  ../include/sprintf_irc.h ../include/send.h ../include/s_err.h \
- ../include/numeric.h ../include/s_bsd.h ../include/s_conf.h \
- ../include/s_conf.h ../include/hash.h ../include/s_serv.h \
- ../include/common.h ../include/sys.h ../include/s_bdd.h ../include/msg.h \
- ../include/m_config.h ../include/dbuf.h ../include/match.h \
- ../include/pcre.h ../include/crule.h ../include/parse.h \
- ../include/numnicks.h ../include/userload.h ../include/s_user.h \
- ../include/channel.h ../include/querycmds.h ../include/IPcheck.h \
- ../include/slab_alloc.h ../include/opercmds.h
+ ../include/numeric.h ../include/class.h ../include/s_bsd.h \
+ ../include/s_conf.h ../include/s_conf.h ../include/hash.h \
+ ../include/s_serv.h ../include/common.h ../include/sys.h \
+ ../include/s_bdd.h ../include/msg.h ../include/m_config.h \
+ ../include/dbuf.h ../include/match.h ../include/pcre.h \
+ ../include/crule.h ../include/parse.h ../include/numnicks.h \
+ ../include/userload.h ../include/s_user.h ../include/channel.h \
+ ../include/querycmds.h ../include/IPcheck.h ../include/slab_alloc.h \
+ ../include/opercmds.h
 s_user.o: s_user.c ../include/sys.h ../include/../config/config.h \
  ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
@@ -564,7 +566,7 @@ s_user.o: s_user.c ../include/sys.h ../include/../config/config.h \
  ../include/version.h ../include/msg.h ../include/userload.h \
  ../include/numnicks.h ../include/sprintf_irc.h ../include/querycmds.h \
  ../include/IPcheck.h ../include/class.h ../include/slab_alloc.h \
- ../include/network.h ../include/aes.h
+ ../include/network.h ../include/m_config.h
 send.o: send.c ../include/sys.h ../include/../config/config.h \
  ../include/../config/setup.h ../include/runmalloc.h ../include/h.h \
  ../include/s_debug.h ../include/struct.h ../include/whowas.h \
@@ -576,7 +578,8 @@ send.o: send.c ../include/sys.h ../include/../config/config.h \
  ../include/sys.h ../include/match.h ../include/pcre.h ../include/list.h \
  ../include/ircd.h ../include/channel.h ../include/bsd.h \
  ../include/class.h ../include/s_user.h ../include/slab_alloc.h \
- ../include/sprintf_irc.h ../include/numnicks.h
+ ../include/sprintf_irc.h ../include/numnicks.h ../include/hash.h \
+ ../include/s_serv.h ../include/s_bdd.h
 sprintf_irc.o: sprintf_irc.c ../include/sys.h \
  ../include/../config/config.h ../include/../config/setup.h \
  ../include/runmalloc.h ../include/h.h ../include/s_debug.h \
@@ -670,9 +673,6 @@ persistent_malloc.o: persistent_malloc.c ../include/persistent_malloc.h
 slab_alloc.o: slab_alloc.c ../include/sys.h ../include/../config/config.h \
  ../include/../config/setup.h ../include/runmalloc.h \
  ../include/runmalloc.h ../include/slab_alloc.h
-aes.o: aes.c ../include/sys.h ../include/../config/config.h \
- ../include/../config/setup.h ../include/runmalloc.h ../include/aes.h \
- ../include/padlock.h ../include/aes.h
 pcre_compile.o: pcre_compile.c ../include/pcre_internal.h \
  ../include/pcre_config.h ../include/pcre.h ../include/ucp.h
 pcre_exec.o: pcre_exec.c ../include/pcre_internal.h \
