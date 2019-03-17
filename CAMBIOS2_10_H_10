@@ -1,3 +1,9 @@
+* 2019/03/17  toni@tonigarcia.es (u2.10.H.10.261)                FEATURE
+------------------------------------------------------------------------
+  Cambio de formato en la tabla o, ahora se usa JSON.
+  En modes se pone los modos a poner, asi cualquier cambio se hace por
+  los services sin necesidad de modificar el ircd como antes.
+ 
 * 2019/02/26  toni@tonigarcia.es (u2.10.H.10.260)                CLEANUP
 ------------------------------------------------------------------------
   Correccion MOTD por DDB.

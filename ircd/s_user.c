@@ -3858,32 +3858,103 @@ int get_status(aClient *sptr)
   reg = db_buscar_registro(BDD_OPERDB, sptr->name);
 
   if (reg) {
-      /* Sistema nuevo, por flags */
-      switch (*reg->valor)
+      if (*reg->valor == '{')
       {
-        case 'a':
-          status |= HMODE_ADMIN | FLAGS_OPER;
-          break;
+        /* Formato nuevo JSON */
+        json_object *json, *json_modes;
+        enum json_tokener_error jerr = json_tokener_success;
+        char *modes;
+        char c, *p;
+        int add = 1;
 
-        case 'c':
-          status |= HMODE_CODER | FLAGS_OPER;
-          break;
+        json = json_tokener_parse_verbose(reg->valor, &jerr);
+        if (jerr != json_tokener_success)
+          return 0;
 
-        case 'b':
-          status |= HMODE_SERVICESBOT | FLAGS_OPER;
-          break;
+        json_object_object_get_ex(json, "modes", &json_modes);
+        modes = (char *)json_object_get_string(json_modes);
 
-        case 'h':
-          status |= FLAGS_OPER;
+        if (modes)
+        {
+          p = modes;
 
-        case 'o':
-          status |= FLAGS_OPER;
+          while (!0)
+          {
+            c = *p++;
+            switch (c)
+            {
+              case '\0':
+              case ' ':
+              case '\t':
+                return status;
 
-        case 'p':
-          status |= HMODE_HELPOP;
-          break;
+              case '+':
+                add = 1;
+                break;
+              case '-':
+                add = 0;
+                break;
+              case 'a':
+                if (add)
+                  status |= HMODE_ADMIN;
+                break;
+              case 'C':
+                if (add)
+                  status |= HMODE_CODER;
+                break;
+              case 'h':
+                if (add)
+                  status |= HMODE_HELPOP;
+                break;
+              case 'o':
+                if (add)
+                  status |= FLAGS_OPER;
+                break;
+              case 'O':
+                if (add)
+                  status |= FLAGS_LOCOP;
+                break;
+              case 'B':
+                if (add)
+                  status |= HMODE_SERVICESBOT;
+                break;
+
+              default:
+                break;
+            }
+          }
+        }
+
+        return status;
+
+      } else {
+        /* Sistema nuevo, por flags */
+        switch (*reg->valor)
+        {
+          case 'a':
+            status |= HMODE_ADMIN | FLAGS_OPER;
+            break;
+
+          case 'c':
+            status |= HMODE_CODER | FLAGS_OPER;
+            break;
+
+          case 'b':
+            status |= HMODE_SERVICESBOT | FLAGS_OPER;
+            break;
+
+          case 'h':
+            status |= FLAGS_OPER;
+
+          case 'o':
+            status |= FLAGS_OPER;
+
+          case 'p':
+            status |= HMODE_HELPOP;
+            break;
+        }
+        return status;
       }
-      return status;
   }
 
   return 0;
@@ -4119,7 +4190,27 @@ void set_privs(aClient *sptr)
   reg = db_buscar_registro(BDD_OPERDB, sptr->name);
 
   if (reg) {
-    sptr->privs = atoll(reg->valor+2);
+    if (*reg->valor == '{')
+    {
+      u_int64_t privs;
+
+      /* Formato nuevo JSON */
+      json_object *json, *json_privs;
+      enum json_tokener_error jerr = json_tokener_success;
+
+      json = json_tokener_parse_verbose(reg->valor, &jerr);
+      if (jerr != json_tokener_success)
+      {
+        sptr->privs = 0;
+        return;
+      }
+
+      json_object_object_get_ex(json, "privs", &json_privs);
+      privs =  json_object_get_int64(json_privs);
+      sptr->privs = privs;
+    } else {
+      sptr->privs = atoll(reg->valor+2);
+    }
   } else {
     sptr->privs = 0;
   }
