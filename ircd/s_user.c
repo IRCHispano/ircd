@@ -5989,6 +5989,7 @@ nickkilldone:
  *
  * If from server, source is client:
  *   parv[2] = timestamp
+ *   parv[3] = modes
  *
  * Source is server:
  *   parv[2] = hopcount
@@ -6419,15 +6420,46 @@ nickkilldone:
       sendto_common_channels(sptr, ":%s NICK :%s", parv[0], nick);
 
       add_history(sptr, 1);
+      if (parc > 3 && *parv[3]=='+') {
+        int flag, *s;
+        char *p;
+
+        for (p = parv[6] + 1; *p; p++)
+        {
+          for (s = user_modes; (flag = *s); s += 2)
+            if (((char)*(s + 1)) == *p)
+            {
+              sptr->flags |= flag;
+              break;
+            }
+          for (s = user_hmodes; (flag = *s); s += 2)
+            if (((char)*(s + 1)) == *p)
+            {
+              sptr->hmodes |= flag;
+              break;
+            }
+        }
+
 #if defined(NO_PROTOCOL9)
-      sendto_serv_butone(cptr,
-          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+        sendto_serv_butone(cptr,
+            "%s%s " TOK_NICK " %s " TIME_T_FMT " %s", NumNick(sptr), nick, sptr->lastnick, parv[3]);
 #else
-      sendto_lowprot_butone(cptr, 9,
-          ":%s NICK %s " TIME_T_FMT, parv[0], nick, sptr->lastnick);
-      sendto_highprot_butone(cptr, 10,
-          "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+        sendto_lowprot_butone(cptr, 9,
+            ":%s NICK %s " TIME_T_FMT " %s", parv[0], nick, sptr->lastnick, parv[3]);
+        sendto_highprot_butone(cptr, 10,
+            "%s%s " TOK_NICK " %s " TIME_T_FMT " %s", NumNick(sptr), nick, sptr->lastnick, parv[3]);
 #endif
+      } else {
+#if defined(NO_PROTOCOL9)
+        sendto_serv_butone(cptr,
+            "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+#else
+        sendto_lowprot_butone(cptr, 9,
+            ":%s NICK %s " TIME_T_FMT, parv[0], nick, sptr->lastnick);
+        sendto_highprot_butone(cptr, 10,
+            "%s%s " TOK_NICK " %s " TIME_T_FMT, NumNick(sptr), nick, sptr->lastnick);
+#endif
+      }
     }
     else
     { /* Si no es un usuario quien se intenta cambiar el nick salgo */

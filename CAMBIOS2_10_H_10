@@ -1,3 +1,10 @@
+* 2019/03/19  toni@tonigarcia.es (u2.10.H.10.262)                FEATURE
+------------------------------------------------------------------------
+  Modificacion del comando NICK de servidor para soportar el nuevo sistema
+  de nicks +r del nuevo IRCD.
+  Este parche es de transicion para IRC-Hispano, solo para que se propague
+  por la red en una mezcla transitoria de ircds viejos con ircds nuevos.
+
 * 2019/03/17  toni@tonigarcia.es (u2.10.H.10.261)                FEATURE
 ------------------------------------------------------------------------
   Cambio de formato en la tabla o, ahora se usa JSON.
