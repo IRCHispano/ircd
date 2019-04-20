@@ -71,9 +71,9 @@
 
 #if defined(DEBUGMODE)          /* Coredump if we miss something... */
 #define IsServer(x)		( ((x)->status == STAT_SERVER) && \
-                                  (((x)->serv) ? 1 : (*((char *) NULL) = 0)) )
+                                  (((x)->serv) ? 1 : MyCoreDump) )
 #define IsUser(x)		( ((x)->status == STAT_USER) && \
-                                  (((x)->user) ? 1 : (*((char *) NULL) = 0)) )
+                                  (((x)->user) ? 1 : MyCoreDump) )
 #else
 #define IsServer(x)		((x)->status == STAT_SERVER)
 #define IsUser(x)		((x)->status == STAT_USER)

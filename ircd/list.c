@@ -45,8 +45,6 @@
 
 #include <assert.h>
 
-RCSTAG_CC("$Id$");
-
 #if defined(DEBUGMODE)
 static struct liststats {
   int inuse;

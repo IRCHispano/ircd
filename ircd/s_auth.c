@@ -28,9 +28,6 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#if defined(HPUX)
-#include <arpa/inet.h>
-#endif /* HPUX */
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -55,8 +52,6 @@
 #include "slab_alloc.h"
 #include "sprintf_irc.h"
 #include "s_bdd.h"
-
-RCSTAG_CC("$Id$");
 
 #define IDENT_START ":%s NOTICE IDENT_LOOKUP :*** Checking Ident\r\n"
 #define IDENT_OK ":%s NOTICE IDENT_LOOKUP :*** Got ident response\r\n"

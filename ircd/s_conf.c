@@ -75,8 +75,6 @@
 #include "fileio.h"
 #include "slab_alloc.h"
 
-RCSTAG_CC("$Id$");
-
 static int check_time_interval(char *, char *);
 static int lookup_confhost(aConfItem *);
 static int is_comment(char *);

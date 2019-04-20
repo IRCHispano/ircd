@@ -61,8 +61,6 @@
 #include "slab_alloc.h"
 
 
-RCSTAG_CC("$Id$");
-
 #define UPINGBUFSIZE 2000       /* Lot bigger then 1024,
                                    bit smaller then 2048 */
 #define UPINGTIMEOUT 120        /* Timeout waitting for first ping response */
@@ -153,11 +151,7 @@ void send_ping(aClient *cptr)
   remote_addr.sin_family = AF_INET;
 
   gettimeofday(&tv, NULL);
-#if defined(__sun__) || (__GLIBC__ >= 2) || defined(__NetBSD__)
-  sprintf((char *)cptr->confs, " %10lu%c%6lu", tv.tv_sec, '\0', tv.tv_usec);
-#else
-  sprintf((char *)cptr->confs, " %10u%c%6u", tv.tv_sec, '\0', tv.tv_usec);
-#endif
+  sprintf((char *)cptr->confs, " %10lu%c%6u", tv.tv_sec, '\0', tv.tv_usec);
 
   Debug((DEBUG_SEND, "send_ping: sending [%s %s] to %s.%d on %d",
       (char *)cptr->confs, (char *)cptr->confs + 12,

@@ -22,13 +22,6 @@
 #if HAVE_SYS_FILE_H
 #include <sys/file.h>
 #endif
-#if defined(HPUX) && HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-#if defined(HPUX)
-#include <sys/syscall.h>
-#define getrusage(a,b) syscall(SYS_GETRUSAGE, a, b)
-#endif
 #if HAVE_GETRUSAGE
 #include <sys/resource.h>
 #else
@@ -57,8 +50,6 @@
 #include "channel.h"
 #include "msg.h"
 #include "numnicks.h"
-
-RCSTAG_CC("$Id$");
 
 /* *INDENT-OFF* */
 
@@ -289,9 +280,6 @@ void send_usage(aClient *cptr, char *nick)
 #define hzz HZ
 #else
   int hzz = 1;
-#if defined(HPUX)
-  hzz = (int)sysconf(_SC_CLK_TCK);
-#endif
 #endif
 #endif
 
@@ -314,11 +302,7 @@ void send_usage(aClient *cptr, char *nick)
   if (secs == 0)
     secs = 1;
 
-#if defined(__sun__) || defined(__bsdi__) || (__GLIBC__ >= 2) || defined(__NetBSD__)
-  sendto_one(cptr, ":%s %d %s :CPU Secs %ld:%ld User %ld:%ld System %ld:%ld",
-#else
   sendto_one(cptr, ":%s %d %s :CPU Secs %ld:%ld User %d:%d System %d:%d",
-#endif
       me.name, RPL_STATSDEBUG, nick, secs / 60, secs % 60,
       rus.ru_utime.tv_sec / 60, rus.ru_utime.tv_sec % 60,
       rus.ru_stime.tv_sec / 60, rus.ru_stime.tv_sec % 60);
@@ -343,9 +327,6 @@ void send_usage(aClient *cptr, char *nick)
   int hzz = 1, ticpermin;
   int umin, smin, usec, ssec;
 
-#if defined(HPUX)
-  hzz = sysconf(_SC_CLK_TCK);
-#endif
   ticpermin = hzz * 60;
 
   umin = tmsbuf.tms_utime / ticpermin;

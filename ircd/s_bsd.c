@@ -27,9 +27,6 @@
 #if HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
-#if defined(SOL2)
-#include <sys/filio.h>
-#endif
 #include <stdio.h>
 #if defined(HAVE_STROPTS_H)
 #include <stropts.h>
@@ -87,8 +84,6 @@
 #include "IPcheck.h"
 #include "msg.h"
 #include "slab_alloc.h"
-
-RCSTAG_CC("$Id$");
 
 #define IP_LOOKUP_START ":%s NOTICE IP_LOOKUP :*** Looking up your hostname...\r\n"
 #define IP_LOOKUP_OK ":%s NOTICE IP_LOOKUP :*** Found your hostname.\r\n"
@@ -201,7 +196,7 @@ void report_error(char *text, aClient *cptr)
    * This may only work when SO_DEBUG is enabled but its worth the
    * gamble anyway.
    */
-#if defined(SO_ERROR) && !defined(SOL2)
+#if defined(SO_ERROR)
   if (cptr && !IsMe(cptr) && cptr->fd >= 0)
     if (!getsockopt(cptr->fd, SOL_SOCKET, SO_ERROR, (OPT_TYPE *)&err, &len))
       if (err)
@@ -422,12 +417,7 @@ void init_sys(void)
       close(fd);
     }
 #endif
-#if defined(HPUX) || defined(SOL2) || defined(_SEQUENT_) || \
-    defined(_POSIX_SOURCE) || defined(SVR4)
-    setsid();
-#else
     setpgid(0, 0);
-#endif
     close(0);                   /* fd 0 opened by inetd */
     loc_clients[0] = NULL;
   }
@@ -1103,15 +1093,7 @@ static void set_sock_opts(int fd, aClient *cptr)
   }
 #endif
 #if defined(SO_SNDBUF)
-#if defined(_SEQUENT_)
-/*
- * Seems that Sequent freezes up if the receving buffer is a different size
- * to the sending buffer (maybe a tcp window problem too).
- */
   opt = 8192;
-#else
-  opt = 8192;
-#endif
   if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (OPT_TYPE *)&opt, sizeof(opt)) < 0)
   {
 #if defined(DEBUGMODE)
@@ -1150,7 +1132,7 @@ int get_sockerr(aClient *cptr)
 {
   int errtmp = errno, err = 0;
   socklen_t len = sizeof(err);
-#if defined(SO_ERROR) && !defined(SOL2)
+#if defined(SO_ERROR)
   if (cptr->fd >= 0)
     if (!getsockopt(cptr->fd, SOL_SOCKET, SO_ERROR, (OPT_TYPE *)&err, &len))
       if (err)

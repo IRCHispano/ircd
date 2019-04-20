@@ -31,8 +31,6 @@
 #include "s_debug.h"
 #include "sprintf_irc.h"
 
-RCSTAG_CC("$Id$");
-
 /* *INDENT-OFF* */
 
 const char atoi_tab[4000] = {

@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #include "sys.h"
 #include "runmalloc.h"
 #include "slab_alloc.h"

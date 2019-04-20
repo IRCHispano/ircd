@@ -40,8 +40,6 @@
 #include "numeric.h"
 #include "s_err.h"
 
-RCSTAG_CC("$Id$");
-
 /************************* Nemesi's hash alghoritm ***********************/
 
 /* This hash function returns *exactly* N%HASHSIZE, where 'N'

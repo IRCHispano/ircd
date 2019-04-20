@@ -36,8 +36,6 @@
 #include "s_numeric.h"
 #include "s_bdd.h"
 
-RCSTAG_CC("$Id$");
-
 static char buffer[1024];
 
 /*

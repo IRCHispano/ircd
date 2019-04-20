@@ -28,8 +28,6 @@
 #include "ircd.h"
 #include "bsd.h"
 
-RCSTAG_CC("$Id$");
-
 #if defined(DEBUGMODE)
 int writecalls = 0;
 int writeb[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -79,9 +77,6 @@ int deliver_it(aClient *cptr, const char *str, int len)
    * ...now, would this work on VMS too? --msa
    */
   if (retval < 0 && (errno == EWOULDBLOCK || errno == EAGAIN ||
-#if defined(SOL2)
-      errno == ENOMEM || errno == ENOSR ||
-#endif
       errno == ENOBUFS))
   {
     retval = 0;

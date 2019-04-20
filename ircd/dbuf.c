@@ -33,8 +33,6 @@
 #include <assert.h>
 #include <string.h>
 
-RCSTAG_CC("$Id$");
-
 /*
  * dbuf is a collection of functions which can be used to
  * maintain a dynamic buffering of a byte stream.

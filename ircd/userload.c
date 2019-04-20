@@ -40,8 +40,6 @@
 #include "s_serv.h"
 #include "querycmds.h"
 
-RCSTAG_CC("$Id$");
-
 struct current_load_st current_load;  /* The current load */
 
 static struct current_load_st cspm_sum; /* Number of connections times number

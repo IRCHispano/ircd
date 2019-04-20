@@ -56,8 +56,6 @@
 #include "querycmds.h"
 #include "s_bdd.h"
 
-RCSTAG_CC("$Id$");
-
 /*
  * m_functions execute protocol messages on this server:
  *

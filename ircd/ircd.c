@@ -28,13 +28,7 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
-#if defined(HPUX)
-#define _KERNEL
-#endif
 #include <sys/resource.h>
-#if defined(HPUX)
-#undef _KERNEL
-#endif
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -81,8 +75,6 @@
 #include "network.h"
 #include "msg.h"
 #include "random.h"
-
-RCSTAG_CC("$Id$");
 
 extern void init_counters(void);
 
@@ -630,13 +622,6 @@ int main(int argc, char *argv[])
 #endif
 
 #if !defined(CHROOTDIR) || (defined(IRC_UID) && defined(IRC_GID))
-#if !defined(_AIX)
-  if (euid != uid)
-  {
-    setuid((uid_t) uid);
-    setuid((uid_t) euid);
-  }
-#endif
 
   if ((int)getuid() == 0)
   {

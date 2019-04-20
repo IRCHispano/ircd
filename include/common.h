@@ -218,7 +218,7 @@ extern int strnCasecmp(const char *a, const char *b, const size_t n);
                                   evutil_timerclear((x)->w); \
                                   (x)->w->tv_usec=0; \
                                   (x)->w->tv_sec=(y); \
-                                  Debug((DEBUG_DEBUG, "timer on %s time %d", (x)->name, (x)->w->tv_sec)); \
+                                  Debug((DEBUG_DEBUG, "timer on %s time %ld", (x)->name, (x)->w->tv_sec)); \
                                   assert(evtimer_add((x)->z, (x)->w)!=-1); \
                                } while (0)
 #define UpdateTimer(x,y)       UpdateGTimer(x,y,evtimer,tm_timer)

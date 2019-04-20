@@ -52,8 +52,6 @@
 
 #include <assert.h>
 
-RCSTAG_CC("$Id$");
-
 /* *INDENT-OFF* */
 
 aMessage msgtab[] = {

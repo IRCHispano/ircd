@@ -22,48 +22,12 @@
 
 #include "../config/config.h"
 #include "../config/setup.h"
-
-#if defined(__osf__)
-#define _OSF_SOURCE
-#endif
-
-#if defined(__sun__)
-#if defined(__svr4__)
-#define SOL2
-#else
-#define SUNOS4
-#endif
-#endif
-
-/* Para Solaris 10 de algun nodo */
-#if defined(__sun__)
-#define u_int16_t unsigned short
-#define u_int32_t unsigned int
-#endif
+#include <signal.h>
 
 #if WORDS_BIGENDIAN
 # define BIT_ZERO_ON_LEFT
 #else
 # define BIT_ZERO_ON_RIGHT
-#endif
-
-#if defined(_SEQUENT_)          /* Dynix 1.4 or 2.0 Generic Define.. */
-#undef BSD
-#define SYSV                    /* Also #define SYSV */
-#endif
-
-#if defined(__hpux)
-#define HPUX
-#endif
-
-#if defined(sgi)
-#define SGI
-#endif
-
-#if defined(mips)
-#undef SYSV
-#undef BSD
-#define BSD 1                   /* mips only works in bsd43 environment */
 #endif
 
 #if defined(BSD_RELIABLE_SIGNALS)
@@ -91,44 +55,20 @@
  */
 #define MAXCLIENTS	(MAXCONNECTIONS-24)
 
-#if defined(HAVECURSES)
-#define DOCURSES
-#else
-#undef DOCURSES
-#endif
-
-#if defined(HAVETERMCAP)
-#define DOTERMCAP
-#else
-#undef DOTERMCAP
-#endif
-
 #if defined(CLIENT_FLOOD)
 #if (CLIENT_FLOOD > 8000) || (CLIENT_FLOOD < 512)
 #error CLIENT_FLOOD needs redefining.
 #endif
 #else
-#error CLIENT_FLOOD undefined
+#define CLIENT_FLOOD 2048
 #endif
 
 #if !defined(CONFIG_SETUGID)
 #undef IRC_UID
 #undef IRC_GID
 #endif
-/*
-#define Reg1 register
-#define Reg2 register
-#define Reg3 register
-#define Reg4 register
-#define Reg5 register
-#define Reg6 register
-#define Reg7 register
-#define Reg8 register
-#define Reg9 register
-#define Reg10 register
-i*/
 
-#define Reg1 
+#define Reg1
 #define Reg2
 #define Reg3
 #define Reg4
@@ -141,23 +81,9 @@ i*/
 
 #define register
 
-/* Define FD_SETSIZE to what we want before including sys/types.h on BSD */
-#if  defined(__FreeBSD__) || defined(__NetBSD__) || defined(__bsdi__)
-#if ((!defined(USE_POLL)) && (!defined(FD_SETSIZE)))
-#define FD_SETSIZE ((MAXCONNECTIONS)+4)
-#endif
-#endif
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/param.h>
-
-#if defined(__osf__)
-#undef _OSF_SOURCE
-/* Buggy header */
-#include <netdb.h>
-#define _OSF_SOURCE
-#endif
 
 #if HAVE_ERRNO_H
 # include <errno.h>
@@ -195,7 +121,7 @@ char *strchr(), *strrchr(), *strtok();
 # endif
 #endif
 
-#if defined(_AIX) || (defined(__STRICT_ANSI__) && __GLIBC__ >= 2)
+#if (defined(__STRICT_ANSI__))
 #include <sys/select.h>
 #endif
 
@@ -211,26 +137,9 @@ char *strchr(), *strrchr(), *strtok();
 # endif
 #endif
 
-#if defined(SOL2)
-#define OPT_TYPE char           /* opt type for get/setsockopt */
-#else
 #define OPT_TYPE void
-#endif
 
-#if defined(SUNOS4)
-#define LIMIT_FMT "%d"
-#else
-#if (defined(__bsdi__) || defined(__NetBSD__))
-#define LIMIT_FMT "%qd"
-#else
 #define LIMIT_FMT "%ld"
-#endif
-#endif
-
-/* Different name on NetBSD and FreeBSD --Skip */
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__bsdi__)
-#define dn_skipname  __dn_skipname
-#endif
 
 #if defined(DEBUGMODE) && !defined(DEBUGMALLOC)
 #define DEBUGMALLOC
@@ -269,10 +178,10 @@ char *strchr(), *strrchr(), *strtok();
 
 #include "runmalloc.h"
 
-#define MyCoreDump *((int *)NULL)=0
+#define MyCoreDump raise(SIGABRT)
 
 /* This isn't really POSIX :(, but we really need it -- can this be replaced ? */
-#if defined(__STRICT_ANSI__) && !defined(_AIX)
+#if defined(__STRICT_ANSI__)
 extern int gettimeofday(struct timeval *tv, struct timezone *tz);
 #endif
 
@@ -281,51 +190,12 @@ extern int gettimeofday(struct timeval *tv, struct timezone *tz);
  * (C) Copyright 1996 by Carlo Wood. All rights reserved.
  */
 
-/* GNU CC improvements: We can only use this if we have a gcc/g++ compiler */
-#if defined(__GNUC__)
-
-#if (__GNUC__ < 2) || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
-#define NO_ATTRIBUTE
-#endif
-
-#else /* !__GNUC__ */
-
-/* No attributes if we don't have gcc-2.7 or higher */
-#define NO_ATTRIBUTE
-
-#endif /* !__GNUC__ */
-
 #if defined(__cplusplus)
 #define HANDLER_ARG(x) x
 #define UNUSED(x)
 #else
 #define HANDLER_ARG(x)
-#if defined(NO_ATTRIBUTE)
-#define __attribute__(x)
-#define UNUSED(x) unused_##x
-#else
 #define UNUSED(x) x __attribute__ ((unused))
 #endif
-#endif
-
-#if defined(NO_ATTRIBUTE)
-#define RCSTAG_CC(string) static char unused_rcs_ident[] = string
-#else
-#define RCSTAG_CC(string) static char rcs_ident[] __attribute__ ((unused)) = string
-#endif
-
-#if defined(HAVE_SYS_CDEFS_H) && !defined(__sun__)
-#include <sys/cdefs.h>
-#else /* !HAVE_SYS_MALLOC_H */
-#undef __BEGIN_DECLS
-#undef __END_DECLS
-#if defined(__cplusplus)
-#define __BEGIN_DECLS   extern "C" {
-#define __END_DECLS     }
-#else
-#define __BEGIN_DECLS
-#define __END_DECLS
-#endif
-#endif /* !HAVE_SYS_CDEFS_H */
 
 #endif /* __sys_include__ */

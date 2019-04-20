@@ -3,11 +3,6 @@
 
 #include <netinet/in.h>
 #include <netdb.h>
-#if defined(HPUX)
-#if !defined(h_errno)
-extern int h_errno;
-#endif
-#endif
 #include <event.h>
 #include "list.h"
 

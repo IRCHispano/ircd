@@ -25,8 +25,6 @@
 #endif
 #include "random.h"
 
-RCSTAG_CC("$Id$");
-
 char localkey[9];
 int autoseed_count = 0;
 

@@ -40,8 +40,6 @@
 #include "support.h"
 #endif
 
-RCSTAG_CC("$Id$");
-
 extern aClient me;
 extern time_t now;
 

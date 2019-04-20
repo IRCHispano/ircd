@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id$
  */
 
 #include "numnicks.h"
@@ -36,8 +35,6 @@
 #include "res.h"
 
 #include <assert.h>
-
-RCSTAG_CC("$Id$");
 
 /*
  * Numeric nicks are new as of version ircu2.10.00beta1.

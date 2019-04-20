@@ -47,8 +47,6 @@ CC
   compiler will be used).  An example is: "/usr/ucb/cc".
   The package needs an ANSI compiler.  Some compilers need an extra option
   to compile ANSI C.  In those cases you can add these options also here.
-  For example, on a HPUX-8.x you would use (if you don't have gcc):
-  "cc -Aa -D_HPUX_SOURCE".
   Note that you should not use quotes.
 
 What flags should I pass to $CC

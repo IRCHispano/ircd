@@ -69,8 +69,6 @@
 
 #include <assert.h>
 
-RCSTAG_CC("$Id$");
-
 static void exit_one_client(aClient *, char *);
 
 #if 0

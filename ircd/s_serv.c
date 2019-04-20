@@ -60,8 +60,6 @@
 #include "opercmds.h"
 
 
-RCSTAG_CC("$Id$");
-
 static int exit_new_server(aClient *cptr, aClient *sptr,
     char *host, time_t timestamp, char *fmt, ...)
     __attribute__ ((format(printf, 5, 6)));

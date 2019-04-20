@@ -25,8 +25,6 @@
 #include "sprintf_irc.h"
 #include "m_watch.h"
 
-RCSTAG_CC("$Id$");
-
 typedef struct {
   int num_val;
   char *num_form;

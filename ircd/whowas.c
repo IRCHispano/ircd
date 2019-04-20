@@ -62,8 +62,6 @@
 #include "s_bdd.h"
 #include "network.h"
 
-RCSTAG_CC("$Id$");
-
 static aWhowas whowas[NICKNAMEHISTORYLENGTH];
 static aWhowas *whowashash[WW_MAX];
 static aWhowas *whowas_next = whowas;

@@ -29,8 +29,6 @@
 #include "numeric.h"
 #include "ircd.h"
 
-RCSTAG_CC("$Id$");
-
 #define BAD_CONF_CLASS		((unsigned int)-1)
 #define BAD_PING		((unsigned int)-2)
 #define BAD_CLIENT_CLASS	((unsigned int)-3)

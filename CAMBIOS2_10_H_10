@@ -1,3 +1,17 @@
+* 2019/04/21  vroman@victorroman.es (u2.10.H.10.264)             CLEANUP
+------------------------------------------------------------------------
+  Support for the following operating systems has been removed: AIX, BSD/OS,
+  DYNIX, FreeBSD, HPUX, NetBSD, OSF, RISC/os, SGI, SunOS (Solaris)
+
+  Removed curses and termcap checks
+  Removed NO_ATTRIBUTE checks as today's compilers support them
+  Every '#define RegX register' was commented. Remove them.
+  Removed dependency on <sys/cdefs.h>
+  Removed RCSTAG_CC macro and every $Id$ tag used by CVS/RCS in the past
+  Core dumps are now generated using raise(SIGABRT)
+  MyCoreDump gets called on IsUser/IsServer check
+  Fixes s_bdd.c build missing an include and others
+
 * 2019/04/20  toni@tonigarcia.es (u2.10.H.10.263)                CLEANUP
 ------------------------------------------------------------------------
   Eliminamos las librerias contenidas en el ircd al ser muy obsoletas

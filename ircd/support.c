@@ -18,10 +18,6 @@
  */
 
 #include "sys.h"
-#if defined(_SEQUENT_)
-#include <sys/timers.h>
-#include <stddef.h>
-#endif
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -40,8 +36,6 @@
 #include "struct.h"
 #include "s_serv.h"
 #include "res.h"
-
-RCSTAG_CC("$Id$");
 
 #if !defined(HAVE_STRTOKEN)
 /*

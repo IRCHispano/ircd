@@ -43,8 +43,6 @@
 #include "s_bdd.h"
 #include <assert.h>
 
-RCSTAG_CC("$Id$");
-
 char sendbuf[2048];
 static int sentalong[MAXCONNECTIONS];
 static int sentalong_marker;

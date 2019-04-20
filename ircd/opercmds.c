@@ -73,8 +73,6 @@ static int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtyp
 static int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[]);
 static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[]);
 
-RCSTAG_CC("$Id$");
-
 /*
  *  m_squit
  *
@@ -1302,19 +1300,10 @@ static char *militime(char *sec, char *usec)
 
   gettimeofday(&tv, NULL);
   if (sec && usec)
-#if defined(__sun__) || defined(__bsdi__) || (__GLIBC__ >= 2) || defined(__NetBSD__)
-    sprintf(timebuf, "%ld",
-        (tv.tv_sec - atoi(sec)) * 1000 + (tv.tv_usec - atoi(usec)) / 1000);
-#else
     sprintf_irc(timebuf, "%d",
         (tv.tv_sec - atoi(sec)) * 1000 + (tv.tv_usec - atoi(usec)) / 1000);
-#endif
   else
-#if defined(__sun__) || defined(__bsdi__) || (__GLIBC__ >= 2) || defined(__NetBSD__)
-    sprintf(timebuf, "%ld %ld", tv.tv_sec, tv.tv_usec);
-#else
     sprintf_irc(timebuf, "%d %d", tv.tv_sec, tv.tv_usec);
-#endif
   return timebuf;
 }
 

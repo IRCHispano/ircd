@@ -36,8 +36,6 @@
 
 #include <assert.h>
 
-RCSTAG_CC("$Id$");
-
 void actualiza_contadores(aClient *cptr, int length)
 {
   aClient *acpt = cptr->acpt;

@@ -50,8 +50,6 @@
 #include "querycmds.h"
 #include "network.h"
 
-RCSTAG_CC("$Id$");
-
 aChannel *channel = NullChn;
 
 static void sendmodeto_one(aClient *cptr, char *from, char *name,

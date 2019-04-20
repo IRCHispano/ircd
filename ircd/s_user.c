@@ -82,17 +82,6 @@
 #include <json-c/json_object.h>
 
 
-RCSTAG_CC("$Id$");
-
-/* *INDENT-OFF* */
-
-/* This is not ANSI, but we have it anyway... */
-__BEGIN_DECLS
-char *crypt(const char *key, const char *salt);
-__END_DECLS
-
-/* *INDENT-ON* */
-
 static char buf[BUFSIZE], buf2[BUFSIZE];
 static char *nuevo_nick_aleatorio(aClient *cptr);
 

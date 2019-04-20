@@ -65,8 +65,6 @@
 #include "s_bdd.h"
 #include "network.h"
 
-RCSTAG_CC("$Id$");
-
 /*
  * m_who() 
  * m_who with support routines rewritten by Nemesi, August 1997

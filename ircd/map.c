@@ -35,8 +35,6 @@
 #include "s_bdd.h"
 #include "s_serv.h"
 
-RCSTAG_CC("$Id$");
-
 static void dump_map(struct Client *cptr, struct Client *server, char *mask,
     int prompt_length)
 {

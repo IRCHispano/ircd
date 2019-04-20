@@ -64,8 +64,6 @@
 
 #endif
 
-RCSTAG_CC("$Id$");
-
 #if defined(CR_DEBUG) || defined(CR_CHKCONF)
 #undef RunMalloc
 #undef malloc

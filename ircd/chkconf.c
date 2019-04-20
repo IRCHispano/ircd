@@ -28,9 +28,6 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
-#if defined(HPUX)
-#include <arpa/inet.h>
-#endif /* HPUX */
 #if defined(R_LINES)
 #include <signal.h>
 #endif
@@ -42,8 +39,6 @@
 #include "ircd.h"
 #include "fileio.h"
 #include "runmalloc.h"
-
-RCSTAG_CC("$Id$");
 
 /*
  * For the connect rule patch..  these really should be in a header,

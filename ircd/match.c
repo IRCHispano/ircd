@@ -28,8 +28,6 @@
 #include "res.h"
 #include <pcre.h>
 
-RCSTAG_CC("$Id$");
-
 /*
  * mmatch()
  *
