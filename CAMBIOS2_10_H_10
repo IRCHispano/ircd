@@ -1,3 +1,14 @@
+* 2019/04/20  toni@tonigarcia.es (u2.10.H.10.263)                CLEANUP
+------------------------------------------------------------------------
+  Eliminamos las librerias contenidas en el ircd al ser muy obsoletas
+  y se configura para obtener las del sistema que suele estar a la ultima
+  si el sistema esta correctamente actualizado.
+  Las librerias son:
+
+  - Libevent 1.4.8 (13/09/2008), actualmente 2.1.8 (22/01/2017)
+  - Zlib 1.2.1 (17/11/2003), actualmente 1.2.11 (12/01/2017)
+  - PCRE 7.9 (11/04/2009), actualmente 8.43 (04/04/2019)
+ 
 * 2019/03/19  toni@tonigarcia.es (u2.10.H.10.262)                FEATURE
 ------------------------------------------------------------------------
   Modificacion del comando NICK de servidor para soportar el nuevo sistema

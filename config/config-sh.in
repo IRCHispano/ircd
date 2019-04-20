@@ -516,12 +516,3 @@ comment 'Mandatory defines (you should leave these untouched)'
   int 'connect(2) timeout (90!)' CONNECTTIMEOUT 90
   int 'Max send queue (40000)' DEFAULTMAXSENDQLENGTH 40000
 endmenu
-
-# Si se ha seleccionado ZLIB, debemos indicar a la libreria con qué compilador se debe compilar.
-
-if [ "$ZLIB_ESNET" = "y" ]; then
- echo "ZLIB: ***"
- echo "ZLIB: *** Ajustando '$CC' como compilador seleccionado."
- echo "ZLIB: ***"
- (cat ../zlib/Makefile | sed "s%CC=.*%CC=$CC%") > ../zlib/Makefile2
-fi

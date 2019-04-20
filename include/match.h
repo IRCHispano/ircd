@@ -1,7 +1,7 @@
 #if !defined(MATCH_H)
 #define MATCH_H
 
-#include "pcre.h"
+#include <pcre.h>
 
 /*=============================================================================
  * System headers used by this header file

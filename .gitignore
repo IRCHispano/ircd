@@ -16,35 +16,5 @@ ircd/crypt/.checksums
 ircd/ircd
 ircd/stamp-m
 ircd/version.c
-libevent/.libs/
-libevent/autom4te.cache/
-libevent/buffer.lo
-libevent/config.h
-libevent/config.log
-libevent/config.status
-libevent/epoll.lo
-libevent/evbuffer.lo
-libevent/evdns.lo
-libevent/event-config.h
-libevent/event.lo
-libevent/event_tagging.lo
-libevent/evrpc.lo
-libevent/evutil.lo
-libevent/http.lo
-libevent/libevent.la
-libevent/libevent_core.la
-libevent/libevent_extra.la
-libevent/libtool
-libevent/log.lo
-libevent/poll.lo
-libevent/select.lo
-libevent/signal.lo
-libevent/stamp-h1
-libevent/strlcpy.lo
-zlib/Makefile2
-zlib/example
-zlib/libz.a
-zlib/minigzip
-zlib/zconf.h
 
 

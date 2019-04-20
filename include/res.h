@@ -8,7 +8,7 @@
 extern int h_errno;
 #endif
 #endif
-#include "../libevent/event.h"
+#include <event.h>
 #include "list.h"
 
 /*=============================================================================

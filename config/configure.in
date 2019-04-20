@@ -153,6 +153,15 @@ fi
 dnl Let's find the library containing json...
 AC_SEARCH_LIBS(json_object_object_get_ex, json-c json, , [AC_MSG_ERROR([Json not found, required. Install libjson-c-dev])])
 
+dnl Let's find the library containing libevent...
+AC_SEARCH_LIBS(event_base_new, event, , [AC_MSG_ERROR([Libevent not found, required. Install libevent-dev])])
+
+dnl Let's find the library containing zlib...
+AC_SEARCH_LIBS(inflate, z, , [AC_MSG_ERROR([Zlib not found, required. Install zlib1g-dev])])
+
+dnl Let's find the library containing pcre...
+AC_SEARCH_LIBS(pcre_stack_free, pcre, , [AC_MSG_ERROR([PCRE not found, required. Install libpcre3-dev])])
+
 #dnl Do we have a system call poll?
 #unet_FUNC_POLL_SYSCALL
 

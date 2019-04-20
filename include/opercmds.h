@@ -2,7 +2,7 @@
 #define OPERCMDS_H
 
 #include "res.h"
-#include "pcre.h"
+#include <pcre.h>
 
 /*=============================================================================
  * General defines

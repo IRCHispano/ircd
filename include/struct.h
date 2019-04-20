@@ -29,7 +29,7 @@
 #include "dbuf.h"
 #endif
 
-#include "event.h"
+#include <event.h>
 #include "res.h"
 
 /*=============================================================================
@@ -88,7 +88,7 @@
  */
 
 #if defined(ZLIB_ESNET)
-#include "zlib.h"
+#include <zlib.h>
 
 #define ZLIB_ESNET_IN   0x1
 #define ZLIB_ESNET_OUT  0x2

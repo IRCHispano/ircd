@@ -16,17 +16,3 @@ else if [ "$i" == "-h" ]; then
 fi 
 fi
 done
-
-echo
-echo
-echo Configurando libreria ZLIB...
-cd ..
-cd zlib
-./configure
-
-echo
-echo
-echo Configurando libreria libevent...
-cd ..
-cd libevent
-./configure --disable-shared --enable-static
