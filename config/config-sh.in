@@ -477,7 +477,7 @@ mainmenu_option next_comment
 comment 'Mandatory defines (you should leave these untouched)'
   eval DBPATH_DEFAULT="database"
   string 'HISPANO/ESNET: Directory where distributed database resides' DBPATH $DBPATH_DEFAULT
-  bool 'HISPANO/ESNET: OnDisk MMAP BDD cache file' BDD_MMAP y
+  bool 'HISPANO/ESNET: OnDisk MMAP BDD cache file' BDD_MMAP n
   if [ "$BDD_MMAP" = "y" ]; then
     string 'HISPANO/ESNET: OnDisk MMAP BDD cache file path' BDD_MMAP_PATH "ircd-database.mmap"
     int 'HISPANO/ESNET: OnDisk MMAP BDD cache file size (Megabytes)' BDD_MMAP_SIZE 16

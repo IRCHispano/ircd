@@ -1,3 +1,7 @@
+* 2019/05/01  toni@tonigarcia.es (u2.10.H.10.265)                    FIX
+------------------------------------------------------------------------
+  Correccion parche u2.10.H.10.262.
+
 * 2019/04/21  vroman@victorroman.es (u2.10.H.10.264)             CLEANUP
 ------------------------------------------------------------------------
   Support for the following operating systems has been removed: AIX, BSD/OS,

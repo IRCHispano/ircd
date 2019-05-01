@@ -5978,7 +5978,7 @@ nickkilldone:
  *
  * If from server, source is client:
  *   parv[2] = timestamp
- *   parv[3] = modes
+ *   parv[3] = modes (optional)
  *
  * Source is server:
  *   parv[2] = hopcount
@@ -6413,7 +6413,7 @@ nickkilldone:
         int flag, *s;
         char *p;
 
-        for (p = parv[6] + 1; *p; p++)
+        for (p = parv[3] + 1; *p; p++)
         {
           for (s = user_modes; (flag = *s); s += 2)
             if (((char)*(s + 1)) == *p)
