@@ -1,3 +1,20 @@
+NOTA IMPORTANTE
+---------------
+
+Este IRCD se ha dejado de desarrollar, los ultimos cambios (commit) son de transicion hacia el nuevo
+IRCh, la ultima version va a ser obligatoria para hacer la migracion, intentar hacerla con versiones
+antiguas puede producir efectos indeseables.
+
+Para mas informacion, visite https://zolty.net
+
+En los parches de transicion hay cambios en el formato de las tablas de las Bases de Datos Distribuidas,
+tienen que estar migrados todos los registros a los formatos correctos para cada tabla para que pueda
+funcionar correctamente en el nuevo IRCh.
+Para más información de la Base de Datos Distribuidas, visite:
+
+   https://zolty.net/ddb-bases-de-datos-distribuidas/
+
+
 Repositorios del IRCD de IRC-Hispano
 ------------------------------------
 
