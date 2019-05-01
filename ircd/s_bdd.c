@@ -2589,11 +2589,39 @@ static void bdd_init()
 
   /* Database directory check */
   if (stat(DBPATH, &check) == -1) {
-    sprintf(msg, "Database directory '%s' does not exists", DBPATH);
-    syslog(LOG_ERR, "%s", msg);
-    Debug((DEBUG_ERROR, "%s", msg));
+    switch (errno) {
+      /* Database directory does not exists, lets create it: */
+      case ENOENT: {
+        int f = mkdir(DBPATH, 0700);
 
-    s_die();
+        if (f == -1) {
+          sprintf(msg, "Error initializing datatabase directory %s: %s",
+                  DBPATH, strerror(errno));
+
+          syslog(LOG_ERR, "%s", msg);
+          Debug((DEBUG_ERROR, "%s", msg));
+          fprintf(stderr, "%s\n", msg);
+          s_die();
+        }
+
+        sprintf(msg, "Initialized database directory: %s", DBPATH);
+        syslog(LOG_INFO, "%s", msg);
+        Debug((DEBUG_INFO, "%s", msg));
+        close(f);
+        break;
+      }
+
+      /* Cannot read database directory, this ends the ircd execution */
+      case EACCES: {
+        sprintf(msg, "Cannot read database directory: %s", DBPATH);
+
+        syslog(LOG_ERR, "%s", msg);
+        Debug((DEBUG_ERROR, "%s", msg));
+        fprintf(stderr, "%s\n", msg);
+        s_die();
+      }
+
+    }
   }
 
   for (char current = ESNET_BDD; current <= ESNET_BDD_END; current++) {
@@ -2613,13 +2641,13 @@ static void bdd_init()
 
             syslog(LOG_ERR, "%s", msg);
       	    Debug((DEBUG_ERROR, "%s", msg));
+            fprintf(stderr, "%s\n", msg);
             s_die();
           }
 
   	  sprintf(msg, "Initialized database file: %s", path);
           syslog(LOG_INFO, "%s", msg);
           Debug((DEBUG_INFO, "%s", msg));
-
           close(f);
        	  break;
         }
@@ -2630,6 +2658,7 @@ static void bdd_init()
 
           syslog(LOG_ERR, "%s", msg);
           Debug((DEBUG_ERROR, "%s", msg));
+          fprintf(stderr, "%s\n", msg);
           s_die();
       	}
       }
