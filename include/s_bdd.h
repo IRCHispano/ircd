@@ -70,6 +70,7 @@
 #define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA       "msg_fullcapacity"
 #define BDD_PERMITE_NICKS_RANDOM		"allow_random_nicks"
 #define BDD_PERMITE_NICKS_SUSPEND               "allow_suspend_nicks"
+#define BDD_PROXY_IPS_ALLOWED                   "allow_ips_proxy"
 
 /* Para las features de los pseudoBOTS tabla 'c' */
 #define BDD_CHANSERV      "chanserv"

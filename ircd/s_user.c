@@ -1751,7 +1751,7 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
    * busca una lista de direcciones IP separadas por coma que seran
    * las autorizadas a conectar utilizando el protocolo PROXY
    */
-  reg = db_buscar_registro(BDD_WEBIRCDB, "proxy");
+  reg = db_buscar_registro(BDD_FEATURESDB, BDD_PROXY_IPS_ALLOWED);
   if (reg)
   {
     char *current, *ipaddress = NULL;

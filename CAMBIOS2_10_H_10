@@ -1,3 +1,8 @@
+* 2019/05/01  toni@tonigarcia.es (u2.10.H.10.272)                FEATURE
+------------------------------------------------------------------------
+  Cambio de lugar de las ips autorizadas de Proxy.
+  Ahora esta en la entrada allow_ips_proxy de la tabla F de features.
+
 * 2019/05/01  toni@tonigarcia.es (u2.10.H.10.271)                FEATURE
 ------------------------------------------------------------------------
   Cambio de formato en la tabla e, ahora se usa JSON.
