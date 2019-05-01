@@ -610,7 +610,7 @@ static Numeric numeric_replies[] = {
 /* 219 */
     {RPL_ENDOFSTATS, "%c :End of /STATS report"},
 /* 220 */
-    {0, (char *)NULL},
+    {RPL_STATSWLINE, "%c %s@%s * %s %s :%s"},
 /* 221 */
     {RPL_UMODEIS, "%s"},
 /* 222 */

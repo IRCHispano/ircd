@@ -68,6 +68,9 @@
 #include "persistent_malloc.h"
 #endif
 
+#include <json-c/json.h>
+#include <json-c/json_object.h>
+
 static int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_t lastmod, time_t lifetime, int parc, char **parv);
 static int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtype, time_t expire, time_t lastmod, time_t lifetime, char *who);
 static int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[]);
@@ -830,8 +833,33 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
         for (reg = db_iterador_init(BDD_WEBIRCDB); reg;
             reg = db_iterador_next())
         {
-          sendto_one(sptr, rpl_str(RPL_STATSILINE), me.name, sptr->name, 'W',
-              reg->clave, "*", 0, 1);
+          if (*reg->valor == '{')
+          {
+            /* Formato nuevo JSON */
+            json_object *json, *json_ident, *json_desc;
+            enum json_tokener_error jerr = json_tokener_success;
+            char *ident, *description;
+
+            json = json_tokener_parse_verbose(reg->valor, &jerr);
+            if (jerr != json_tokener_success)
+              continue;
+
+            json_object_object_get_ex(json, "ident", &json_ident);
+            ident = (char *)json_object_get_string(json_ident);
+
+            json_object_object_get_ex(json, "desc", &json_desc);
+            description = (char *)json_object_get_string(json_desc);
+
+            sendto_one(sptr, rpl_str(RPL_STATSWLINE), me.name, sptr->name, 'W',
+               "*", reg->clave, ident ? ident : "(none)",
+               description ? description : "");
+          }
+          else
+          {
+            /* Formato antiguo */
+            sendto_one(sptr, rpl_str(RPL_STATSWLINE), me.name, sptr->name, 'W',
+                "*", reg->clave, "(none)", "*", "");
+          }
         }
       }
       break;

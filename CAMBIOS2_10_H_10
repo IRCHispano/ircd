@@ -1,3 +1,9 @@
+* 2019/05/01  toni@tonigarcia.es (u2.10.H.10.270)                FEATURE
+------------------------------------------------------------------------
+  Cambio de formato en la tabla w, ahora se usa JSON.
+  Para la migracion al nuevo ircd.
+  Se corrige el /stats W para que muestre la info que tiene que dar.
+
 * 2019/05/01  toni@tonigarcia.es (u2.10.H.10.269)                FEATURE
 ------------------------------------------------------------------------
   Cambio de formato en la tabla i, ahora se usa JSON.
