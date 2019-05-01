@@ -4136,32 +4136,51 @@ void make_vhostperso(aClient *acptr, int mostrar)
   {
     char *vhost;
 
-    /* Copio el valor en memoria para evitar que corte el registro en
-     * memoria de la BDD cuando hay un ! de separacion de campos.
-     */
-    DupString(vhost, reg->valor);
-    if (strchr(vhost, '!'))
+    if (*reg->valor == '{')
     {
-      /* Corto */
-      int i = 0;
+      /* Formato nuevo JSON */
+      json_object *json, *json_vhost;
+      enum json_tokener_error jerr = json_tokener_success;
 
-      while (vhost[i] != 0) {
-        if (vhost[i] == '!')
-        {
-          vhost[i]=0;
-          break;
+      json = json_tokener_parse_verbose(reg->valor, &jerr);
+      if (jerr != json_tokener_success)
+        return;
+
+      json_object_object_get_ex(json, "vhost", &json_vhost);
+      vhost = (char *)json_object_get_string(json_vhost);
+
+      SlabStringAllocDup(&(acptr->user->vhostperso), vhost, HOSTLEN);
+    }
+    else
+    {
+      /* Formato antiguo vhost!vhostcolor */
+
+      /* Copio el valor en memoria para evitar que corte el registro en
+       * memoria de la BDD cuando hay un ! de separacion de campos.
+       */
+      DupString(vhost, reg->valor);
+      if (strchr(vhost, '!'))
+      {
+        /* Corto */
+        int i = 0;
+
+        while (vhost[i] != 0) {
+          if (vhost[i] == '!')
+          {
+            vhost[i]=0;
+            break;
+          }
+          i++;
         }
-        i++;
       }
+      SlabStringAllocDup(&(acptr->user->vhostperso), vhost, HOSTLEN);
+      RunFree(vhost);
     }
 
-    SlabStringAllocDup(&(acptr->user->vhostperso), vhost, HOSTLEN);
     SetIpVirtualPersonalizada(acptr);
     if (mostrar)
       sendto_one(acptr, rpl_str(RPL_HOSTHIDDEN), me.name, acptr->name,
           acptr->user->vhostperso);
-
-    RunFree(vhost);
   }
 }
 #endif

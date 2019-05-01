@@ -65,6 +65,9 @@
 #include "s_bdd.h"
 #include "network.h"
 
+#include <json-c/json.h>
+#include <json-c/json_object.h>
+
 /*
  * m_who() 
  * m_who with support routines rewritten by Nemesi, August 1997
@@ -828,26 +831,47 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
           a2cptr = user->server;
 #if defined(BDD_VIP)
           if (IsHidden(acptr) && reg) {
-              char *vhost;
-              char *vhostcolor;
+            char *vhost;
+            char *vhostcolor = NULL;
+
+            if (*reg->valor == '{')
+            {
+              /* Formato nuevo JSON */
+              json_object *json, *json_whois;
+              enum json_tokener_error jerr = json_tokener_success;
+
+              json = json_tokener_parse_verbose(reg->valor, &jerr);
+              if (jerr == json_tokener_success) {
+                json_object_object_get_ex(json, "whois", &json_whois);
+                vhostcolor = (char *)json_object_get_string(json_whois);
+              }
+            }
+            else
+            {
+              /* Formato antiguo vhost!vhostcolor */
 
               /* Copio el valor en memoria para evitar que corte el registro en
                * memoria de la BDD cuando hay un ! de separacion de campos.
                */
               DupString(vhost, reg->valor);
               vhostcolor = strchr(vhost, '!');
-
-              if (vhostcolor) {
+              if (vhostcolor)
                 *vhostcolor++;
-                sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
-                    parv[0], name, PunteroACadena(user->username),
-                    vhostcolor, PunteroACadena(acptr->info));
-              } else {
-                sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
-                    parv[0], name, PunteroACadena(user->username),
-                    vhost, PunteroACadena(acptr->info));
-              }
+            }
+
+            if (vhostcolor) {
+              sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
+                  parv[0], name, PunteroACadena(user->username),
+                  vhostcolor, PunteroACadena(acptr->info));
+            } else {
+              sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
+                  parv[0], name, PunteroACadena(user->username),
+                  get_virtualhost(acptr, 1), PunteroACadena(acptr->info));
+            }
+
+            if (*reg->valor != '{')
               RunFree(vhost);
+
           } else
             sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
                 parv[0], name, PunteroACadena(user->username),
@@ -1028,25 +1052,45 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(BDD_VIP)
         if (IsHidden(acptr) && reg) {
             char *vhost;
-            char *vhostcolor;
+            char *vhostcolor = NULL;
 
-            /* Copio el valor en memoria para evitar que corte el registro en
-             * memoria de la BDD cuando hay un ! de separacion de campos.
-             */
-            DupString(vhost, reg->valor);
-            vhostcolor = strchr(vhost, '!');
+            if (*reg->valor == '{')
+            {
+              /* Formato nuevo JSON */
+              json_object *json, *json_whois;
+              enum json_tokener_error jerr = json_tokener_success;
+
+              json = json_tokener_parse_verbose(reg->valor, &jerr);
+              if (jerr == json_tokener_success) {
+                json_object_object_get_ex(json, "whois", &json_whois);
+                vhostcolor = (char *)json_object_get_string(json_whois);
+              }
+            }
+            else
+            {
+              /* Formato antiguo vhost!vhostcolor */
+
+              /* Copio el valor en memoria para evitar que corte el registro en
+               * memoria de la BDD cuando hay un ! de separacion de campos.
+               */
+              DupString(vhost, reg->valor);
+              vhostcolor = strchr(vhost, '!');
+              if (vhostcolor)
+                *vhostcolor++;
+            }
 
             if (vhostcolor) {
-              *vhostcolor++;
               sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
                   parv[0], name, PunteroACadena(user->username),
                   vhostcolor, PunteroACadena(acptr->info));
             } else {
               sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
                   parv[0], name, PunteroACadena(user->username),
-                  vhost, PunteroACadena(acptr->info));
+                  get_virtualhost(acptr, 1), PunteroACadena(acptr->info));
             }
-            RunFree(vhost);
+
+            if (*reg->valor != '{')
+              RunFree(vhost);
         } else
           sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
               parv[0], name, PunteroACadena(user->username),

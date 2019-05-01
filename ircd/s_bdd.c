@@ -1265,7 +1265,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
     case BDD_IPVIRTUALDB:
       {
         aClient *sptr;
-        
+
         if ((sptr = FindUser(c)) && IsUser(sptr))
         {
           BorraIpVirtualPerso(sptr);
