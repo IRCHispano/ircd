@@ -557,9 +557,35 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
         for (reg = db_iterador_init(BDD_EXCEPTIONDB); reg;
             reg = db_iterador_next())
-        { /* Mando con una e minuscula los que estan en BDD */
-          sendto_one(sptr, rpl_str(RPL_STATSELINE), me.name, sptr->name, 'E',
-              reg->clave, reg->valor, 0, -1);
+        {
+          /* Mando con una e minuscula los que estan en BDD */
+          if (*reg->valor == '{')
+          {
+            /* Formato nuevo JSON */
+            json_object *json, *json_user, *json_port;
+            enum json_tokener_error jerr = json_tokener_success;
+            char *user;
+            int port;
+
+            json = json_tokener_parse_verbose(reg->valor, &jerr);
+            if (jerr != json_tokener_success)
+              continue;
+
+            json_object_object_get_ex(json, "user", &json_user);
+            user = (char *)json_object_get_string(json_user);
+
+            json_object_object_get_ex(json, "port", &json_port);
+            port = json_object_get_int(json_port);
+
+            sendto_one(sptr, rpl_str(RPL_STATSELINE), me.name, sptr->name, 'e',
+                reg->clave, user ? user : "*", port, -1);
+          }
+          else
+          {
+            /* Formato antiguo */
+            sendto_one(sptr, rpl_str(RPL_STATSELINE), me.name, sptr->name, 'e',
+                reg->clave, reg->valor, 0, -1);
+          }
         }
       }
       break;

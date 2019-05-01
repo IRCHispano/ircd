@@ -714,7 +714,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
           /* Al borrar una eline hay que comprobar si hay usuarios
            * que puedan verse afectados por glines */
 
-          {            
+          {
             aClient *acptr;
             int found_g;
             for (i = 0; i <= highest_fd; i++)

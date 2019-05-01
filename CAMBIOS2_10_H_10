@@ -1,3 +1,8 @@
+* 2019/05/01  toni@tonigarcia.es (u2.10.H.10.271)                FEATURE
+------------------------------------------------------------------------
+  Cambio de formato en la tabla e, ahora se usa JSON.
+  Para la migracion al nuevo ircd.
+
 * 2019/05/01  toni@tonigarcia.es (u2.10.H.10.270)                FEATURE
 ------------------------------------------------------------------------
   Cambio de formato en la tabla w, ahora se usa JSON.
