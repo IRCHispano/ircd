@@ -75,6 +75,9 @@
 #include "fileio.h"
 #include "slab_alloc.h"
 
+#include <json-c/json.h>
+#include <json-c/json_object.h>
+
 static int check_time_interval(char *, char *);
 static int lookup_confhost(aConfItem *);
 static int is_comment(char *);
@@ -1325,10 +1328,41 @@ int find_exception(aClient *cptr)
     for (reg = db_iterador_init(BDD_EXCEPTIONDB); reg;
         reg = db_iterador_next())
     {
+      char *pass = NULL;
+      char *user = NULL;
+      int port = 0;
+
+      if (*reg->valor == '{')
+      {
+        /* Formato nuevo JSON */
+        json_object *json, *json_pass, *json_user, *json_port;
+        enum json_tokener_error jerr = json_tokener_success;
+
+        json = json_tokener_parse_verbose(reg->valor, &jerr);
+        if (jerr != json_tokener_success)
+          continue;
+
+        json_object_object_get_ex(json, "pass", &json_pass);
+        pass = (char *)json_object_get_string(json_pass);
+
+        json_object_object_get_ex(json, "user", &json_user);
+        user = (char *)json_object_get_string(json_user);
+
+        json_object_object_get_ex(json, "port", &json_port);
+        port = json_object_get_int(json_port);
+      }
+      else
+      {
+        pass = reg->valor;
+      }
+
       if ((reg->clave && (match(reg->clave, PunteroACadena(cptr->sockhost)) == 0 ||
           match(reg->clave, ircd_ntoa_c(cptr)) == 0))
-          && (reg->valor
-          && (match(reg->valor, PunteroACadena(cptr->user->username)) == 0)))
+          && (user
+          && (match(user, PunteroACadena(cptr->user->username)) == 0))
+          && (BadPtr(pass) || (!BadPtr(pass)
+          && !strcmp(pass, cptr->passwd))) && (!port
+          || (port == cptr->acpt->port)))
         return 1;
     }
   }

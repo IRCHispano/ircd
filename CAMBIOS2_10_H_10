@@ -1,3 +1,34 @@
+* 2019/05/01  toni@tonigarcia.es (u2.10.H.10.272)                FEATURE
+------------------------------------------------------------------------
+  Cambio de lugar de las ips autorizadas de Proxy.
+  Ahora esta en la entrada allow_ips_proxy de la tabla F de features.
+
+* 2019/05/01  toni@tonigarcia.es (u2.10.H.10.271)                FEATURE
+------------------------------------------------------------------------
+  Cambio de formato en la tabla e, ahora se usa JSON.
+  Para la migracion al nuevo ircd.
+
+* 2019/05/01  toni@tonigarcia.es (u2.10.H.10.270)                FEATURE
+------------------------------------------------------------------------
+  Cambio de formato en la tabla w, ahora se usa JSON.
+  Para la migracion al nuevo ircd.
+  Se corrige el /stats W para que muestre la info que tiene que dar.
+
+* 2019/05/01  toni@tonigarcia.es (u2.10.H.10.269)                FEATURE
+------------------------------------------------------------------------
+  Cambio de formato en la tabla i, ahora se usa JSON.
+  Para la migracion al nuevo ircd.
+
+* 2019/05/01  toni@tonigarcia.es (u2.10.H.10.268)                FEATURE
+------------------------------------------------------------------------
+  Cambio de formato en la tabla v, ahora se usa JSON.
+  Para la migracion al nuevo ircd.
+
+* 2019/05/01  toni@tonigarcia.es (u2.10.H.10.267)                FEATURE
+------------------------------------------------------------------------
+  Completo el parche anterior creando tambien el directorio de la base
+  de datos.
+
 * 2019/05/01  vroman@victorroman.es (u2.10.H.10.266)             FEATURE
 ------------------------------------------------------------------------
   if DBPATH doesn't exists shows an error message and dies.

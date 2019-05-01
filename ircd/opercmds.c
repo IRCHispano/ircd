@@ -68,6 +68,9 @@
 #include "persistent_malloc.h"
 #endif
 
+#include <json-c/json.h>
+#include <json-c/json_object.h>
+
 static int propaga_gline(aClient *cptr, aClient *sptr, int active, time_t expire, time_t lastmod, time_t lifetime, int parc, char **parv);
 static int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtype, time_t expire, time_t lastmod, time_t lifetime, char *who);
 static int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2gline, int parc, char *parv[]);
@@ -554,9 +557,35 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
         for (reg = db_iterador_init(BDD_EXCEPTIONDB); reg;
             reg = db_iterador_next())
-        { /* Mando con una e minuscula los que estan en BDD */
-          sendto_one(sptr, rpl_str(RPL_STATSELINE), me.name, sptr->name, 'E',
-              reg->clave, reg->valor, 0, -1);
+        {
+          /* Mando con una e minuscula los que estan en BDD */
+          if (*reg->valor == '{')
+          {
+            /* Formato nuevo JSON */
+            json_object *json, *json_user, *json_port;
+            enum json_tokener_error jerr = json_tokener_success;
+            char *user;
+            int port;
+
+            json = json_tokener_parse_verbose(reg->valor, &jerr);
+            if (jerr != json_tokener_success)
+              continue;
+
+            json_object_object_get_ex(json, "user", &json_user);
+            user = (char *)json_object_get_string(json_user);
+
+            json_object_object_get_ex(json, "port", &json_port);
+            port = json_object_get_int(json_port);
+
+            sendto_one(sptr, rpl_str(RPL_STATSELINE), me.name, sptr->name, 'e',
+                reg->clave, user ? user : "*", port, -1);
+          }
+          else
+          {
+            /* Formato antiguo */
+            sendto_one(sptr, rpl_str(RPL_STATSELINE), me.name, sptr->name, 'e',
+                reg->clave, reg->valor, 0, -1);
+          }
         }
       }
       break;
@@ -830,8 +859,33 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
         for (reg = db_iterador_init(BDD_WEBIRCDB); reg;
             reg = db_iterador_next())
         {
-          sendto_one(sptr, rpl_str(RPL_STATSILINE), me.name, sptr->name, 'W',
-              reg->clave, "*", 0, 1);
+          if (*reg->valor == '{')
+          {
+            /* Formato nuevo JSON */
+            json_object *json, *json_ident, *json_desc;
+            enum json_tokener_error jerr = json_tokener_success;
+            char *ident, *description;
+
+            json = json_tokener_parse_verbose(reg->valor, &jerr);
+            if (jerr != json_tokener_success)
+              continue;
+
+            json_object_object_get_ex(json, "ident", &json_ident);
+            ident = (char *)json_object_get_string(json_ident);
+
+            json_object_object_get_ex(json, "desc", &json_desc);
+            description = (char *)json_object_get_string(json_desc);
+
+            sendto_one(sptr, rpl_str(RPL_STATSWLINE), me.name, sptr->name, 'W',
+               "*", reg->clave, ident ? ident : "(none)",
+               description ? description : "");
+          }
+          else
+          {
+            /* Formato antiguo */
+            sendto_one(sptr, rpl_str(RPL_STATSWLINE), me.name, sptr->name, 'W',
+                "*", reg->clave, "(none)", "*", "");
+          }
         }
       }
       break;

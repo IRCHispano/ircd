@@ -1645,11 +1645,36 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!reg)
       reg = db_buscar_registro(BDD_WEBIRCDB, ircd_ntoa_c(sptr));
 
+
     if (!reg)
       return exit_client(sptr, sptr, &me, "WEBIRC Not authorized from your host");
 
-    if (strcmp(password, reg->valor))
-      return exit_client(sptr, sptr, &me, "WEBIRC Password invalid for your host");
+    if (*reg->valor == '{')
+    {
+      /* Formato nuevo JSON */
+      json_object *json, *json_pass;
+      enum json_tokener_error jerr = json_tokener_success;
+      char *pass;
+
+      json = json_tokener_parse_verbose(reg->valor, &jerr);
+      if (jerr != json_tokener_success)
+        return exit_client(sptr, sptr, &me, "WEBIRC Bad JSON Format from your host");;
+
+      json_object_object_get_ex(json, "pass", &json_pass);
+      pass = (char *)json_object_get_string(json_pass);
+
+      if (!pass)
+        return exit_client(sptr, sptr, &me, "WEBIRC No password for your host");
+
+      if (strcmp(password, reg->valor))
+        return exit_client(sptr, sptr, &me, "WEBIRC Password invalid for your host");
+    }
+    else
+    {
+      /* Formato antiguo */
+      if (strcmp(password, reg->valor))
+        return exit_client(sptr, sptr, &me, "WEBIRC Password invalid for your host");
+    }
   }
 
   /* acceso concedido */
@@ -1726,7 +1751,7 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
    * busca una lista de direcciones IP separadas por coma que seran
    * las autorizadas a conectar utilizando el protocolo PROXY
    */
-  reg = db_buscar_registro(BDD_WEBIRCDB, "proxy");
+  reg = db_buscar_registro(BDD_FEATURESDB, BDD_PROXY_IPS_ALLOWED);
   if (reg)
   {
     char *current, *ipaddress = NULL;
@@ -4136,32 +4161,51 @@ void make_vhostperso(aClient *acptr, int mostrar)
   {
     char *vhost;
 
-    /* Copio el valor en memoria para evitar que corte el registro en
-     * memoria de la BDD cuando hay un ! de separacion de campos.
-     */
-    DupString(vhost, reg->valor);
-    if (strchr(vhost, '!'))
+    if (*reg->valor == '{')
     {
-      /* Corto */
-      int i = 0;
+      /* Formato nuevo JSON */
+      json_object *json, *json_vhost;
+      enum json_tokener_error jerr = json_tokener_success;
 
-      while (vhost[i] != 0) {
-        if (vhost[i] == '!')
-        {
-          vhost[i]=0;
-          break;
+      json = json_tokener_parse_verbose(reg->valor, &jerr);
+      if (jerr != json_tokener_success)
+        return;
+
+      json_object_object_get_ex(json, "vhost", &json_vhost);
+      vhost = (char *)json_object_get_string(json_vhost);
+
+      SlabStringAllocDup(&(acptr->user->vhostperso), vhost, HOSTLEN);
+    }
+    else
+    {
+      /* Formato antiguo vhost!vhostcolor */
+
+      /* Copio el valor en memoria para evitar que corte el registro en
+       * memoria de la BDD cuando hay un ! de separacion de campos.
+       */
+      DupString(vhost, reg->valor);
+      if (strchr(vhost, '!'))
+      {
+        /* Corto */
+        int i = 0;
+
+        while (vhost[i] != 0) {
+          if (vhost[i] == '!')
+          {
+            vhost[i]=0;
+            break;
+          }
+          i++;
         }
-        i++;
       }
+      SlabStringAllocDup(&(acptr->user->vhostperso), vhost, HOSTLEN);
+      RunFree(vhost);
     }
 
-    SlabStringAllocDup(&(acptr->user->vhostperso), vhost, HOSTLEN);
     SetIpVirtualPersonalizada(acptr);
     if (mostrar)
       sendto_one(acptr, rpl_str(RPL_HOSTHIDDEN), me.name, acptr->name,
           acptr->user->vhostperso);
-
-    RunFree(vhost);
   }
 }
 #endif

@@ -38,6 +38,10 @@
 #if defined(BDD_CLONES)
 #include "s_bdd.h"
 #include "support.h"
+
+#include <json-c/json.h>
+#include <json-c/json_object.h>
+
 #endif
 
 extern aClient me;
@@ -583,7 +587,25 @@ int IPbusca_clones(aClient *cptr)
     if (reg == NULL) {
         return -1;
     }
-    return atoi(reg->valor);
+
+    if (*reg->valor == '{')
+    {
+      /* Formato nuevo JSON */
+      json_object *json, *json_clones;
+      enum json_tokener_error jerr = json_tokener_success;
+
+      json = json_tokener_parse_verbose(reg->valor, &jerr);
+      if (jerr != json_tokener_success)
+        return -1;
+
+      json_object_object_get_ex(json, "clones", &json_clones);
+      return json_object_get_int(json_clones);
+    }
+    else
+    {
+      /* Formato antiguo */
+      return atoi(reg->valor);
+    }
   }
   return -1;
 }

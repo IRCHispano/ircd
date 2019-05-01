@@ -133,33 +133,6 @@ install: build
 	  ${CHOWN} ${IRCDOWN} ${MPATH} ${RPATH}; \
 	  ${CHGRP} ${IRCDGRP} ${MPATH} ${RPATH}; )
 
-	if [ -f ${DPATH}/${DBPATH} ]; then ${RM} ${DPATH}/${DBPATH}; fi
-	( cd ${DPATH}; \
-	  if [ ! -d ${DBPATH} ]; then ${MKDIR} ${DBPATH}; fi ; \
-	  ${CHMOD} 700 ${DBPATH} ; \
-         if [ "${IRC_UID}" != "" ]; then \
-          ${CHOWN} ${IRC_UID} ${DBPATH} ; \
-          ${CHGRP} ${IRC_GID} ${DBPATH} ; \
-         fi ; \
-	  ${TOUCH} ${DBPATH}/hashes ; \
-	  ${CHMOD} 600 ${DBPATH}/hashes ; \
-         if [ "${IRC_UID}" != "" ]; then \
-          ${CHOWN} ${IRC_UID} ${DBPATH}/hashes ; \
-          ${CHGRP} ${IRC_GID} ${DBPATH}/hashes ; \
-         fi ; ) \
-
-	if [ "${BDD_MMAP}" = "y" ]; then \
-		( cd ${BINDIR} ; \
-		if [ ! -f ${BDD_MMAP_PATH} ]; then \
-			${TOUCH} ${BDD_MMAP_PATH}; \
-		fi ; \
-		if [ "${IRC_UID}" != "" ]; then \
-			${CHOWN} ${IRC_UID} ${BDD_MMAP_PATH} ; \
-			${CHGRP} ${IRC_GID} ${BDD_MMAP_PATH} ; \
-		fi ; \
-		${CHMOD} 600 ${BDD_MMAP_PATH} ; ) \
-	fi ;
-
 uninstall:
 	@if [ "${BINDIR}" != "${DPATH}" ]; then \
 		echo "${RM} -f ${BINDIR}/${SYMLINK} ${BINDIR}/ircd.9* ${BINDIR}/chkconf"; \

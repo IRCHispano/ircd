@@ -345,6 +345,7 @@
 #define RPL_ENDOFSTATS	     219  /* See also RPL_STATSDLINE */
 /*      RPL_STATSPLINE       220          EFNet - Because 217 was for old Q: lines */
 /*      RPL_STATSBLINE       220          Dalnet extension */
+#define RPL_STATSWLINE       220
 #define RPL_UMODEIS	     221
 /*     RPL_SQLINE_NICK      222           Dalnet extension */
 #define RPL_STATSJLINE      222   /* Undernet extension */
