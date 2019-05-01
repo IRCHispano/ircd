@@ -1,3 +1,9 @@
+* 2019/05/01  vroman@victorroman.es (u2.10.H.10.266)             FEATURE
+------------------------------------------------------------------------
+  if DBPATH doesn't exists shows an error message and dies.
+  Database files are created on DBPATH at ircd execution if they doesn't
+  exists.
+
 * 2019/05/01  toni@tonigarcia.es (u2.10.H.10.265)                    FIX
 ------------------------------------------------------------------------
   Correccion parche u2.10.H.10.262.

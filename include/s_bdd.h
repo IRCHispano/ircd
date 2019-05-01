@@ -124,6 +124,7 @@ struct db_reg {
   struct db_reg *next;
 };
 
+static void bdd_init(void);
 void reload_db(void);
 void initdb(void);
 struct DB_nick *find_db_nick(char *nick);

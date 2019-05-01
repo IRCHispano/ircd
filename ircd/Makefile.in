@@ -146,18 +146,7 @@ install: build
          if [ "${IRC_UID}" != "" ]; then \
           ${CHOWN} ${IRC_UID} ${DBPATH}/hashes ; \
           ${CHGRP} ${IRC_GID} ${DBPATH}/hashes ; \
-         fi ; \
-	  for i in a b c d e f g h i j k l m n o p q r s t u v w x y z ; \
-	  do \
-	    if [ ! -f ${DBPATH}/tabla.$$i ]; then \
-	      ${TOUCH} ${DBPATH}/tabla.$$i ; \
-	      ${CHMOD} 600 ${DBPATH}/tabla.$$i ; \
-             if [ "${IRC_UID}" != "" ]; then \
-              ${CHOWN} ${IRC_UID} ${DBPATH}/tabla.$$i ; \
-              ${CHGRP} ${IRC_GID} ${DBPATH}/tabla.$$i ; \
-             fi ; \
-	    fi ; \
-	  done ; )
+         fi ; ) \
 
 	if [ "${BDD_MMAP}" = "y" ]; then \
 		( cd ${BINDIR} ; \
