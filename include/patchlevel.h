@@ -37,7 +37,7 @@
 /* Se usa el .patches */
 #define PATCHLEVEL "0"
 
-#define RELEASE ".H.10."
+#define RELEASE ".H.10.L."
 
 /*
  * Deliberate empty lines
