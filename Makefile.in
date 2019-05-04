@@ -38,7 +38,7 @@ build:
 	if [ ! -f config/config.h ]; then \
 		echo "Run '${MAKE} config' to configure the server"; \
 	else \
-	for i in config ircd; do \
+	for i in config libevent ircd; do \
 		echo "Building $$i..."; \
 		cd $$i; \
 		${MAKE} build; \
@@ -54,7 +54,7 @@ root-clean:
 	done || true
 
 clean: root-clean
-	@for i in ircd config; do \
+	@for i in ircd config libevent; do \
 		echo "Cleaning $$i..."; \
 		cd $$i; ${MAKE} clean; cd ..;\
 	done
@@ -68,7 +68,7 @@ root-distclean: root-clean
 	${RM} -f Makefile
 
 distclean: root-distclean
-	@for i in doc ircd config; do \
+	@for i in doc ircd config libevent; do \
 		echo "Dist-cleaning $$i..."; \
 		cd $$i; ${MAKE} distclean; cd ..;\
 	done

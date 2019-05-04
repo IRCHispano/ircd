@@ -29,7 +29,7 @@
 #include "dbuf.h"
 #endif
 
-#include <event.h>
+#include "../libevent/event.h"
 #include "res.h"
 
 /*=============================================================================

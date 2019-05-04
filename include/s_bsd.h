@@ -3,7 +3,7 @@
 
 #include <netdb.h>
 #include "s_conf.h"
-#include <event.h>
+#include "../libevent/event.h"
 
 /*=============================================================================
  * Macro's

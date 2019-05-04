@@ -3,7 +3,7 @@
 
 #include <netinet/in.h>
 #include <netdb.h>
-#include <event.h>
+#include "../libevent/event.h"
 #include "list.h"
 
 /*=============================================================================
