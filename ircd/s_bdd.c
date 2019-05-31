@@ -2515,6 +2515,7 @@ void initdb(void)
   tabla_residente_y_len[BDD_CONFIGDB] = 256;
   tabla_residente_y_len[BDD_EXCEPTIONDB] = 512;
   tabla_residente_y_len[BDD_CHANREDIRECTDB] = 256;
+  tabla_residente_y_len[BDD_PROXYDB] = 256;
   
   cache = mmap_cache();
 
@@ -3242,6 +3243,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
         nivel_helper = -1;
       break;
     case BDD_WEBIRCDB:         /* 'w' */
+    case BDD_PROXYDB:
       if (nivel_helper < 10)
         nivel_helper = -1;
       break;
