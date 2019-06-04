@@ -1666,7 +1666,7 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (!pass)
         return exit_client(sptr, sptr, &me, "WEBIRC No password for your host");
 
-      if (strcmp(password, reg->valor))
+      if (strcmp(password, pass))
         return exit_client(sptr, sptr, &me, "WEBIRC Password invalid for your host");
     }
     else
