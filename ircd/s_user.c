@@ -1666,7 +1666,7 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (!pass)
         return exit_client(sptr, sptr, &me, "WEBIRC No password for your host");
 
-      if (strcmp(password, reg->valor))
+      if (strcmp(password, pass))
         return exit_client(sptr, sptr, &me, "WEBIRC Password invalid for your host");
     }
     else
@@ -1726,7 +1726,6 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
   struct db_reg *reg;
-  unsigned short access_allowed = 0;
 
   if (IsRegistered(sptr))
     return 0;
@@ -1747,38 +1746,11 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 
   /*
-   * Buscamos el registro con clave "proxy". Dicha clave
-   * busca una lista de direcciones IP separadas por coma que seran
-   * las autorizadas a conectar utilizando el protocolo PROXY
+   * Buscamos el registro en la tabla y, que es la tabla de las
+   * ips autorizadas a conectar utilizando el protocolo PROXY.
    */
-  reg = db_buscar_registro(BDD_FEATURESDB, BDD_PROXY_IPS_ALLOWED);
-  if (reg)
-  {
-    char *current, *ipaddress = NULL;
-    char *reg_valor = NULL;
-
-    /*
-     * Copio reg->valor en reg_valor para evitar la corrupcion
-     * de memoria que ocurre al iterar en reg->valor si este posee
-     * el caracter ','. Copiado de channel.c
-     */
-    DupString(reg_valor, reg->valor);
-
-    for (current = strtoken(&ipaddress, reg_valor, ",");
-         current;
-         current = strtoken(&ipaddress, NULL, ","))
-    {
-        if (strcmp(sptr->sockhost, current) == 0)
-        {
-          access_allowed = 1;
-          break;
-        }
-    }
-
-    RunFree(reg_valor);
-  }
-
-  if (access_allowed == 0)
+  reg = db_buscar_registro(BDD_PROXYDB, sptr->sockhost);
+  if (!reg)
     return exit_client(sptr, sptr, &me, "PROXY Not authorized from your address");
 
   IPcheck_connect_fail(sptr);

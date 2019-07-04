@@ -1,3 +1,13 @@
+* 2019/06/05  toni@tonigarcia.es (u2.10.H.10.274)                    FIX
+------------------------------------------------------------------------
+  Correccion parche u2.10.H.10.270.
+
+* 2019/05/31  toni@tonigarcia.es (u2.10.H.10.273)                FEATURE
+------------------------------------------------------------------------
+  Con motivo de la implantacion del soporte Haproxy en el nuevo ircd,
+  por razones de eficiencia, finalmente las ips autorizadas van en
+  registros propios en la tabla Y.
+
 * 2019/05/01  toni@tonigarcia.es (u2.10.H.10.272)                FEATURE
 ------------------------------------------------------------------------
   Cambio de lugar de las ips autorizadas de Proxy.
