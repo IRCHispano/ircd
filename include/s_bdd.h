@@ -48,10 +48,6 @@
 
 
 /*
-** Registros de configuracion en la tabla 'z'
-*/
-#define BDD_CLAVE_DE_CIFRADO_DE_IPS		"clave.de.cifrado.de.ips"
-/*
  * Registros compatibles con features del nuevo ircd
  */
 #define BDD_ACTIVAR_IDENT                       "noident"
@@ -71,6 +67,7 @@
 #define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA       "msg_fullcapacity"
 #define BDD_PERMITE_NICKS_RANDOM		"allow_random_nicks"
 #define BDD_PERMITE_NICKS_SUSPEND               "allow_suspend_nicks"
+#define BDD_CLAVE_DE_CIFRADO_DE_IPS             "ip_crypt_key"
 
 /* Para las features de los pseudoBOTS tabla 'c' */
 #define BDD_CHANSERV      "chanserv"
