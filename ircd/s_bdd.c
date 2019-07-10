@@ -654,20 +654,20 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               permite_nicks_suspend = 0;
             }
-          }                     /* Fin de "!reemplazar" */
-          break;
-
-        case BDD_CONFIGDB:
-          if (!reemplazar)
-          {
-            if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_IPS))
+            else if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_IPS))
             {
               clave_de_cifrado_de_ips = NULL;
               clave_de_cifrado_binaria[0] = 0;
               clave_de_cifrado_binaria[1] = 0;
               elimina_cache_ips_virtuales();
             }
-            else if(!strncmp(c, "noredirect:", 9) && !strcmp(c+9, me.name))
+          }                     /* Fin de "!reemplazar" */
+          break;
+
+        case BDD_CONFIGDB:
+          if (!reemplazar)
+          {
+            if(!strncmp(c, "noredirect:", 9) && !strcmp(c+9, me.name))
             {
               desactivar_redireccion_canales=0;
             }
@@ -1229,9 +1229,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         else
           permite_nicks_suspend = 0;
       }
-      break;
-    case BDD_CONFIGDB:
-      if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_IPS))
+      else if (!strcmp(c, BDD_CLAVE_DE_CIFRADO_DE_IPS))
       {
         char tmp, clave[12 + 1];
 
@@ -1245,7 +1243,9 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
         elimina_cache_ips_virtuales();
       }
-      else if(!strncmp(c, "noredirect:", 9) && !strcmp(c+9, me.name))
+      break;
+    case BDD_CONFIGDB:
+      if(!strncmp(c, "noredirect:", 9) && !strcmp(c+9, me.name))
       {
         desactivar_redireccion_canales=1;
       }
@@ -2552,7 +2552,7 @@ void initdb(void)
     {
       numero_maximo_de_clones_por_defecto = atoi(reg->valor);
     }
-    if ((reg = db_buscar_registro(BDD_CONFIGDB, BDD_CLAVE_DE_CIFRADO_DE_IPS)))
+    if ((reg = db_buscar_registro(BDD_FEATURESDB, BDD_CLAVE_DE_CIFRADO_DE_IPS)))
     {
       char tmp, clave[12 + 1];
 
@@ -3247,7 +3247,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
       if (nivel_helper < 10)
         nivel_helper = -1;
       break;
-    case BDD_CONFIGDB:         /* 'z' */
+    case BDD_FEATURESDB:       /* 'f' */
       if (!strcmp(clave, BDD_CLAVE_DE_CIFRADO_DE_IPS) && (nivel_helper < 10))
         nivel_helper = -1;
       break;
@@ -3255,7 +3255,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
   if (nivel_helper < 0)
   {
-    if (MyUser(sptr) 
+    if (MyUser(sptr)
 #if !defined(NO_PROTOCOL9)
         || Protocol(cptr) < 10
 #endif
