@@ -1,4 +1,4 @@
-* 2019/05/31  toni@tonigarcia.es (u2.10.H.10.275)                FEATURE
+* 2019/07/05  toni@tonigarcia.es (u2.10.H.10.275)                FEATURE
 ------------------------------------------------------------------------
   La clave de cifrado ahora en tabla f de Feature con la clave IP_CRYPT_KEY.
  
