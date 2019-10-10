@@ -231,7 +231,7 @@ static Numeric numeric_errors[] = {
 /* 469 */
     {0, (char *)NULL},
 /* 470 */
-    {0, (char *)NULL},
+    {ERR_LINKCHANNEL, "%s %s :Forwarding to another channel"},
 /* 471 */
     {ERR_CHANNELISFULL, "%s :Cannot join channel (+l) - "
                         "El canal está limitado y no acepta más usuarios"},

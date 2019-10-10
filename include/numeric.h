@@ -124,7 +124,7 @@
 #define ERR_INVALIDUSERNAME  468  /* Undernet extension */
 /*      ERR_ONLYSERVERSCANCHANGE 468      Dalnet extension */
 /*      ERR_LINKSET         469           Dalnet extension */
-/*      ERR_LINKCHANNEL             470           Unreal */
+#define ERR_LINKCHANNEL      470  /* Unreal, Inspircd, Freenode */
 /*      ERR_KICKEDFROMCHAN   470          Aircd */
 #define ERR_CHANNELISFULL    471
 #define ERR_UNKNOWNMODE	     472
