@@ -4033,6 +4033,10 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
             && chptr->owner && !strcmp(chptr->owner, sptr->name))
           flags = CHFL_OWNER;
 
+          /* Si es una redireccion, mandar 470 */
+          if (ch_redir)
+            sendto_one(sptr, err_str(ERR_LINKCHANNEL), me.name, parv[0],
+                ch_redir->clave, chptr->chname);
       }
       /*
        * Complete user entry to the new channel (if any)

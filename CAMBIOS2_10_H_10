@@ -1,3 +1,7 @@
+* 2019/10/10  toni@tonigarcia.es (u2.10.H.10.276)                    FIX
+------------------------------------------------------------------------
+  Cuando se redirecciona un canal a otro, hay que mandar el raw 470.
+
 * 2019/07/05  toni@tonigarcia.es (u2.10.H.10.275)                FEATURE
 ------------------------------------------------------------------------
   La clave de cifrado ahora en tabla f de Feature con la clave IP_CRYPT_KEY.
