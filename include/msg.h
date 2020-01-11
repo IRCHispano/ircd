@@ -95,6 +95,10 @@
 #define TOK_PRIVS               "PR"
 #define CLASS_PRIVS             LEVEL_QUERY
 
+#define MSG_SPAM                "SPAM"
+#define TOK_SPAM                "SP"
+#define CLASS_SPAM              LEVEL_PROPAGATE
+
 /* We are using PPROXY as PROXY is defined in Linux's glibc socket.h */
 #define MSG_PPROXY		"PROXY"		/* PROXY */
 #define TOK_PROXY		"PROXY"

@@ -628,7 +628,7 @@ static Numeric numeric_replies[] = {
 /* 228 */
     {0, (char *)NULL},
 /* 229 */
-    {0, (char *)NULL},
+    {RPL_STATSSPAMF, "%c %ld %d %s %s :%s"},
 /* 230 */
     {0, (char *)NULL},
 /* 231 */

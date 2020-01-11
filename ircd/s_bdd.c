@@ -62,6 +62,7 @@
 #include "IPcheck.h"
 #include "network.h"
 #include "slab_alloc.h"
+#include "spam.h"
 
 #include "s_bdd.h"
 
@@ -78,6 +79,7 @@
 char *bot_nickserv = NULL;
 char *bot_chanserv = NULL;
 char *bot_clonesserv = NULL;
+char *bot_spamserv = NULL;
 int numero_maximo_de_clones_por_defecto;
 char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
@@ -94,6 +96,8 @@ char *network = NULL;
 char *canal_operadores = NULL;
 char *canal_debug = NULL;
 char *canal_privsdebug = NULL;
+char *canal_geodebug = NULL;
+char *canal_spamdebug = NULL;
 int conversion_utf = 0;
 int permite_nicks_random = 0;
 int permite_nicks_suspend = 0;
@@ -521,6 +525,14 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                 bot_clonesserv=NULL;
               }
             }
+            else if (!strcmp(c, BDD_SPAMSERV))
+            {
+              if (bot_spamserv)
+              {
+                RunFree(bot_spamserv);
+                bot_spamserv=NULL;
+              }
+            }
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -641,6 +653,22 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                 canal_privsdebug=NULL;
               }
             }
+            else if(!strcmp(c, BDD_CANAL_GEODEBUG))
+            {
+              if(canal_geodebug)
+              {
+                RunFree(canal_geodebug);
+                canal_geodebug=NULL;
+              }
+            }
+            else if(!strcmp(c, BDD_CANAL_SPAMDEBUG))
+            {
+              if(canal_spamdebug)
+              {
+                RunFree(canal_spamdebug);
+                canal_spamdebug=NULL;
+              }
+            }
 
             else if (!strcmp(c, BDD_CONVERSION_UTF))
             {
@@ -661,6 +689,16 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               clave_de_cifrado_binaria[1] = 0;
               elimina_cache_ips_virtuales();
             }
+          }                     /* Fin de "!reemplazar" */
+          break;
+
+        case BDD_SPAMDB:
+          if (!reemplazar)
+          {
+            u_int32_t id = atoi(c);
+            if (id)
+                spam_del(id);
+
           }                     /* Fin de "!reemplazar" */
           break;
 
@@ -960,6 +998,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         SlabStringAllocDup(&bot_clonesserv, v, 0);
       }
+      else if(!strcmp(c, BDD_SPAMSERV))
+      {
+        SlabStringAllocDup(&bot_spamserv, v, 0);
+      }
       break;
 
      /* 05-Ene-04: mount@irc-dev.net
@@ -1208,6 +1250,14 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         SlabStringAllocDup(&canal_privsdebug, v, 0);
       }
+      else if(!strcmp(c, BDD_CANAL_GEODEBUG))
+      {
+        SlabStringAllocDup(&canal_geodebug, v, 0);
+      }
+      else if(!strcmp(c, BDD_CANAL_SPAMDEBUG))
+      {
+        SlabStringAllocDup(&canal_spamdebug, v, 0);
+      }
       else if (!strcmp(c, BDD_CONVERSION_UTF))
       {
         if (!strcasecmp(v, "TRUE"))
@@ -1244,6 +1294,48 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         elimina_cache_ips_virtuales();
       }
       break;
+    case BDD_SPAMDB:
+      {
+        struct SpamFilter *spam;
+        json_object *json, *json_pattern, *json_flags;
+        json_object *json_mode, *json_reason, *json_gexpire;
+        u_int32_t id_filter;
+        char *pattern, *reason;
+        u_int16_t flags, mode;
+        time_t gexpire;
+        enum json_tokener_error jerr = json_tokener_success;
+
+        json = json_tokener_parse_verbose(reg->valor, &jerr);
+        if (jerr != json_tokener_success)
+          break;
+
+        json_object_object_get_ex(json, "pattern", &json_pattern);
+        pattern = (char *)json_object_get_string(json_pattern);
+        json_object_object_get_ex(json, "flags", &json_flags);
+        flags = json_object_get_int(json_flags);
+        json_object_object_get_ex(json, "action", &json_mode);
+        mode = json_object_get_int(json_mode);
+        json_object_object_get_ex(json, "reason", &json_reason);
+        reason = (char *)json_object_get_string(json_reason);
+        json_object_object_get_ex(json, "expires", &json_gexpire);
+        gexpire = json_object_get_int64(json_gexpire);
+
+        id_filter = atoi(c);
+
+        /* id y pattern son obligatorios */
+        if (!id_filter || !pattern)
+          break;
+
+        spam = find_spam(id_filter);
+
+        if (spam)
+          spam_update(spam, pattern, reason, mode, flags, gexpire);
+        else
+          spam_add(id_filter, pattern, reason, mode, flags, gexpire);
+
+      }
+      break;
+
     case BDD_CONFIGDB:
       if(!strncmp(c, "noredirect:", 9) && !strcmp(c+9, me.name))
       {
@@ -2504,11 +2596,13 @@ void initdb(void)
   tabla_residente_y_len[BDD_CHAN2DB] = 8192;
   tabla_residente_y_len[BDD_BOTSDB] = 256;
   tabla_residente_y_len[BDD_FEATURESDB] = 256;
+  tabla_residente_y_len[BDD_GEODB] = 256;
   tabla_residente_y_len[BDD_JUPEDB] = 512;
   tabla_residente_y_len[BDD_LOGGINGDB] = 256;
   tabla_residente_y_len[BDD_MOTDDB] = 256;
   tabla_residente_y_len[BDD_PSEUDODB] = 256;
   tabla_residente_y_len[BDD_QUARANTINEDB] = 256;
+  tabla_residente_y_len[BDD_SPAMDB] = 512;
   tabla_residente_y_len[BDD_UWORLDDB] = 256;
   tabla_residente_y_len[BDD_IPVIRTUALDB] = 4096;
   tabla_residente_y_len[BDD_WEBIRCDB] = 256;

@@ -19,8 +19,8 @@ extern void sendto_one_hunt(aClient *to, aClient *from, char *cmd,
 extern void sendbufto_one(aClient *to);
 extern void sendto_ops(const char *pattern, ...)
     __attribute__ ((format(printf, 1, 2)));
-extern void sendto_debug_channel(char *pattern, ...)
-    __attribute__ ((format(printf, 1, 2)));
+extern void sendto_debug_channel(char *channel, char *pattern, ...)
+    __attribute__ ((format(printf, 2, 3)));
 extern void sendto_channel_butserv(aChannel *chptr, aClient *from,
     char *pattern, ...) __attribute__ ((format(printf, 3, 4)));
 extern void sendto_serv_butone(aClient *one, char *pattern, ...)

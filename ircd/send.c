@@ -448,7 +448,7 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
 /*
  * send debug message to channel
  */
-void sendto_debug_channel(char *pattern, ...)
+void sendto_debug_channel(char *channel, char *pattern, ...)
 {
   va_list vl;
   Reg1 Link *lp;
@@ -458,7 +458,7 @@ void sendto_debug_channel(char *pattern, ...)
   static char fmt[1024];
   char *fmt_target;
 
-  chptr = FindChannel(canal_privsdebug);
+  chptr = FindChannel(channel);
   if (!chptr)
       return;
 

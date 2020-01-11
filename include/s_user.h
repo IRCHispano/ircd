@@ -81,6 +81,7 @@ extern char *get_visiblehost(aClient *sptr, aClient *acptr, int audit);
 void make_vhost(aClient *acptr, int mostrar);
 void make_vhostperso(aClient *acptr, int mostrar);
 #endif
+extern void spam_set_modes(aClient *sptr);
 extern void set_privs(aClient *sptr);
 extern uint64_t HasPriv(aClient *sptr, uint64_t priv);
 extern void rename_user(aClient *sptr, char *nick_nuevo);

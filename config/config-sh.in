@@ -475,6 +475,7 @@ endmenu
 
 mainmenu_option next_comment
 comment 'Mandatory defines (you should leave these untouched)'
+  bool 'Maxmind GeoIP2 geoiplocation support' USE_GEOIP2 n
   eval DBPATH_DEFAULT="database"
   string 'HISPANO/ESNET: Directory where distributed database resides' DBPATH $DBPATH_DEFAULT
   bool 'HISPANO/ESNET: OnDisk MMAP BDD cache file' BDD_MMAP n
