@@ -1,3 +1,16 @@
+* 2020/01/12  toni@tonigarcia.es (u2.10.H.10.277)                FEATURE
+------------------------------------------------------------------------
+  Soporte inicial de Geolocalizacion, con el uso de tabla g de la DDB.
+
+  Soporte inicial del sistema antispam con el uso de la tabla s de la DDB.
+
+  Se incluye el nuevo modo de usuario +V para indicar que está pendiente
+  de validaciones externas por services para completar la entrada a la red.
+
+  El resto del soporte no se hara publico por motivos de seguridad, no
+  obstante, si deseas más informacion de las implementaciones, contactar
+  con toni@tonigarcia.es.
+
 * 2019/10/10  toni@tonigarcia.es (u2.10.H.10.276)                    FIX
 ------------------------------------------------------------------------
   Cuando se redirecciona un canal a otro, hay que mandar el raw 470.

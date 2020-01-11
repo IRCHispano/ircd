@@ -250,7 +250,8 @@ extern struct sockaddr_in vserv;
 #define HMODE_USERDEAF                0x00008000  /* Usuario no puede mandar nada al canal */
 #define HMODE_USERBITCH               0x00010000  /* Usuario puteado, ni manda ni recibe salvo ciertas condiciones */
 #define HMODE_USERNOJOIN              0x00020000  /* Al intentar entrar a un canal entra siempre a uno de debug */
-#define HMODE_DOCKING                 0x00040000  /* Tiene Docking */
+#define HMODE_PENDVALIDATION          0x00040000  /* Pendiente de validacion por services */
+#define HMODE_DOCKING                 0x00080000  /* Tiene Docking */
 
 #define HFLAG_WEBIRC                  0x01000000  /* Usuario WebIRC */
 #define HFLAG_PROXY                   0x02000000  /* Usuario Proxy */
@@ -259,14 +260,14 @@ extern struct sockaddr_in vserv;
 #define SEND_HMODES \
     (HMODE_NICKREGISTERED | HMODE_HELPOP | HMODE_SERVICESBOT | HMODE_HIDDEN | HMODE_HIDDENVIEWER \
        | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG | HMODE_STRIPCOLOR | HMODE_NOCHAN | HMODE_SSL \
-       | HMODE_ADMIN | HMODE_CODER | HMODE_NOIDLE | HMODE_WHOIS | HMODE_USERDEAF |HMODE_USERBITCH | HMODE_USERNOJOIN | HMODE_DOCKING)
+       | HMODE_ADMIN | HMODE_CODER | HMODE_NOIDLE | HMODE_WHOIS | HMODE_USERDEAF |HMODE_USERBITCH | HMODE_USERNOJOIN | HMODE_PENDVALIDATION | HMODE_DOCKING)
 
 /* Modos hispano TODOS */
 #define ALL_HMODES \
     (SEND_HMODES)
 
 #define HMODES_HIDDEN_USER \
-    (HMODE_NOIDLE | HMODE_USERDEAF | HMODE_USERBITCH | HMODE_USERNOJOIN)
+    (HMODE_NOIDLE | HMODE_USERDEAF | HMODE_USERBITCH | HMODE_USERNOJOIN | HMODE_PENDVALIDATION)
 
 #define HMODES_HIDDEN_OPER \
      (HMODE_WHOIS)
@@ -289,6 +290,7 @@ extern struct sockaddr_in vserv;
 #define IsUserDeaf(x)           ((x)->hmodes & HMODE_USERDEAF)
 #define IsUserBitch(x)          ((x)->hmodes & HMODE_USERBITCH)
 #define IsUserNoJoin(x)         ((x)->hmodes & HMODE_USERNOJOIN)
+#define IsPendValidation(x)     ((x)->hmodes & HMODE_PENDVALIDATION)
 #define IsDocking(x)            ((x)->hmodes & HMODE_DOCKING)
 
 #define TieneIpVirtualPersonalizada(x)  ((x)->hmodes & HFLAG_IPVIRTUAL_PERSONALIZADA)
@@ -314,6 +316,7 @@ extern struct sockaddr_in vserv;
 #define SetUserDeaf(x)          ((x)->hmodes |= HMODE_USERDEAF)
 #define SetUserBitch(x)         ((x)->hmodes |= HMODE_USERBITCH)
 #define SetUserNoJoin(x)        ((x)->hmodes |= HMODE_USERNOJOIN)
+#define SetPendValidation(x)    ((x)->hmodes |= HMODE_PENDVALIDATION)
 #define SetDocking(x)           ((x)->hmodes |= HMODE_DOCKING)
 
 #define SetIpVirtualPersonalizada(x)    ((x)->hmodes |= HFLAG_IPVIRTUAL_PERSONALIZADA)
@@ -339,6 +342,7 @@ extern struct sockaddr_in vserv;
 #define ClearUserDeaf(x)        ((x)->hmodes &= ~HMODE_USERDEAF)
 #define ClearUserBitch(x)       ((x)->hmodes &= ~HMODE_USERBITCH)
 #define ClearUserNoJoin(x)      ((x)->hmodes &= ~HMODE_USERNOJOIN)
+#define ClearPendValidation(x)  ((x)->hmodes &= ~HMODE_PENDVALIDATION)
 #define ClearDocking(x)         ((x)->hmodes &= ~HMODE_DOCKING)
 
 #define ClearIpVirtualPersonalizada(x)  ((x)->hmodes &= ~HFLAG_IPVIRTUAL_PERSONALIZADA)

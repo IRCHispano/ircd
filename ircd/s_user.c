@@ -843,6 +843,7 @@ static int user_hmodes[] = {
   HMODE_USERDEAF,       'D',
   HMODE_USERBITCH,      'P',
   HMODE_USERNOJOIN,     'J',
+  HMODE_PENDVALIDATION, 'V',
   0,			0
 };
 
@@ -1030,6 +1031,19 @@ void strip_color (const char *src, int maxlength, char *dst)
       pos++;
     }
   *dst = 0;
+}
+
+void spam_set_modes(aClient *sptr)
+{
+  int of, oh;
+
+  of = sptr->flags;
+  oh = sptr->hmodes;
+
+  SetUserDeaf(sptr);
+  SetUserBitch(sptr);
+
+  send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
 }
 
 /*
@@ -2960,6 +2974,11 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if (!(sethmodes & HMODE_USERNOJOIN))
       ClearUserNoJoin(sptr);
+
+    if (sethmodes & HMODE_PENDVALIDATION)
+      SetPendValidation(sptr);
+    else
+      ClearPendValidation(sptr);
   }
 
   if (MyConnect(sptr) && IsNickRegistered(sptr))
@@ -3200,6 +3219,18 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
           break;
         case '-':
           what = MODE_DEL;
+          break;
+        case 'V':
+          if (what == MODE_ADD)
+            SetPendValidation(acptr);
+          else {
+            if (MyConnect(acptr) && IsPendValidation(acptr))
+              sendto_one(acptr,
+                  ":%s NOTICE %s :*** Se ha validado la conexion, ya puedes utilizar el servicio de Chat :)",
+                  bot_nickserv ? bot_nickserv : me.name, acptr->name);
+
+            ClearPendValidation(acptr);
+          }
           break;
         /*
          * We may not get these, but they shouldnt be in default:
@@ -3965,7 +3996,7 @@ int can_viewhost(aClient *sptr, aClient *acptr, int audit)
   if (IsAdmin(sptr) || IsCoder(sptr))
   {
     if (audit && (sptr != acptr))
-      sendto_debug_channel("[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
+      sendto_debug_channel(canal_privsdebug, "[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
     return 1;
   }
 
@@ -3973,7 +4004,7 @@ int can_viewhost(aClient *sptr, aClient *acptr, int audit)
   if (!IsAnOper(acptr) && !IsAdmin(acptr) && !IsCoder(acptr))
   {
     if (audit && (sptr != acptr))
-      sendto_debug_channel("[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
+      sendto_debug_channel(canal_privsdebug, "[PRIVS-IP] %s ha visto la IP de %s", sptr->name, acptr->name);
     return 1;
   }
 

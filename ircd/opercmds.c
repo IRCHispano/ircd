@@ -64,6 +64,7 @@
 #include "support.h"
 #include "s_serv.h"
 #include "hash.h"
+#include "spam.h"
 #if defined(BDD_MMAP)
 #include "persistent_malloc.h"
 #endif
@@ -793,6 +794,16 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(DEBUGMODE)
       send_usage(sptr, parv[0]);
 #endif
+      break;
+    case 'S':
+    case 's':
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
+      spam_stats(sptr);
       break;
     case 'D':
       /* Solo ircops tienen acceso */

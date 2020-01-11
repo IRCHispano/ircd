@@ -159,6 +159,9 @@ AC_SEARCH_LIBS(inflate, z, , [AC_MSG_ERROR([Zlib not found, required. Install zl
 dnl Let's find the library containing pcre...
 AC_SEARCH_LIBS(pcre_stack_free, pcre, , [AC_MSG_ERROR([PCRE not found, required. Install libpcre3-dev])])
 
+dnl Let's find the library containing pcre...
+AC_SEARCH_LIBS(MMDB_open, maxminddb, , [AC_MSG_WARN([Maxmind GeoIP2 not found, recommended. Install libmaxminddb-dev])])
+
 #dnl Do we have a system call poll?
 #unet_FUNC_POLL_SYSCALL
 

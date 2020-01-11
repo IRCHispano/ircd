@@ -32,6 +32,7 @@
 #define BDD_CHAN2DB        'd'
 #define BDD_EXCEPTIONDB    'e'
 #define BDD_FEATURESDB     'f'
+#define BDD_GEODB          'g'
 #define BDD_JUPEDB         'j'
 #define BDD_LOGGINGDB      'l'
 #define BDD_MOTDDB         'm'
@@ -39,6 +40,7 @@
 #define BDD_PSEUDODB       'p'
 #define BDD_QUARANTINEDB   'q'
 #define BDD_CHANREDIRECTDB 'r'
+#define BDD_SPAMDB         's'
 #define BDD_UWORLDDB       'u'
 #define BDD_IPVIRTUALDB    'v'
 #define BDD_WEBIRCDB       'w'
@@ -63,16 +65,19 @@
 #define BDD_CANAL_OPERS                         "operschan"
 #define BDD_CANAL_DEBUG                         "debugchan"
 #define BDD_CANAL_PRIVSDEBUG                    "privsdebugchan"
+#define BDD_CANAL_GEODEBUG                      "geodebugchan"
+#define BDD_CANAL_SPAMDEBUG                     "spamdebugchan"
 #define BDD_CONVERSION_UTF                      "utf8_conversion"
 #define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA       "msg_fullcapacity"
 #define BDD_PERMITE_NICKS_RANDOM		"allow_random_nicks"
 #define BDD_PERMITE_NICKS_SUSPEND               "allow_suspend_nicks"
 #define BDD_CLAVE_DE_CIFRADO_DE_IPS             "ip_crypt_key"
 
-/* Para las features de los pseudoBOTS tabla 'c' */
+/* Para las features de los pseudoBOTS tabla 'b' */
 #define BDD_CHANSERV      "chanserv"
 #define BDD_NICKSERV      "nickserv"
 #define BDD_CLONESSERV    "clonesserv"
+#define BDD_SPAMSERV      "spamserv"
 
 /* Privilegios IRCD */
 #define PRIV_CHAN_LIMIT      0x000000001 /**< no channel limit on oper */
@@ -147,6 +152,7 @@ int m_dbq(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern char *bot_nickserv;
 extern char *bot_chanserv;
 extern char *bot_clonesserv;
+extern char *bot_spamserv;
 extern int numero_maximo_de_clones_por_defecto;
 extern char *clave_de_cifrado_de_ips;
 extern unsigned int clave_de_cifrado_binaria[2];
@@ -162,6 +168,8 @@ extern char *network;
 extern char *canal_operadores;
 extern char *canal_debug;
 extern char *canal_privsdebug;
+extern char *canal_geodebug;
+extern char *canal_spamdebug;
 extern int conversion_utf;
 extern int permite_nicks_random;
 extern int permite_nicks_suspend;

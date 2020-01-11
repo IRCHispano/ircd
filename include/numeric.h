@@ -362,6 +362,8 @@
 /*      RPL_STATSGLINE      227           Dalnet extension */
 /*      RPL_STATSVLINE      227           Unreal */
 
+#define RPL_STATSSPAMF      229           /* Unreal */
+
 #define RPL_SERVICEINFO             231 /* Unused */
 #define RPL_ENDOFSERVICES    232  /* Unused */
 /*     RPL_RULES            232           Unreal */
