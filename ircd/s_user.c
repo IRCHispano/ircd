@@ -831,6 +831,7 @@ static int user_hmodes[] = {
   HMODE_HELPOP,         'h',
   HMODE_HIDDEN,         'x',
   HMODE_HIDDENVIEWER,   'X',
+  HMODE_VHOSTPERSO,     'v',
   HMODE_SERVICESBOT,    'B',
   HMODE_MSGONLYREG,     'R',
   HMODE_STRIPCOLOR,     'c',
@@ -3017,7 +3018,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!(sethmodes & HMODE_NICKREGISTERED))
     {
       if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
-        SetIpVirtualPersonalizada(sptr);
+        SetVhostPerso(sptr);
       else
         BorraIpVirtualPerso(sptr);
     }
@@ -3056,7 +3057,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #if defined(BDD_VIP)
   if ((sethmodes & HMODE_HIDDEN) && !IsHidden(sptr))
   {
-    if (TieneIpVirtualPersonalizada(sptr))
+    if (IsVhostPerso(sptr))
       BorraIpVirtualPerso(sptr);
   }
 #endif
@@ -4022,7 +4023,7 @@ char *get_virtualhost(aClient *sptr, int perso)
   if (!IsUser(sptr))
     return "<Que_Pasa?>";       /* esto no deberia salir nunca */
 
-  if (perso && TieneIpVirtualPersonalizada(sptr))
+  if (perso && IsVhostPerso(sptr))
   {
     if (!sptr->user->vhostperso)
       make_vhostperso(sptr, 0);
@@ -4052,7 +4053,7 @@ char *get_visiblehost(aClient *sptr, aClient *acptr, int audit)
     return PunteroACadena(sptr->user->host);
   else
   {
-    if (TieneIpVirtualPersonalizada(sptr)) {
+    if (IsVhostPerso(sptr)) {
       if (!sptr->user->vhostperso)
         make_vhostperso(sptr, 0);
       return sptr->user->vhostperso;
@@ -4205,7 +4206,7 @@ void make_vhostperso(aClient *acptr, int mostrar)
       RunFree(vhost);
     }
 
-    SetIpVirtualPersonalizada(acptr);
+    SetVhostPerso(acptr);
     if (mostrar)
       sendto_one(acptr, rpl_str(RPL_HOSTHIDDEN), me.name, acptr->name,
           acptr->user->vhostperso);
@@ -4509,7 +4510,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
   hAddClient(sptr);
 
 #if defined(BDD_VIP)
-  if (TieneIpVirtualPersonalizada(sptr)) {
+  if (IsVhostPerso(sptr)) {
       BorraIpVirtualPerso(sptr);
       vhperso = 1;
   }
@@ -4575,7 +4576,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
                                  */
       SetHidden(sptr);
       if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
-        SetIpVirtualPersonalizada(sptr);
+        SetVhostPerso(sptr);
 #else
       /* Puede que tenga una ip virtual personalizada */
       if (IsNickSuspended(sptr))
@@ -4585,7 +4586,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       else if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
       {
         SetHidden(sptr);
-        SetIpVirtualPersonalizada(sptr);
+        SetVhostPerso(sptr);
       }
       else
       {
@@ -4595,7 +4596,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 
       if (IsHidden(sptr))
       {
-        if (TieneIpVirtualPersonalizada(sptr)) {
+        if (IsVhostPerso(sptr)) {
           make_vhostperso(sptr, 1);
         } else {
             /* Tenia vhost personalizada, ahora mandamos
@@ -5623,7 +5624,7 @@ nickkilldone:
 ** rutina con un usuario no inicializado del todo (recien conectado)
 ** que todavia no esta marcado como "user".
 */
-    if (IsUser(sptr) && TieneIpVirtualPersonalizada(sptr)) {
+    if (IsUser(sptr) && IsVhostPerso(sptr)) {
       BorraIpVirtualPerso(sptr);
       vhperso = 1;
     }
@@ -5766,7 +5767,7 @@ nickkilldone:
 #if !defined(BDD_VIP2)
           ClearHidden(sptr);
 #endif
-          if (TieneIpVirtualPersonalizada(sptr)) {
+          if (IsVhostPerso(sptr)) {
             BorraIpVirtualPerso(sptr);
             vhperso = 1;
           }
@@ -5858,7 +5859,7 @@ nickkilldone:
     else if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
     {
       SetHidden(sptr);          /* Tiene una ip virtual personalizada */
-      SetIpVirtualPersonalizada(sptr);
+      SetVhostPerso(sptr);
     }
     else
     {
@@ -5904,7 +5905,7 @@ nickkilldone:
                                  */
       SetHidden(sptr);
       if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
-        SetIpVirtualPersonalizada(sptr);
+        SetVhostPerso(sptr);
 #else
       /* Puede que tenga una ip virtual personalizada */
       if (nick_suspendido)
@@ -5914,7 +5915,7 @@ nickkilldone:
       else if (db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
       {
         SetHidden(sptr);
-        SetIpVirtualPersonalizada(sptr);
+        SetVhostPerso(sptr);
       }
       else
       {
@@ -5986,7 +5987,7 @@ nickkilldone:
     {
       if (IsHidden(sptr))
       {
-        if (TieneIpVirtualPersonalizada(sptr)) {
+        if (IsVhostPerso(sptr)) {
           make_vhostperso(sptr, 1);
         } else {
           /* Tenia vhost personalizada, ahora mandamos
@@ -6383,7 +6384,7 @@ nickkilldone:
   /* Si tiene +r y vhost, lo marcamos */
   if (IsNickRegistered(sptr) && db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
   {
-    SetIpVirtualPersonalizada(sptr);
+    SetVhostPerso(sptr);
   }
 #endif
 
@@ -6508,7 +6509,7 @@ nickkilldone:
     SlabStringAllocDup(&(sptr->name), nick, 0);
     hAddClient(sptr);
 #if defined(BDD_VIP)
-    if (TieneIpVirtualPersonalizada(sptr)) {
+    if (IsVhostPerso(sptr)) {
       BorraIpVirtualPerso(sptr);
     }
 #endif

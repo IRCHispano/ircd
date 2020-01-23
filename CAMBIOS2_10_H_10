@@ -1,3 +1,9 @@
+* 2020/01/23  toni@tonigarcia.es (u2.10.H.10.278)                FEATURE
+------------------------------------------------------------------------
+  Nuevo modo de usuario +v para indicar que tiene vhost personalizado.
+  Parche de transicion al nuevo IRCh, el funcionamiento es basico y no
+  se optimiza el codigo, en el IRCh se reescribira todo.
+
 * 2020/01/12  toni@tonigarcia.es (u2.10.H.10.277)                FEATURE
 ------------------------------------------------------------------------
   Soporte inicial de Geolocalizacion, con el uso de tabla g de la DDB.
