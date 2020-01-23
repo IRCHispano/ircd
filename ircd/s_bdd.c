@@ -738,10 +738,17 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             aClient *sptr;
             if ((sptr = FindUser(c)) && IsUser(sptr))
             {
+              int of, oh;
+
+              of = sptr->flags;
+              oh = sptr->hmodes;
+
               BorraIpVirtualPerso(sptr);
-              if (MyUser(sptr))
+              if (MyUser(sptr)) {
+                send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
                 sendto_one(sptr, rpl_str(RPL_HOSTHIDDEN), me.name, sptr->name,
                     get_virtualhost(sptr, 0));
+              }
             }
           }
           break;
@@ -1360,10 +1367,17 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
 
         if ((sptr = FindUser(c)) && IsUser(sptr))
         {
+          int of, oh;
+
+          of = sptr->flags;
+          oh = sptr->hmodes;
+
           BorraIpVirtualPerso(sptr);
-          SetIpVirtualPersonalizada(sptr);
-          if (MyUser(sptr))
+          SetVhostPerso(sptr);
+          if (MyUser(sptr)) {
+            send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
             make_vhostperso(sptr, 1);
+          }
         }
       }
       break;

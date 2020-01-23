@@ -238,7 +238,7 @@ extern struct sockaddr_in vserv;
 #define HMODE_HELPOP                  0x00000010  /* Es un oper con modo +h */
 #define HMODE_SERVICESBOT             0x00000020  /* Es un bot de canales */
 #define HMODE_HIDDEN                  0x00000040  /* IP Oculta */
-#define HFLAG_IPVIRTUAL_PERSONALIZADA 0x00000080  /* IP virtual personalizada */
+#define HMODE_VHOSTPERSO              0x00000080  /* IP virtual personalizada */
 #define HMODE_STRIPCOLOR              0x00000100  /* El usuario no recibe colores en +c */
 #define HMODE_NOCHAN                  0x00000200  /* No mostrar canales */
 #define HMODE_SSL                     0x00000400  /* Usuario con conexion SSL */
@@ -258,7 +258,7 @@ extern struct sockaddr_in vserv;
 
 /* Modos hispano  a propagar */
 #define SEND_HMODES \
-    (HMODE_NICKREGISTERED | HMODE_HELPOP | HMODE_SERVICESBOT | HMODE_HIDDEN | HMODE_HIDDENVIEWER \
+    (HMODE_NICKREGISTERED | HMODE_HELPOP | HMODE_SERVICESBOT | HMODE_HIDDEN | HMODE_HIDDENVIEWER | HMODE_VHOSTPERSO \
        | HMODE_NICKSUSPENDED | HMODE_MSGONLYREG | HMODE_STRIPCOLOR | HMODE_NOCHAN | HMODE_SSL \
        | HMODE_ADMIN | HMODE_CODER | HMODE_NOIDLE | HMODE_WHOIS | HMODE_USERDEAF |HMODE_USERBITCH | HMODE_USERNOJOIN | HMODE_PENDVALIDATION | HMODE_DOCKING)
 
@@ -278,6 +278,7 @@ extern struct sockaddr_in vserv;
 #define IsServicesBot(x)        ((x)->hmodes & HMODE_SERVICESBOT)
 #define IsHidden(x)             ((x)->hmodes & HMODE_HIDDEN)
 #define IsHiddenViewer(x)       ((x)->hmodes & HMODE_HIDDENVIEWER)
+#define IsVhostPerso(x)         ((x)->hmodes & HMODE_VHOSTPERSO)
 #define IsNickSuspended(x)      ((x)->hmodes & HMODE_NICKSUSPENDED)
 #define IsMsgOnlyReg(x)         ((x)->hmodes & HMODE_MSGONLYREG)
 #define IsStripColor(x)         ((x)->hmodes & HMODE_STRIPCOLOR)
@@ -293,7 +294,6 @@ extern struct sockaddr_in vserv;
 #define IsPendValidation(x)     ((x)->hmodes & HMODE_PENDVALIDATION)
 #define IsDocking(x)            ((x)->hmodes & HMODE_DOCKING)
 
-#define TieneIpVirtualPersonalizada(x)  ((x)->hmodes & HFLAG_IPVIRTUAL_PERSONALIZADA)
 #define IsWebIRC(x)             ((x)->hmodes & HFLAG_WEBIRC)
 #define IsProxy(x)              ((x)->hmodes & HFLAG_PROXY)
 
@@ -304,6 +304,7 @@ extern struct sockaddr_in vserv;
 #define SetServicesBot(x)       ((x)->hmodes |= HMODE_SERVICESBOT)
 #define SetHidden(x)            ((x)->hmodes |= HMODE_HIDDEN)
 #define SetHiddenViewer(x)      ((x)->hmodes |= HMODE_HIDDENVIEWER)
+#define SetVhostPerso(x)         ((x)->hmodes |= HMODE_VHOSTPERSO)
 #define SetNickSuspended(x)     ((x)->hmodes |= HMODE_NICKSUSPENDED)
 #define SetMsgOnlyReg(x)        ((x)->hmodes |= HMODE_MSGONLYREG)
 #define SetStripColor(x)        ((x)->hmodes |= HMODE_STRIPCOLOR)
@@ -319,7 +320,6 @@ extern struct sockaddr_in vserv;
 #define SetPendValidation(x)    ((x)->hmodes |= HMODE_PENDVALIDATION)
 #define SetDocking(x)           ((x)->hmodes |= HMODE_DOCKING)
 
-#define SetIpVirtualPersonalizada(x)    ((x)->hmodes |= HFLAG_IPVIRTUAL_PERSONALIZADA)
 #define SetWebIRC(x)            ((x)->hmodes |= HFLAG_WEBIRC)
 #define SetProxy(x)             ((x)->hmodes |= HFLAG_PROXY)
 
@@ -332,6 +332,7 @@ extern struct sockaddr_in vserv;
 #define ClearServicesBot(x)     ((x)->hmodes &= ~HMODE_SERVICESBOT)
 #define ClearHidden(x)          ((x)->hmodes &= ~HMODE_HIDDEN)
 #define ClearHiddenViewer(x)    ((x)->hmodes &= ~HMODE_HIDDENVIEWER)
+#define ClearVhostPerso(x)      ((x)->hmodes &= ~HMODE_VHOSTPERSO)
 #define ClearStripColor(x)      ((x)->hmodes &= ~HMODE_STRIPCOLOR)
 #define ClearNoChan(x)          ((x)->hmodes &= ~HMODE_NOCHAN)
 #define ClearSSL(x)             ((x)->hmodes &= ~HMODE_SSL)
@@ -345,8 +346,6 @@ extern struct sockaddr_in vserv;
 #define ClearPendValidation(x)  ((x)->hmodes &= ~HMODE_PENDVALIDATION)
 #define ClearDocking(x)         ((x)->hmodes &= ~HMODE_DOCKING)
 
-#define ClearIpVirtualPersonalizada(x)  ((x)->hmodes &= ~HFLAG_IPVIRTUAL_PERSONALIZADA)
-
 #define BorraIpVirtual(x)      do { \
                                  assert(IsUser(x)); \
                                  if((x)->user->vhost) \
@@ -359,7 +358,7 @@ extern struct sockaddr_in vserv;
                                  if((x)->user->vhostperso) \
                                    SlabStringFree((x)->user->vhostperso); \
                                  (x)->user->vhostperso=NULL; \
-                                 ClearIpVirtualPersonalizada(x); \
+                                 ClearVhostPerso(x); \
                                } while (0)
 
 #endif /* S_BSD_H */
