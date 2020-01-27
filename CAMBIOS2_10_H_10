@@ -1,3 +1,7 @@
+* 2020/01/27  toni@tonigarcia.es (u2.10.H.10.278)                FEATURE
+------------------------------------------------------------------------
+  Nuevas variables de configuracion por DDB para Geo y Spam.
+
 * 2020/01/23  toni@tonigarcia.es (u2.10.H.10.278)                FEATURE
 ------------------------------------------------------------------------
   Nuevo modo de usuario +v para indicar que tiene vhost personalizado.
