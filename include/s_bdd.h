@@ -69,9 +69,17 @@
 #define BDD_CANAL_SPAMDEBUG                     "spamdebugchan"
 #define BDD_CONVERSION_UTF                      "utf8_conversion"
 #define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA       "msg_fullcapacity"
-#define BDD_PERMITE_NICKS_RANDOM		"allow_random_nicks"
+#define BDD_PERMITE_NICKS_RANDOM                "allow_random_nicks"
 #define BDD_PERMITE_NICKS_SUSPEND               "allow_suspend_nicks"
 #define BDD_CLAVE_DE_CIFRADO_DE_IPS             "ip_crypt_key"
+#define BDD_GEO_ENABLE                          "geo_enable"
+#define BDD_GEO_MSG_KILL                        "geo_msg_kill"
+#define BDD_GEO_URL_VALIDATION                  "geo_url_validation"
+#define BDD_SPAM_CHECK_PRIVATE                  "spam_check_privates"
+#define BDD_SPAM_CHECK_CHANNEL                  "spam_check_channels"
+#define BDD_SPAM_CHECK_AWAY                     "spam_check_aways"
+#define BDD_SPAM_CHECK_TOPIC                    "spam_check_topics"
+
 
 /* Para las features de los pseudoBOTS tabla 'b' */
 #define BDD_CHANSERV      "chanserv"
@@ -173,6 +181,14 @@ extern char *canal_spamdebug;
 extern int conversion_utf;
 extern int permite_nicks_random;
 extern int permite_nicks_suspend;
+extern int geo_enable;
+extern char *geo_msg_kill;
+extern char *geo_url_validation;
+extern int spam_check_privates;
+extern int spam_check_channels;
+extern int spam_check_aways;
+extern int spam_check_topics;
+
 
 /* -- mman.h no contiene algunas definicieones en plataformas antiguas -- */
 #if !defined(MAP_FAILED)

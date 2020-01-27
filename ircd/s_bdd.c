@@ -101,6 +101,13 @@ char *canal_spamdebug = NULL;
 int conversion_utf = 0;
 int permite_nicks_random = 0;
 int permite_nicks_suspend = 0;
+int geo_enable;
+char *geo_msg_kill;
+char *geo_url_validation;
+int spam_check_privates;
+int spam_check_channels;
+int spam_check_aways;
+int spam_check_topics;
 unsigned char bdd_initialized = 0;
 
 /*
@@ -688,6 +695,42 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               clave_de_cifrado_binaria[0] = 0;
               clave_de_cifrado_binaria[1] = 0;
               elimina_cache_ips_virtuales();
+            }
+            else if (!strcmp(c, BDD_GEO_ENABLE))
+            {
+              geo_enable = 0;
+            }
+            else if (!strcmp(c, BDD_GEO_MSG_KILL))
+            {
+              if(geo_msg_kill)
+              {
+                RunFree(geo_msg_kill);
+                geo_msg_kill=NULL;
+              }
+            }
+            else if (!strcmp(c, BDD_GEO_URL_VALIDATION))
+            {
+              if(geo_url_validation)
+              {
+                RunFree(geo_url_validation);
+                geo_url_validation=NULL;
+              }
+            }
+            else if (!strcmp(c, BDD_SPAM_CHECK_PRIVATE))
+            {
+              spam_check_privates = 0;
+            }
+            else if (!strcmp(c, BDD_SPAM_CHECK_CHANNEL))
+            {
+              spam_check_channels = 0;
+            }
+            else if (!strcmp(c, BDD_SPAM_CHECK_AWAY))
+            {
+              spam_check_aways = 0;
+            }
+            else if (!strcmp(c, BDD_SPAM_CHECK_TOPIC))
+            {
+              spam_check_topics = 0;
             }
           }                     /* Fin de "!reemplazar" */
           break;
@@ -1299,6 +1342,49 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         clave[6] = tmp;
         clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
         elimina_cache_ips_virtuales();
+      }
+      else if (!strcmp(c, BDD_GEO_ENABLE))
+      {
+        if (!strcasecmp(v, "TRUE"))
+          geo_enable = !0;
+        else
+          geo_enable = 0;
+      }
+      else if(!strcmp(c, BDD_GEO_MSG_KILL))
+      {
+        SlabStringAllocDup(&geo_msg_kill, v, 0);
+      }
+      else if(!strcmp(c, BDD_GEO_URL_VALIDATION))
+      {
+        SlabStringAllocDup(&geo_url_validation, v, 0);
+      }
+      else if (!strcmp(c, BDD_SPAM_CHECK_PRIVATE))
+      {
+        if (!strcasecmp(v, "TRUE"))
+          spam_check_privates = !0;
+        else
+          spam_check_privates = 0;
+      }
+      else if (!strcmp(c, BDD_SPAM_CHECK_CHANNEL))
+      {
+        if (!strcasecmp(v, "TRUE"))
+          spam_check_channels = !0;
+        else
+          spam_check_channels = 0;
+      }
+      else if (!strcmp(c, BDD_SPAM_CHECK_AWAY))
+      {
+        if (!strcasecmp(v, "TRUE"))
+          spam_check_aways = !0;
+        else
+          spam_check_aways = 0;
+      }
+      else if (!strcmp(c, BDD_SPAM_CHECK_TOPIC))
+      {
+        if (!strcasecmp(v, "TRUE"))
+          spam_check_topics = !0;
+        else
+          spam_check_topics = 0;
       }
       break;
     case BDD_SPAMDB:
