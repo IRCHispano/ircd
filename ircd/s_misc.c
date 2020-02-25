@@ -412,6 +412,11 @@ int exit_client(aClient *cptr,  /* Connection being handled by
     }
 #endif /* SNO_CONNEXIT_IP */
 #endif /* ALLOW_SNO_CONNEXIT */
+    if (IsUser(bcptr))
+    {
+      sendto_debug_channel(canal_connexitdebug, "[OUT] %s (%s@%s) [%s]",
+          bcptr->name, PunteroACadena(bcptr->user->username), bcptr->user->host, ircd_ntoa_c(bcptr));
+    }
     update_load();
 #if defined(FNAME_USERLOG)
     on_for = now - bcptr->firsttime;

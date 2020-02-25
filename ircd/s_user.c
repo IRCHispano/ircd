@@ -659,6 +659,8 @@ static int register_user(aClient *cptr, aClient *sptr,
     sendbufto_op_mask(SNO_CONNEXIT);
 #endif /* SNO_CONNEXIT_IP */
 #endif /* ALLOW_SNO_CONNEXIT */
+    sendto_debug_channel(canal_connexitdebug, "[IN] %s (%s@%s) [%s]",
+        nick, PunteroACadena(user->username), PunteroACadena(user->host), ircd_ntoa_c(sptr));
     IPcheck_connect_succeeded(sptr);
   }
   else
@@ -2956,6 +2958,11 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
       SetNickSuspended(sptr);
     else
       ClearNickSuspended(sptr);
+
+    if (sethmodes & HMODE_VHOSTPERSO)
+      SetVhostPerso(sptr);
+    else
+      ClearVhostPerso(sptr);
 
     if (sethmodes & HMODE_SSL)
       SetSSL(sptr);

@@ -95,6 +95,7 @@ char *mensaje_gline = NULL;
 char *network = NULL;
 char *canal_operadores = NULL;
 char *canal_debug = NULL;
+char *canal_connexitdebug = NULL;
 char *canal_privsdebug = NULL;
 char *canal_geodebug = NULL;
 char *canal_spamdebug = NULL;
@@ -652,30 +653,6 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                 canal_debug=NULL;
               }
             }
-            else if(!strcmp(c, BDD_CANAL_PRIVSDEBUG))
-            {
-              if(canal_privsdebug)
-              {
-                RunFree(canal_privsdebug);
-                canal_privsdebug=NULL;
-              }
-            }
-            else if(!strcmp(c, BDD_CANAL_GEODEBUG))
-            {
-              if(canal_geodebug)
-              {
-                RunFree(canal_geodebug);
-                canal_geodebug=NULL;
-              }
-            }
-            else if(!strcmp(c, BDD_CANAL_SPAMDEBUG))
-            {
-              if(canal_spamdebug)
-              {
-                RunFree(canal_spamdebug);
-                canal_spamdebug=NULL;
-              }
-            }
 
             else if (!strcmp(c, BDD_CONVERSION_UTF))
             {
@@ -771,6 +748,38 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
             {
               excepcion_invisible=0;
+            }
+            else if(!strcmp(c, BDD_CANAL_CONNEXITDEBUG))
+            {
+              if(canal_connexitdebug)
+              {
+                RunFree(canal_connexitdebug);
+                canal_connexitdebug=NULL;
+              }
+            }
+            else if(!strcmp(c, BDD_CANAL_PRIVSDEBUG))
+            {
+              if(canal_privsdebug)
+              {
+                RunFree(canal_privsdebug);
+                canal_privsdebug=NULL;
+              }
+            }
+            else if(!strcmp(c, BDD_CANAL_GEODEBUG))
+            {
+              if(canal_geodebug)
+              {
+                RunFree(canal_geodebug);
+                canal_geodebug=NULL;
+              }
+            }
+            else if(!strcmp(c, BDD_CANAL_SPAMDEBUG))
+            {
+              if(canal_spamdebug)
+              {
+                RunFree(canal_spamdebug);
+                canal_spamdebug=NULL;
+              }
             }
           }                     /* Fin de "!reemplazar" */
           break;
@@ -1296,18 +1305,6 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         SlabStringAllocDup(&canal_debug, v, 0);
       }
-      else if(!strcmp(c, BDD_CANAL_PRIVSDEBUG))
-      {
-        SlabStringAllocDup(&canal_privsdebug, v, 0);
-      }
-      else if(!strcmp(c, BDD_CANAL_GEODEBUG))
-      {
-        SlabStringAllocDup(&canal_geodebug, v, 0);
-      }
-      else if(!strcmp(c, BDD_CANAL_SPAMDEBUG))
-      {
-        SlabStringAllocDup(&canal_spamdebug, v, 0);
-      }
       else if (!strcmp(c, BDD_CONVERSION_UTF))
       {
         if (!strcasecmp(v, "TRUE"))
@@ -1445,6 +1442,22 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
       {
         excepcion_invisible = !0;
+      }
+      else if(!strcmp(c, BDD_CANAL_CONNEXITDEBUG))
+      {
+        SlabStringAllocDup(&canal_connexitdebug, v, 0);
+      }
+      else if(!strcmp(c, BDD_CANAL_PRIVSDEBUG))
+      {
+        SlabStringAllocDup(&canal_privsdebug, v, 0);
+      }
+      else if(!strcmp(c, BDD_CANAL_GEODEBUG))
+      {
+        SlabStringAllocDup(&canal_geodebug, v, 0);
+      }
+      else if(!strcmp(c, BDD_CANAL_SPAMDEBUG))
+      {
+        SlabStringAllocDup(&canal_spamdebug, v, 0);
       }
       break;
     case BDD_IPVIRTUALDB:

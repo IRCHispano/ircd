@@ -1,4 +1,17 @@
-* 2020/01/27  toni@tonigarcia.es (u2.10.H.10.278)                FEATURE
+* 2020/01/28  toni@tonigarcia.es (u2.10.H.10.280)                FEATURE
+------------------------------------------------------------------------
+ Se mueve configuraciones de debug en canal a la tabla z, dado que en el
+ nuevo ircd no se hara en la tabla f sino en la tabla l.
+ Las configuraciones movidas son:
+
+    connexitdebugchan (nuevo): Entradas/Salidas de usuarios
+    privsdebugchan: Uso de privilegios como ver IP de otro usuario
+    geodebugchan: Avisos de kill/silenciado por Geolocalizacion
+    spamdebugchan: Avisos de eventos de antispam
+
+  Alguna correccion menor de los ultimos cambios.
+
+* 2020/01/27  toni@tonigarcia.es (u2.10.H.10.279)                FEATURE
 ------------------------------------------------------------------------
   Nuevas variables de configuracion por DDB para Geo y Spam.
 

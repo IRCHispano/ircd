@@ -27,6 +27,7 @@
 #define ESNET_NICKDB      'n'
 #define ESNET_CLONESDB    'i'
 
+#define BDD_ASNUMDB        'a'
 #define BDD_BOTSDB         'b'
 #define BDD_CHANDB         'c'
 #define BDD_CHAN2DB        'd'
@@ -79,6 +80,12 @@
 #define BDD_SPAM_CHECK_CHANNEL                  "spam_check_channels"
 #define BDD_SPAM_CHECK_AWAY                     "spam_check_aways"
 #define BDD_SPAM_CHECK_TOPIC                    "spam_check_topics"
+
+/* Registros tabla z no migrables a nuevo ircd (usa otro sistema mediante tabla l de Logging) */
+#define BDD_CANAL_CONNEXITDEBUG                 "connexitdebugchan"
+#define BDD_CANAL_PRIVSDEBUG                    "privsdebugchan"
+#define BDD_CANAL_GEODEBUG                      "geodebugchan"
+#define BDD_CANAL_SPAMDEBUG                     "spamdebugchan"
 
 
 /* Para las features de los pseudoBOTS tabla 'b' */
@@ -175,6 +182,7 @@ extern char *mensaje_gline;
 extern char *network;
 extern char *canal_operadores;
 extern char *canal_debug;
+extern char *canal_connexitdebug;
 extern char *canal_privsdebug;
 extern char *canal_geodebug;
 extern char *canal_spamdebug;
