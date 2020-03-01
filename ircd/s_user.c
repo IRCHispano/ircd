@@ -77,6 +77,9 @@
 #include "slab_alloc.h"
 #include "network.h"
 #include "m_config.h"
+#if defined(USE_GEOIP2)
+#include "geoip.h"
+#endif
 
 #include <json-c/json.h>
 #include <json-c/json_object.h>
@@ -520,6 +523,19 @@ static int register_user(aClient *cptr, aClient *sptr,
     }
 #endif
 
+#if defined(USE_GEOIP2)
+    if (geo_enable)
+    {
+      /* ... */
+      strncpy(sptr->country_iso, "--", 2);
+      sptr->asnum = 0;
+      /* ... */
+    } else {
+      strncpy(sptr->country_iso, "--", 2);
+      sptr->asnum = 0;
+    }
+#endif
+
     /*
      * Check for mixed case usernames, meaning probably hacked.  Jon2 3-94
      * Summary of rules now implemented in this patch:         Ensor 11-94
@@ -659,8 +675,17 @@ static int register_user(aClient *cptr, aClient *sptr,
     sendbufto_op_mask(SNO_CONNEXIT);
 #endif /* SNO_CONNEXIT_IP */
 #endif /* ALLOW_SNO_CONNEXIT */
+
+#if defined(USE_GEOIP2)
+    if (geo_enable)
+      sendto_debug_channel(canal_connexitdebug, "[IN] %s (%s@%s) [%s - AS%d %s]",
+          nick, PunteroACadena(user->username), ircd_ntoa_c(sptr), sptr->country_iso,
+          sptr->asnum, PunteroACadena(sptr->asnum_name));
+    else
+#endif
     sendto_debug_channel(canal_connexitdebug, "[IN] %s (%s@%s) [%s]",
         nick, PunteroACadena(user->username), PunteroACadena(user->host), ircd_ntoa_c(sptr));
+
     IPcheck_connect_succeeded(sptr);
   }
   else

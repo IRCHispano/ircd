@@ -1,4 +1,12 @@
-* 2020/01/28  toni@tonigarcia.es (u2.10.H.10.280)                FEATURE
+* 2020/03/01  toni@tonigarcia.es (u2.10.H.10.281)                FEATURE
+------------------------------------------------------------------------
+  Soporte inicial de Geolocalizacion mediante Pais y Asnum.
+
+  El resto del soporte no se hara publico por motivos de seguridad, no
+  obstante, si deseas más informacion de las implementaciones, contactar
+  con toni@tonigarcia.es.
+
+* 2020/02/25  toni@tonigarcia.es (u2.10.H.10.280)                FEATURE
 ------------------------------------------------------------------------
  Se mueve configuraciones de debug en canal a la tabla z, dado que en el
  nuevo ircd no se hara en la tabla f sino en la tabla l.
