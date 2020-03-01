@@ -75,6 +75,9 @@
 #include "network.h"
 #include "msg.h"
 #include "random.h"
+#if defined(USE_GEOIP2)
+#include "geoip.h"
+#endif
 
 extern void init_counters(void);
 
@@ -122,6 +125,9 @@ RETSIGTYPE s_die(HANDLER_ARG(int UNUSED(sig)))
 
 RETSIGTYPE s_die2(HANDLER_ARG(int UNUSED(sig)))
 {
+#if defined(USE_GEOIP2)
+  geoip_end();
+#endif
 #if defined(BDD_MMAP)
   db_persistent_commit();
 #endif
@@ -164,6 +170,10 @@ void server_reboot(void)
   sendto_ops("Aieeeee!!!  Restarting server...");
   Debug((DEBUG_NOTICE, "Restarting server..."));
   flush_connections(me.fd);
+
+#if defined(USE_GEOIP2)
+  geoip_end();
+#endif
 
 #if defined(BDD_MMAP)
   db_persistent_commit();
@@ -796,7 +806,9 @@ int main(int argc, char *argv[])
 #endif
   initdb();
   
-  
+#if defined(USE_GEOIP2)
+  geoip_init();
+#endif
 
   for (;;)
   {

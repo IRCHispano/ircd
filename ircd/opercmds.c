@@ -68,6 +68,9 @@
 #if defined(BDD_MMAP)
 #include "persistent_malloc.h"
 #endif
+#if defined(USE_GEOIP2)
+#include "geoip.h"
+#endif
 
 #include <json-c/json.h>
 #include <json-c/json_object.h>
@@ -1945,6 +1948,10 @@ static int m_die_local(aClient *UNUSED(cptr), aClient *sptr, int UNUSED(parc), c
 
   flush_connections(me.fd);
 
+#if defined(USE_GEOIP2)
+  geoip_end();
+#endif
+
 #if defined(BDD_MMAP)
   db_persistent_commit();
 #endif
@@ -2002,6 +2009,10 @@ static int m_die_remoto(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 
   flush_connections(me.fd);
+
+#if defined(USE_GEOIP2)
+  geoip_end();
+#endif
 
 #if defined(BDD_MMAP)
   db_persistent_commit();

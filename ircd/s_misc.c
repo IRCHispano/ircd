@@ -412,8 +412,15 @@ int exit_client(aClient *cptr,  /* Connection being handled by
     }
 #endif /* SNO_CONNEXIT_IP */
 #endif /* ALLOW_SNO_CONNEXIT */
-    if (IsUser(bcptr))
+    if (MyUser(bcptr))
     {
+#if defined(USE_GEOIP2)
+      if (geo_enable)
+        sendto_debug_channel(canal_connexitdebug, "[OUT] %s (%s@%s) [%s - AS%d %s]",
+            bcptr->name, PunteroACadena(bcptr->user->username), ircd_ntoa_c(bcptr), bcptr->country_iso,
+            bcptr->asnum, bcptr->asnum_name ? PunteroACadena(bcptr->asnum_name) :  "--");
+      else
+#endif
       sendto_debug_channel(canal_connexitdebug, "[OUT] %s (%s@%s) [%s]",
           bcptr->name, PunteroACadena(bcptr->user->username), bcptr->user->host, ircd_ntoa_c(bcptr));
     }
@@ -645,6 +652,11 @@ static void exit_one_client(aClient *bcptr, char *comment)
       RunFree(bcptr->passwd);
     if (MyConnect(bcptr) && bcptr->passbdd)
       RunFree(bcptr->passbdd);
+
+#if defined(USE_GEOIP2)
+    if (MyUser(bcptr) && bcptr->asnum_name)
+      SlabStringFree(bcptr->asnum_name);
+#endif
 
     if (IsInvisible(bcptr))
       --nrof.inv_clients;

@@ -67,7 +67,7 @@ OBJS=IPcheck.o bsd.o channel.o class.o common.o crule.o dbuf.o fileio.o ircd.o \
      random.o res.o runmalloc.o s_auth.o s_bsd.o s_conf.o s_debug.o s_err.o \
      s_misc.o s_numeric.o s_ping.o s_serv.o s_user.o send.o sprintf_irc.o \
      support.o userload.o whocmds.o whowas.o hash.o s_bdd.o spam.o \
-     m_config.o m_watch.o persistent_malloc.o slab_alloc.o
+     m_config.o m_watch.o persistent_malloc.o slab_alloc.o geoip.o
 
 SRC=${OBJS:%.o=%.c}
 

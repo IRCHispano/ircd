@@ -74,6 +74,9 @@
 #include "hash.h"
 #include "fileio.h"
 #include "slab_alloc.h"
+#if defined(USE_GEOIP2)
+#include "geoip.h"
+#endif
 
 #include <json-c/json.h>
 #include <json-c/json_object.h>
@@ -683,6 +686,10 @@ int rehash(aClient *cptr, int sig)
 ** la integridad de la BDD. Debería hacerse de otra forma.
 */
   // reload_db();
+
+#if defined(USE_GEOIP2)
+  geoip_reload();
+#endif
 
   for (i = 0; i <= highest_fd; i++)
     if ((acptr = loc_clients[i]) && !IsMe(acptr))

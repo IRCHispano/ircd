@@ -170,6 +170,12 @@ struct Client {
   char *passbdd;                /* Password para la BDD especificada en 
                                    el PASS (/SERVER en los clientes) */
 
+#if defined(USE_GEOIP2)
+  char country_iso[2];
+  int asnum;
+  char *asnum_name;
+#endif
+
   unsigned int flags_local;     /* Local client flags */
   struct SLink *invited;        /* chain of invite pointer blocks */
   
