@@ -4341,6 +4341,7 @@ void spam_set_kickban(aChannel *chptr, aClient *sptr, char *comment)
 {
   Link *lp;
   char banmask[HOSTLEN+5];
+  int result;
 
   if (IsModelessChannel(chptr->chname))
     return;

@@ -2352,7 +2352,7 @@ static int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
             return 0;         /* found an existing G-line that matches */
 #endif
         /* add the line: */
-        add_gline(cptr, sptr, host, parv[parc - 1], user, expire, lastmod, lifetime, 0);
+        add_gline(cptr, sptr, host, parv[parc - 1], user, expire, lastmod, lifetime, 0, 0);
     }
   }
 
@@ -2479,7 +2479,7 @@ static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
               me.name, parv[0], "GLINE");
           return 0;
         }
-        add_gline(cptr, sptr, host, parv[3], user, expire, lastmod, lifetime, 1);
+        add_gline(cptr, sptr, host, parv[3], user, expire, lastmod, lifetime, 1, 0);
       }
       else
         sendto_one(cptr, err_str(ERR_NOSUCHGLINE), me.name, parv[0], user,

@@ -17,8 +17,11 @@ extern char *inetntoa(struct in_addr in);
 extern char *ircd_ntoa_c(aClient *cptr);
 extern const char* ircd_ntoa(const struct irc_in_addr* addr);
 extern const char* ircd_ntoa_r(char* buf, const struct irc_in_addr* addr);
+extern const char* ircd_ntoa_cidr(const struct irc_in_addr* in, int bits);
+extern const char* ircd_ntoa_cidr_r(char* buf, const struct irc_in_addr* in, int bits);
 #define ircd_aton(ADDR, STR) ipmask_parse((STR), (ADDR), NULL)
 extern int ipmask_parse(const char *in, struct irc_in_addr *mask, unsigned char *bits_ptr);
+extern void ipmask_range(const struct irc_in_addr *ip, int bits, struct irc_in_addr *init, struct irc_in_addr *final);
 extern int check_if_ipmask(const char *mask);
 extern void write_log(const char *filename, const char *pattern, ...);
 extern struct irc_in_addr *client_addr(aClient *cptr);

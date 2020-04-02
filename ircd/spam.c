@@ -33,8 +33,11 @@
 #include "s_bdd.h"
 #include "s_bsd.h"
 #include "s_err.h"
+#include "s_misc.h"
 #include "s_serv.h"
+#include "s_user.h"
 #include "send.h"
+#include "sprintf_irc.h"
 #include "struct.h"
 #include "support.h"
 

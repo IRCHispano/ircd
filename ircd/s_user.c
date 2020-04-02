@@ -77,6 +77,7 @@
 #include "slab_alloc.h"
 #include "network.h"
 #include "m_config.h"
+#include "spam.h"
 #if defined(USE_GEOIP2)
 #include "geoip.h"
 #endif
