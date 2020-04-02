@@ -1416,12 +1416,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         if (!id_filter || !pattern)
           break;
 
-        spam = find_spam(id_filter);
-
-        if (spam)
-          spam_update(spam, pattern, reason, mode, flags, gexpire);
-        else
-          spam_add(id_filter, pattern, reason, mode, flags, gexpire);
+        spam_add(id_filter, pattern, reason, mode, flags, gexpire);
 
       }
       break;

@@ -1,3 +1,11 @@
+* 2020/04/03  toni@tonigarcia.es (u2.10.H.10.282)                FEATURE
+------------------------------------------------------------------------
+  Soporte inicial de AntiSpam.
+
+  El resto del soporte no se hara publico por motivos de seguridad, no
+  obstante, si deseas más informacion de las implementaciones, contactar
+  con toni@tonigarcia.es.
+
 * 2020/03/01  toni@tonigarcia.es (u2.10.H.10.281)                FEATURE
 ------------------------------------------------------------------------
   Soporte inicial de Geolocalizacion mediante Pais y Asnum.

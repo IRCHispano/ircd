@@ -36,11 +36,10 @@ struct SpamFilter {
 };
 
 extern void spam_add(u_int32_t id_filter, char *pattern, char *reason, int action, u_int16_t pcre, time_t expire);
-extern void spam_update(struct SpamFilter *spam, char *pattern, char *reason, int action, u_int16_t pcre, time_t expire);
 extern void spam_del(u_int32_t id_filter);
 extern char *get_str_spamaction(enum SpamActionType action);
 extern struct SpamFilter *find_spam(u_int32_t);
-extern struct SpamFilter *check_spam(aClient *sptr, char *mesage, int flags);
+extern int check_spam(aClient *sptr, char *mesage, int flags, aChannel *chptr, aClient *acptr);
 extern int m_spam(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern void spam_stats(aClient *cptr);
 

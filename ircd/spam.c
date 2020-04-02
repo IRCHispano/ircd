@@ -21,17 +21,25 @@
 
 #include "h.h"
 #include "spam.h"
+#include "channel.h"
 #include "common.h"
 #include "ircd.h"
 #include "match.h"
 #include "msg.h"
 #include "numeric.h"
 #include "numnicks.h"
+#include "opercmds.h"
+#include "s_conf.h"
+#include "s_bdd.h"
 #include "s_bsd.h"
 #include "s_err.h"
+#include "s_misc.h"
 #include "s_serv.h"
+#include "s_user.h"
 #include "send.h"
+#include "sprintf_irc.h"
 #include "struct.h"
+#include "support.h"
 
 struct SpamFilter *listspam = NULL;
 
@@ -47,11 +55,6 @@ SpamAction spamactions[] = {
 };
 
 void spam_add(u_int32_t id_filter, char *pattern, char *reason, int action, u_int16_t flags, time_t expire)
-{
- /* ... */
-}
-
-void spam_update(struct SpamFilter *spam, char *pattern, char *reason, int action, u_int16_t flags, time_t expire)
 {
  /* ... */
 }
@@ -79,11 +82,18 @@ struct SpamFilter *find_spam(u_int32_t id_filter)
   return NULL;
 }
 
-struct SpamFilter *check_spam(aClient *sptr, char *text, int flags)
+static int action_spam(struct SpamFilter *spam, aClient *sptr, char *text, int flags, aChannel *chptr, aClient *acptr)
 {
   /* ... */
 
-  return NULL;
+  return 0;
+}
+
+int check_spam(aClient *sptr, char *text, int flags, aChannel *chptr, aClient *acptr)
+{
+  /* ... */
+
+  return 0;
 }
 
 /*
@@ -91,9 +101,11 @@ struct SpamFilter *check_spam(aClient *sptr, char *text, int flags)
  *
  * parv[0] = sender prefix
  * parv[1] = spam id
- * parv[2] = numeric spammer
- * parv[3] = spam event
- * parv[4] = channel (Optional)
+ * parv[2] = spam event
+ * parv[3] = spam action
+ * parv[4] = numeric spammer
+ * parv[5] = destin
+ * parv[6] = id gline
  * parv[parc-1] = message
  */
 int m_spam(aClient *cptr, aClient *sptr, int parc, char *parv[])
@@ -101,15 +113,11 @@ int m_spam(aClient *cptr, aClient *sptr, int parc, char *parv[])
   if (!IsServer(cptr))
     return 0;
 
-  if (parc < 5)
+  if (parc < 8)
     return 0;
 
-  if (parc == 6)
-    sendto_highprot_butone(cptr, 10, "%s " TOK_SPAM, " %s %s %s %s :%s", NumServ(sptr),
-        parv[1], parv[2], parv[3], parv[4], parv[parc - 1]);
-  else
-    sendto_highprot_butone(cptr, 10, "%s " TOK_SPAM, " %s %s %s %s :%s", NumServ(sptr),
-        parv[1], parv[2], parv[3], parv[parc - 1]);
+  sendto_highprot_butone(cptr, 10, "%s " TOK_SPAM " %s %s %s %s %s %s :%s", NumServ(sptr),
+      parv[1], parv[2], parv[3], parv[4], parv[5], parv[6], parv[7]);
 
   return 0;
 }

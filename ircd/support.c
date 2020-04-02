@@ -229,6 +229,38 @@ const char* ircd_ntoa_r(char* buf, const struct irc_in_addr* in)
     }
 }
 
+const char* ircd_ntoa_cidr(const struct irc_in_addr* in, int bits)
+{
+  static char buf[SOCKIPLEN+4]; /* IP/128 */
+  return ircd_ntoa_cidr_r(buf, in, bits);
+}
+
+const char* ircd_ntoa_cidr_r(char* buf, const struct irc_in_addr* in, int bits)
+{
+    int is_ipv4 = irc_in_addr_is_ipv4(in);
+
+    /* Default bits, /32 in IPv4, /64 in IPv6 and /48 in 6to4 */
+    if (!bits) {
+        if (is_ipv4)
+            bits = 32;
+        else if (in->in6_16[0] == htons(0x2002))
+            bits = 48;
+        else
+            bits = 64;
+    }
+
+    if ((is_ipv4 && bits == 32) || (!is_ipv4 && bits == 128)) {
+        sprintf(buf, "%s", ircd_ntoa(in));
+    } else {
+        struct irc_in_addr init, final;
+
+        ipmask_range(in, bits, &init, &final);
+        sprintf(buf, "%s/%d", ircd_ntoa(&init), bits);
+    }
+
+    return buf;
+}
+
 /** Attempt to parse an IPv4 address into a network-endian form.
  * @param[in] input Input string.
  * @param[out] output Network-endian representation of the address.
@@ -429,6 +461,46 @@ ipmask_parse(const char *input, struct irc_in_addr *ip, unsigned char *pbits)
   } else return 0; /* parse failed */
 }
 
+void
+ipmask_range(const struct irc_in_addr *ip, int bits, struct irc_in_addr *init, struct irc_in_addr *final)
+{
+    int i, j, jmin, real, div, first, part;
+    unsigned short part_init, part_final;
+
+    memcpy(init, ip, sizeof(struct irc_in_addr));
+    memcpy(final, ip, sizeof(struct irc_in_addr));
+
+    if (irc_in_addr_is_ipv4(ip))
+        bits += 96;
+
+    div = bits / 16;
+
+    for (i = 0; i < 8; i++) {
+        real = i+1;
+
+        if (i < div)
+            continue;
+
+        jmin = (i == div) ? (bits - div*16) : 0;
+        part_init = part_final = ntohs(init->in6_16[i]);
+        part = 1;
+        first = 0;
+
+        for (j = 15; j >= 0; j--) {
+            if (first)
+                part *= 2;
+            first = 1;
+              if (j < jmin)
+                continue;
+
+            part_init &= ~part;
+            part_final |= part;
+        }
+
+        init->in6_16[i] = htons(part_init);
+        final->in6_16[i] = htons(part_final);
+    }
+}
 
 #if !defined(HAVE_INET_NETOF)
 /*

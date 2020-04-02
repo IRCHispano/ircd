@@ -239,5 +239,6 @@ extern char *adapta_y_visualiza_canal_flags(aChannel *chptr, int add, int del);
 extern void mascara_canal_flags(char *modos, int *add, int *del);
 void channel_modes(aClient *cptr, char *mbuf, char *pbuf, aChannel *chptr);
 extern aChannel *channel;
+extern void spam_set_kickban(aChannel *chptr, aClient *sptr, char *comment);
 
 #endif /* CHANNEL_H */

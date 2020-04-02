@@ -2035,7 +2035,7 @@ int m_die(aClient *cptr, aClient *sptr, int parc, char *parv[])
 }
 
 static void add_gline(aClient *cptr, aClient *sptr, char *host, char *comment,
-    char *user, time_t expire, time_t lastmod, time_t lifetime, int local)
+    char *user, time_t expire, time_t lastmod, time_t lifetime, int local, int is_spam_gline)
 {
 
   aClient *acptr;
@@ -2050,7 +2050,7 @@ static void add_gline(aClient *cptr, aClient *sptr, char *host, char *comment,
   if (!lifetime) /* si no me ponen tiempo de vida uso el tiempo de expiracion */
     lifetime = expire;
 
-  if((!IsHub(sptr) || !buscar_uline(cptr->confs, sptr->name)) && !lastmod) /* Si no es hub y no tiene uline y me pasan ultima mod 0 salgo */
+  if (!is_spam_gline && ((!IsHub(sptr) || !buscar_uline(cptr->confs, sptr->name)) && !lastmod)) /* Si no es hub y no tiene uline y me pasan ultima mod 0 salgo */
     return;
 
   /* Inform ops */
@@ -2352,7 +2352,7 @@ static int ms_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
             return 0;         /* found an existing G-line that matches */
 #endif
         /* add the line: */
-        add_gline(cptr, sptr, host, parv[parc - 1], user, expire, lastmod, lifetime, 0);
+        add_gline(cptr, sptr, host, parv[parc - 1], user, expire, lastmod, lifetime, 0, 0);
     }
   }
 
@@ -2479,7 +2479,7 @@ static int mo_gline(aClient *cptr, aClient *sptr, aGline *agline, aGline *a2glin
               me.name, parv[0], "GLINE");
           return 0;
         }
-        add_gline(cptr, sptr, host, parv[3], user, expire, lastmod, lifetime, 1);
+        add_gline(cptr, sptr, host, parv[3], user, expire, lastmod, lifetime, 1, 0);
       }
       else
         sendto_one(cptr, err_str(ERR_NOSUCHGLINE), me.name, parv[0], user,
@@ -2732,3 +2732,31 @@ static int modifica_gline(aClient *cptr, aClient *sptr, aGline *agline, int gtyp
   return 1;
 }
 
+void spam_gline(aClient *sptr, time_t gexpire, char *reason)
+{
+  aGline *agline, *a2gline;
+  time_t expire, lastmod = 0, lifetime= 0;
+  char *host = (char *)ircd_ntoa_cidr(&sptr->ip, 0);
+  char *user = "*";
+
+  for (agline = gline, a2gline = NULL; agline;
+      agline = agline->next)
+  {
+    if (!strCasediff(agline->name, user)
+        && ((GlineIsRealName(agline) && !strcmp(agline->host, host)) ||
+            (!GlineIsRealName(agline) && !strCasediff(agline->host, host)))
+       ) /* No chequeo casediff por si es pcre */
+      break;
+    a2gline = agline;
+  }
+
+  expire = gexpire + TStime();  /* expire time? */
+  if (agline)
+  {                       /* modifico gline; new expire time? */
+    modifica_gline(&me, &me, agline, 0, expire, lastmod, lifetime, me.name);
+  }
+  else
+  {                       /* create gline */
+    add_gline(&me, &me, host, reason, user, expire, lastmod, lifetime, 0, 1);
+  }
+}

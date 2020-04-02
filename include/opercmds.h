@@ -72,5 +72,6 @@ extern int m_rpong(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_close(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 extern int m_gline(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+extern void spam_gline(aClient *sptr, time_t gexpire, char *reason);
 
 #endif /* OPERCMDS_H */
