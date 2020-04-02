@@ -49,6 +49,7 @@
 #include "sprintf_irc.h"
 #include "querycmds.h"
 #include "network.h"
+#include "spam.h"
 
 aChannel *channel = NullChn;
 
@@ -4334,6 +4335,51 @@ int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
   }
 
   return 0;
+}
+
+void spam_set_kickban(aChannel *chptr, aClient *sptr, char *comment)
+{
+  Link *lp;
+  char banmask[HOSTLEN+5];
+
+  if (IsModelessChannel(chptr->chname))
+    return;
+
+  /* Ban */
+  sprintf_irc(banmask, "*!*@%s", IsHidden(sptr) ? get_virtualhost(sptr, 0) : sptr->user->host);
+
+  result = add_banid(&me, chptr, banmask, 1, 0);
+
+  if (result == 0) {
+    sendto_channel_butserv(chptr, &me, ":%s MODE %s +b %s",
+        me.name, chptr->chname, banmask);
+
+#if defined(NO_PROTOCOL9)
+    sendto_serv_butone(NULL, "%s " TOK_MODE " %s +b %s " TIME_T_FMT,
+         NumServ(&me), chptr->chname, banmask, chptr->creationtime);
+#else
+    sendto_lowprot_butone(NULL, 9, ":%s MODE %s +b %s " TIME_T_FMT,
+        me.name, chptr->chname, banmask, chptr->creationtime);
+    sendto_highprot_butone(NULL, 10, "%s " TOK_MODE " %s +b %s " TIME_T_FMT,
+        NumServ(&me), chptr->chname, banmask, chptr->creationtime);
+#endif
+  }
+
+  /* Kick */
+  if (strlen(comment) > (size_t)KICKLEN)
+    comment[KICKLEN] = '\0';
+
+  sendto_channel_butserv(chptr, sptr,
+      ":%s KICK %s %s :%s", me.name, chptr->chname, sptr->name, comment);
+
+#if !defined(NO_PROTOCOL9)
+   sendto_lowprot_butone(NULL, 9, ":%s KICK %s %s :%s",
+       me.name, chptr->chname, sptr->name, comment);
+#endif
+   sendto_highprot_butone(NULL, 10, "%s " TOK_KICK " %s %s%s :%s",
+       NumServ(&me), chptr->chname, NumNick(sptr), comment);
+
+   remove_user_from_channel(sptr, chptr);
 }
 
 /*
