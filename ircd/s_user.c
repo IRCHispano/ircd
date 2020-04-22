@@ -636,8 +636,6 @@ static int register_user(aClient *cptr, aClient *sptr,
 
   if (IsInvisible(sptr))
     ++nrof.inv_clients;
-  if (IsOper(sptr))
-    ++nrof.opers;
 
   if (MyConnect(sptr))
   {
@@ -4663,7 +4661,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
 
           if (status & FLAGS_OPER)
           {
-            if (!IsAnOper(sptr))
+            if (!IsOper(sptr))
               nrof.opers++;
             SetOper(sptr);
             sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);

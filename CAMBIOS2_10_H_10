@@ -1,3 +1,7 @@
+* 2020/04/22  toni@tonigarcia.es (u2.10.H.10.283)                    FIX
+------------------------------------------------------------------------
+  Se corrige el contador de Ircops.
+
 * 2020/04/03  toni@tonigarcia.es (u2.10.H.10.282)                FEATURE
 ------------------------------------------------------------------------
   Soporte inicial de AntiSpam.
