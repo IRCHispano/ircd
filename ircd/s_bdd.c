@@ -1099,7 +1099,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
 
         if (status & FLAGS_OPER)
         {
-          if (!IsAnOper(sptr))
+          if (!IsOper(sptr))
             nrof.opers++;
           SetOper(sptr);
           sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);
@@ -1207,7 +1207,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
 
               if (status & FLAGS_OPER)
               {
-                if (!IsAnOper(sptr))
+                if (!IsOper(sptr))
                   nrof.opers++;
                 SetOper(sptr);
                 sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);
