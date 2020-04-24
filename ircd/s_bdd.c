@@ -2705,6 +2705,7 @@ void initdb(void)
   tabla_residente_y_len[BDD_BOTSDB] = 256;
   tabla_residente_y_len[BDD_FEATURESDB] = 256;
   tabla_residente_y_len[BDD_GEODB] = 256;
+  tabla_residente_y_len[BDD_ASNUMDB] = 256;
   tabla_residente_y_len[BDD_JUPEDB] = 512;
   tabla_residente_y_len[BDD_LOGGINGDB] = 256;
   tabla_residente_y_len[BDD_MOTDDB] = 256;
