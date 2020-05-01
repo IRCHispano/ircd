@@ -656,7 +656,7 @@ static Numeric numeric_replies[] = {
 /* 242 */
     {RPL_STATSUPTIME, ":Server Up %d days, %d:%02d:%02d"},
 /* 243 */
-    {RPL_STATSOLINE, "%c %s * %s %d %d"},
+    {RPL_STATSOLINE, "%c %s * %s %lu %d"},
 /* 244 */
     {RPL_STATSHLINE, "%c %s * %s %d %d"},
 /* 245 */

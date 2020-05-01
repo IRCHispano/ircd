@@ -2480,7 +2480,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
       /* prevent someone from being both oper and local oper */
       ClearLocOp(sptr);
       SetOper(sptr);
-      set_privs(sptr);
+      sptr->privs = aconf->privs;
       ++nrof.opers;
     }
     *--s = '@';
@@ -2496,7 +2496,7 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);
     set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
-    sptr->privs = aconf->port;
+    sptr->privs = aconf->privs;
     SetOperCmd(sptr);
     send_umode_out(cptr, sptr, old, oldh, IsRegistered(sptr));
     /*

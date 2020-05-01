@@ -999,7 +999,10 @@ int initconf(int opt)
       DupString(aconf->name, tmp);
       if ((tmp = getfield(NULL, IRCDCONF_DELIMITER)) == NULL)
         break;
-      aconf->port = atoi(tmp);
+      if ((aconf->status & CONF_OPERATOR) || (aconf->status & CONF_LOCOP))
+        aconf->privs = atoll(tmp);
+      else
+        aconf->port = atoi(tmp);
       tmp = getfield(NULL, IRCDCONF_DELIMITER);
       if (aconf->status & CONF_ME)
       {
