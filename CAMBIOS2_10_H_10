@@ -1,3 +1,8 @@
+* 2020/05/01  toni@tonigarcia.es (u2.10.H.10.285)                    FIX
+------------------------------------------------------------------------
+  No se capturaba correctamente los privilegios en las olines. Se añade
+  documentacion en el ejemplo del ircd.conf.
+
 * 2020/04/24  toni@tonigarcia.es (u2.10.H.10.284)                    FIX
 ------------------------------------------------------------------------
   La tabla de ASNUM no era residente, se corrige.

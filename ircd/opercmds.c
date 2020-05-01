@@ -280,6 +280,9 @@ static void report_configured_links(aClient *sptr, int mask)
       else if ((tmp->status & (CONF_WEBIRC)))
         sendto_one(sptr, rpl_str(p[1]), me.name, sptr->name, c, host, "*",
             0, -1);
+      else if ((tmp->status & CONF_OPERATOR) || (tmp->status & CONF_LOCOP))
+        sendto_one(sptr, rpl_str(p[1]), me.name, sptr->name, c, host, name,
+            tmp->privs, get_conf_class(tmp));
 #if defined(ESNET_NEG)
       else if ((tmp->status & CONF_NEGOTIATION))
         sendto_one(sptr, rpl_str(p[1]), me.name, sptr->name, c, host, pass,

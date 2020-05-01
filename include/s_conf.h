@@ -71,6 +71,7 @@ struct ConfItem {
   char *passwd;
   char *name;
   unsigned short int port;
+  uint64_t privs;
   time_t hold;                  /* Hold action until this time
                                    (calendar time) */
 #if !defined(VMSP)
