@@ -789,7 +789,7 @@ static int register_user(aClient *cptr, aClient *sptr,
   /* Send umode to client */
   if (MyUser(sptr))
   {
-    send_umode(cptr, sptr, 0, ALL_UMODES, 0, ALL_HMODES);
+    send_umode_out(cptr, sptr, 0, 0, 0);
     if (sptr->snomask != SNO_DEFAULT && (sptr->flags & FLAGS_SERVNOTICE))
       sendto_one(sptr, rpl_str(RPL_SNOMASK), me.name, sptr->name,
           sptr->snomask, sptr->snomask);

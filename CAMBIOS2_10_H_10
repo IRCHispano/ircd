@@ -1,3 +1,9 @@
+* 2020/05/06  toni@tonigarcia.es (u2.10.H.10.286)                    FIX
+------------------------------------------------------------------------
+  En la migracion a JSON de la tabla e del parche u2.10.H.10.271 se ha
+  introducido un bug. Se corrige.
+  Se optimiza un poco el codigo de Elines.
+
 * 2020/05/01  toni@tonigarcia.es (u2.10.H.10.285)                    FIX
 ------------------------------------------------------------------------
   No se capturaba correctamente los privilegios en las olines. Se añade
