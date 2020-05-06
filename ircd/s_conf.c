@@ -1368,11 +1368,11 @@ int find_exception(aClient *cptr)
 
       if ((reg->clave && (match(reg->clave, PunteroACadena(cptr->sockhost)) == 0 ||
           match(reg->clave, ircd_ntoa_c(cptr)) == 0))
-          && (user
-          && (match(user, PunteroACadena(cptr->user->username)) == 0))
-          && (BadPtr(pass) || (!BadPtr(pass)
-          && !strcmp(pass, cptr->passwd))) && (!port
-          || (port == cptr->acpt->port)))
+          && (!user || (user
+            && (match(user, PunteroACadena(cptr->user->username)) == 0)))
+          && (!pass || (pass
+            && !strcmp(pass, cptr->passwd)))
+          && (!port || (port == cptr->acpt->port)))
         return 1;
     }
   }
@@ -1402,9 +1402,11 @@ int find_kill(aClient *cptr)
   /*
    * Si tiene una excepcion, saltar la comprobacion
    */
-  if (find_exception(cptr))
+  if (find_exception(cptr)) {
+    SetElined(cptr);
     return 0;
-  
+  }
+
   for (tmp = conf; tmp; tmp = tmp->next)
     /* Added a check against the user's IP address as well.
      * If the line is either CONF_KILL or CONF_IPKILL, check it; if and only

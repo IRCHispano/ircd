@@ -255,6 +255,8 @@ extern struct sockaddr_in vserv;
 
 #define HFLAG_WEBIRC                  0x01000000  /* Usuario WebIRC */
 #define HFLAG_PROXY                   0x02000000  /* Usuario Proxy */
+#define HFLAG_ELINED                  0x04000000
+
 
 /* Modos hispano  a propagar */
 #define SEND_HMODES \
@@ -296,7 +298,7 @@ extern struct sockaddr_in vserv;
 
 #define IsWebIRC(x)             ((x)->hmodes & HFLAG_WEBIRC)
 #define IsProxy(x)              ((x)->hmodes & HFLAG_PROXY)
-
+#define IsElined(x)             ((x)->hmodes & HFLAG_ELINED)
 
 /* Macros para poner modos hispano */
 #define SetNickRegistered(x)    ((x)->hmodes |= HMODE_NICKREGISTERED)
@@ -322,6 +324,7 @@ extern struct sockaddr_in vserv;
 
 #define SetWebIRC(x)            ((x)->hmodes |= HFLAG_WEBIRC)
 #define SetProxy(x)             ((x)->hmodes |= HFLAG_PROXY)
+#define SetElined(x)            ((x)->hmodes |= HFLAG_ELINED)
 
 /* Macros para borrar modos hispano */
 #define ClearNickRegistered(x)  ((x)->hmodes &= ~HMODE_NICKREGISTERED)
@@ -345,6 +348,8 @@ extern struct sockaddr_in vserv;
 #define ClearUserNoJoin(x)      ((x)->hmodes &= ~HMODE_USERNOJOIN)
 #define ClearPendValidation(x)  ((x)->hmodes &= ~HMODE_PENDVALIDATION)
 #define ClearDocking(x)         ((x)->hmodes &= ~HMODE_DOCKING)
+
+#define ClearElined(x)          ((x)->hmodes &= ~HFLAG_ELINED)
 
 #define BorraIpVirtual(x)      do { \
                                  assert(IsUser(x)); \

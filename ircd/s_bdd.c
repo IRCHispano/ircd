@@ -818,6 +818,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               if ((acptr = loc_clients[i]) && !IsMe(acptr))
               {
+                ClearElined(acptr);
                 if ((found_g = find_kill(acptr)))
                 {
                   sendto_op_mask(found_g == -2 ? SNO_GLINE : SNO_OPERKILL,
