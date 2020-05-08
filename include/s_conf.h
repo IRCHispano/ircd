@@ -50,6 +50,10 @@
 #define CONF_CRULE		(CONF_CRULEALL | CONF_CRULEAUTO)
 #define CONF_KLINE		(CONF_KILL | CONF_IPKILL)
 
+
+#define ELINE_GLINE   0x1
+#define ELINE_GEO     0x2
+
 #define IsIllegal(x)	((x)->status & CONF_ILLEGAL)
 
 #define IsConfCookieEnc(x)  ((x)->status & CONF_COOKIE_ENC)

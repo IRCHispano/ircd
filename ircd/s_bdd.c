@@ -813,7 +813,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               if ((acptr = loc_clients[i]) && !IsMe(acptr))
               {
-                ClearElined(acptr);
+                ClearGeoElined(acptr);
                 if ((found_g = find_kill(acptr)))
                 {
                   sendto_op_mask(found_g == -2 ? SNO_GLINE : SNO_OPERKILL,
@@ -1123,11 +1123,12 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         int prohibido = 0;
         char *automodes;
         char *reason;
+        int snomask;
 
         if (*valor == '{')
         {
           /* Formato nuevo JSON */
-          json_object *json, *json_flags, *json_reason, *json_automodes;
+          json_object *json, *json_flags, *json_reason, *json_automodes, *json_snomask;
           enum json_tokener_error jerr = json_tokener_success;
           int flagsddb;
 
@@ -1141,6 +1142,9 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
           reason = (char *)json_object_get_string(json_reason);
           json_object_object_get_ex(json, "automodes", &json_automodes);
           automodes = (char *)json_object_get_string(json_automodes);
+          json_object_object_get_ex(json, "snomask", &json_snomask);
+          snomask = json_object_get_int(json_snomask);
+
 
           if (flagsddb == DDB_NICK_SUSPEND)
             suspendido = !0;
@@ -1222,7 +1226,17 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
               sptr->hmodes |= addhmodes;
           }
 
+          if (snomask)
+          {
+            set_snomask(sptr, snomask, SNO_SET);
+            sptr->flags |= FLAGS_SERVNOTICE;
+          }
+
           send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
+
+          if (sptr->snomask && snomask)
+            sendto_one(sptr, rpl_str(RPL_SNOMASK), me.name, sptr->name,
+                sptr->snomask, sptr->snomask);
 
         } else {
           /* No registrado */
