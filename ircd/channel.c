@@ -3785,7 +3785,11 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
   }
 
-  if (MyUser(sptr) && IsUserNoJoin(sptr) && canal_debug) {
+  if (MyUser(sptr) && IsUserNoJoin(sptr)) {
+
+    if (!canal_debug)
+        return 0;
+
     /* Copio el valor en memoria para evitar que corte el registro en
      * memoria de la BDD cuando hay un , de separacion de campos.
      */
@@ -3897,7 +3901,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
 
         /* Redireccion de canales */
-        if(!desactivar_redireccion_canales && (ch_redir = db_buscar_registro(BDD_CHANREDIRECTDB, name)))
+        if (activar_redireccion_canales && (ch_redir = db_buscar_registro(BDD_CHANREDIRECTDB, name)))
           name=ch_redir->valor;
 
         if (bad_channel(name) && !IsAnOper(sptr))

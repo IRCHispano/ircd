@@ -55,6 +55,8 @@
  */
 #define BDD_ACTIVAR_IDENT                       "noident"
 #define BDD_AUTOINVISIBLE                       "autousermodes"
+#define BDD_MENSAJE_QUIT                        "msg_quit"
+#define BDD_MENSAJE_PART                        "msg_part"
 #define BDD_MENSAJE_GLINE                       "msg_glined"
 #define BDD_NICKLEN                             "nicklen"
 #define BDD_NUMERO_MAXIMO_DE_CLONES_POR_DEFECTO "ipcheck_default_iline"
@@ -72,6 +74,7 @@
 #define BDD_MENSAJE_DE_CAPACIDAD_SUPERADA       "msg_fullcapacity"
 #define BDD_PERMITE_NICKS_RANDOM                "allow_random_nicks"
 #define BDD_PERMITE_NICKS_SUSPEND               "allow_suspend_nicks"
+#define BDD_ENABLE_REDIRECT_CHAN                "redirect_channel_enable"
 #define BDD_CLAVE_DE_CIFRADO_DE_IPS             "ip_crypt_key"
 #define BDD_GEO_ENABLE                          "geo_enable"
 #define BDD_GEO_MSG_KILL                        "geo_msg_kill"
@@ -174,8 +177,7 @@ extern unsigned int clave_de_cifrado_binaria[2];
 extern int ocultar_servidores;
 extern int activar_ident;
 extern int auto_invisible;
-extern int excepcion_invisible;
-extern int desactivar_redireccion_canales;
+extern int activar_redireccion_canales;
 extern char *mensaje_quit_personalizado;
 extern char *mensaje_part_personalizado;
 extern char *mensaje_gline;
