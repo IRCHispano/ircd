@@ -1,3 +1,7 @@
+* 2020/05/08  toni@tonigarcia.es (u2.10.H.10.289)                FEATURE
+------------------------------------------------------------------------
+  Soporte de snomask para nicks registrados mediante tabla n.
+
 * 2020/05/08  toni@tonigarcia.es (u2.10.H.10.288)                CLEANUP
 ------------------------------------------------------------------------
   A gracias al parche anterior, se eliminan los registros asociados a
