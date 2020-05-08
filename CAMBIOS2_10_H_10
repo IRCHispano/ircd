@@ -1,3 +1,9 @@
+* 2020/05/08  toni@tonigarcia.es (u2.10.H.10.287)                    FIX
+------------------------------------------------------------------------
+  21 años despues, se corrige el historico bug de que no reconocian las
+  mascaras de servidor en los registros de la BDD para establecer
+  configuraciones locales.
+
 * 2020/05/06  toni@tonigarcia.es (u2.10.H.10.286)                    FIX
 ------------------------------------------------------------------------
   En la migracion a JSON de la tabla e del parche u2.10.H.10.271 se ha

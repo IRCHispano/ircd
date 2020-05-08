@@ -2250,7 +2250,8 @@ static void db_alta(char *registro, unsigned char que_bdd, aClient *cptr, aClien
 
   tabla_serie[que_bdd] = atol(p0);
 
-  if (tabla_residente_y_len[que_bdd])
+  /* Solo se mete en memoria los registros cuyo destino hace match con el servidor */
+  if (tabla_residente_y_len[que_bdd] && !match(p1, me.name))
   {
     if (p4 == NULL)             /* Borrado */
       db_eliminar_registro(que_bdd, p3, 0, cptr, sptr);
