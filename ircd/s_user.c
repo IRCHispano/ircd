@@ -5901,7 +5901,7 @@ nickkilldone:
 #endif /* !defined(BDD_VIP2) */
 #endif /* defined(BDD_VIP) */
 
-   if (auto_invisible && !excepcion_invisible)
+   if (auto_invisible)
      SetInvisible(sptr);
 
    if (find_port_ssl(sptr))

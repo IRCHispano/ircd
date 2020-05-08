@@ -87,8 +87,7 @@ int ocultar_servidores = 0;
 int activar_modos = 0;
 int activar_ident = 0;
 int auto_invisible = 0;
-int excepcion_invisible = 0;
-int desactivar_redireccion_canales = 0;
+int activar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
 char *mensaje_part_personalizado = NULL;
 char *mensaje_gline = NULL;
@@ -629,6 +628,22 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
                 mensaje_gline=NULL;
               }
             }
+            else if(!strcmp(c, BDD_MENSAJE_QUIT))
+            {
+              if(mensaje_quit_personalizado)
+              {
+                RunFree(mensaje_quit_personalizado);
+                mensaje_quit_personalizado=NULL;
+              }
+            }
+            else if(!strcmp(c, BDD_MENSAJE_PART))
+            {
+              if(mensaje_part_personalizado)
+              {
+                RunFree(mensaje_part_personalizado);
+                mensaje_part_personalizado=NULL;
+              }
+            }
             else if(!strcmp(c, BDD_NETWORK))
             {
               if(network)
@@ -672,6 +687,10 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               clave_de_cifrado_binaria[0] = 0;
               clave_de_cifrado_binaria[1] = 0;
               elimina_cache_ips_virtuales();
+            }
+            else if (!strcmp(c, BDD_ENABLE_REDIRECT_CHAN))
+            {
+              activar_redireccion_canales = 0;
             }
             else if (!strcmp(c, BDD_GEO_ENABLE))
             {
@@ -725,31 +744,7 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
         case BDD_CONFIGDB:
           if (!reemplazar)
           {
-            if(!strncmp(c, "noredirect:", 9) && !strcmp(c+9, me.name))
-            {
-              desactivar_redireccion_canales=0;
-            }
-            else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
-            {
-              if(mensaje_quit_personalizado)
-              {
-                RunFree(mensaje_quit_personalizado);
-                mensaje_quit_personalizado=NULL;
-              }
-            }
-            else if(!strncmp(c, "part:", 5) && !strcmp(c+5, me.name))
-            {
-              if(mensaje_part_personalizado)
-              {
-                RunFree(mensaje_part_personalizado);
-                mensaje_part_personalizado=NULL;
-              }
-            }
-            else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
-            {
-              excepcion_invisible=0;
-            }
-            else if(!strcmp(c, BDD_CANAL_CONNEXITDEBUG))
+            if(!strcmp(c, BDD_CANAL_CONNEXITDEBUG))
             {
               if(canal_connexitdebug)
               {
@@ -1294,6 +1289,14 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         SlabStringAllocDup(&mensaje_gline, v, 0);
       }
+      else if(!strcmp(c, BDD_MENSAJE_QUIT))
+      {
+        SlabStringAllocDup(&mensaje_quit_personalizado, v, 0);
+      }
+      else if(!strcmp(c, BDD_MENSAJE_PART))
+      {
+        SlabStringAllocDup(&mensaje_part_personalizado, v, 0);
+      }
       else if(!strcmp(c, BDD_NETWORK))
       {
         SlabStringAllocDup(&network, v, 0);
@@ -1340,6 +1343,13 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         clave[6] = tmp;
         clave_de_cifrado_binaria[1] = base64toint(clave + 6); /* BINARIO */
         elimina_cache_ips_virtuales();
+      }
+      else if (!strcmp(c, BDD_ENABLE_REDIRECT_CHAN))
+      {
+        if (!strcasecmp(v, "TRUE"))
+          activar_redireccion_canales = !0;
+        else
+          activar_redireccion_canales = 0;
       }
       else if (!strcmp(c, BDD_GEO_ENABLE))
       {
@@ -1423,23 +1433,7 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       break;
 
     case BDD_CONFIGDB:
-      if(!strncmp(c, "noredirect:", 9) && !strcmp(c+9, me.name))
-      {
-        desactivar_redireccion_canales=1;
-      }
-      else if(!strncmp(c, "quit:", 5) && !strcmp(c+5, me.name))
-      {
-        SlabStringAllocDup(&mensaje_quit_personalizado, v, 0);
-      }
-      else if(!strncmp(c, "part:", 5) && !strcmp(c+5, me.name))
-      {
-        SlabStringAllocDup(&mensaje_part_personalizado, v, 0);
-      }
-      else if(!strncmp(c, "noinvisible:", 12) && !strcmp(c+12, me.name))
-      {
-        excepcion_invisible = !0;
-      }
-      else if(!strcmp(c, BDD_CANAL_CONNEXITDEBUG))
+      if(!strcmp(c, BDD_CANAL_CONNEXITDEBUG))
       {
         SlabStringAllocDup(&canal_connexitdebug, v, 0);
       }
@@ -2250,7 +2244,8 @@ static void db_alta(char *registro, unsigned char que_bdd, aClient *cptr, aClien
 
   tabla_serie[que_bdd] = atol(p0);
 
-  if (tabla_residente_y_len[que_bdd])
+  /* Solo se mete en memoria los registros cuyo destino hace match con el servidor */
+  if (tabla_residente_y_len[que_bdd] && !match(p1, me.name))
   {
     if (p4 == NULL)             /* Borrado */
       db_eliminar_registro(que_bdd, p3, 0, cptr, sptr);
