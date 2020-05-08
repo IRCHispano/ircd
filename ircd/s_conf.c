@@ -1341,11 +1341,12 @@ int find_exception(aClient *cptr)
       char *pass = NULL;
       char *user = NULL;
       int port = 0;
+      int type = 0;
 
       if (*reg->valor == '{')
       {
         /* Formato nuevo JSON */
-        json_object *json, *json_pass, *json_user, *json_port;
+        json_object *json, *json_pass, *json_user, *json_port, *json_type;
         enum json_tokener_error jerr = json_tokener_success;
 
         json = json_tokener_parse_verbose(reg->valor, &jerr);
@@ -1360,6 +1361,9 @@ int find_exception(aClient *cptr)
 
         json_object_object_get_ex(json, "port", &json_port);
         port = json_object_get_int(json_port);
+
+        json_object_object_get_ex(json, "type", &json_type);
+        type = json_object_get_int(json_type);
       }
       else
       {
@@ -1372,8 +1376,16 @@ int find_exception(aClient *cptr)
             && (match(user, PunteroACadena(cptr->user->username)) == 0)))
           && (!pass || (pass
             && !strcmp(pass, cptr->passwd)))
-          && (!port || (port == cptr->acpt->port)))
-        return 1;
+          && (!port || (port == cptr->acpt->port))) {
+
+        if (type & ELINE_GEO)
+          SetGeoElined(cptr);
+
+        if (type & ELINE_GLINE)
+          return 1;
+
+        continue;
+      }
     }
   }
 
@@ -1402,10 +1414,8 @@ int find_kill(aClient *cptr)
   /*
    * Si tiene una excepcion, saltar la comprobacion
    */
-  if (find_exception(cptr)) {
-    SetElined(cptr);
+  if (find_exception(cptr))
     return 0;
-  }
 
   for (tmp = conf; tmp; tmp = tmp->next)
     /* Added a check against the user's IP address as well.

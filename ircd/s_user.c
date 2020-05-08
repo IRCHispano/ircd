@@ -4561,6 +4561,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       int of, oh;
       int flagsddb = 0;
       char *automodes = NULL;
+      int snomask;
 
       of = sptr->flags;
       oh = sptr->hmodes;
@@ -4568,7 +4569,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       if (*reg->valor == '{')
       {
         /* Formato nuevo JSON */
-        json_object *json, *json_flags, *json_automodes;
+        json_object *json, *json_flags, *json_automodes, *json_snomask;
         enum json_tokener_error jerr = json_tokener_success;
 
         json = json_tokener_parse_verbose(reg->valor, &jerr);
@@ -4577,6 +4578,9 @@ void rename_user(aClient *sptr, char *nick_nuevo)
           flagsddb = json_object_get_int(json_flags);
           json_object_object_get_ex(json, "automodes", &json_automodes);
           automodes = (char *)json_object_get_string(json_automodes);
+          json_object_object_get_ex(json, "snomask", &json_snomask);
+          snomask = json_object_get_int(json_snomask);
+
         }
       } else {
         /* Formato antiguo pass_flag */
@@ -4679,8 +4683,18 @@ void rename_user(aClient *sptr, char *nick_nuevo)
             sptr->flags |= addflags;
             sptr->hmodes |= addhmodes;
         }
+        if (snomask)
+        {
+          set_snomask(sptr, snomask, SNO_SET);
+          sptr->flags |= FLAGS_SERVNOTICE;
+        }
       }
       send_umode_out(sptr, sptr, of, oh, IsRegistered(sptr));
+
+      if (sptr->snomask && snomask)
+        sendto_one(sptr, rpl_str(RPL_SNOMASK), me.name, sptr->name,
+            sptr->snomask, sptr->snomask);
+
     }
 
   }
@@ -4967,6 +4981,7 @@ int m_nick_local(aClient *cptr, aClient *sptr, int parc, char *parv[])
   char *tmp;
   char *reason = NULL;
   char *automodes = NULL;
+  int snomask;
 #if defined(BDD_VIP)
   int vhperso = 0;
 #endif
@@ -5447,7 +5462,7 @@ nickkilldone:
     if (*reg->valor == '{')
     {
       /* Formato nuevo JSON */
-      json_object *json, *json_flags, *json_reason, *json_pass, *json_automodes;
+      json_object *json, *json_flags, *json_reason, *json_pass, *json_automodes, *json_snomask;
       enum json_tokener_error jerr = json_tokener_success;
 
       json = json_tokener_parse_verbose(reg->valor, &jerr);
@@ -5460,6 +5475,8 @@ nickkilldone:
         passddb = (char *)json_object_get_string(json_pass);
         json_object_object_get_ex(json, "automodes", &json_automodes);
         automodes = (char *)json_object_get_string(json_automodes);
+        json_object_object_get_ex(json, "snomask", &json_snomask);
+        snomask = json_object_get_int(json_snomask);
       }
     } else {
       /* Formato antiguo pass_flag
@@ -5997,6 +6014,12 @@ nickkilldone:
         sptr->flags |= addflags;
         sptr->hmodes |= addhmodes;
       }
+
+      if (snomask)
+      {
+        set_snomask(sptr, snomask, SNO_SET);
+        sptr->flags |= FLAGS_SERVNOTICE;
+      }
     }
     else
     {
@@ -6032,6 +6055,10 @@ nickkilldone:
     }
 #endif /* defined(BDD_VIP) */
     send_umode_out(cptr, sptr, of, oh, IsRegistered(sptr));
+
+    if (sptr->snomask && snomask && sptr->snomask == snomask)
+      sendto_one(sptr, rpl_str(RPL_SNOMASK), me.name, sptr->name,
+          sptr->snomask, sptr->snomask);
   }
 
   /*
