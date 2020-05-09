@@ -1,3 +1,9 @@
+* 2020/05/09  toni@tonigarcia.es (u2.10.H.10.293)                FEATURE
+------------------------------------------------------------------------
+  Hasta ahora el valor de AUTOUSERMODES era solamente poner el +i. 
+  Ahora se permite poner cualquier modo que se pueda poner el usuario
+  al conectar a la red.
+
 * 2020/05/09  toni@tonigarcia.es (u2.10.H.10.292)                FEATURE
 ------------------------------------------------------------------------
   Optimizamos las lecturas de la tabla f de la BDD pasando todo a

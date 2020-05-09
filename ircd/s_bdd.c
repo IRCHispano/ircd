@@ -87,7 +87,7 @@ unsigned int clave_de_cifrado_binaria[2];
 int ocultar_servidores = 0;
 int activar_modos = 0;
 int desactivar_ident = 1;
-int auto_invisible = 0;
+char *auto_usermodes = NULL;
 int activar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
 char *mensaje_part_personalizado = NULL;
@@ -622,9 +622,13 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               SlabStringAllocDup(&(his.info), SERVER_INFO, REALLEN);
             }
-            else if (!strcmp(c, BDD_AUTOINVISIBLE))
+            else if (!strcmp(c, BDD_AUTOUSERMODES))
             {
-              auto_invisible = 0;
+              if(auto_usermodes)
+              {
+                RunFree(auto_usermodes);
+                auto_usermodes=NULL;
+              }
             }
             else if (!strcmp(c, BDD_NICKLEN))
             {
@@ -1302,9 +1306,9 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         SlabStringAllocDup(&(his.info), v, REALLEN);
       }
-      else if (!strcmp(c, BDD_AUTOINVISIBLE))
+      else if (!strcmp(c, BDD_AUTOUSERMODES))
       {
-        auto_invisible = !0;
+        SlabStringAllocDup(&auto_usermodes, v, 0);
       }
       else if (!strcmp(c, BDD_NICKLEN))
       {

@@ -5911,8 +5911,13 @@ nickkilldone:
 #endif /* !defined(BDD_VIP2) */
 #endif /* defined(BDD_VIP) */
 
-   if (auto_invisible)
-     SetInvisible(sptr);
+   if (auto_usermodes) {
+     int addflags, addhmodes;
+
+     mask_user_flags(auto_usermodes, &addflags, &addhmodes);
+     sptr->flags |= addflags;
+     sptr->hmodes |= addhmodes;
+   }
 
    if (find_port_ssl(sptr))
      SetSSL(sptr);
