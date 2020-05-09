@@ -355,7 +355,17 @@ static Numeric numeric_errors[] = {
     {0, (char *)NULL},
 /* 526 */
     {ERR_OPERONLY, "%s :Cannot join channel (+O) - "
-                      "Necesita ser IRC Operator para entrar" }
+                      "Necesita ser IRC Operator para entrar" },
+/* 527 */
+    {0, (char *)NULL},
+/* 528 */
+    {0, (char *)NULL},
+/* 529 */
+    {0, (char *)NULL},
+/* 530 */
+    {0, (char *)NULL},
+/* 531 */
+    {ERR_CANTSENDTOUSER, "%s :Can't send CTCP to user (+T) - No puedes mandar CTCP al usuario" }
 };
 
 static Numeric numeric_replies[] = {
