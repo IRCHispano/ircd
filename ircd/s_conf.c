@@ -1384,6 +1384,9 @@ int find_exception(aClient *cptr)
         if (type & ELINE_GLINE)
           return 1;
 
+        if (!type) // Metodo antiguo
+          return 1;
+
         continue;
       }
     }
