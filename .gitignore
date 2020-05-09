@@ -2,17 +2,21 @@
 Makefile
 config/.config
 config/.config.old
+config/autom4te.cache/
+config/autoscan.log
 config/config-sh
 config/config.h
 config/config.log
 config/config.status
 config/configuretool
+config/configure.scan
 config/setup.h
 config/stamp-h
 doc/stamp-m
 include/patchlist.h
 ircd/chkconf
 ircd/crypt/.checksums
+ircd/crypt/mkpasswd
 ircd/ircd
 ircd/stamp-m
 ircd/version.c
@@ -41,3 +45,4 @@ libevent/select.lo
 libevent/signal.lo
 libevent/stamp-h1
 libevent/strlcpy.lo
+patches/marks/

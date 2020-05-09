@@ -1,8 +1,7 @@
-diff --git ircd/s_serv.c ircd/s_serv.c
-index 571ff60..ccb6082 100644
+index 126b08a..a4d7c61 100644
 --- ircd/s_serv.c
 +++ ircd/s_serv.c
-@@ -768,9 +768,10 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
+@@ -767,9 +767,10 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
              IsIPv6(acptr) ? "6" : "", PunteroACadena(acptr->info));
  #if !defined(NO_PROTOCOL9)
        else
@@ -15,7 +14,7 @@ index 571ff60..ccb6082 100644
  #endif
      }
      return 0;
-@@ -946,9 +947,14 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
+@@ -944,9 +945,14 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
            me.info ? me.info : "IRCers United");
      else
        sendto_one(cptr,
@@ -32,7 +31,7 @@ index 571ff60..ccb6082 100644
             me.info ? me.info : "IRCers United");
  
      tx_num_serie_dbs(cptr);
-@@ -1029,9 +1035,10 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
+@@ -1027,9 +1033,10 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
  #if !defined(NO_PROTOCOL9)
        else
          sendto_one(acptr,
@@ -44,7 +43,7 @@ index 571ff60..ccb6082 100644
              PunteroACadena(cptr->info));
  #endif
      }
-@@ -1045,10 +1052,11 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
+@@ -1043,10 +1050,11 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
              IsIPv6(cptr) ? "6" : "", PunteroACadena(cptr->info));
  #if !defined(NO_PROTOCOL9)
        else
@@ -58,7 +57,7 @@ index 571ff60..ccb6082 100644
  #endif
      }
    }
-@@ -1095,10 +1103,11 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
+@@ -1093,10 +1101,11 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
                PunteroACadena(acptr->info));
          else
            sendto_one(cptr,
@@ -71,7 +70,7 @@ index 571ff60..ccb6082 100644
                PunteroACadena(acptr->info));
        }
        else
-@@ -1114,10 +1123,11 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
+@@ -1112,10 +1121,11 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
  #if !defined(NO_PROTOCOL9)
          else
            sendto_one(cptr,
@@ -84,7 +83,7 @@ index 571ff60..ccb6082 100644
                PunteroACadena(acptr->info));
  #endif
        }
-@@ -1139,11 +1149,15 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
+@@ -1137,11 +1147,15 @@ int m_server_estab(aClient *cptr, aConfItem *aconf, aConfItem *bconf, time_t sta
           * been received. -avalon
           * Or only NICK in new format. --Run
           */
@@ -101,11 +100,10 @@ index 571ff60..ccb6082 100644
              PunteroACadena(acptr->info));
  
          send_umode(cptr, acptr, 0, SEND_UMODES, 0, SEND_HMODES);
-diff --git a/ircd/s_user.c b/ircd/s_user.c
-index 0755a8f..90130e7 100644
+index d8ca761..6214675 100644
 --- ircd/s_user.c
 +++ ircd/s_user.c
-@@ -820,10 +820,12 @@ static int register_user(aClient *cptr, aClient *sptr,
+@@ -733,10 +733,12 @@ static int register_user(aClient *cptr, aClient *sptr,
  #else /* Remove the following when all servers are 2.10 */
  
    /* First send message to all 2.9 servers */

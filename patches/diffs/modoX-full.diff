@@ -1,6 +1,7 @@
+index 27a41c8..9f92268 100644
 --- ircd/send.c
 +++ ircd/send.c
-@@ -414,7 +414,7 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
+@@ -412,7 +412,7 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
        {
          strcat(sender, "@");
  #if defined(BDD_VIP)
@@ -9,7 +10,7 @@
  #else
          strcat(sender, user->host);
  #endif
-@@ -429,7 +429,7 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
+@@ -427,7 +427,7 @@ static void vsendto_prefix_one(aClient *to, aClient *from,
      {
        strcat(sender, "@");
  #if defined(BDD_VIP)
