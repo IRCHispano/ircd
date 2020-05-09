@@ -44,9 +44,9 @@ static Numeric local_replies[] = {
 
 /* 004 */
 #if defined(BDD_VIP)
-    {RPL_MYINFO, "%s %s dioswkgxXvrRaChSBcnz biklmnopstvcrRMCNuWz"},
+    {RPL_MYINFO, "%s %s dioswkgxXvrRaChSBcnzKT biklmnopstvcrRMCNuWz"},
 #else
-    {RPL_MYINFO, "%s %s dioswkgraChSBcnz biklmnopstvcrRMCNuWz"},
+    {RPL_MYINFO, "%s %s dioswkgraChSBcnzKT biklmnopstvcrRMCNuWz"},
 #endif /* BDD_VIP */
 
 /* 005 */
@@ -484,11 +484,11 @@ static Numeric numeric_replies[] = {
 /* 355 */
     {0, (char *)NULL},
 /* 356 */
-    {0, (char *)NULL},
+    {RPL_USERDEAF, "%s :No puede mandar mensajes a canales"},
 /* 357 */
-    {0, (char *)NULL},
+    {RPL_USERBITCH, "%s :No puede mandar mensajes privados"},
 /* 358 */
-    {0, (char *)NULL},
+    {RPL_USERNOJOIN, "%s :No puede entrar en canales"},
 /* 359 */
     {0, (char *)NULL},
 /* 360 */

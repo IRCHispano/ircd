@@ -296,6 +296,8 @@ static void do_who(aClient *sptr, aClient *acptr, aChannel *repchan,
       *(p1++) = 'k';
     if (IsDocking(acptr))
       *(p1++) = 'K';
+    if (IsNoCTCP(acptr))
+      *(p1++) = 'T';
 
     if (IsAnOper(sptr))
     {
@@ -1012,6 +1014,15 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
           if (IsDocking(acptr))
             sendto_one(sptr, rpl_str(RPL_DOCKING), me.name, parv[0], name);
+
+          if (IsUserDeaf(acptr) && IsAnOper(acptr))
+            sendto_one(sptr, rpl_str(RPL_USERDEAF), me.name, parv[0], name);
+
+          if (IsUserBitch(acptr) && IsAnOper(acptr))
+            sendto_one(sptr, rpl_str(RPL_USERBITCH), me.name, parv[0], name);
+
+          if (IsUserNoJoin(acptr) && IsAnOper(acptr))
+            sendto_one(sptr, rpl_str(RPL_USERNOJOIN), me.name, parv[0], name);
 
           if (IsHidden(acptr) && (can_viewhost(sptr, acptr, 1) || acptr == sptr))
             sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY),  me.name, parv[0],

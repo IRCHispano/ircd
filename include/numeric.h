@@ -282,6 +282,10 @@
 #define RPL_WHOSPCRPL        354  /* Undernet extension,
                                      See also RPL_ENDOFWHO */
 
+#define RPL_USERDEAF         356
+#define RPL_USERBITCH        357
+#define RPL_USERNOJOIN       358
+
 #define RPL_KILLDONE        361 /* Unused */
 #define RPL_CLOSING	     362
 #define RPL_CLOSEEND	     363
