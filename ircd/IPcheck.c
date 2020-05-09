@@ -585,6 +585,8 @@ int IPbusca_clones(aClient *cptr)
 
     reg = db_buscar_registro(ESNET_CLONESDB, IPCidr);
     if (reg == NULL) {
+      reg = db_buscar_registro(ESNET_CLONESDB, ircd_ntoa_c(cptr));
+      if (reg == NULL)
         return -1;
     }
 
