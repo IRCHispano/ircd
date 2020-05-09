@@ -76,7 +76,7 @@ void start_auth(aClient *cptr)
   int err;
 
   /* Sin IDENT */
-  if (!activar_ident)
+  if (desactivar_ident)
   {
     cptr->count = 0;
     cptr->authfd = -1;

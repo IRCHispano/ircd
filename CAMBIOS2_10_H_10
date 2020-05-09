@@ -1,3 +1,9 @@
+
+* 2020/05/08  toni@tonigarcia.es (u2.10.H.10.291)                FEATURE
+------------------------------------------------------------------------
+  La feature NOIDENT estaba puesta al reves, lo ponemos bien y mantenemo
+  por defecto el sistema desactivado.
+
 * 2020/05/08  toni@tonigarcia.es (u2.10.H.10.290)                FEATURE
 ------------------------------------------------------------------------
   Mejora del sistema de Exception, ahora permite establecer un nuevo

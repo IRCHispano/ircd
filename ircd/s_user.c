@@ -482,7 +482,7 @@ static int register_user(aClient *cptr, aClient *sptr,
           HOSTLEN);
     aconf = sptr->confs->value.aconf;
 
-    if (!activar_ident)
+    if (desactivar_ident)
       sptr->flags &= ~FLAGS_DOID;
 
     if (sptr->flags & FLAGS_GOTID)
@@ -553,7 +553,7 @@ static int register_user(aClient *cptr, aClient *sptr,
      * No other special characters are allowed.
      * Name must contain at least one letter.
      */
-  if (activar_ident)
+  if (!desactivar_ident)
   {
     tmpstr2 = tmpstr = (username[0] == '~' ? &username[1] : username);
     while (*tmpstr && !badid)
@@ -617,7 +617,7 @@ static int register_user(aClient *cptr, aClient *sptr,
           me.name, ERR_INVALIDUSERNAME, cptr->name);
       return exit_client(cptr, sptr, &me, "USER: Bad username");
     }
-  } /* activar_ident */
+  } /* !desactivar_ident */
 
     Count_unknownbecomesclient(sptr, nrof);
   }

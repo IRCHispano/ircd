@@ -53,7 +53,7 @@
 /*
  * Registros compatibles con features del nuevo ircd
  */
-#define BDD_ACTIVAR_IDENT                       "noident"
+#define BDD_NO_IDENT                            "noident"
 #define BDD_AUTOINVISIBLE                       "autousermodes"
 #define BDD_MENSAJE_QUIT                        "msg_quit"
 #define BDD_MENSAJE_PART                        "msg_part"
@@ -175,7 +175,7 @@ extern int numero_maximo_de_clones_por_defecto;
 extern char *clave_de_cifrado_de_ips;
 extern unsigned int clave_de_cifrado_binaria[2];
 extern int ocultar_servidores;
-extern int activar_ident;
+extern int desactivar_ident;
 extern int auto_invisible;
 extern int activar_redireccion_canales;
 extern char *mensaje_quit_personalizado;

@@ -85,7 +85,7 @@ char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
 int ocultar_servidores = 0;
 int activar_modos = 0;
-int activar_ident = 0;
+int desactivar_ident = 1;
 int auto_invisible = 0;
 int activar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
@@ -600,9 +600,9 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               ocultar_servidores = 0;
             }
-            else if (!strcmp(c, BDD_ACTIVAR_IDENT))
+            else if (!strcmp(c, BDD_NO_IDENT))
             {
-              activar_ident = 0;
+              desactivar_ident = 1;
             }
             else if (!strcmp(c, BDD_SERVER_NAME))
             {
@@ -1265,12 +1265,12 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
         else
           ocultar_servidores = 0;
       }
-      else if (!strcmp(c, BDD_ACTIVAR_IDENT))
+      else if (!strcmp(c, BDD_NO_IDENT))
       {
-        if (!strcasecmp(v, "TRUE"))
-          activar_ident = !0;
+        if (!strcasecmp(v, "FALSE"))
+          desactivar_ident = 0;
         else
-          activar_ident = 0;
+          desactivar_ident = 1;
       }
       else if (!strcmp(c, BDD_SERVER_NAME))
       {
