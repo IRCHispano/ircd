@@ -1584,10 +1584,7 @@ void event_auth_callback(int fd, short event, aClient *cptr)
 }
 
 void deadsocket(aClient *cptr) {
-  if(!IsServer(cptr) && mensaje_quit_personalizado)
-    exit_client(cptr, cptr, &me, mensaje_quit_personalizado);
-  else
-    exit_client(cptr, cptr, &me,
+  exit_client(cptr, cptr, &me,
       IsDead(cptr) ? LastDeadComment(cptr) : strerror(get_sockerr(cptr)));
 }
 
@@ -1645,10 +1642,7 @@ void event_client_read_callback(int fd, short event, aClient *cptr) {
     exit_client_msg(cptr, cptr, &me, "Server %s closed the connection (%s)",
         PunteroACadena(cptr->name), cptr->serv->last_error_msg);
   else {
-    if(mensaje_quit_personalizado)
-      exit_client(cptr, cptr, &me, mensaje_quit_personalizado);
-    else
-      exit_client_msg(cptr, cptr, &me, "Read error: %s", // ERROR DE LECTURA DE CLIENTE
+    exit_client_msg(cptr, cptr, &me, "Read error: %s", // ERROR DE LECTURA DE CLIENTE
         (length < 0) ? strerror(get_sockerr(cptr)) : "EOF from client");
   }
 }
@@ -1893,10 +1887,7 @@ void event_checkping_callback(int fd, short event, aClient *cptr)
               
             }
 
-          if(IsRegistered(cptr) && mensaje_quit_personalizado)
-            exit_client(cptr, cptr, &me, mensaje_quit_personalizado);
-          else
-            exit_client(cptr, cptr, &me, "Ping timeout");
+          exit_client(cptr, cptr, &me, "Ping timeout");
         }
       return;
     }
