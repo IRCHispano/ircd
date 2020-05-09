@@ -859,6 +859,7 @@ static int user_hmodes[] = {
   HMODE_DOCKING,        'K',
   HMODE_NOIDLE,         'I',
   HMODE_WHOIS,          'W',
+  HMODE_NOCTCP,         'T',
 /* Control Spam */
   HMODE_USERDEAF,       'D',
   HMODE_USERBITCH,      'P',
@@ -1174,13 +1175,19 @@ static int m_message(aClient *cptr, aClient *sptr,
           continue;
 
         /* Los +P solo reciben si viene de un ircop o un clon */
-        if (MyUser(sptr) && !IsOper(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip)
+        if (MyUser(sptr) && !IsAnOper(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip)
             && IsUserBitch(acptr))
           continue;
 
         /* Los +P solo mandan a un clon o a un Bot */
         if (MyUser(sptr) && IsUserBitch(sptr) && irc_in_addr_cmp(&sptr->ip, &acptr->ip) && !IsServicesBot(acptr))
           continue;
+
+        if (MyUser(sptr) && IsNoCTCP(acptr) && !IsAnOper(sptr) && sptr != acptr &&
+             (*parv[parc - 1] == 1) && strncmp(parv[parc - 1], "\001ACTION ", 8)) {
+            sendto_one(sptr, err_str(ERR_CANTSENDTOUSER), me.name, parv[0], acptr->name);
+            continue;
+        }
 
         if (MyUser(sptr) && IsMsgOnlyReg(acptr) && !IsNickRegistered(sptr)
             && !IsAnOper(sptr))

@@ -44,9 +44,9 @@ static Numeric local_replies[] = {
 
 /* 004 */
 #if defined(BDD_VIP)
-    {RPL_MYINFO, "%s %s dioswkgxXvrRaChSBcnz biklmnopstvcrRMCNuWz"},
+    {RPL_MYINFO, "%s %s dioswkgxXvrRaChSBcnzKT biklmnopstvcrRMCNuWz"},
 #else
-    {RPL_MYINFO, "%s %s dioswkgraChSBcnz biklmnopstvcrRMCNuWz"},
+    {RPL_MYINFO, "%s %s dioswkgraChSBcnzKT biklmnopstvcrRMCNuWz"},
 #endif /* BDD_VIP */
 
 /* 005 */
@@ -355,7 +355,17 @@ static Numeric numeric_errors[] = {
     {0, (char *)NULL},
 /* 526 */
     {ERR_OPERONLY, "%s :Cannot join channel (+O) - "
-                      "Necesita ser IRC Operator para entrar" }
+                      "Necesita ser IRC Operator para entrar" },
+/* 527 */
+    {0, (char *)NULL},
+/* 528 */
+    {0, (char *)NULL},
+/* 529 */
+    {0, (char *)NULL},
+/* 530 */
+    {0, (char *)NULL},
+/* 531 */
+    {ERR_CANTSENDTOUSER, "%s :Can't send CTCP to user (+T) - No puedes mandar CTCP al usuario" }
 };
 
 static Numeric numeric_replies[] = {
@@ -474,11 +484,11 @@ static Numeric numeric_replies[] = {
 /* 355 */
     {0, (char *)NULL},
 /* 356 */
-    {0, (char *)NULL},
+    {RPL_USERDEAF, "%s :No puede mandar mensajes a canales"},
 /* 357 */
-    {0, (char *)NULL},
+    {RPL_USERBITCH, "%s :No puede mandar mensajes privados"},
 /* 358 */
-    {0, (char *)NULL},
+    {RPL_USERNOJOIN, "%s :No puede entrar en canales"},
 /* 359 */
     {0, (char *)NULL},
 /* 360 */

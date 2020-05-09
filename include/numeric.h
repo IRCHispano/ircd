@@ -199,6 +199,7 @@
 /*     ERR_WHOSYNTAX        522           Dalnet extension */
 /*     ERR_WHOLIMEXCEED     523           Dalnet extension */
 #define ERR_OPERONLY         526      /* 520 Unreal */
+#define ERR_CANTSENDTOUSER   531
 /*      ERR_NOTLOWEROPLEVEL  550          Undernet extension */
 /*      ERR_NOTMANAGER       551          Undernet extension */
 /*      ERR_CHANSECURED      552          Undernet extension */
@@ -280,6 +281,10 @@
 #define RPL_NAMREPLY	     353  /* See also RPL_ENDOFNAMES */
 #define RPL_WHOSPCRPL        354  /* Undernet extension,
                                      See also RPL_ENDOFWHO */
+
+#define RPL_USERDEAF         356
+#define RPL_USERBITCH        357
+#define RPL_USERNOJOIN       358
 
 #define RPL_KILLDONE        361 /* Unused */
 #define RPL_CLOSING	     362
