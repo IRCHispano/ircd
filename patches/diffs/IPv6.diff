@@ -1,5 +1,6 @@
---- doc/ejemplo.conf
-+++ doc/ejemplo.conf
+index f2fa6c7..834aff2 100644
+--- a/doc/ejemplo.conf
++++ b/doc/ejemplo.conf
 @@ -30,7 +30,7 @@
  # servidor es algo meramente descriptivo.
  
@@ -365,7 +366,7 @@
  
  #
  # Y llegamos a la parte de los "IRC Operatos" (IRCops). El estatus de
-@@ -350,24 +350,24 @@ d:*.asia.irc-hispano.org::connected(taipei.asia.*)
+@@ -350,8 +350,8 @@ d:*.asia.irc-hispano.org::connected(taipei.asia.*)
  # Dependiendo del make config, a los IRCops locales se les puede denegar
  # o permitir el uso de REHASH, RESTART, DIE y GLINE (solo localmente).
  # Los IRCops locales se denotan con una "o" minuscula.
@@ -373,9 +374,15 @@
 -# o:<host/mascara IP>:<clave encriptada>:<nick>:<flags>:<clase>
 +# O%<host/mascara IP>%<clave encriptada>%<nick>%<flags>%<clase>
 +# o%<host/mascara IP>%<clave encriptada>%<nick>%<flags>%<clase>
+ #
+ # Los flags disponibles son:
+ #
+@@ -395,21 +395,21 @@ d:*.asia.irc-hispano.org::connected(taipei.asia.*)
+ #
+ # Los privilegios permitidos es la suma total.
  
--O:*@*.ttd.es:VRKLDrQKn0jLs:nikolas::10
-+O%*@*.ttd.es%VRKLDrQKn0jLs%nikolas%%10
+-O:*@*.ttd.es:VRKLDrQKn0jLs:nikolas:18446744073709549567:10
++O%*@*.ttd.es%VRKLDrQKn0jLs%nikolas%18446744073709549567%10
  
  # La clase de conexion es opcional, pero dejandolo vacio hace que las lineas
 -# O: se asocien con la clase 0, que normalmente solo acepta una conexion
@@ -396,7 +403,7 @@
  # puertos (tanto AF_UNIX como AF_INET) en los que el ircd escuchara
  # conexiones.
  # El puerto por convenio es el 6667, y se usan tambien, por convenio
-@@ -388,14 +388,14 @@ O:*@*.ttd.es:VRKLDrQKn0jLs:nikolas::10
+@@ -430,14 +430,14 @@ O:*@*.ttd.es:VRKLDrQKn0jLs:nikolas:18446744073709549567:10
  # para usar con stunnel y similares.
  #
  # La sintaxis es asi:
@@ -418,7 +425,7 @@
  
  # En el path, se especifica donde se creara el socket UNIX de escucha del
  # servidor.
-@@ -406,22 +406,22 @@ P:/tmp/.ircd:::7000
+@@ -448,22 +448,22 @@ P:/tmp/.ircd:::7000
  # These lines allow you to run a CGI:IRC client on your website without
  # having to set clone exceptions for your websites hostname on your IRCd.
  # CGI:IRC will send a WEBIRC command along with the clients hostname, ip and
@@ -446,7 +453,7 @@
  #
  # Por defecto, no se necesita especificar una configuracion, ya que
  # se activan automaticamente, pero siempre hay casos que una configuracion
-@@ -439,10 +439,10 @@ P:/tmp/.ircd:::7000
+@@ -481,10 +481,10 @@ P:/tmp/.ircd:::7000
  
  # Ejemplos:
  # Activar ZLIB en el enlace con america.irc-hispano.org
@@ -459,6 +466,7 @@
  
  # Y aqui termina el fichero de ejemplo de configuracion del ircd
  # Si tienes dudas, vista http://www.irc-dev.net, o entra en el canal
+index 07e3c44..2071f26 100644
 --- include/IPcheck.h
 +++ include/IPcheck.h
 @@ -5,7 +5,7 @@
@@ -470,9 +478,10 @@
  extern void IPcheck_connect_fail(aClient *cptr);
  extern void IPcheck_connect_succeeded(aClient *cptr);
  extern int IPcheck_remote_connect(aClient *cptr, const char *hostname,
+index e1fa20d..fb22e52 100644
 --- include/res.h
 +++ include/res.h
-@@ -89,4 +89,12 @@ extern size_t cres_mem(aClient *sptr);
+@@ -84,4 +84,12 @@ extern size_t cres_mem(aClient *sptr);
  extern void event_expire_cache_callback(int fd, short event, struct event *ev);
  extern void event_timeout_query_list_callback(int fd, short event, struct event *ev);
  
@@ -485,6 +494,7 @@
 +#endif
 +
  #endif /* RES_H */
+index 3310c54..2cff58e 100644
 --- include/s_bsd.h
 +++ include/s_bsd.h
 @@ -227,8 +227,12 @@ extern int highest_fd, resfd;
@@ -500,9 +510,10 @@
  
  /* Bits de los modos hispano */
  #define HMODE_NICKREGISTERED          0x00000001  /* Nick is registered (HISPANO/ESNET) */
+index 11ec9d9..854b599 100644
 --- include/s_conf.h
 +++ include/s_conf.h
-@@ -57,7 +57,11 @@
+@@ -61,7 +61,11 @@
  #define IsConfListenPort(x) ((x)->status & CONF_LISTEN_PORT)
  #define IsConfClient(x)     ((x)->status & CONF_CLIENT)
  
@@ -514,7 +525,7 @@
  
  /*=============================================================================
   * Structures
-@@ -66,7 +70,11 @@
+@@ -70,7 +74,11 @@
  struct ConfItem {
    unsigned int status;          /* If CONF_ILLEGAL, delete when no clients */
    unsigned int clients;         /* Number of *LOCAL* clients using this */
@@ -526,22 +537,27 @@
    char *host;
    char *passwd;
    char *name;
+index 3fe9431..9ee760d 100644
 --- include/support.h
 +++ include/support.h
-@@ -15,8 +15,10 @@ extern void dumpcore(const char *pattern, ...)
+@@ -14,11 +14,13 @@ extern char *strtoken(char **save, char *str, char *fs);
+ extern void dumpcore(const char *pattern, ...)
      __attribute__ ((format(printf, 1, 2)));
  extern char *inetntoa(struct in_addr in);
- extern char *ircd_ntoa_c(aClient *cptr);
 +extern char *inet6ntoa(struct in6_addr in);
+ extern char *ircd_ntoa_c(aClient *cptr);
  extern const char* ircd_ntoa(const struct irc_in_addr* addr);
  extern const char* ircd_ntoa_r(char* buf, const struct irc_in_addr* addr);
+ extern const char* ircd_ntoa_cidr(const struct irc_in_addr* in, int bits);
+ extern const char* ircd_ntoa_cidr_r(char* buf, const struct irc_in_addr* in, int bits);
 +extern const struct irc_in_addr* ircd_ntop(char *host);
  #define ircd_aton(ADDR, STR) ipmask_parse((STR), (ADDR), NULL)
  extern int ipmask_parse(const char *in, struct irc_in_addr *mask, unsigned char *bits_ptr);
- extern int check_if_ipmask(const char *mask);
+ extern void ipmask_range(const struct irc_in_addr *ip, int bits, struct irc_in_addr *init, struct irc_in_addr *final);
+index 7abd3c3..e9b3793 100644
 --- ircd/ircd.c
 +++ ircd/ircd.c
-@@ -581,12 +581,21 @@ int main(int argc, char *argv[])
+@@ -583,12 +583,21 @@ int main(int argc, char *argv[])
                argv[0], p, h_errno);
            return -1;
          }
@@ -563,16 +579,18 @@
          else
          {
            fprintf(stderr, "%s: Error creating virtual host \"%s\": "
+index 16feaa3..7ab2c6d 100644
 --- ircd/res.c
 +++ ircd/res.c
-@@ -1691,4 +1691,3 @@ size_t cres_mem(aClient *sptr)
+@@ -1685,4 +1685,3 @@ size_t cres_mem(aClient *sptr)
        me.name, RPL_STATSDEBUG, sptr->name, sm, im, nm);
    return ts + sm + im + nm;
  }
 -
+index ecb4f33..4065d65 100644
 --- ircd/s_bsd.c
 +++ ircd/s_bsd.c
-@@ -109,7 +109,11 @@ struct event evres;
+@@ -104,7 +104,11 @@ struct event evres;
  aClient *loc_clients[MAXCONNECTIONS];
  int highest_fd = 0, udpfd = -1, resfd = -1;
  unsigned int readcalls = 0;
@@ -584,7 +602,7 @@
  static void polludp();
  
  static struct sockaddr *connect_inet(aConfItem *, aClient *, int *);
-@@ -118,8 +122,12 @@ static int check_init(aClient *, char *);
+@@ -113,8 +117,12 @@ static int check_init(aClient *, char *);
  static void do_dns_async(), set_sock_opts(int, aClient *);
  static char readbuf[8192];
  #if defined(VIRTUAL_HOST)
@@ -597,7 +615,7 @@
  static int running_in_background;
  
  #if defined(GODMODE)
-@@ -230,6 +238,14 @@ void report_error(char *text, aClient *cptr)
+@@ -225,6 +233,14 @@ void report_error(char *text, aClient *cptr)
   */
  int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
  {
@@ -612,7 +630,7 @@
    static struct sockaddr_in server;
    struct in_addr addr4;
    int ad[4], opt;
-@@ -252,6 +268,7 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
+@@ -247,6 +263,7 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
      sscanf(virtual, "%d.%d.%d.%d", &ad[0], &ad[1], &ad[2], &ad[3]);
      sprintf_irc(ipvirtual, "%d.%d.%d.%d", ad[0], ad[1], ad[2], ad[3]);
    }
@@ -620,7 +638,7 @@
    
    if (cptr != &me)
    {
-@@ -265,7 +282,11 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
+@@ -260,7 +277,11 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
     */
    if (cptr->fd == -1)
    {
@@ -632,7 +650,7 @@
      if (cptr->fd < 0 && errno == EAGAIN)
      {
        sendto_ops("opening stream socket %s: No more sockets", cptr->name);
-@@ -293,6 +314,19 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
+@@ -288,6 +309,19 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
     */
    if (port)
    {
@@ -652,7 +670,7 @@
      server.sin_family = AF_INET;
  #if !defined(VIRTUAL_HOST)
      server.sin_addr.s_addr = INADDR_ANY;
-@@ -303,6 +337,8 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
+@@ -298,6 +332,8 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
        server.sin_addr = vserv.sin_addr;
  #endif
      server.sin_port = htons(port);
@@ -661,7 +679,7 @@
      if (bind(cptr->fd, (struct sockaddr *)&server, sizeof(server)) == -1)
      {
        report_error("binding stream socket %s: %s", cptr);
-@@ -323,13 +359,22 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
+@@ -318,13 +354,22 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
    {
      char buf[1024];
  
@@ -684,7 +702,7 @@
    /* Pasamos de in_addr a irc_in_addr */
    addr4.s_addr = inet_addr(ipname);
    memset(&cptr->ip, 0, sizeof(struct irc_in_addr));
-@@ -338,6 +383,7 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
+@@ -333,6 +378,7 @@ int inetport(aClient *cptr, char *name, unsigned short int port, char *virtual)
    cptr->ip.in6_16[7] = htons(ntohl(addr4.s_addr) & 65535);
  
    cptr->port = ntohs(server.sin_port);
@@ -692,7 +710,7 @@
    listen(cptr->fd, 128);        /* Use listen port backlog of 128 */
    loc_clients[cptr->fd] = cptr;
  
-@@ -472,15 +518,24 @@ void write_pidfile(void)
+@@ -462,15 +508,24 @@ void write_pidfile(void)
   */
  static int check_init(aClient *cptr, char *sockn)
  {
@@ -717,7 +735,7 @@
    }
    else if (getpeername(cptr->fd, (struct sockaddr *)&sk, &len) == -1)
    {
-@@ -493,6 +548,16 @@ static int check_init(aClient *cptr, char *sockn)
+@@ -483,6 +538,16 @@ static int check_init(aClient *cptr, char *sockn)
      strncpy(sockn, PunteroACadena(cptr->sockhost), HOSTLEN);
      get_sockhost(cptr, sockn);
    } else {
@@ -734,7 +752,7 @@
      strcpy(sockn, inetntoa(sk.sin_addr));
  
      if (inet_netof(sk.sin_addr) == IN_LOOPBACKNET)
-@@ -506,9 +571,14 @@ static int check_init(aClient *cptr, char *sockn)
+@@ -496,9 +561,14 @@ static int check_init(aClient *cptr, char *sockn)
      cptr->ip.in6_16[5] = htons(65535);
      cptr->ip.in6_16[6] = htons(ntohl(sk.sin_addr.s_addr) >> 16);
      cptr->ip.in6_16[7] = htons(ntohl(sk.sin_addr.s_addr) & 65535);
@@ -749,7 +767,7 @@
  
    return 0;
  }
-@@ -528,10 +598,12 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
+@@ -516,10 +586,12 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
    Reg2 struct hostent *hp = NULL;
    Reg3 int i;
    enum AuthorizationCheckResult acr;
@@ -762,7 +780,7 @@
  
    ClearAccess(cptr);
    Debug((DEBUG_DNS, "ch_cl: check access for %s[%s]",
-@@ -549,7 +621,11 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
+@@ -537,7 +609,11 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
    if (hp)
    {
      for (i = 0; hp->h_addr_list[i]; i++)
@@ -774,7 +792,7 @@
          break;
      if (!hp->h_addr_list[i])
      {
-@@ -632,8 +708,12 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
+@@ -619,8 +695,12 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
  
    Debug((DEBUG_DNS, "ch_cl: access ok: %s[%s]", cptr->name, sockname));
  
@@ -787,7 +805,7 @@
    {
      ircstp->is_loc++;
    }
-@@ -665,10 +745,12 @@ int check_server(aClient *cptr)
+@@ -652,10 +732,12 @@ int check_server(aClient *cptr)
    char abuff[HOSTLEN + USERLEN + 2];
    char sockname[HOSTLEN + 1], fullname[HOSTLEN + 1];
    int i;
@@ -800,7 +818,7 @@
  
    name = cptr->name;
    Debug((DEBUG_DNS, "sv_cl: check access for %s[%s]", name,
-@@ -741,7 +823,11 @@ check_serverback:
+@@ -728,7 +810,11 @@ check_serverback:
    if (hp)
    {
      for (i = 0; hp->h_addr_list[i]; i++)
@@ -812,7 +830,7 @@
          break;
      if (!hp->h_addr_list[i])
      {
-@@ -797,9 +883,15 @@ check_serverback:
+@@ -784,9 +870,15 @@ check_serverback:
    if (!hp)
    {
      if (!c_conf)
@@ -828,7 +846,7 @@
    }
    else
      for (i = 0; hp->h_addr_list[i]; i++)
-@@ -830,8 +922,13 @@ check_serverback:
+@@ -817,8 +909,13 @@ check_serverback:
    attach_conf(cptr, c_conf);
    attach_confs(cptr, name, CONF_HUB | CONF_LEAF | CONF_UWORLD);
  
@@ -842,7 +860,7 @@
    if (!IsUnixSocket(cptr))
      get_sockhost(cptr, c_conf->host);
  
-@@ -1245,8 +1342,13 @@ aClient *add_connection(aClient *cptr, int fd, int type)
+@@ -1224,8 +1321,13 @@ aClient *add_connection(aClient *cptr, int fd, int type)
    else
    {
      Reg1 char *s, *t;
@@ -856,7 +874,7 @@
  
      if (getpeername(fd, (struct sockaddr *)&addr, &len) == -1)
      {
-@@ -1267,6 +1369,11 @@ aClient *add_connection(aClient *cptr, int fd, int type)
+@@ -1246,6 +1348,11 @@ aClient *add_connection(aClient *cptr, int fd, int type)
       * Copy ascii address to 'sockhost' just in case. Then we
       * have something valid to put into error messages...
       */
@@ -868,7 +886,7 @@
      get_sockhost(acptr, inetntoa(addr.sin_addr));
  
      /* Pasamos de sockaddr_in a irc_in_addr */
-@@ -1274,7 +1381,9 @@ aClient *add_connection(aClient *cptr, int fd, int type)
+@@ -1253,7 +1360,9 @@ aClient *add_connection(aClient *cptr, int fd, int type)
      acptr->ip.in6_16[5] = htons(65535);
      acptr->ip.in6_16[6] = htons(ntohl(addr.sin_addr.s_addr) >> 16);
      acptr->ip.in6_16[7] = htons(ntohl(addr.sin_addr.s_addr) & 65535);
@@ -878,7 +896,7 @@
  
      /*
       * Check that this socket (client) is allowed to accept
-@@ -1322,7 +1431,11 @@ aClient *add_connection(aClient *cptr, int fd, int type)
+@@ -1301,7 +1410,11 @@ aClient *add_connection(aClient *cptr, int fd, int type)
    lin.flags = ASYNC_CLIENT;
    lin.value.cptr = acptr;
  #if defined(NODNS)
@@ -890,7 +908,7 @@
    {
      static struct hostent lhe = { "localhost", NULL, 0, 0, NULL };
      acptr->hostp = &lhe;
-@@ -1330,7 +1443,11 @@ aClient *add_connection(aClient *cptr, int fd, int type)
+@@ -1309,7 +1422,11 @@ aClient *add_connection(aClient *cptr, int fd, int type)
    else
    {
  #endif
@@ -902,7 +920,7 @@
      acptr->hostp = gethost_byaddr(&acptr->ip, &lin);
      if (!acptr->hostp)
      {
-@@ -2027,8 +2144,13 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
+@@ -1997,8 +2114,13 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
    Reg3 char *s;
    int errtmp, len;
  
@@ -916,7 +934,7 @@
  
    if ((c2ptr = FindClient(aconf->name)))
    {
-@@ -2073,7 +2195,11 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
+@@ -2043,7 +2165,11 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
     * If we dont know the IP# for this host and itis a hostname and
     * not a ip# string, then try and find the appropriate host record.
     */
@@ -929,7 +947,7 @@
    {
      Link lin;
  
-@@ -2083,6 +2209,18 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
+@@ -2053,6 +2179,18 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
      //nextdnscheck = 1;
      s = strchr(aconf->host, '@');
      s++;                        /* should NEVER be NULL */
@@ -948,7 +966,7 @@
      if ((aconf->ipnum.s_addr = inet_addr(s)) == INADDR_NONE)
      {
        aconf->ipnum.s_addr = INADDR_ANY;
-@@ -2093,6 +2231,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
+@@ -2063,6 +2201,7 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
          return 0;
        memcpy(&aconf->ipnum, hp->h_addr, sizeof(struct in_addr));
      }
@@ -956,7 +974,7 @@
    }
    cptr = make_client(NULL, STAT_UNKNOWN);
    cptr->hostp = hp;
-@@ -2223,14 +2362,22 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
+@@ -2193,14 +2332,22 @@ int connect_server(aConfItem *aconf, aClient *by, struct hostent *hp)
  
  static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
  {
@@ -979,7 +997,7 @@
    if (cptr->fd == -1 && errno == EAGAIN)
    {
      sendto_ops("opening stream socket to server %s: No more sockets",
-@@ -2247,8 +2394,17 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
+@@ -2217,14 +2364,24 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
      sendto_ops("No more connections allowed (%s)", cptr->name);
      return NULL;
    }
@@ -998,15 +1016,14 @@
    memset(&server, 0, sizeof(server));
    server.sin_family = AF_INET;
    get_sockhost(cptr, aconf->host);
-@@ -2256,6 +2412,7 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
+ 
  #if defined(VIRTUAL_HOST)
    mysk.sin_addr = vserv.sin_addr;
- #endif
 +#endif
+ #endif
  
    /*
-    * Bind to a local IP# (with unknown port - let unix decide) so
-@@ -2285,6 +2442,22 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
+@@ -2255,6 +2412,22 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
     * conf line, whether as a result of the hostname lookup or the ip#
     * being present instead. If we dont know it, then the connect fails.
     */
@@ -1029,7 +1046,7 @@
    if (isDigit(*aconf->host) && (aconf->ipnum.s_addr == INADDR_NONE))
      aconf->ipnum.s_addr = inet_addr(aconf->host);
    if (aconf->ipnum.s_addr == INADDR_NONE)
-@@ -2300,7 +2473,9 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
+@@ -2270,7 +2443,9 @@ static struct sockaddr *connect_inet(aConfItem *aconf, aClient *cptr, int *lenp)
    memcpy(&server.sin_addr, &aconf->ipnum, sizeof(struct in_addr));
    memcpy(&cptr->ip, &aconf->ipnum, sizeof(struct in_addr));
    server.sin_port = htons(((aconf->port > 0) ? aconf->port : portnum));
@@ -1040,7 +1057,7 @@
  
    CreateClientEvent(cptr);
  
-@@ -2319,8 +2494,13 @@ void get_my_name(aClient *cptr)
+@@ -2289,8 +2464,13 @@ void get_my_name(aClient *cptr)
     * Setup local socket structure to use for binding to.
     */
    memset(&mysk, 0, sizeof(mysk));
@@ -1054,7 +1071,7 @@
  
    if (!aconf || BadPtr(aconf->host))
      return;
-@@ -2329,12 +2509,21 @@ void get_my_name(aClient *cptr)
+@@ -2299,11 +2479,20 @@ void get_my_name(aClient *cptr)
  
    if (!BadPtr(aconf->passwd) && 0 != strcmp(aconf->passwd, "*"))
    {
@@ -1071,12 +1088,11 @@
        mysk.sin_addr.s_addr = INADDR_ANY;
  #if defined(VIRTUAL_HOST)
      memcpy(&vserv, &mysk, sizeof(struct sockaddr_in));
- #endif
 +#endif
+ #endif
    }
    Debug((DEBUG_DEBUG, "local name is %s", get_client_name(&me, TRUE)));
- }
-@@ -2344,6 +2533,25 @@ void get_my_name(aClient *cptr)
+@@ -2314,6 +2503,25 @@ void get_my_name(aClient *cptr)
   */
  int setup_ping(void)
  {
@@ -1102,7 +1118,7 @@
    struct sockaddr_in from;
    int on = 1;
  
-@@ -2361,6 +2569,7 @@ int setup_ping(void)
+@@ -2331,6 +2539,7 @@ int setup_ping(void)
      Debug((DEBUG_ERROR, "socket udp : %s", strerror(errno)));
      return -1;
    }
@@ -1110,7 +1126,7 @@
    if (setsockopt(udpfd, SOL_SOCKET, SO_REUSEADDR,
        (OPT_TYPE *)&on, sizeof(on)) == -1)
    {
-@@ -2408,7 +2617,11 @@ int setup_ping(void)
+@@ -2378,7 +2587,11 @@ int setup_ping(void)
  static void polludp(void)
  {
    Reg1 char *s;
@@ -1122,7 +1138,7 @@
    int n;
    socklen_t fromlen = sizeof(from);
    static time_t last = 0;
-@@ -2514,7 +2727,11 @@ static void do_dns_async(void)
+@@ -2484,7 +2697,11 @@ static void do_dns_async(void)
        aconf = ln.value.aconf;
        if (hp && aconf)
        {
@@ -1134,7 +1150,7 @@
          connect_server(aconf, NULL, hp);
        }
        else
-@@ -2526,7 +2743,11 @@ static void do_dns_async(void)
+@@ -2496,7 +2713,11 @@ static void do_dns_async(void)
        del_queries((char *)cptr);
        if (hp)
        {
@@ -1146,7 +1162,7 @@
          if (ping_server(cptr) == -1)
            end_ping(cptr);
        }
-@@ -2540,7 +2761,11 @@ static void do_dns_async(void)
+@@ -2510,7 +2731,11 @@ static void do_dns_async(void)
      case ASYNC_CONF:
        aconf = ln.value.aconf;
        if (hp && aconf)
@@ -1158,9 +1174,10 @@
        break;
      default:
        break;
+index 7b7da7f..c165c21 100644
 --- ircd/s_conf.c
 +++ ircd/s_conf.c
-@@ -588,7 +588,11 @@ aConfItem *find_conf_ip(Link *lp, char *ip, char *user, int statmask)
+@@ -592,7 +592,11 @@ aConfItem *find_conf_ip(Link *lp, char *ip, char *user, int statmask)
        continue;
      }
      *s = '@';
@@ -1172,7 +1189,7 @@
        return tmp;
    }
    return NULL;
-@@ -1242,6 +1246,19 @@ static int lookup_confhost(aConfItem *aconf)
+@@ -1223,6 +1227,19 @@ static int lookup_confhost(aConfItem *aconf)
    ln.value.aconf = aconf;
    ln.flags = ASYNC_CONF;
  
@@ -1192,7 +1209,7 @@
    if (isDigit(*s))
      aconf->ipnum.s_addr = inet_addr(s);
    else if ((hp = gethost_byname(s, &ln)))
-@@ -1253,6 +1270,8 @@ static int lookup_confhost(aConfItem *aconf)
+@@ -1234,6 +1251,8 @@ static int lookup_confhost(aConfItem *aconf)
  badlookup:
    if (aconf->ipnum.s_addr == INADDR_NONE)
      memset(&aconf->ipnum, 0, sizeof(struct in_addr));
@@ -1201,9 +1218,10 @@
    Debug((DEBUG_ERROR, "Host/server name error: (%s) (%s)",
        aconf->host, aconf->name));
    return -1;
+index 787e07d..a84b7c3 100644
 --- ircd/s_ping.c
 +++ ircd/s_ping.c
-@@ -100,16 +100,26 @@ RCSTAG_CC("$Id$");
+@@ -98,16 +98,26 @@
   */
  int start_ping(aClient *cptr)
  {
@@ -1230,7 +1248,7 @@
  
    if (MyUser(cptr->acpt) 
  #if !defined(NO_PROTOCOL9)
-@@ -145,12 +155,23 @@ int start_ping(aClient *cptr)
+@@ -143,22 +153,43 @@ int start_ping(aClient *cptr)
   */
  void send_ping(aClient *cptr)
  {
@@ -1253,10 +1271,7 @@
 +#endif
  
    gettimeofday(&tv, NULL);
- #if (__GLIBC__ >= 2) || defined(__NetBSD__)
-@@ -159,12 +180,22 @@ void send_ping(aClient *cptr)
-   sprintf((char *)cptr->confs, " %10u%c%6u", tv.tv_sec, '\0', tv.tv_usec);
- #endif
+   sprintf((char *)cptr->confs, " %10lu%c%6u", tv.tv_sec, '\0', tv.tv_usec);
  
 +#if defined(IPV6)
 +  inet_ntop(AF_INET6, &remote_addr.sin6_addr, sockn, HOSTLEN);
@@ -1277,7 +1292,7 @@
    {
  #if defined(DEBUGMODE)
      int err = errno;
-@@ -205,16 +236,27 @@ void send_ping(aClient *cptr)
+@@ -199,16 +230,27 @@ void send_ping(aClient *cptr)
   */
  void read_ping(aClient *cptr)
  {
@@ -1305,7 +1320,7 @@
  
    gettimeofday(&tv, NULL);
  
-@@ -270,14 +312,21 @@ void read_ping(aClient *cptr)
+@@ -264,14 +306,21 @@ void read_ping(aClient *cptr)
  
  int ping_server(aClient *cptr)
  {
@@ -1327,7 +1342,7 @@
      char *s;
      Link lin;
  
-@@ -291,6 +340,19 @@ int ping_server(aClient *cptr)
+@@ -285,6 +334,19 @@ int ping_server(aClient *cptr)
      s = strchr(PunteroACadena(cptr->sockhost), '@');
      s++;                        /* should never be NULL;
                                     cptr->sockhost is actually a conf->host */
@@ -1347,7 +1362,7 @@
      if ((addr4.s_addr = inet_addr(s)) == INADDR_NONE)
      {
        addr4.s_addr = INADDR_ANY;
-@@ -300,6 +362,7 @@ int ping_server(aClient *cptr)
+@@ -294,6 +356,7 @@ int ping_server(aClient *cptr)
          return 0;
        memcpy(&addr4, hp->h_addr, sizeof(struct in_addr));
      }
@@ -1355,7 +1370,7 @@
    }
  
    /* TODO: Pasar de addr4 a cptr->ip */
-@@ -518,7 +581,11 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
+@@ -512,7 +575,11 @@ int m_uping(aClient *cptr, aClient *sptr, int parc, char *parv[])
    SlabStringAllocDup(&(cptr->sockhost), aconf->host, HOSTLEN);
    cptr->acpt = sptr;
    SetAskedPing(sptr);
@@ -1367,9 +1382,10 @@
    SlabStringAllocDup(&(cptr->name), aconf->name, 0);
    cptr->firsttime = 0;
  
+index d8ca761..b602deb 100644
 --- ircd/s_user.c
 +++ ircd/s_user.c
-@@ -2481,7 +2481,9 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
+@@ -2506,7 +2506,9 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
      {
        aConfItem *aconf2;
        Reg1 Link *tmp, *tmp2;
@@ -1379,7 +1395,7 @@
  
        /*
         * Desligamos las clases que tiene el usuario
-@@ -2503,9 +2505,13 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
+@@ -2528,9 +2530,13 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
        DupString(aconf2->name, sptr->name);
        DupString(aconf2->host, PunteroACadena(sptr->sockhost));
  
@@ -1393,9 +1409,10 @@
  
        aconf2->status = CONF_CLIENT;
  
+index 07af166..4673c90 100644
 --- ircd/support.c
 +++ ircd/support.c
-@@ -111,6 +111,24 @@ char *ircd_ntoa_c(aClient *cptr)
+@@ -105,6 +105,24 @@ char *ircd_ntoa_c(aClient *cptr)
    return (char *)ircd_ntoa(&cptr->ip);
  }
  

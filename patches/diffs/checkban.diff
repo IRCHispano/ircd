@@ -1,13 +1,15 @@
+index 8225814..8306946 100644
 --- include/channel.h
 +++ include/channel.h
-@@ -234,6 +234,7 @@ extern int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+@@ -233,6 +233,7 @@ extern int m_list(aClient *cptr, aClient *sptr, int parc, char *parv[]);
+ extern int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[]);
  extern int m_svsjoin(aClient *cptr, aClient *sptr, int parc, char *parv[]);
  extern int m_svspart(aClient *cptr, aClient *sptr, int parc, char *parv[]);
- extern int m_svskick(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 +extern int m_checkban(aClient *cptr, aClient *sptr, int parc, char *parv[]);
  extern void send_user_joins(aClient *cptr, aClient *user);
  
  extern char *adapta_y_visualiza_canal_flags(aChannel *chptr, int add, int del);
+index 11fc25c..dd45785 100644
 --- include/msg.h
 +++ include/msg.h
 @@ -104,6 +104,9 @@
@@ -20,9 +22,10 @@
  
  #define MSG_PRIVATE		"PRIVMSG"	/* PRIV */
  #define TOK_PRIVATE		"P"
+index d7a33f3..7382103 100644
 --- include/numeric.h
 +++ include/numeric.h
-@@ -428,6 +428,12 @@
+@@ -435,6 +435,12 @@
  /*      RPL_JUPELIST         282          Undernet extension */
  /*      RPL_ENDOFJUPELIST    283          Undernet extension */
  /*      RPL_FEATURE         284           Undernet extension */
@@ -35,9 +38,10 @@
  /*      RPL_CHANINFO_HANDLE  285          Aircd */
  /*      RPL_CHANINFO_USERS   286          Aircd */
  /*      RPL_CHANINFO_CHOPS   287          Aircd */
+index 1f8cfad..9524776 100644
 --- ircd/channel.c
 +++ ircd/channel.c
-@@ -7009,6 +7009,175 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
+@@ -6972,6 +6972,175 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
    return (1);
  }
  
@@ -213,19 +217,21 @@
  void send_user_joins(aClient *cptr, aClient *user)
  {
    Reg1 Link *lp;
+index 024d13d..399b6a1 100644
 --- ircd/parse.c
 +++ ircd/parse.c
-@@ -134,6 +134,7 @@ aMessage msgtab[] = {
+@@ -132,6 +132,7 @@ aMessage msgtab[] = {
+     {CLASS_SVSJOIN,      MSG_SVSJOIN,     TOK_SVSJOIN,     m_svsjoin,     0, MAXPARA,   MFLG_SLOW,      0L},
      {CLASS_SVSPART,      MSG_SVSPART,     TOK_SVSPART,     m_svspart,     0, MAXPARA,   MFLG_SLOW,      0L},
-     {CLASS_SVSKICK,      MSG_SVSKICK,     TOK_SVSKICK,     m_svskick,     0, MAXPARA,   MFLG_SLOW,      0L},
      {CLASS_WATCH,      MSG_WATCH,      TOK_WATCH,      m_watch,        0, 1,   MFLG_SLOW,      0L},
 +    {CLASS_CHECKBAN,   MSG_CHECKBAN,   TOK_CHECKBAN,   m_checkban,     0, MAXPARA,   MFLG_SLOW,      0L},
      {CLASS_WEBIRC,     MSG_WEBIRC,     TOK_WEBIRC,     m_webirc,       0, MAXPARA,   MFLG_SLOW|MFLG_UNREG,      0L},
      {CLASS_PROXY,     MSG_PPROXY,     TOK_PROXY,     m_proxy,       0, MAXPARA,   MFLG_SLOW|MFLG_UNREG,      0L},
      {CLASS_PRIVS,        MSG_PRIVS,       TOK_PRIVS,       m_privs,       0, MAXPARA,   MFLG_SLOW,      0L},
+index 595a848..df77b6c 100644
 --- ircd/s_err.c
 +++ ircd/s_err.c
-@@ -734,7 +734,25 @@ static Numeric numeric_replies[] = {
+@@ -742,7 +742,25 @@ static Numeric numeric_replies[] = {
  /* 280 */
      {RPL_GLIST, "%s@%s " TIME_T_FMT " %s%s (expires at %s)"},
  /* 281 */
