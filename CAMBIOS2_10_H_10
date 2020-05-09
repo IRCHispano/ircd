@@ -1,5 +1,9 @@
+* 2020/05/09  toni@tonigarcia.es (u2.10.H.10.292)                FEATURE
+------------------------------------------------------------------------
+  Optimizamos las lecturas de la tabla f de la BDD pasando todo a
+  variables.
 
-* 2020/05/08  toni@tonigarcia.es (u2.10.H.10.291)                FEATURE
+* 2020/05/09  toni@tonigarcia.es (u2.10.H.10.291)                FEATURE
 ------------------------------------------------------------------------
   La feature NOIDENT estaba puesta al reves, lo ponemos bien y mantenemo
   por defecto el sistema desactivado.

@@ -446,15 +446,8 @@ static int register_user(aClient *cptr, aClient *sptr,
           char *msg =
               "Sorry, your connection class is full - try again later or try another server";
 #if defined(BDD_CLONES)
-          struct db_reg *msg_db;
-
-          msg_db =
-              db_buscar_registro(BDD_CONFIGDB,
-              BDD_MENSAJE_DE_CAPACIDAD_SUPERADA);
-          if (msg_db)
-          {
-            msg = msg_db->valor;
-          }
+          if (mensaje_demasiados_clones)
+            msg = mensaje_demasiados_clones;
 #endif
           return exit_client(cptr, sptr, &me, msg);
         }

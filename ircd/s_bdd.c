@@ -81,6 +81,7 @@ char *bot_chanserv = NULL;
 char *bot_clonesserv = NULL;
 char *bot_spamserv = NULL;
 int numero_maximo_de_clones_por_defecto;
+char *mensaje_demasiados_clones = NULL;
 char *clave_de_cifrado_de_ips;
 unsigned int clave_de_cifrado_binaria[2];
 int ocultar_servidores = 0;
@@ -91,6 +92,7 @@ int activar_redireccion_canales = 0;
 char *mensaje_quit_personalizado = NULL;
 char *mensaje_part_personalizado = NULL;
 char *mensaje_gline = NULL;
+char *mensaje_capacidad_superada = NULL;
 char *network = NULL;
 char *canal_operadores = NULL;
 char *canal_debug = NULL;
@@ -596,6 +598,14 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
             {
               numero_maximo_de_clones_por_defecto = 0;
             }
+            else if (!strcmp(c, BDD_MENSAJE_DE_DEMASIADOS_CLONES))
+            {
+              if(mensaje_demasiados_clones)
+              {
+                RunFree(mensaje_demasiados_clones);
+                mensaje_demasiados_clones=NULL;
+              }
+            }
             else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
             {
               ocultar_servidores = 0;
@@ -642,6 +652,14 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
               {
                 RunFree(mensaje_part_personalizado);
                 mensaje_part_personalizado=NULL;
+              }
+            }
+            else if (!strcmp(c, BDD_MENSAJE_DE_CAPACIDAD_SUPERADA))
+            {
+              if(mensaje_capacidad_superada)
+              {
+                RunFree(mensaje_capacidad_superada);
+                mensaje_capacidad_superada=NULL;
               }
             }
             else if(!strcmp(c, BDD_NETWORK))
@@ -1258,6 +1276,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       {
         numero_maximo_de_clones_por_defecto = atoi(v);
       }
+      else if(!strcmp(c, BDD_MENSAJE_DE_DEMASIADOS_CLONES))
+      {
+        SlabStringAllocDup(&mensaje_demasiados_clones, v, 0);
+      }
       else if (!strcmp(c, BDD_OCULTAR_SERVIDORES))
       {
         if (!strcasecmp(v, "TRUE"))
@@ -1310,6 +1332,10 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
       else if(!strcmp(c, BDD_MENSAJE_PART))
       {
         SlabStringAllocDup(&mensaje_part_personalizado, v, 0);
+      }
+      else if(!strcmp(c, BDD_MENSAJE_DE_CAPACIDAD_SUPERADA))
+      {
+        SlabStringAllocDup(&mensaje_capacidad_superada, v, 0);
       }
       else if(!strcmp(c, BDD_NETWORK))
       {
