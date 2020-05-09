@@ -1,3 +1,8 @@
+* 2020/05/09  toni@tonigarcia.es (u2.10.H.10.298)                    FIX
+------------------------------------------------------------------------
+  El quit personalizado no puede tapar quits de errores, dificulta el
+  diagnostico de la conexion.
+
 * 2020/05/09  toni@tonigarcia.es (u2.10.H.10.297)                    FIX
 ------------------------------------------------------------------------
   Debido a que muchos usuarios el formato de iline resulta complicado
