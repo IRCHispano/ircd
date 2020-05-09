@@ -446,15 +446,8 @@ static int register_user(aClient *cptr, aClient *sptr,
           char *msg =
               "Sorry, your connection class is full - try again later or try another server";
 #if defined(BDD_CLONES)
-          struct db_reg *msg_db;
-
-          msg_db =
-              db_buscar_registro(BDD_CONFIGDB,
-              BDD_MENSAJE_DE_CAPACIDAD_SUPERADA);
-          if (msg_db)
-          {
-            msg = msg_db->valor;
-          }
+          if (mensaje_demasiados_clones)
+            msg = mensaje_demasiados_clones;
 #endif
           return exit_client(cptr, sptr, &me, msg);
         }
@@ -482,7 +475,7 @@ static int register_user(aClient *cptr, aClient *sptr,
           HOSTLEN);
     aconf = sptr->confs->value.aconf;
 
-    if (!activar_ident)
+    if (desactivar_ident)
       sptr->flags &= ~FLAGS_DOID;
 
     if (sptr->flags & FLAGS_GOTID)
@@ -553,7 +546,7 @@ static int register_user(aClient *cptr, aClient *sptr,
      * No other special characters are allowed.
      * Name must contain at least one letter.
      */
-  if (activar_ident)
+  if (!desactivar_ident)
   {
     tmpstr2 = tmpstr = (username[0] == '~' ? &username[1] : username);
     while (*tmpstr && !badid)
@@ -617,7 +610,7 @@ static int register_user(aClient *cptr, aClient *sptr,
           me.name, ERR_INVALIDUSERNAME, cptr->name);
       return exit_client(cptr, sptr, &me, "USER: Bad username");
     }
-  } /* activar_ident */
+  } /* !desactivar_ident */
 
     Count_unknownbecomesclient(sptr, nrof);
   }
@@ -5918,8 +5911,13 @@ nickkilldone:
 #endif /* !defined(BDD_VIP2) */
 #endif /* defined(BDD_VIP) */
 
-   if (auto_invisible)
-     SetInvisible(sptr);
+   if (auto_usermodes) {
+     int addflags, addhmodes;
+
+     mask_user_flags(auto_usermodes, &addflags, &addhmodes);
+     sptr->flags |= addflags;
+     sptr->hmodes |= addhmodes;
+   }
 
    if (find_port_ssl(sptr))
      SetSSL(sptr);

@@ -53,8 +53,8 @@
 /*
  * Registros compatibles con features del nuevo ircd
  */
-#define BDD_ACTIVAR_IDENT                       "noident"
-#define BDD_AUTOINVISIBLE                       "autousermodes"
+#define BDD_NO_IDENT                            "noident"
+#define BDD_AUTOUSERMODES                       "autousermodes"
 #define BDD_MENSAJE_QUIT                        "msg_quit"
 #define BDD_MENSAJE_PART                        "msg_part"
 #define BDD_MENSAJE_GLINE                       "msg_glined"
@@ -172,15 +172,17 @@ extern char *bot_chanserv;
 extern char *bot_clonesserv;
 extern char *bot_spamserv;
 extern int numero_maximo_de_clones_por_defecto;
+extern char *mensaje_demasiados_clones;
 extern char *clave_de_cifrado_de_ips;
 extern unsigned int clave_de_cifrado_binaria[2];
 extern int ocultar_servidores;
-extern int activar_ident;
-extern int auto_invisible;
+extern int desactivar_ident;
+extern char *auto_usermodes;
 extern int activar_redireccion_canales;
 extern char *mensaje_quit_personalizado;
 extern char *mensaje_part_personalizado;
 extern char *mensaje_gline;
+extern char *mensaje_capacidad_superada;
 extern char *network;
 extern char *canal_operadores;
 extern char *canal_debug;

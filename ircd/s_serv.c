@@ -789,7 +789,7 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
       strcpy(buffer, "p09:");
       strcat(buffer, parv[1]);
-      
+
       if (!db_buscar_registro(BDD_CONFIGDB, buffer))
       {
 /*

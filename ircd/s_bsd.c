@@ -512,7 +512,6 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
   char buf[HOSTLEN + 1 + 1024];
   int num_clones = -1;
   int iline = 0;
-  struct db_reg *reg;
   static char sockname[HOSTLEN + 1];
   Reg2 struct hostent *hp = NULL;
   Reg3 int i;
@@ -581,11 +580,10 @@ enum AuthorizationCheckResult check_client(aClient *cptr)
 ** Informacion adicional bajo base de datos
 */
     buf[0] = '\0';
-    reg = db_buscar_registro(BDD_FEATURESDB, BDD_MENSAJE_DE_DEMASIADOS_CLONES);
-    if (reg)
+    if (mensaje_demasiados_clones)
     {
       strcpy(buf, ". ");
-      strcat(buf, reg->valor);
+      strcat(buf, mensaje_demasiados_clones);
     }
 /*
 ** Ojo con pasarle un buffer que, a su vez, contenga "%"

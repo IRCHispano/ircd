@@ -372,7 +372,7 @@
 #define RPL_SERVLISTEND             235 /* Unused */
 /*      RPL_STATSVERBOSE     236          Undernet extension */
 #define RPL_STATSENGINE     237
-/*      RPL_STATSFLINE       238          Undernet extension */
+#define RPL_STATSFLINE       238    /* Undernet feature lines */
 /*      RPL_STATSIAUTH       239          IRCnet extension */
 /*      RPL_STATSVLINE       240          IRCnet extension */
 /*     RPL_STATSXLINE       240           Austnet */
