@@ -975,6 +975,128 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
       }
       break;
+    case 'F':
+    case 'f':
+      /* Solo ircops tienen acceso */
+      if (!IsAnOper(sptr))
+      {
+        sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
+        return 0;
+      }
+      {
+        /* Lista los features */
+        int is_all = (stat == 'F');
+
+        if (!desactivar_ident || is_all)
+          sendto_one(sptr, ":%s %d %s %c NOIDENT %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              desactivar_ident ? "TRUE" : "FALSE");
+
+        if (auto_usermodes || is_all)
+          sendto_one(sptr, ":%s %d %s %c AUTOUSERMODES %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              auto_usermodes ? auto_usermodes : "");
+
+        if (mensaje_gline || is_all)
+          sendto_one(sptr, ":%s %d %s %c MSG_GLINED %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              mensaje_gline ? mensaje_gline : "");
+
+        if (mensaje_quit_personalizado || is_all)
+          sendto_one(sptr, ":%s %d %s %c MSG_QUIT %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              mensaje_quit_personalizado ? mensaje_quit_personalizado : "");
+
+        if (mensaje_part_personalizado || is_all)
+          sendto_one(sptr, ":%s %d %s %c MSG_PART %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              mensaje_part_personalizado ? mensaje_part_personalizado : "");
+
+        if (nicklen != 30 || is_all)
+          sendto_one(sptr, ":%s %d %s %c NICKLEN %d", me.name, RPL_STATSFLINE, parv[0], stat,
+              nicklen);
+
+        if (numero_maximo_de_clones_por_defecto || is_all)
+          sendto_one(sptr, ":%s %d %s %c IPCHECK_DEFAULT_ILINE %d", me.name, RPL_STATSFLINE, parv[0], stat,
+              numero_maximo_de_clones_por_defecto);
+
+        if (mensaje_demasiados_clones || is_all)
+          sendto_one(sptr, ":%s %d %s %c IPCHECK_MSG_TOOMANY %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              mensaje_demasiados_clones ? mensaje_demasiados_clones : "");
+
+        if (ocultar_servidores || is_all)
+          sendto_one(sptr, ":%s %d %s %c HIS_NETSPLIT %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              ocultar_servidores ? "TRUE" : "FALSE");
+
+        if (strcmp(his.name, me.name) || is_all)
+          sendto_one(sptr, ":%s %d %s %c HIS_SERVERNAME %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              his.name);
+
+        if (strcmp(his.info, me.info) || is_all)
+          sendto_one(sptr, ":%s %d %s %c HIS_SERVERINFO %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              his.info);
+
+        if (network || is_all)
+          sendto_one(sptr, ":%s %d %s %c NETWORK %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              network ? network : "");
+
+        if (canal_operadores || is_all)
+          sendto_one(sptr, ":%s %d %s %c OPERSCHAN %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              canal_operadores ? canal_operadores : "");
+
+        if (canal_debug || is_all)
+          sendto_one(sptr, ":%s %d %s %c DEBUGCHAN %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              canal_debug ? canal_debug : "");
+
+        if (clave_de_cifrado_de_ips || is_all)
+          sendto_one(sptr, ":%s %d %s %c IP_CRYPT_KEY %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              clave_de_cifrado_de_ips ? "Crypt Key is setting" : "No Crypt Key is setting");
+
+        if (conversion_utf || is_all)
+          sendto_one(sptr, ":%s %d %s %c UTF8_CONVERSION %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              conversion_utf ? "TRUE" : "FALSE");
+
+       if (mensaje_capacidad_superada || is_all)
+          sendto_one(sptr, ":%s %d %s %c MSG_FULLCAPACITY %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              mensaje_capacidad_superada ? mensaje_capacidad_superada: "");
+
+        if (permite_nicks_random || is_all)
+          sendto_one(sptr, ":%s %d %s %c ALLOW_RANDOM_NICKS %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              permite_nicks_random ? "TRUE" : "FALSE");
+
+        if (permite_nicks_suspend || is_all)
+          sendto_one(sptr, ":%s %d %s %c ALLOW_SUSPEND_NICKS %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              permite_nicks_suspend ? "TRUE" : "FALSE");
+
+        if (activar_redireccion_canales || is_all)
+          sendto_one(sptr, ":%s %d %s %c REDIRECT_CHANNEL_ENABLE %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              activar_redireccion_canales ? "TRUE" : "FALSE");
+
+        if (geo_enable || is_all)
+          sendto_one(sptr, ":%s %d %s %c GEO_ENABLE %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              geo_enable ? "TRUE" : "FALSE");
+
+       if (geo_msg_kill || is_all)
+          sendto_one(sptr, ":%s %d %s %c GEO_MSG_KILL %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              geo_msg_kill ? geo_msg_kill : "");
+
+       if (geo_url_validation || is_all)
+          sendto_one(sptr, ":%s %d %s %c GEO_URL_VALIDATION %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              geo_url_validation ? geo_url_validation : "");
+
+        if (spam_check_privates || is_all)
+          sendto_one(sptr, ":%s %d %s %c SPAM_CHECK_PRIVATES %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              spam_check_privates ? "TRUE" : "FALSE");
+
+        if (spam_check_channels || is_all)
+          sendto_one(sptr, ":%s %d %s %c SPAM_CHECK_CHANNELS %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              spam_check_channels ? "TRUE" : "FALSE");
+
+        if (spam_check_aways || is_all)
+          sendto_one(sptr, ":%s %d %s %c SPAM_CHECK_AWAYS %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              spam_check_aways ? "TRUE" : "FALSE");
+
+        if (spam_check_topics || is_all)
+          sendto_one(sptr, ":%s %d %s %c SPAM_CHECK_TOPICS %s", me.name, RPL_STATSFLINE, parv[0], stat,
+              spam_check_topics ? "TRUE" : "FALSE");
+      }
+      break;
+
     default:
       stat = '*';
       break;
