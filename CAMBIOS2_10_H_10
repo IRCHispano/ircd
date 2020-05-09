@@ -1,3 +1,8 @@
+* 2020/05/09  toni@tonigarcia.es (u2.10.H.10.299)                CLEANUP
+------------------------------------------------------------------------
+  Se revisan los parches contenidos en patches/ para que se puedan
+  aplicarse con el codigo actual.
+
 * 2020/05/09  toni@tonigarcia.es (u2.10.H.10.298)                    FIX
 ------------------------------------------------------------------------
   El quit personalizado no puede tapar quits de errores, dificulta el
