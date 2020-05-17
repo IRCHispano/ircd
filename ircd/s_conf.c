@@ -1374,7 +1374,7 @@ int find_exception(aClient *cptr)
           match(reg->clave, ircd_ntoa_c(cptr)) == 0))
           && (!user || (user
             && (match(user, PunteroACadena(cptr->user->username)) == 0)))
-          && (!pass || (pass
+          && (!pass || (pass && !BadPtr(cptr->passwd)
             && !strcmp(pass, cptr->passwd)))
           && (!port || (port == cptr->acpt->port))) {
 
