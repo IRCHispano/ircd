@@ -4561,7 +4561,7 @@ void rename_user(aClient *sptr, char *nick_nuevo)
       int of, oh;
       int flagsddb = 0;
       char *automodes = NULL;
-      int snomask;
+      int snomask = 0;
 
       of = sptr->flags;
       oh = sptr->hmodes;
