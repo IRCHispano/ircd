@@ -1367,7 +1367,8 @@ int find_exception(aClient *cptr)
       }
       else
       {
-        pass = reg->valor;
+        // El sistema antiguo solo admite la IP.
+        ;
       }
 
       if ((reg->clave && (match(reg->clave, PunteroACadena(cptr->sockhost)) == 0 ||

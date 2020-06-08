@@ -630,6 +630,9 @@ static int register_user(aClient *cptr, aClient *sptr,
   if (IsInvisible(sptr))
     ++nrof.inv_clients;
 
+  if (!MyUser(sptr) && IsOper(sptr))  /* Sumamos para entradas REMOTAS de +o */
+    ++nrof.opers;             /* Las locales se procesan en m_nick   */
+
   if (MyConnect(sptr))
   {
     sendto_one(sptr, rpl_str(RPL_WELCOME), me.name, nick, network ? network : NETWORK_NAME, nick);
