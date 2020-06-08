@@ -2828,7 +2828,7 @@ static void bdd_init()
 {
   char path[PATH_MAX];
   char msg[1024];
-
+  char current;
   struct stat check;
 
   /* Database directory check */
@@ -2868,7 +2868,7 @@ static void bdd_init()
     }
   }
 
-  for (char current = ESNET_BDD; current <= ESNET_BDD_END; current++) {
+  for (current = ESNET_BDD; current <= ESNET_BDD_END; current++) {
     sprintf_irc(path, "%s/tabla.%c", DBPATH, current);
     int stat_status = stat(path, &check);
 
