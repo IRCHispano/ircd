@@ -658,6 +658,9 @@ static void exit_one_client(aClient *bcptr, char *comment)
       SlabStringFree(bcptr->asnum_name);
 #endif
 
+    if (IsHelpOp(bcptr))
+      --nrof.helpers;
+
     if (IsInvisible(bcptr))
       --nrof.inv_clients;
 
@@ -670,7 +673,7 @@ static void exit_one_client(aClient *bcptr, char *comment)
       Count_remoteclientquits(nrof, bcptr);
 
     if (IsService(bcptr->user->server))
-      nrof.services--;
+      --nrof.services;
   }
   else if (IsServer(bcptr))
   {
@@ -683,7 +686,7 @@ static void exit_one_client(aClient *bcptr, char *comment)
       Count_remoteserverquits(nrof);
 
     if (IsService(bcptr))
-      nrof.pservers--;
+      --nrof.pservers;
   }
   else if (IsPing(bcptr))       /* Apperently, we are closing ALL links */
   {

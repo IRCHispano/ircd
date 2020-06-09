@@ -55,8 +55,6 @@ extern void sendto_lops_butone(aClient *one, char *pattern, ...)
 extern void vsendto_ops(const char *pattern, va_list vl);
 extern void sendto_ops_butone(aClient *one, aClient *from, char *pattern, ...)
     __attribute__ ((format(printf, 3, 4)));
-extern void sendto_ops_helpers_butone(aClient *one, aClient *from,
-    char *pattern, ...) __attribute__ ((format(printf, 3, 4)));
 extern void sendto_g_serv_butone(aClient *one, char *pattern,
     ...) __attribute__ ((format(printf, 2, 3)));
 extern void sendto_realops(const char *pattern,

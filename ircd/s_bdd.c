@@ -464,11 +464,15 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
 
          ClearNickRegistered(sptr);
          ClearNickSuspended(sptr);
-         ClearHelpOp(sptr);
-         if (IsOper(sptr))
-             nrof.opers--;
 
+         if (IsHelpOp(sptr))
+           --nrof.helpers;
+         ClearHelpOp(sptr);
+
+         if (IsOper(sptr))
+           --nrof.opers;
          ClearOper(sptr);
+
          ClearAdmin(sptr);
          ClearCoder(sptr);
          ClearServicesBot(sptr);
@@ -494,11 +498,14 @@ static void db_eliminar_registro(unsigned char tabla, char *clave,
          of = sptr->flags;
          oh = sptr->hmodes;
 
+         if (IsHelpOp(sptr))
+           --nrof.helpers;
          ClearHelpOp(sptr);
-         if (IsOper(sptr))
-             nrof.opers--;
 
+         if (IsOper(sptr))
+           --nrof.opers;
          ClearOper(sptr);
+
          ClearAdmin(sptr);
          ClearCoder(sptr);
          ClearServicesBot(sptr);
@@ -1113,12 +1120,16 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
           SetServicesBot(sptr);
 
         if (status & HMODE_HELPOP)
+        {
+          if (!IsHelpOp(sptr))
+              ++nrof.helpers;
           SetHelpOp(sptr);
+        }
 
         if (status & FLAGS_OPER)
         {
           if (!IsOper(sptr))
-            nrof.opers++;
+            ++nrof.opers;
           SetOper(sptr);
           sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);
           set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
@@ -1224,13 +1235,16 @@ static void db_insertar_registro(unsigned char tabla, char *clave, char *valor,
               if (status & HMODE_SERVICESBOT)
                 SetServicesBot(sptr);
 
-              if (status & HMODE_HELPOP)
+              if (status & HMODE_HELPOP) {
+                if (!IsHelpOp(sptr))
+                  ++nrof.helpers;
                 SetHelpOp(sptr);
+              }
 
               if (status & FLAGS_OPER)
               {
                 if (!IsOper(sptr))
-                  nrof.opers++;
+                  ++nrof.opers;
                 SetOper(sptr);
                 sptr->flags |= (FLAGS_WALLOP | FLAGS_SERVNOTICE | FLAGS_DEBUG);
                 set_snomask(sptr, SNO_OPERDEFAULT, SNO_ADD);
