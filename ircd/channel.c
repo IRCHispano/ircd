@@ -5872,12 +5872,14 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
 
     /* if the user is owner, prevent a kick from local user */
-    if (lp->flags & CHFL_OWNER && MyUser(sptr) && (sptr != who))
+#if 0
+    if ((lp->flags & CHFL_OWNER) && MyUser(sptr) && (sptr != who))
     {
       sendto_one(sptr, err_str(ERR_ISOWNERCHAN),
           me.name, parv[0], who->name, chptr->chname);
       return 0;
     }
+#endif
 
     if (who->from != cptr &&
         !IsServicesBot(sptr) &&
