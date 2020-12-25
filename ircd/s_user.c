@@ -4259,6 +4259,13 @@ void make_vhostperso(aClient *acptr, int mostrar)
       sendto_one(acptr, rpl_str(RPL_HOSTHIDDEN), me.name, acptr->name,
           acptr->user->vhostperso);
   }
+  else
+  {
+    /* Si no hay registro en la BDD, usamos el vhost y quitamos +v */
+    if (!acptr->user->vhost)
+      make_vhost(acptr, 0);
+    ClearVhostPerso(acptr);
+  }
 }
 #endif
 
