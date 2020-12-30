@@ -3035,12 +3035,15 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
         !(statusbdd & HMODE_CODER))
       ClearCoder(sptr);
 
-#if defined(BDD_VIP) && !defined(BDD_VIP2)
+#if defined(BDD_VIP)
     if (MyConnect(sptr))
     {
       if (!db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
       {
+#if !defined(BDD_VIP2)
         ClearHidden(sptr);
+#endif
+        ClearVhostPerso(sptr);
       }
     }
 #endif
@@ -3080,10 +3083,13 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     ClearOper(sptr);
 
     ClearServicesBot(sptr);
-#if defined(BDD_VIP) && !defined(BDD_VIP2)
+#if defined(BDD_VIP)
     if (!db_buscar_registro(BDD_IPVIRTUALDB, sptr->name))
     {
-      ClearHidden(sptr);
+#if !defined(BDD_VIP2)
+     ClearHidden(sptr);
+#endif
+     ClearVhostPerso(sptr);
     }
 #endif
     if (!IsOperCmd(sptr)) {
@@ -3333,6 +3339,13 @@ int m_svsumode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     --nrof.inv_clients;
   if (!(setflags & FLAGS_INVISIBLE) && IsInvisible(acptr))
     ++nrof.inv_clients;
+
+  /* Proteccion +v */
+#if defined(BDD_VIP)
+  if (!db_buscar_registro(BDD_IPVIRTUALDB, acptr->name))
+      ClearVhostPerso(acptr);
+#endif
+
 
   if (MyUser(acptr))
   {
@@ -4258,13 +4271,6 @@ void make_vhostperso(aClient *acptr, int mostrar)
     if (mostrar)
       sendto_one(acptr, rpl_str(RPL_HOSTHIDDEN), me.name, acptr->name,
           acptr->user->vhostperso);
-  }
-  else
-  {
-    /* Si no hay registro en la BDD, usamos el vhost y quitamos +v */
-    if (!acptr->user->vhost)
-      make_vhost(acptr, 0);
-    ClearVhostPerso(acptr);
   }
 }
 #endif

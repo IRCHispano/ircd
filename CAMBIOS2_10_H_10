@@ -1,3 +1,8 @@
+* 2020/12/30  toni@tonigarcia.es (u2.10.H.10.304)                    FIX
+------------------------------------------------------------------------
+  Verificacion del modo +v para que no se "regale" el modo sin tener un
+  vhost. Se comprueba tambien en los SVSMODE.
+
 * 2020/12/25  toni@tonigarcia.es (u2.10.H.10.303)                    FIX
 ------------------------------------------------------------------------
   Correccion grave vhost reportado por Olivares.
